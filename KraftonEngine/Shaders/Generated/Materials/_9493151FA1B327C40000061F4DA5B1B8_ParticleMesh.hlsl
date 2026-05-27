@@ -1,5 +1,5 @@
-// Generated from Content/Material/Auto/material_9.mat
-// Domain: ParticleSprite
+// Generated from Content/Material/Material_Emitter0_4.mat
+// Domain: ParticleMesh
 
 #include "Common/ConstantBuffers.hlsli"
 #include "Common/VertexLayouts.hlsli"
@@ -28,28 +28,22 @@ struct FMaterialResult
     float2 UVOffset;
 };
 
-Texture2D Tex_Diffuse : register(t0);
-
 FMaterialResult EvaluateMaterial(FMaterialPixelInput Input)
 {
-    float2 n_3 = Input.UV1;
-    float4 n_45 = Tex_Diffuse.Sample(LinearWrapSampler, n_3);
-    float4 n_9 = Input.ParticleColor;
-    float4 n_11 = (n_45 * n_9);
-    float3 n_15 = (n_11).rgb;
-    float n_18 = (n_11).a;
+    float4 n_1 = Input.ParticleColor;
     FMaterialResult Result;
-    Result.Color = n_15;
+    Result.Color = (n_1).xyz;
     Result.Emissive = float3(0, 0, 0);
-    Result.Opacity = n_18;
+    Result.Opacity = (n_1).x;
     Result.UVOffset = float2(0, 0);
     return Result;
 }
 
 
-struct PS_Input_MaterialParticle
+struct PS_Input_MaterialMeshParticle
 {
     float4 position       : SV_POSITION;
+    float3 normal         : NORMAL;
     float2 texcoord       : TEXCOORD0;
     float4 color          : COLOR;
     float  subImageIndex  : TEXCOORD1;
@@ -57,31 +51,30 @@ struct PS_Input_MaterialParticle
     float3 worldPos       : TEXCOORD3;
 };
 
-PS_Input_MaterialParticle VS(VS_Input_ParticleQuad quad, VS_Input_ParticleInstance inst)
+PS_Input_MaterialMeshParticle VS(VS_Input_PNCT vert, VS_Input_MeshParticleInstance inst)
 {
-    float sinR = sin(inst.rotation);
-    float cosR = cos(inst.rotation);
+    float4 worldPos = mul(float4(vert.position, 1.0f), inst.transform);
+    // 비균일 스케일에서 노말 왜곡 방지: 역전치 행렬 사용
+    float3x3 M = (float3x3)inst.transform;
+    float3x3 invTransM = transpose(float3x3(
+        cross(M[1], M[2]),
+        cross(M[2], M[0]),
+        cross(M[0], M[1])
+    ));
+    float3 worldNormal = mul(vert.normal, invTransM);
 
-    float2 rotUV = float2(
-        quad.cornerUV.x * cosR - quad.cornerUV.y * sinR,
-        quad.cornerUV.x * sinR + quad.cornerUV.y * cosR
-    );
-
-    float3 worldPos = inst.position
-                    + FrameCameraRight * rotUV.x * inst.size
-                    + FrameCameraUp * rotUV.y * inst.size;
-
-    PS_Input_MaterialParticle output;
-    output.position       = mul(float4(worldPos, 1.0f), mul(View, Projection));
-    output.texcoord       = quad.cornerUV + 0.5f;
-    output.color          = inst.color;
+    PS_Input_MaterialMeshParticle output;
+    output.position       = mul(worldPos, mul(View, Projection));
+    output.normal         = normalize(worldNormal);
+    output.texcoord       = vert.texcoord;
+    output.color          = vert.color * inst.color;
     output.subImageIndex  = inst.subImageIndex;
     output.dynamicParam   = inst.dynamicParam;
-    output.worldPos       = worldPos;
+    output.worldPos       = worldPos.xyz / worldPos.w;
     return output;
 }
 
-float4 PS(PS_Input_MaterialParticle input) : SV_TARGET
+float4 PS(PS_Input_MaterialMeshParticle input) : SV_TARGET
 {
     FMaterialPixelInput MaterialInput;
     MaterialInput.UV0           = input.texcoord;
@@ -94,7 +87,9 @@ float4 PS(PS_Input_MaterialParticle input) : SV_TARGET
     MaterialInput.DynamicParam  = input.dynamicParam;
 
     FMaterialResult Result = EvaluateMaterial(MaterialInput);
-    float4 FinalColor = float4(Result.Color + Result.Emissive, Result.Opacity);
+    float3 BaseColor = Result.Color;
+
+    float4 FinalColor = float4(BaseColor + Result.Emissive, Result.Opacity);
     clip(FinalColor.a - 0.01f);
     return ApplyFogTranslucent(FinalColor, input.worldPos, CameraWorldPos);
 }
