@@ -1,4 +1,4 @@
-// Generated from Content/Material/Auto/BasicShapeMaterial_Emitter0.mat
+// Generated from Content/Material/Material_Emitter0_5.mat
 // Domain: ParticleMesh
 
 #include "Common/ConstantBuffers.hlsli"
@@ -29,13 +29,15 @@ struct FMaterialResult
     float2 UVOffset;
 };
 
+Texture2D Tex_Diffuse : register(t0);
+
 FMaterialResult EvaluateMaterial(FMaterialPixelInput Input)
 {
-    float4 n_1 = Input.ParticleColor;
+    float4 n_17 = Tex_Diffuse.Sample(LinearWrapSampler, Input.UV0);
     FMaterialResult Result;
-    Result.Color = (n_1).xyz;
+    Result.Color = (n_17).xyz;
     Result.Emissive = float3(0, 0, 0);
-    Result.Opacity = (n_1).x;
+    Result.Opacity = (n_17).x;
     Result.UVOffset = float2(0, 0);
     return Result;
 }

@@ -1,19 +1,19 @@
 {
-  "BlendState" : "Opaque",
+  "BlendState" : "AlphaBlend",
   "Compiled" : {
-    "GeneratorVersion" : "ParticleMeshLighting_v4",
+    "GeneratorVersion" : "ParticleMeshLighting_v3",
     "GraphHash" : "B39F960DD3478C65",
     "Parameters" : {
 
     },
-    "ReceiveLighting" : true,
+    "ReceiveLighting" : false,
     "Textures" : {
 
     }
   },
-  "DepthStencilState" : "Default",
-  "Domain" : "ParticleMesh",
-  "GeneratedShaderPath" : "Shaders/Generated/Materials/_41AAC49C33C14A5000013C79B41DEE10_ParticleMesh.hlsl",
+  "DepthStencilState" : "DepthReadOnly",
+  "Domain" : "ParticleSprite",
+  "GeneratedShaderPath" : "Shaders/Generated/Materials/A9E0216820D68CBA000000CFB18250EC_ParticleSprite.hlsl",
   "Graph" : {
     "Links" : [{
         "FromPinId" : 2,
@@ -111,11 +111,10 @@
         "Value" : [1.000000, 1.000000, 1.000000, 1.000000]
       }]
   },
-  "MaterialGuid" : "41AAC49C33C14A5000013C79B41DEE10",
-  "PathFileName" : "Content/Material/Auto/BasicShapeMaterial_Emitter0.mat",
-  "RasterizerState" : "SolidBackCull",
-  "ReceiveLighting" : true,
-  "RenderPass" : "Opaque",
-  "ShaderPath" : "Shaders/Generated/Materials/_41AAC49C33C14A5000013C79B41DEE10_ParticleMesh.hlsl",
+  "MaterialGuid" : "A9E0216820D68CBA000000CFB18250EC",
+  "PathFileName" : "Content/Material/Material_Emitter0_2.mat",
+  "RasterizerState" : "SolidNoCull",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Generated/Materials/A9E0216820D68CBA000000CFB18250EC_ParticleSprite.hlsl",
   "Version" : 2
 }
