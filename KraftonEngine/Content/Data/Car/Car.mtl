@@ -1,0 +1,52 @@
+# Blender 5.1.0 MTL File: 'None'
+# www.blender.org
+
+newmtl Car.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd textures/car_monster_1933_ford_coupe_df.png
+map_d textures/car_monster_1933_ford_coupe_df.png
+
+newmtl Car.002
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd textures/car_monster_1933_ford_coupe_livery02_occ.png
+map_d textures/car_monster_1933_ford_coupe_livery02_occ.png
+
+newmtl Car.003
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd textures/car_monster_1933_ford_coupe_glows.png
+map_d textures/car_monster_1933_ford_coupe_glows.png
+
+newmtl Car.004
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd textures/license_plates_df.png
+map_d textures/license_plates_df.png
+
+newmtl Car.005
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 2
+map_Kd textures/car_bottom_df.png
+map_d textures/car_bottom_df.png
