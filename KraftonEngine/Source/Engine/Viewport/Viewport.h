@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Render/Types/RenderTypes.h"
+#include "Render/Types/BloomTypes.h"
 
 class FViewportClient;
 
@@ -63,11 +64,17 @@ public:
 	ID3D11RenderTargetView* GetCullingHeatmapRTV() const { return CullingHeatmapRTV; }
 	ID3D11ShaderResourceView* GetCullingHeatmapSRV() const { return CullingHeatmapSRV; }
 
+	const FBloomFrameResources* GetBloomResources() const { return &BloomResources; }
+
 	const D3D11_VIEWPORT& GetViewportRect() const { return ViewportRect; }
 
 private:
 	bool CreateResources();
 	void ReleaseResources();
+	bool CreateBloomResources();
+	void ReleaseBloomResources();
+	bool CreateBloomMip(FBloomMipResource& OutResource, uint32 InWidth, uint32 InHeight, const char* DebugName);
+	void ReleaseBloomMip(FBloomMipResource& Resource);
 
 private:
 	FViewportClient* ViewportClient = nullptr;
@@ -118,6 +125,8 @@ private:
 	ID3D11Texture2D* CullingHeatmapTexture = nullptr;
 	ID3D11RenderTargetView* CullingHeatmapRTV = nullptr;
 	ID3D11ShaderResourceView* CullingHeatmapSRV = nullptr;
+
+	FBloomFrameResources BloomResources;
 
 	D3D11_VIEWPORT ViewportRect = {};
 

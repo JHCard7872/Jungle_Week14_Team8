@@ -68,7 +68,7 @@ private:
 	// 공통 헬퍼
 	void EmitLineCommand(FLineGeometry& Lines, FShader* Shader, const FDrawCommandRenderState& RS);
 	void ApplyMaterialRenderState(FDrawCommandRenderState& OutState, const UMaterial* Mat, const FDrawCommandRenderState& BaseState);
-	FShader* SelectEffectiveShader(FShader* ProxyShader, EViewMode ViewMode, bool bUseSkeletalVertexFactory, bool bUseWheelVertexFactory, bool bWeightBoneHeatMap, bool bFog = false);
+	FShader* SelectEffectiveShader(FShader* ProxyShader, EViewMode ViewMode, bool bUseSkeletalVertexFactory, bool bUseWheelVertexFactory, bool bWeightBoneHeatMap, bool bFog = false, bool bColorOnly = false);
 
 	FConstantBuffer* GetPerObjectCBForProxy(FScene* Scene, const FPrimitiveSceneProxy& Proxy);
 	void EnsurePerObjectCBPoolCapacity(FScene* Scene, uint32 RequiredCount);
@@ -80,6 +80,7 @@ private:
 	const FPassRenderStateTable* PassRenderStateTable = nullptr;
 	EViewMode CollectViewMode = EViewMode::Lit_Phong;
 	bool bCollectWeightBoneHeatMap = false;
+	bool bCollectHasMRT = false;
 	int32 CollectWeightBoneHeatMapBoneIndex = -1;
 	FVector CollectCameraPos = FVector(0.0f, 0.0f, 0.0f);
 

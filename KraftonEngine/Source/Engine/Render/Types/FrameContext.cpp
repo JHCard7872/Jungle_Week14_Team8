@@ -38,6 +38,7 @@ void FFrameContext::SetViewportInfo(const FViewport* VP)
 	ViewportHeight   = static_cast<float>(VP->GetHeight());
 	ViewportRTV             = VP->GetRTV();
 	ViewportDSV             = VP->GetDSV();
+	BloomResources          = VP->GetBloomResources();
 	SceneColorCopySRV       = VP->GetSceneColorCopySRV();
 	SceneColorCopyTexture   = VP->GetSceneColorCopyTexture();
 	ViewportRenderTexture   = VP->GetRTTexture();

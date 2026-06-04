@@ -58,6 +58,7 @@ struct FShowFlags
 	bool bDepthOfField = false;
 	bool bDOFBokeh = false;
 	bool bFXAA = false;
+	bool bBloom = false;
 	bool bGammaCorrection = true;
 	bool bViewLightCulling = false;
 	bool bVisualize25DCulling = false;
@@ -104,6 +105,12 @@ struct FViewportRenderOptions
 	// FXAA 전용 설정
 	float EdgeThreshold = 0.125f;
 	float EdgeThresholdMin = 0.0625f;
+
+	// Bloom settings
+	float BloomThreshold = 1.0f;
+	float BloomSoftKnee = 0.5f;
+	float BloomIntensity = 0.6f;
+	float BloomBlurRadius = 1.0f;
 
 	// Tone Mapping / Gamma Correction settings
 	float Gamma = 2.4f;

@@ -115,6 +115,7 @@ void FDrawCommandBuilder::BeginCollect(const FFrameContext& Frame)
 	DrawCommandList.Reset();
 	CollectViewMode = Frame.RenderOptions.ViewMode;
 	bCollectWeightBoneHeatMap = Frame.RenderOptions.bWeightBoneHeatMap;
+	bCollectHasMRT = Frame.NormalRTV != nullptr && Frame.CullingHeatmapRTV != nullptr;
 	CollectWeightBoneHeatMapBoneIndex = Frame.RenderOptions.WeightBoneHeatMapBoneIndex;
 
 	bHasSelectionMaskCommands = false;
@@ -136,9 +137,9 @@ void FDrawCommandBuilder::BeginCollect(const FFrameContext& Frame)
 // ============================================================
 // SelectEffectiveShader — ViewMode에 따른 UberLit 셰이더 변형 선택
 // ============================================================
-FShader* FDrawCommandBuilder::SelectEffectiveShader(FShader* ProxyShader, EViewMode ViewMode, bool bUseSkeletalVertexFactory, bool bUseWheelVertexFactory, bool bWeightBoneHeatMap, bool bFog)
+FShader* FDrawCommandBuilder::SelectEffectiveShader(FShader* ProxyShader, EViewMode ViewMode, bool bUseSkeletalVertexFactory, bool bUseWheelVertexFactory, bool bWeightBoneHeatMap, bool bFog, bool bColorOnly)
 {
-	if (!bUseWheelVertexFactory && ProxyShader != FShaderManager::Get().GetOrCreate(EShaderPath::UberLit))
+	if (!bUseWheelVertexFactory && !FShaderManager::Get().IsShaderFromPath(ProxyShader, EShaderPath::UberLit))
 		return ProxyShader;
 
 	const EUberLitDefines::EVertexFactory VertexFactory = bUseSkeletalVertexFactory
@@ -150,17 +151,17 @@ FShader* FDrawCommandBuilder::SelectEffectiveShader(FShader* ProxyShader, EViewM
 	switch (ViewMode)
 	{
 	case EViewMode::Unlit:
-		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Unlit, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog);
+		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Unlit, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog, bColorOnly);
 	case EViewMode::Lit_Gouraud:
-		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Gouraud, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog);
+		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Gouraud, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog, bColorOnly);
 	case EViewMode::Lit_Lambert:
-		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Lambert, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog);
+		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Lambert, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog, bColorOnly);
 	case EViewMode::Lit_Phong:
 	case EViewMode::LightCulling:
-		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Phong, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog);
+		return FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Phong, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog, bColorOnly);
 	default:
-		return (bUseSkeletalVertexFactory || bUseWheelVertexFactory || bFog)
-			? FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Default, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog)
+		return (bUseSkeletalVertexFactory || bUseWheelVertexFactory || bFog || bColorOnly)
+			? FShaderManager::Get().GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Default, VertexFactory, EShaderErrorMode::Notification, bWeightBoneHeatMap, bFog, bColorOnly)
 			: ProxyShader;
 	}
 }
@@ -251,7 +252,8 @@ void FDrawCommandBuilder::BuildCommandForProxy(FScene& Scene, const FPrimitiveSc
 		FShader* SectionShader = (Section.Material && Section.Material->GetShader())
 			? Section.Material->GetShader()
 			: Proxy.GetShader();
-		FShader* EffectiveShader = SelectEffectiveShader(SectionShader, CollectViewMode, bGPUSkinning, bWheelMesh, bWeightBoneHeatMap, bSectionIsTranslucent);
+		const bool bColorOnly = Pass != ERenderPass::Opaque || !bCollectHasMRT;
+		FShader* EffectiveShader = SelectEffectiveShader(SectionShader, CollectViewMode, bGPUSkinning, bWheelMesh, bWeightBoneHeatMap, bSectionIsTranslucent, bColorOnly);
 
 		FDrawCommand& Cmd = DrawCommandList.AddCommand();
 		Cmd.Pass = Pass;

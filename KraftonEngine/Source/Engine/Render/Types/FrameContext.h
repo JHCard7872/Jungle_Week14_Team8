@@ -4,6 +4,7 @@
 #include "Math/Matrix.h"
 #include "Math/Vector.h"
 #include "Render/Types/ViewTypes.h"
+#include "Render/Types/BloomTypes.h"
 #include "Render/Types/LODContext.h"
 #include "Collision/Math/ConvexVolume.h"
 #include "GameFramework/WorldContext.h"
@@ -45,6 +46,7 @@ struct FFrameContext
 
 	ID3D11RenderTargetView*   ViewportRTV          = nullptr;
 	ID3D11DepthStencilView*   ViewportDSV          = nullptr;
+	const FBloomFrameResources* BloomResources      = nullptr;
 	// SceneColor 복사 — FXAA 등 PostProcess에서 최종 화면 읽기용
 	ID3D11ShaderResourceView* SceneColorCopySRV     = nullptr;
 	ID3D11Texture2D* SceneColorCopyTexture          = nullptr;
@@ -127,6 +129,7 @@ struct FFrameContext
 	{
 		ViewportRTV             = nullptr;
 		ViewportDSV             = nullptr;
+		BloomResources          = nullptr;
 		SceneColorCopySRV       = nullptr;
 		SceneColorCopyTexture   = nullptr;
 		ViewportRenderTexture   = nullptr;

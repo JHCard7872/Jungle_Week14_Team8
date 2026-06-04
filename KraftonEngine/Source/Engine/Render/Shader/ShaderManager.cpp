@@ -139,6 +139,10 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	GetOrCreate(EShaderPath::DOFBokeh, StartupError);
 	GetOrCreate(EShaderPath::DOFRecombine, StartupError);
 	GetOrCreate(EShaderPath::GammaCorrection, StartupError);
+	GetOrCreate(EShaderPath::BloomPrefilter, StartupError);
+	GetOrCreate(EShaderPath::BloomDownsample, StartupError);
+	GetOrCreate(EShaderPath::BloomBlur, StartupError);
+	GetOrCreate(EShaderPath::BloomComposite, StartupError);
 	GetOrCreateShadowDepthPermutation(EShadowDepthDefines::EVertexFactory::StaticMesh, StartupError);
 	GetOrCreateShadowDepthPermutation(EShadowDepthDefines::EVertexFactory::SkeletalMesh, StartupError);
 	GetOrCreate(EShaderPath::ShadowMapVis, StartupError);
@@ -153,6 +157,8 @@ void FShaderManager::Initialize(ID3D11Device* InDevice)
 	// AlphaBlend 패스용 — USE_FOG=1 퍼뮤테이션 사전 컴파일
 	GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Default, EUberLitDefines::EVertexFactory::StaticMesh,   StartupError, false, true);
 	GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Default, EUberLitDefines::EVertexFactory::SkeletalMesh, StartupError, false, true);
+	GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Default, EUberLitDefines::EVertexFactory::StaticMesh,   StartupError, false, true, true);
+	GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel::Default, EUberLitDefines::EVertexFactory::SkeletalMesh, StartupError, false, true, true);
 
 	// include 역매핑 구축
 	RebuildIncludeDependents();
@@ -271,10 +277,10 @@ FShader* FShaderManager::GetOrCreateShadowDepthPermutation(EShadowDepthDefines::
 }
 
 FShader* FShaderManager::GetOrCreateUberLitPermutation(EUberLitDefines::ELightingModel LightingModel,
-	EUberLitDefines::EVertexFactory VertexFactory, EShaderErrorMode ErrorMode, bool bWeightBoneHeatMap, bool bFog)
+	EUberLitDefines::EVertexFactory VertexFactory, EShaderErrorMode ErrorMode, bool bWeightBoneHeatMap, bool bFog, bool bColorOnly)
 {
-	const D3D_SHADER_MACRO* Defines = EUberLitDefines::GetDefines(LightingModel, VertexFactory, bWeightBoneHeatMap, bFog);
-	return PreCompile(EUberLitDefines::MakePermutationKey(LightingModel, VertexFactory, bWeightBoneHeatMap, bFog), Defines, ErrorMode);
+	const D3D_SHADER_MACRO* Defines = EUberLitDefines::GetDefines(LightingModel, VertexFactory, bWeightBoneHeatMap, bFog, bColorOnly);
+	return PreCompile(EUberLitDefines::MakePermutationKey(LightingModel, VertexFactory, bWeightBoneHeatMap, bFog, bColorOnly), Defines, ErrorMode);
 }
 
 // ============================================================
@@ -288,6 +294,24 @@ FShader* FShaderManager::FindOrCreate(const FString& Path)
 FShader* FShaderManager::FindOrCreate(const FShaderKey& Key)
 {
 	return GetOrCreate(Key);
+}
+
+bool FShaderManager::IsShaderFromPath(const FShader* Shader, const FString& Path) const
+{
+	if (!Shader)
+	{
+		return false;
+	}
+
+	for (const auto& [Key, Entry] : ShaderCache)
+	{
+		if (Key.Path == Path && Entry.Shader.get() == Shader)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void FShaderManager::InvalidatePath(const FString& Path)

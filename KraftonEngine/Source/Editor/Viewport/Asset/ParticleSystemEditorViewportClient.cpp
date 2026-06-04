@@ -16,6 +16,11 @@
 void FParticleSystemEditorViewportClient::Initialize(ID3D11Device* Device, uint32 Width, uint32 Height)
 {
     RenderOptions.ShowFlags.bGrid = false;
+    RenderOptions.ShowFlags.bBloom = true;
+    RenderOptions.BloomThreshold = 0.8f;
+    RenderOptions.BloomSoftKnee = 0.5f;
+    RenderOptions.BloomIntensity = 1.2f;
+    RenderOptions.BloomBlurRadius = 2.0f;
 
     Viewport = new FViewport();
     Viewport->Initialize(Device, Width, Height);

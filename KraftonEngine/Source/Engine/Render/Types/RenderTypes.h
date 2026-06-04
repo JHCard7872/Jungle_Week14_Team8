@@ -41,6 +41,7 @@ enum class ERenderPass : uint32
 	AdditiveDecal,		// Additive 빌보드 등
 	EarlyPostProcess,	// Fog, DepthOfField(DOF)
 	AlphaBlend,			// 반투명 지오메트리 (Font, SubUV, Billboard, Translucent)
+	Bloom,				// HDR SceneColor 기반 Bloom 합성
 	SelectionMask,		// 선택 스텐실 마스크
 	EditorLines,		// 디버그 라인 + 그리드 (LINELIST)
 	PostProcess,		// 아웃라인 풀스크린, SceneDepth
@@ -64,6 +65,7 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::AdditiveDecal",
 		"RenderPass::EarlyPostProcess",
 		"RenderPass::AlphaBlend",
+		"RenderPass::Bloom",
 		"RenderPass::SelectionMask",
 		"RenderPass::EditorLines",
 		"RenderPass::PostProcess",
@@ -90,6 +92,7 @@ namespace RenderStateStrings
 		{ "AdditiveDecal", (int)ERenderPass::AdditiveDecal },
 		{ "EarlyPostProcess",(int)ERenderPass::EarlyPostProcess },
 		{ "AlphaBlend",    (int)ERenderPass::AlphaBlend },
+		{ "Bloom",         (int)ERenderPass::Bloom },
 		{ "SelectionMask", (int)ERenderPass::SelectionMask },
 		{ "EditorLines",   (int)ERenderPass::EditorLines },
 		{ "PostProcess",   (int)ERenderPass::PostProcess },

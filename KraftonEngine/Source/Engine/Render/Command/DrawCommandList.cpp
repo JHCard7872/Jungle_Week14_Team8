@@ -65,6 +65,8 @@ void FDrawCommandList::Sort()
 		std::sort(Commands.begin(), Commands.end(),
 			[](const FDrawCommand& A, const FDrawCommand& B)
 			{
+				if (A.Pass != B.Pass)
+					return static_cast<uint32>(A.Pass) < static_cast<uint32>(B.Pass);
 				return A.SortKey < B.SortKey;
 			});
 	}
@@ -173,6 +175,9 @@ void FDrawCommandList::SubmitCommand(const FDrawCommand& Cmd,
 	FD3DDevice& Device, FSystemResources& Resources,
 	ID3D11DeviceContext* Ctx, FStateCache& Cache)
 {
+	if (!Cmd.Shader || !Cmd.Shader->IsValid())
+		return;
+
 	const bool bForce = Cache.bForceAll;
 
 	// --- 렌더 상태 ---
