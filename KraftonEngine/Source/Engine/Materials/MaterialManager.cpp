@@ -760,6 +760,12 @@ bool FMaterialManager::InjectDefaultParameters(json::JSON& JsonData, FMaterialTe
 			continue;
 		}
 
+		if (ParamName == "EmissiveStrength")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 1.0f;
+			continue;
+		}
+
 		switch (Info->Size)
 		{
 			case sizeof(float) : // 4바이트 - Scalar

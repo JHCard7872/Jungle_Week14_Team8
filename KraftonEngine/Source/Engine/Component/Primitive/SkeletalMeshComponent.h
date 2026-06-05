@@ -110,6 +110,9 @@ public:
     UFUNCTION(Pure, Category="Physics|Ragdoll")
     bool IsRagdollEnabled() const { return bRagdollActive; }
 
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    bool IsRagdollRecovering() const { return bRagdollRecovering; }
+
     UFUNCTION(Callable, Category="Physics|Ragdoll")
     void WakeAllRagdollBodies();
 
@@ -139,6 +142,12 @@ public:
 
     UFUNCTION(Callable, Category = "Physics|Ragdoll")
     void SetAllBodiesBelowSimulatePhysics(FName InBoneName, bool bSimulate, bool bIncludeSelf = true);
+
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    float GetRagdollRecoveryDuration() const { return RagdollRecoveryDuration; }
+
+    UFUNCTION(Call, Category = "Physics|Ragdoll")
+    void SetRagdollRecoveryDuration(float InDuration) {  RagdollRecoveryDuration = InDuration < 0.0f ? 0.0f : InDuration; }
 
     UFUNCTION(Callable, Exec, Category = "Physics|Ragdoll")
     void SetRagdollGravityEnabled(bool bEnableGravity);

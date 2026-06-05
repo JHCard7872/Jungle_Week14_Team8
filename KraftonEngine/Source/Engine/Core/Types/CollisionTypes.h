@@ -9,6 +9,7 @@
 
 class AActor;
 class UPrimitiveComponent;
+struct FBodyInstance;
 
 // ============================================================
 // ECollisionChannel — 충돌 채널 (오브젝트 분류용)
@@ -183,6 +184,7 @@ struct FHitResult
 {
 	UPrimitiveComponent* HitComponent = nullptr;
 	AActor* HitActor = nullptr;
+	FBodyInstance* PhysicsBody = nullptr;
 
 	float Distance = 3.402823466e+38F; // FLT_MAX
 	float PenetrationDepth = 0.0f;

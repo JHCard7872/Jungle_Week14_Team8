@@ -410,15 +410,23 @@ public:
 		MeshComponent->TickRagdollPreviewSimulation(DeltaTime);
 	}
 
-	void Render(USkeletalMeshDebugComponent* MeshComponent, UPhysicsAsset* PhysicsAsset, int32 SelectedBodyIndex)
+	void Render(
+		USkeletalMeshDebugComponent* MeshComponent,
+		UPhysicsAsset* PhysicsAsset,
+		int32 SelectedBodyIndex,
+		const FMeshEditorViewportClient* ViewportClient)
 	{
-		RenderContents(MeshComponent, PhysicsAsset, SelectedBodyIndex);
+		RenderContents(MeshComponent, PhysicsAsset, SelectedBodyIndex, ViewportClient);
 	}
 
 	bool IsActive() const { return bSimulationActive; }
 
 private:
-	void RenderContents(USkeletalMeshDebugComponent* MeshComponent, UPhysicsAsset* PhysicsAsset, int32 SelectedBodyIndex)
+	void RenderContents(
+		USkeletalMeshDebugComponent* MeshComponent,
+		UPhysicsAsset* PhysicsAsset,
+		int32 SelectedBodyIndex,
+		const FMeshEditorViewportClient* ViewportClient)
 	{
 		ImGui::TextUnformatted("Ragdoll");
 		ImGui::Separator();
@@ -482,6 +490,8 @@ private:
 			RenderSelfCollisionModeOption("Enable All", ERagdollSelfCollisionMode::EnableAll, MeshComponent);
 			ImGui::EndCombo();
 		}
+
+		RenderPanInfo(ViewportClient);
 
 		//if (ImGui::SliderFloat("Blend", &BlendWeight, 0.0f, 1.0f, "%.2f"))
 		//{
@@ -613,6 +623,40 @@ private:
 		}
 
 		return Bodies[SelectedBodyIndex]->BoneName;
+	}
+
+	static void RenderPanInfo(const FMeshEditorViewportClient* ViewportClient)
+	{
+		if (!ViewportClient)
+		{
+			return;
+		}
+
+		FName BoneName = FName::None;
+		FVector WorldHitPoint = FVector::ZeroVector;
+		FVector LocalHitPoint = FVector::ZeroVector;
+		FVector TargetWorldPoint = FVector::ZeroVector;
+		float PinDistance = 0.0f;
+		float BodyMass = 0.0f;
+		if (!ViewportClient->GetRagdollBodyPanInfo(
+			BoneName,
+			WorldHitPoint,
+			LocalHitPoint,
+			&TargetWorldPoint,
+			&PinDistance,
+			&BodyMass))
+		{
+			return;
+		}
+
+		const FString BoneNameText = BoneName.ToString();
+		ImGui::Separator();
+		ImGui::Text("Picked Body: %s", BoneNameText.c_str());
+		ImGui::Text("World Hit: %.2f, %.2f, %.2f", WorldHitPoint.X, WorldHitPoint.Y, WorldHitPoint.Z);
+		ImGui::Text("Local Hit: %.2f, %.2f, %.2f", LocalHitPoint.X, LocalHitPoint.Y, LocalHitPoint.Z);
+		ImGui::Text("Pin Target: %.2f, %.2f, %.2f", TargetWorldPoint.X, TargetWorldPoint.Y, TargetWorldPoint.Z);
+		ImGui::Text("Pin Distance: %.2f", PinDistance);
+		ImGui::Text("Body Mass: %.3f kg", BodyMass);
 	}
 
 	static const char* GetSelfCollisionModeLabel(ERagdollSelfCollisionMode Mode)
@@ -1716,7 +1760,8 @@ void FMeshEditorPhysicsAssetTab::Render(float AvailableHeight)
 		RagdollPanel->Render(
 			GetViewportClient().GetPreviewDebugMeshComponent(),
 			PhysicsAsset,
-			SelectedPhysicsBodyIndex);
+			SelectedPhysicsBodyIndex,
+			&GetViewportClient());
 		ImGui::Separator();
 	}
 	RenderPhysicsAssetBodyList(SkeletalMesh, PhysicsAsset);

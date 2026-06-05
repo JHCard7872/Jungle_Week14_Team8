@@ -21,6 +21,13 @@ struct FParticleFrameConstants
 	FVector CameraUp;    float _pad1;
 };
 
+struct FBeamTrailMaterialConstants
+{
+	float SectionColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	float EmissiveStrength = 1.0f;
+	float _Pad0[3] = {};
+};
+
 // EParticleBlendMode → Pass / BlendState / DepthStencil 결정
 struct FParticleRenderState
 {
@@ -245,6 +252,7 @@ void FParticleSystemSceneProxy::EnsureEmitterBuffers(ID3D11Device* Device, int32
 		auto Buf = std::make_unique<FEmitterRenderBuffer>();
 		Buf->InstanceVB.Create(Device, 64, InstanceStride);
 		Buf->ParticleFrameCB.Create(Device, sizeof(FParticleFrameConstants), "ParticleFrameCB");
+		Buf->BeamTrailMaterialCB.Create(Device, sizeof(FBeamTrailMaterialConstants), "BeamTrailMaterialCB");
 		EmitterBuffers.push_back(std::move(Buf));
 	}
 }
@@ -620,6 +628,18 @@ void FParticleSystemSceneProxy::SubmitBeamTrailEmitter(
 		{
 			Cmd.Bindings.SRVs[Slot] = MatSRVs[Slot] ? const_cast<ID3D11ShaderResourceView*>(MatSRVs[Slot])
 				: FallbackWhite;
+		}
+	}
+	else
+	{
+		const FBeamTrailMaterialConstants DefaultMaterial;
+		Buffer.BeamTrailMaterialCB.Update(Context, &DefaultMaterial, sizeof(FBeamTrailMaterialConstants));
+		Cmd.Bindings.PerShaderCB[0] = &Buffer.BeamTrailMaterialCB;
+
+		ID3D11ShaderResourceView* FallbackWhite = FMaterialManager::Get().GetFallbackWhiteSRV();
+		for (int32 Slot = 0; Slot < static_cast<int32>(EMaterialTextureSlot::Max); ++Slot)
+		{
+			Cmd.Bindings.SRVs[Slot] = FallbackWhite;
 		}
 	}
 

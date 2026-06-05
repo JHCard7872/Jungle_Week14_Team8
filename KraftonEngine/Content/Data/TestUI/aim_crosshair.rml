@@ -1,0 +1,29 @@
+<rml>
+<head>
+    <style>
+        body {
+            margin: 0px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .crosshair {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 64px;
+            height: 64px;
+            margin-left: -32px;
+            margin-top: -32px;
+        }
+
+        #crosshair_hold {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <img id="crosshair_normal" class="crosshair" src="aim_collect.png" />
+    <img id="crosshair_hold" class="crosshair" src="aim_collect_hold.png" />
+</body>
+</rml>
