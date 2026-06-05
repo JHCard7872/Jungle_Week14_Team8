@@ -1,4 +1,4 @@
-#include "Particles/Beam/ParticleModuleBeamNoise.h"
+﻿#include "Particles/Beam/ParticleModuleBeamNoise.h"
 #include "Object/GarbageCollection.h"
 
 #include "Object/Object.h"
@@ -71,7 +71,7 @@ void UParticleModuleBeamNoise::InitializeDefaults()
 	if (!NoiseRange.IsCreated())
 	{
 		UDistributionVectorConstant* DistributionNoiseRange = UObjectManager::Get().CreateObject<UDistributionVectorConstant>(this);
-		DistributionNoiseRange->Constant = FVector(50.0f, 50.0f, 50.0f);
+		DistributionNoiseRange->Constant = FVector(0.0f, 0.0f, 0.0f);
 		NoiseRange.Distribution = DistributionNoiseRange;
 	}
 

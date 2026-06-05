@@ -1,16 +1,25 @@
-#include "GameFramework/Pawn/GOIncRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncRagdollPawn.h"
 
+#include "Animation/AnimationManager.h"
 #include "Component/Movement/GOIncRagdollMovementComponent.h"
 #include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Component/Script/LuaScriptComponent.h"
 #include "Component/Shape/CapsuleComponent.h"
+#include "Core/Logging/Log.h"
+#include "Core/Types/CollisionTypes.h"
 #include "Mesh/MeshManager.h"
 #include "Runtime/Engine.h"
 
 namespace
 {
-	const FString DefaultGOIncRagdollSkeletalMeshFileName = "Content/Data/Mario2/Mario2_SkeletalMesh.uasset";
+	const FString DefaultGOIncRagdollSkeletalMeshFileName = "Content/Data/Sonic/sc_dash_loop_anm_hkx_SkeletalMesh.uasset";
 	const FString DefaultGOIncRagdollLuaScriptFileName = "GOIncRagdollPawn_Test.lua";
+	const FString DefaultGOIncRagdollRunAnimationFileName = "Content/Data/Sonic/sc_dash_loop_anm_hkx_sc_dash_loop.uasset";
+
+	constexpr float DefaultAliveCapsuleRadius = 1.8f;
+	constexpr float DefaultAliveCapsuleHalfHeight = 3.0f;
+	constexpr float DefaultReviveTriggerCapsuleRadius = 2.4f;
+	constexpr float DefaultReviveTriggerCapsuleHalfHeight = 3.4f;
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents()
@@ -23,11 +32,18 @@ void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileNam
 	// NPC Pawn이므로 PlayerController 자동 possess 대상이 되지 않게 둔다.
 	SetAutoPossessPlayer(false);
 
-	// 1) Capsule — Root. 살아있는 상태에서 UGOIncRagdollMovementComponent의 UpdatedComponent가 된다.
+	// 1) Capsule — Root. Alive 상태에서 UGOIncRagdollMovementComponent의 UpdatedComponent가 된다.
+	// Dead 상태에서는 Lua가 이 Capsule collision을 끄고, ragdoll sync 위치로 Root를 이동시킨다.
 	CapsuleComponent = AddComponent<UCapsuleComponent>();
 	SetRootComponent(CapsuleComponent);
+	ConfigureAliveCollisionCapsuleDefaults();
 
-	// 2) SkeletalMesh — Capsule의 자식. Animation/ragdoll 표현 담당.
+	// 2) ReviveTriggerCapsule — Capsule의 자식. DeadRagdoll 상태에서 Player overlap revive 감지만 담당한다.
+	ReviveTriggerCapsuleComponent = AddComponent<UCapsuleComponent>();
+	ReviveTriggerCapsuleComponent->AttachToComponent(CapsuleComponent);
+	ConfigureReviveTriggerCapsuleDefaults();
+
+	// 3) SkeletalMesh — Capsule의 자식. Animation/ragdoll 표현 담당.
 	Mesh = AddComponent<USkeletalMeshComponent>();
 	Mesh->AttachToComponent(CapsuleComponent);
 
@@ -44,15 +60,85 @@ void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileNam
 
 	ApplyInitialRagdollState();
 
-	// 3) GOIncRagdollMovement — non-scene. UpdatedComponent만 직접 이동한다.
+	// 4) GOIncRagdollMovement — non-scene. Alive collision capsule만 직접 이동한다.
 	RagdollMovementComponent = AddComponent<UGOIncRagdollMovementComponent>();
 	RagdollMovementComponent->SetUpdatedComponent(CapsuleComponent);
 
-	// 4) LuaScript — 상태 판단/컴포넌트 API 조합은 Lua에서 처리한다.
+	// 5) LuaScript — 상태 판단/컴포넌트 API 조합은 Lua에서 처리한다.
 	LuaScriptComponent = AddComponent<ULuaScriptComponent>();
 	if (!ScriptFile.empty())
 	{
 		LuaScriptComponent->SetScriptFile(ScriptFile);
+	}
+}
+
+
+void AGOIncRagdollPawn::ConfigureAliveCollisionCapsuleDefaults()
+{
+	if (!CapsuleComponent)
+	{
+		return;
+	}
+
+	CapsuleComponent->SetCapsuleSize(DefaultAliveCapsuleRadius, DefaultAliveCapsuleHalfHeight);
+	CapsuleComponent->SetSimulatePhysics(false);
+	CapsuleComponent->SetKinematicPhysics(true);
+	CapsuleComponent->SetGenerateOverlapEvents(false);
+	CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AGOIncRagdollPawn::ConfigureReviveTriggerCapsuleDefaults()
+{
+	if (!ReviveTriggerCapsuleComponent)
+	{
+		return;
+	}
+
+	ReviveTriggerCapsuleComponent->SetCapsuleSize(
+		DefaultReviveTriggerCapsuleRadius,
+		DefaultReviveTriggerCapsuleHalfHeight);
+	ReviveTriggerCapsuleComponent->SetSimulatePhysics(false);
+	ReviveTriggerCapsuleComponent->SetKinematicPhysics(true);
+	ReviveTriggerCapsuleComponent->SetGenerateOverlapEvents(true);
+	ReviveTriggerCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+
+	if (CapsuleComponent && ReviveTriggerCapsuleComponent->GetParent() != CapsuleComponent)
+	{
+		ReviveTriggerCapsuleComponent->AttachToComponent(CapsuleComponent);
+	}
+}
+
+void AGOIncRagdollPawn::EnsureReviveTriggerCapsuleComponent()
+{
+	if (!CapsuleComponent)
+	{
+		return;
+	}
+
+	if (!ReviveTriggerCapsuleComponent)
+	{
+		for (UActorComponent* Component : GetComponents())
+		{
+			UCapsuleComponent* Candidate = Cast<UCapsuleComponent>(Component);
+			if (Candidate && Candidate != CapsuleComponent)
+			{
+				ReviveTriggerCapsuleComponent = Candidate;
+				break;
+			}
+		}
+	}
+
+	// Existing scene files will not have the new trigger component yet.
+	// Create it at runtime so old scenes keep working without manual scene edits.
+	if (!ReviveTriggerCapsuleComponent)
+	{
+		ReviveTriggerCapsuleComponent = AddComponent<UCapsuleComponent>();
+		ConfigureReviveTriggerCapsuleDefaults();
+		UE_LOG("[GOIncRagdollPawn] Added missing ReviveTriggerCapsuleComponent at runtime.");
+	}
+	else if (ReviveTriggerCapsuleComponent->GetParent() != CapsuleComponent)
+	{
+		ReviveTriggerCapsuleComponent->AttachToComponent(CapsuleComponent);
 	}
 }
 
@@ -72,6 +158,9 @@ void AGOIncRagdollPawn::ApplyInitialRagdollState()
 void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 {
 	CapsuleComponent = Cast<UCapsuleComponent>(GetRootComponent());
+	ReviveTriggerCapsuleComponent = nullptr;
+	EnsureReviveTriggerCapsuleComponent();
+
 	Mesh = GetComponentByClass<USkeletalMeshComponent>();
 	RagdollMovementComponent = GetComponentByClass<UGOIncRagdollMovementComponent>();
 	LuaScriptComponent = GetComponentByClass<ULuaScriptComponent>();
@@ -94,12 +183,39 @@ void AGOIncRagdollPawn::PostDuplicate()
 	RefreshGOIncRagdollPawnComponents();
 }
 
+void AGOIncRagdollPawn::PlayFleeAnimation()
+{
+	if (!Mesh) return;
+
+	UAnimSequenceBase* RunAnim = FAnimationManager::Get().LoadAnimation(DefaultGOIncRagdollRunAnimationFileName);
+
+	if (!RunAnim)
+	{
+		UE_LOG("[GOIncRagdollPawn] Failed to load flee animation: %s",
+			DefaultGOIncRagdollRunAnimationFileName.c_str());
+		return;
+	}
+
+	Mesh->PlayAnimation(RunAnim, true);
+}
+
+void AGOIncRagdollPawn::StopFleeAnimation()
+{
+	if (!Mesh) return;
+
+	Mesh->StopAnimation();
+}
+
 void AGOIncRagdollPawn::OnOwnedComponentRemoved(UActorComponent* Component)
 {
 	Super::OnOwnedComponentRemoved(Component);
 	if (Component == CapsuleComponent)
 	{
 		CapsuleComponent = nullptr;
+	}
+	if (Component == ReviveTriggerCapsuleComponent)
+	{
+		ReviveTriggerCapsuleComponent = nullptr;
 	}
 	if (Component == Mesh)
 	{

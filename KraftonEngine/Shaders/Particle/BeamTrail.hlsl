@@ -3,6 +3,13 @@
 
 Texture2D BeamTrailTexture : register(t0);
 
+cbuffer PerMaterial : register(b2)
+{
+    float4 SectionColor;
+    float EmissiveStrength;
+    float3 _Pad0;
+};
+
 struct VS_Input_BeamTrail
 {
     float3 position : POSITION;
@@ -35,8 +42,8 @@ PS_Input_BeamTrail VS(VS_Input_BeamTrail input)
 
 float4 PS(PS_Input_BeamTrail input) : SV_TARGET
 {
-    float4 col = BeamTrailTexture.Sample(LinearClampSampler, input.texcoord);
-    col *= input.color;
+    float4 col = BeamTrailTexture.Sample(LinearClampSampler, input.texcoord) * input.color * SectionColor;
+    col.rgb *= max(EmissiveStrength, 0.0f);
     clip(col.a - 0.01f);
     return col;
 }

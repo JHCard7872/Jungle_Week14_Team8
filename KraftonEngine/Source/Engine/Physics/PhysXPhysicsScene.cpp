@@ -82,6 +82,9 @@ namespace
 
 	bool ResolvePhysXRaycastTarget(const PxRaycastHit& Block, FHitResult& OutHit)
 	{
+		FBodyInstance* HitBody = GetBodyInstanceFromActor(Block.actor);
+		OutHit.PhysicsBody = HitBody;
+
 		if (Block.shape && Block.shape->userData)
 		{
 			UPrimitiveComponent* HitComponent = static_cast<UPrimitiveComponent*>(Block.shape->userData);
@@ -103,7 +106,7 @@ namespace
 
 		if (Block.actor)
 		{
-			AActor* HitActor = GetOwnerActorFromPhysXActor(Block.actor);
+			AActor* HitActor = HitBody ? HitBody->GetOwnerActor() : nullptr;
 			if (!IsValid(HitActor))
 			{
 				return false;

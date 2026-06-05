@@ -65,9 +65,30 @@ void FPrimitiveSceneProxy::UpdateTransform()
 	}
 
 	PerObjectConstants = FPerObjectConstants::FromWorldMatrix(OwnerComponent->GetWorldMatrix());
+	RefreshHitRimFromOwner();
 	CachedWorldPos = PerObjectConstants.Model.GetLocation();
 	CachedBounds = OwnerComponent->GetWorldBoundingBox();
 	LastLODUpdateFrame = UINT32_MAX;
+	MarkPerObjectCBDirty();
+}
+
+void FPrimitiveSceneProxy::RefreshHitRimFromOwner()
+{
+	UPrimitiveComponent* OwnerComponent = GetOwner();
+	if (!OwnerComponent)
+	{
+		PerObjectConstants.HitRimColorAndIntensity = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+		PerObjectConstants.HitRimParams = FVector4(3.0f, 0.0f, 0.0f, 0.0f);
+		PerObjectConstants.HitImpactCenterAndRadius = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+		PerObjectConstants.HitImpactParams = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+		MarkPerObjectCBDirty();
+		return;
+	}
+
+	PerObjectConstants.HitRimColorAndIntensity = OwnerComponent->GetHitRimColorAndIntensity();
+	PerObjectConstants.HitRimParams = OwnerComponent->GetHitRimParams();
+	PerObjectConstants.HitImpactCenterAndRadius = OwnerComponent->GetHitImpactCenterAndRadius();
+	PerObjectConstants.HitImpactParams = OwnerComponent->GetHitImpactParams();
 	MarkPerObjectCBDirty();
 }
 

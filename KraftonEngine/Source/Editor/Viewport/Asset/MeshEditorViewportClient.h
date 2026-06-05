@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Viewport/EditorPreviewViewportClient.h"
 #include "Viewport/ViewportClient.h"
@@ -24,6 +24,8 @@ class USkeletalMeshComponent;
 class USkeletalMeshDebugComponent;
 class UPhysicsAsset;
 class UPhysicsAssetDebugComponent;
+struct FBodyInstance;
+struct FPhysicsAssetDebugHitResult;
 
 class FMeshEditorViewportClient : public FViewportClient, public IEditorPreviewViewportClient, public FGCObject
 {
@@ -65,6 +67,13 @@ public:
 	void SetOnPhysicsAssetConstraintPicked(TFunction<void(int32)> InCallback);
 	void SetOnPhysicsAssetShapeEdited(TFunction<void()> InCallback);
 	void SetOnPhysicsAssetConstraintEdited(TFunction<void()> InCallback);
+	bool GetRagdollBodyPanInfo(
+		FName& OutBoneName,
+		FVector& OutWorldHitPoint,
+		FVector& OutLocalHitPoint,
+		FVector* OutTargetWorldPoint = nullptr,
+		float* OutPinDistance = nullptr,
+		float* OutBodyMass = nullptr) const;
 
 	FViewportRenderOptions& GetRenderOptions() override { return RenderOptions; }
 	const FViewportRenderOptions& GetRenderOptions() const override { return RenderOptions; }
@@ -95,6 +104,14 @@ private:
 	void SyncPhysicsAssetConstraintGizmoTarget(UPhysicsAsset* PhysicsAsset, int32 SelectedConstraintIndex);
 
 	void HandleDragStart(const FRay& Ray);
+	bool IsRagdollPreviewActive() const;
+	bool CanUsePhysicsAssetGizmo() const;
+	void DeactivatePhysicsAssetGizmo();
+	FBodyInstance* FindRagdollBodyForPhysicsAssetBodyIndex(int32 BodyIndex) const;
+	bool BeginRagdollBodyPan(const FRay& Ray, const FPhysicsAssetDebugHitResult& Hit);
+	bool ComputeRagdollBodyPanTarget(const FRay& Ray, FVector& OutTargetWorldPoint) const;
+	void UpdateRagdollBodyPan(const FRay& Ray, float DeltaTime);
+	void EndRagdollBodyPan();
 	void NotifyPhysicsAssetBodyPicked(int32 BodyIndex);
 	void NotifyPhysicsAssetConstraintPicked(int32 ConstraintIndex);
 	bool IsPhysicsAssetShapeGizmoActive() const;
@@ -123,6 +140,24 @@ private:
 	TFunction<void()> OnPhysicsAssetShapeEdited;
 	TFunction<void()> OnPhysicsAssetConstraintEdited;
 
+	// Physics Asset 미리보기에서 시뮬레이션 중인 랙돌 물리 바디를 끌기 위한 런타임 상태입니다.
+	// 피킹한 지점은 물리 바디의 로컬 좌표로 보관해서 회전 후에도 같은 표면 지점을 추적합니다.
+	bool bRagdollBodyPanning = false;
+	bool bRagdollPanSpringActive = false;
+	int32 RagdollPanBodyIndex = -1;
+	FName RagdollPanBoneName = FName::None;
+	FVector RagdollPanLocalHitPoint = FVector::ZeroVector;
+
+	// 마우스 이동은 이 기준 평면 위로 투영해서 2D 마우스 변화량이 깊이 방향으로 튀는 것을 막습니다.
+	FVector RagdollPanPlaneOrigin = FVector::ZeroVector;
+	FVector RagdollPanPlaneNormal = FVector::ForwardVector;
+
+	// 눈에 보이는 빔 끝점이 아니라, 물리 스프링이 따라갈 숨은 목표점입니다.
+	// 빔 끝점은 매 프레임 계산되는 현재 피킹 지점을 사용해야 합니다.
+	FVector RagdollPanTargetWorldPoint = FVector::ZeroVector;
+	FVector RagdollPanGrabOffsetWorld = FVector::ZeroVector;
+	float RagdollPanDistance = 0.0f;
+
 	UWorld* PreviewWorld = nullptr;
 	AActor* PreviewActor = nullptr;
 
@@ -132,7 +167,7 @@ private:
 
 	FRect ViewportScreenRect;
 
-	// Camera Focus Animation
+	// 카메라 포커스 애니메이션
 	bool bIsFocusAnimating = false;
 	FVector FocusStartLoc;
 	FRotator FocusStartRot;
@@ -141,7 +176,7 @@ private:
 	float FocusAnimTimer = 0.0f;
 	const float FocusAnimDuration = 0.5f;
 
-	// Camera Smoothing
+	// 카메라 보간
 	FVector TargetLocation;
 	bool bTargetLocationInitialized = false;
 	FVector LastAppliedCameraLocation;

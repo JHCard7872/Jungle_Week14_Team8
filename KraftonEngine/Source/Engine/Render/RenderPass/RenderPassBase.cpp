@@ -10,5 +10,10 @@ void FRenderPassBase::Execute(const FPassContext& Ctx)
 	Ctx.CommandList.GetPassRange(PassType, Start, End);
 	if (Start >= End) return;
 
+	if (PassType != ERenderPass::PreDepth && PassType != ERenderPass::SelectionMask)
+	{
+		Ctx.Resources.BindHitRimNoiseTexture(Ctx.Device);
+	}
+
 	Ctx.CommandList.SubmitRange(Start, End, Ctx.Device, Ctx.Resources, Ctx.Cache);
 }

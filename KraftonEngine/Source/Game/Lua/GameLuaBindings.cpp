@@ -1,4 +1,4 @@
-#include "Game/Lua/GameLuaBindings.h"
+﻿#include "Game/Lua/GameLuaBindings.h"
 
 #include "sol/sol.hpp"
 
@@ -144,6 +144,10 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			{
 				return CollisionEnabledToLuaString(Component.GetCollisionEnabled());
 			});
+			PrimitiveComponentType.set_function("SetGenerateOverlapEvents", &UPrimitiveComponent::SetGenerateOverlapEvents);
+			PrimitiveComponentType.set_function("GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents);
+			PrimitiveComponentType.set_function("SetKinematicPhysics", &UPrimitiveComponent::SetKinematicPhysics);
+			PrimitiveComponentType.set_function("GetKinematicPhysics", &UPrimitiveComponent::GetKinematicPhysics);
 			PrimitiveComponentType.set_function("IsCollisionEnabled", &UPrimitiveComponent::IsCollisionEnabled);
 			PrimitiveComponentType.set_function("IsQueryCollisionEnabled", &UPrimitiveComponent::IsQueryCollisionEnabled);
 			PrimitiveComponentType.set_function("IsPhysicsCollisionEnabled", &UPrimitiveComponent::IsPhysicsCollisionEnabled);
@@ -183,6 +187,12 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"SetMaxSpeed", &UGOIncRagdollMovementComponent::SetMaxSpeed,
 		"SetAcceleration", &UGOIncRagdollMovementComponent::SetAcceleration,
 		"SetBrakingDeceleration", &UGOIncRagdollMovementComponent::SetBrakingDeceleration,
+		"SetFloorRaycastEnabled", &UGOIncRagdollMovementComponent::SetFloorRaycastEnabled,
+		"IsFloorRaycastEnabled", &UGOIncRagdollMovementComponent::IsFloorRaycastEnabled,
+		"SetGravityEnabled", &UGOIncRagdollMovementComponent::SetGravityEnabled,
+		"IsGravityEnabled", &UGOIncRagdollMovementComponent::IsGravityEnabled,
+		"SnapUpdatedComponentToFloor", &UGOIncRagdollMovementComponent::SnapUpdatedComponentToFloor,
+		"IsGrounded", &UGOIncRagdollMovementComponent::IsGrounded,
 		"GetVelocity", &UGOIncRagdollMovementComponent::GetVelocity);
 
 	Lua.new_usertype<USkeletalMeshComponent>("SkeletalMeshComponent",
@@ -190,7 +200,11 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		sol::bases<UPrimitiveComponent, USceneComponent, UActorComponent, UObject>(),
 		"SetRagdollEnabled", &USkeletalMeshComponent::SetRagdollEnabled,
 		"IsRagdollEnabled", &USkeletalMeshComponent::IsRagdollEnabled,
+		"SetPlayRate", &USkeletalMeshComponent::SetPlayRate,
+		"IsRagdollRecovering", &USkeletalMeshComponent::IsRagdollRecovering,
 		"WakeAllRagdollBodies", &USkeletalMeshComponent::WakeAllRagdollBodies,
+		"GetRagdollRecoveryDuration", &USkeletalMeshComponent::GetRagdollRecoveryDuration,
+		"SetRagdollRecoveryDuration", &USkeletalMeshComponent::SetRagdollRecoveryDuration,
 		"AddImpulseToBone", [](USkeletalMeshComponent& Component, const FString& BoneName, const FVector& Impulse)
 		{
 			Component.AddImpulseToBone(FName(BoneName), Impulse);
@@ -232,9 +246,13 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		sol::base_classes,
 		sol::bases<APawn, AActor, UObject>(),
 		"GetCapsuleComponent", &AGOIncRagdollPawn::GetCapsuleComponent,
+		"GetAliveCollisionCapsuleComponent", &AGOIncRagdollPawn::GetAliveCollisionCapsuleComponent,
+		"GetReviveTriggerCapsuleComponent", &AGOIncRagdollPawn::GetReviveTriggerCapsuleComponent,
 		"GetMesh", &AGOIncRagdollPawn::GetMesh,
 		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
-		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent);
+		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent,
+		"PlayFleeAnimation", &AGOIncRagdollPawn::PlayFleeAnimation,
+		"StopFleeAnimation", &AGOIncRagdollPawn::StopFleeAnimation);
 
 	{
 		sol::table ActorType = Lua["Actor"];

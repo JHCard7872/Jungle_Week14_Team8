@@ -1,0 +1,18 @@
+{
+  "BlendState" : "AlphaBlend",
+  "DepthStencilState" : "DepthReadOnly",
+  "Domain" : "ParticleSprite",
+  "Origin" : "ParticleEmitter",
+  "Parameters" : {
+    "EmissiveStrength" : 3.000000,
+    "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000]
+  },
+  "PathFileName" : "Content/Material/Auto/Beam.mat",
+  "RasterizerState" : "SolidNoCull",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Particle/BeamTrail.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Data/Particle/Beam.png",
+    "EmissiveTexture" : "Content/Data/Particle/Beam.png"
+  }
+}
