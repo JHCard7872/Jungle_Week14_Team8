@@ -1229,7 +1229,7 @@
     <ClCompile Include="Source\Engine\Component\Movement\FloatingPawnMovementComponent.cpp">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\Component\Movement\PawnMovementComponent.cpp">
+    <ClCompile Include="Source\Engine\Component\Movement\GOIncRagdollMovementComponent.cpp">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Movement\MovementComponent.cpp">
@@ -1466,7 +1466,7 @@
     <ClCompile Include="Source\Engine\GameFramework\Pawn\LuaCharacter.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\GameFramework\Pawn\RespawnRagdollPawn.cpp">
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\Pawn.cpp">
@@ -2535,7 +2535,7 @@
     <ClInclude Include="Source\Engine\Component\Movement\FloatingPawnMovementComponent.h">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\Component\Movement\PawnMovementComponent.h">
+    <ClInclude Include="Source\Engine\Component\Movement\GOIncRagdollMovementComponent.h">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Component\Movement\MovementComponent.h">
@@ -2808,7 +2808,7 @@
     <ClInclude Include="Source\Engine\GameFramework\Pawn\LuaCharacter.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\GameFramework\Pawn\RespawnRagdollPawn.h">
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\Pawn.h">

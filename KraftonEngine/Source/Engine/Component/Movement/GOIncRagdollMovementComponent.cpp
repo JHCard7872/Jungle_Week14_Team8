@@ -1,4 +1,4 @@
-#include "Component/Movement/PawnMovementComponent.h"
+#include "Component/Movement/GOIncRagdollMovementComponent.h"
 
 #include "Component/SceneComponent.h"
 #include "Serialization/Archive.h"
@@ -10,25 +10,25 @@ namespace
 	constexpr float SmallInputThreshold = 1.0e-4f;
 }
 
-void UPawnMovementComponent::AddInputVector(const FVector& WorldVector)
+void UGOIncRagdollMovementComponent::AddInputVector(const FVector& WorldVector)
 {
 	PendingInputVector += WorldVector;
 }
 
-FVector UPawnMovementComponent::ConsumeInputVector()
+FVector UGOIncRagdollMovementComponent::ConsumeInputVector()
 {
 	const FVector Consumed = PendingInputVector;
 	PendingInputVector = FVector(0.0f, 0.0f, 0.0f);
 	return Consumed;
 }
 
-void UPawnMovementComponent::StopMovementImmediately()
+void UGOIncRagdollMovementComponent::StopMovementImmediately()
 {
 	Velocity = FVector(0.0f, 0.0f, 0.0f);
 	PendingInputVector = FVector(0.0f, 0.0f, 0.0f);
 }
 
-void UPawnMovementComponent::SetMovementEnabled(bool bEnabled)
+void UGOIncRagdollMovementComponent::SetMovementEnabled(bool bEnabled)
 {
 	bMovementEnabled = bEnabled;
 	if (!bMovementEnabled)
@@ -37,23 +37,23 @@ void UPawnMovementComponent::SetMovementEnabled(bool bEnabled)
 	}
 }
 
-void UPawnMovementComponent::SetMaxSpeed(float InMaxSpeed)
+void UGOIncRagdollMovementComponent::SetMaxSpeed(float InMaxSpeed)
 {
 	MaxSpeed = std::max(0.0f, InMaxSpeed);
 	ClampVelocityToMaxSpeed();
 }
 
-void UPawnMovementComponent::SetAcceleration(float InAcceleration)
+void UGOIncRagdollMovementComponent::SetAcceleration(float InAcceleration)
 {
 	Acceleration = std::max(0.0f, InAcceleration);
 }
 
-void UPawnMovementComponent::SetBrakingDeceleration(float InBrakingDeceleration)
+void UGOIncRagdollMovementComponent::SetBrakingDeceleration(float InBrakingDeceleration)
 {
 	BrakingDeceleration = std::max(0.0f, InBrakingDeceleration);
 }
 
-void UPawnMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
+void UGOIncRagdollMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -73,7 +73,7 @@ void UPawnMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Updated->SetWorldLocation(Updated->GetWorldLocation() + MoveDelta);
 }
 
-void UPawnMovementComponent::ApplyInputToVelocity(const FVector& Input, float DeltaTime)
+void UGOIncRagdollMovementComponent::ApplyInputToVelocity(const FVector& Input, float DeltaTime)
 {
 	const float InputLength = Input.Length();
 	if (InputLength > SmallInputThreshold)
@@ -90,7 +90,7 @@ void UPawnMovementComponent::ApplyInputToVelocity(const FVector& Input, float De
 	ApplyBraking(DeltaTime);
 }
 
-void UPawnMovementComponent::ApplyBraking(float DeltaTime)
+void UGOIncRagdollMovementComponent::ApplyBraking(float DeltaTime)
 {
 	const FVector Velocity2D(Velocity.X, Velocity.Y, 0.0f);
 	const float Speed2D = Velocity2D.Length();
@@ -107,7 +107,7 @@ void UPawnMovementComponent::ApplyBraking(float DeltaTime)
 	Velocity.Z = 0.0f;
 }
 
-void UPawnMovementComponent::ClampVelocityToMaxSpeed()
+void UGOIncRagdollMovementComponent::ClampVelocityToMaxSpeed()
 {
 	const FVector Velocity2D(Velocity.X, Velocity.Y, 0.0f);
 	const float Speed2D = Velocity2D.Length();
@@ -123,7 +123,7 @@ void UPawnMovementComponent::ClampVelocityToMaxSpeed()
 	Velocity.Z = 0.0f;
 }
 
-void UPawnMovementComponent::Serialize(FArchive& Ar)
+void UGOIncRagdollMovementComponent::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
 	Ar << bMovementEnabled;

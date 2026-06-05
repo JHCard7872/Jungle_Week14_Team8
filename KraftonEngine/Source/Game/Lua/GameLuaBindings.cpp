@@ -2,16 +2,17 @@
 
 #include "sol/sol.hpp"
 
-#include "Component/Movement/PawnMovementComponent.h"
+#include "Component/Movement/GOIncRagdollMovementComponent.h"
 #include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/Script/LuaScriptComponent.h"
 #include "Component/Shape/CapsuleComponent.h"
 #include "Component/ShapeComponent.h"
 #include "Core/Types/CollisionTypes.h"
+#include "Core/Logging/Log.h"
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
-#include "GameFramework/Pawn/RespawnRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncRagdollPawn.h"
 #include "Lua/LuaScriptManager.h"
 #include "Math/Transform.h"
 
@@ -149,7 +150,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		}
 	}
 
-	// CapsuleComponent는 RespawnRagdollPawn getter가 직접 반환하므로 Lua usertype이 필요하다.
+	// CapsuleComponent는 GOIncRagdollPawn getter가 직접 반환하므로 Lua usertype이 필요하다.
 	Lua.new_usertype<UShapeComponent>("ShapeComponent",
 		sol::base_classes,
 		sol::bases<UPrimitiveComponent, USceneComponent, UActorComponent, UObject>());
@@ -171,18 +172,18 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"GetScriptFile", &ULuaScriptComponent::GetScriptFile,
 		"SetScriptFile", &ULuaScriptComponent::SetScriptFile);
 
-	Lua.new_usertype<UPawnMovementComponent>("PawnMovementComponent",
+	Lua.new_usertype<UGOIncRagdollMovementComponent>("GOIncRagdollMovementComponent",
 		sol::base_classes,
 		sol::bases<UActorComponent, UObject>(),
-		"AddInputVector", &UPawnMovementComponent::AddInputVector,
-		"ConsumeInputVector", &UPawnMovementComponent::ConsumeInputVector,
-		"StopMovementImmediately", &UPawnMovementComponent::StopMovementImmediately,
-		"SetMovementEnabled", &UPawnMovementComponent::SetMovementEnabled,
-		"IsMovementEnabled", &UPawnMovementComponent::IsMovementEnabled,
-		"SetMaxSpeed", &UPawnMovementComponent::SetMaxSpeed,
-		"SetAcceleration", &UPawnMovementComponent::SetAcceleration,
-		"SetBrakingDeceleration", &UPawnMovementComponent::SetBrakingDeceleration,
-		"GetVelocity", &UPawnMovementComponent::GetVelocity);
+		"AddInputVector", &UGOIncRagdollMovementComponent::AddInputVector,
+		"ConsumeInputVector", &UGOIncRagdollMovementComponent::ConsumeInputVector,
+		"StopMovementImmediately", &UGOIncRagdollMovementComponent::StopMovementImmediately,
+		"SetMovementEnabled", &UGOIncRagdollMovementComponent::SetMovementEnabled,
+		"IsMovementEnabled", &UGOIncRagdollMovementComponent::IsMovementEnabled,
+		"SetMaxSpeed", &UGOIncRagdollMovementComponent::SetMaxSpeed,
+		"SetAcceleration", &UGOIncRagdollMovementComponent::SetAcceleration,
+		"SetBrakingDeceleration", &UGOIncRagdollMovementComponent::SetBrakingDeceleration,
+		"GetVelocity", &UGOIncRagdollMovementComponent::GetVelocity);
 
 	Lua.new_usertype<USkeletalMeshComponent>("SkeletalMeshComponent",
 		sol::base_classes,
@@ -227,21 +228,21 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			return MakeOptionalVector(State, Component.GetRagdollComponentSyncWorldLocation(Location), Location);
 		});
 
-	Lua.new_usertype<ARespawnRagdollPawn>("RespawnRagdollPawn",
+	Lua.new_usertype<AGOIncRagdollPawn>("GOIncRagdollPawn",
 		sol::base_classes,
 		sol::bases<APawn, AActor, UObject>(),
-		"GetCapsuleComponent", &ARespawnRagdollPawn::GetCapsuleComponent,
-		"GetMesh", &ARespawnRagdollPawn::GetMesh,
-		"GetPawnMovementComponent", &ARespawnRagdollPawn::GetPawnMovementComponent,
-		"GetLuaScriptComponent", &ARespawnRagdollPawn::GetLuaScriptComponent);
+		"GetCapsuleComponent", &AGOIncRagdollPawn::GetCapsuleComponent,
+		"GetMesh", &AGOIncRagdollPawn::GetMesh,
+		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
+		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent);
 
 	{
 		sol::table ActorType = Lua["Actor"];
 		if (ActorType.valid())
 		{
-			ActorType.set_function("AsRespawnRagdollPawn", [](AActor& Actor) -> ARespawnRagdollPawn*
+			ActorType.set_function("AsGOIncRagdollPawn", [](AActor& Actor) -> AGOIncRagdollPawn*
 			{
-				return Cast<ARespawnRagdollPawn>(&Actor);
+				return Cast<AGOIncRagdollPawn>(&Actor);
 			});
 		}
 	}

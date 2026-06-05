@@ -5,7 +5,7 @@
 #include "GameFramework/Actor/4WVehicleActor.h"
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
 #include "GameFramework/Actor/RagdollActor.h"
-#include "GameFramework/Pawn/RespawnRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncRagdollPawn.h"
 #include "GameFramework/World.h"
 
 // ============================================================
@@ -44,10 +44,10 @@ void RegisterGameActorPlacements()
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(
-		"Respawn Ragdoll Pawn",
+		"GOInc Ragdoll Pawn",
 		[](UWorld* World, const FVector& Location) -> AActor*
 		{
-			ARespawnRagdollPawn* Pawn = World ? World->SpawnActor<ARespawnRagdollPawn>() : nullptr;
+			AGOIncRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncRagdollPawn>() : nullptr;
 			if (Pawn)
 			{
 				Pawn->InitDefaultComponents();

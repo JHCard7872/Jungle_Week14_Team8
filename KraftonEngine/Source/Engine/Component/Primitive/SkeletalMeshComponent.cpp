@@ -761,7 +761,7 @@ bool USkeletalMeshComponent::GetRagdollComponentSyncWorldTransform(FTransform& O
     const FVector WorldOffset = RagdollComponentSyncLocalOffset * ComponentWorldNoTranslation;
     const FVector NewComponentWorldLocation = BodyWorldLocation - WorldOffset;
 
-    OutTransform = GetComponentTransform();
+    OutTransform = FTransform::FromMatrixWithScale(GetWorldMatrix());
     OutTransform.Location = NewComponentWorldLocation;
     return true;
 }
