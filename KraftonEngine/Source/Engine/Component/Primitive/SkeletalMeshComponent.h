@@ -116,6 +116,18 @@ public:
     UFUNCTION(Callable, Category="Physics|Ragdoll")
     void AddImpulseToBone(FName BoneName, const FVector& Impulse);
 
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollBodyWorldTransform(FName BoneName, FTransform& OutTransform) const;
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollBodyWorldLocation(FName BoneName, FVector& OutLocation) const;
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollComponentSyncWorldTransform(FTransform& OutTransform) const;
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollComponentSyncWorldLocation(FVector& OutLocation) const;
+
     UFUNCTION(Callable, Category = "Physics|Ragdoll")
     void SetAllBodiesPhysicsBlendWeight(float InPhysicsBlendWeight);
 
