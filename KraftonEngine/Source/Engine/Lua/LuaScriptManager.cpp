@@ -12,6 +12,9 @@
 #include "Component/PrimitiveComponent.h"
 #include "Component/SceneComponent.h"
 #include "Component/Primitive/StaticMeshComponent.h"
+#include "Component/Primitive/ParticleSystemComponent.h"
+#include "Particles/ParticleSystem.h"
+#include "Particles/ParticleSystemManager.h"
 #include "Core/Types/CollisionTypes.h"
 #include "Runtime/Engine.h"
 #include "Viewport/GameViewportClient.h"
@@ -1811,6 +1814,16 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 		// WM_QUIT — FEngineLoop::Run 이 PumpMessages 에서 잡고 정상 shutdown.
 		PostQuitMessage(0);
 	});
+	Engine.set_function("LoadScene", [](const FString& ScenePath)
+	{
+		// 다음 프레임 끝에 안전 교체 (GameEngine::ProcessPendingTransition — 월드 destroy
+		// + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
+		// PIE 에선 세션 종료(에디터 복귀)로 매핑된다.
+		if (GEngine)
+		{
+			GEngine->RequestTransitionToScene(ScenePath);
+		}
+	});
 	Engine.set_function("SetOnEscape", [](sol::protected_function Callback)
 	{
 		FLuaScriptManager::SetOnEscapePressed(std::move(Callback));
@@ -2046,6 +2059,38 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	AudioManager.set_function("IsLoopPlaying", [](const FString& LoopName)
 	{
 		return FAudioManager::Get().IsLoopPlaying(LoopName);
+	});
+
+	// ParticleManager — 파티클 에셋(.uasset)을 위치에 스폰. FParticleSystemManager(캐시) 래핑.
+	// 반환값은 Actor 핸들 — 수명 관리(Destroy)는 Lua 쪽 몫이다 (ParticleFX.lua 참고).
+	sol::table ParticleManager = Lua.create_named_table("ParticleManager");
+	ParticleManager.set_function("SpawnAt", [](const FString& Path, const FVector& Pos) -> AActor*
+	{
+		if (!GEngine) return nullptr;
+		UWorld* World = GEngine->GetWorld();
+		if (!World) return nullptr;
+
+		UParticleSystem* Template = FParticleSystemManager::Get().Load(Path);
+		if (!Template)
+		{
+			UE_LOG("[Lua] ParticleManager.SpawnAt: 파티클 로드 실패. Path=%s", Path.c_str());
+			return nullptr;
+		}
+
+		AActor* Actor = World->SpawnActorByClass(AActor::StaticClass());
+		if (!Actor) return nullptr;
+
+		UParticleSystemComponent* Comp = Actor->AddComponent<UParticleSystemComponent>();
+		if (!Comp)
+		{
+			World->DestroyActor(Actor);
+			return nullptr;
+		}
+
+		Actor->SetRootComponent(Comp);
+		Comp->SetTemplate(Template);   // 내부에서 InitializeSystem + render state dirty 까지
+		Actor->SetActorLocation(Pos);
+		return Actor;
 	});
 
 	Lua.set_function("LoadAudio", [](const FString& SoundName, const FString& Path, sol::optional<bool> bLoop)
