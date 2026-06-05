@@ -29,6 +29,7 @@ void AGOIncRagdollPawn::InitDefaultComponents()
 
 void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileName, const FString& ScriptFile)
 {
+	AddTag(FName("Ragdoll"));
 	// NPC Pawn이므로 PlayerController 자동 possess 대상이 되지 않게 둔다.
 	SetAutoPossessPlayer(false);
 
@@ -93,10 +94,23 @@ void AGOIncRagdollPawn::ConfigureReviveTriggerCapsuleDefaults()
 	ReviveTriggerCapsuleComponent->SetCapsuleSize(
 		DefaultReviveTriggerCapsuleRadius,
 		DefaultReviveTriggerCapsuleHalfHeight);
+
 	ReviveTriggerCapsuleComponent->SetSimulatePhysics(false);
 	ReviveTriggerCapsuleComponent->SetKinematicPhysics(true);
+
+	// Trigger는 물리 충돌이 아니라 Player overlap 감지만 해야 함.
 	ReviveTriggerCapsuleComponent->SetGenerateOverlapEvents(true);
 	ReviveTriggerCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	ReviveTriggerCapsuleComponent->SetCollisionObjectType(ECollisionChannel::Trigger);
+
+	// 기본은 전부 무시.
+	ReviveTriggerCapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Ignore);
+
+	// Pawn 채널만 overlap.
+	// 현재 Player도 Pawn 채널일 가능성이 높아서 우선 이렇게 둠.
+	ReviveTriggerCapsuleComponent->SetCollisionResponseToChannel(
+		ECollisionChannel::Pawn,
+		ECollisionResponse::Overlap);
 
 	if (CapsuleComponent && ReviveTriggerCapsuleComponent->GetParent() != CapsuleComponent)
 	{

@@ -2844,6 +2844,41 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
 		return CurrentWorld ? CurrentWorld->GetGameTimeSeconds() : 0.0f;
 	});
+	World.set_function("LineTraceGround", [](const FVector& Start, const FVector& End, AActor* IgnoreActor, sol::this_state State) -> sol::object
+	{
+		sol::state_view LuaState(State);
+		UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+		if (!CurrentWorld)
+		{
+			return sol::make_object(LuaState, sol::nil);
+		}
+
+		const FVector Delta = End - Start;
+		const float MaxDist = Delta.Length();
+		if (MaxDist <= 1.0e-6f)
+		{
+			return sol::make_object(LuaState, sol::nil);
+		}
+
+		FHitResult Hit;
+		const uint32 ObjectTypeMask =
+			ObjectTypeBit(ECollisionChannel::WorldStatic) |
+			ObjectTypeBit(ECollisionChannel::WorldDynamic);
+		const bool bHit = CurrentWorld->PhysicsRaycastByObjectTypes(
+			Start,
+			Delta / MaxDist,
+			MaxDist,
+			Hit,
+			ObjectTypeMask,
+			IgnoreActor);
+
+		if (!bHit)
+		{
+			return sol::make_object(LuaState, sol::nil);
+		}
+
+		return sol::make_object(LuaState, Hit);
+	});
 
 	// 게임 특화 usertype/enum/global(GetGameState 등) 은 Game 모듈의
 	// RegisterGameLuaBindings 가 등록한다. 호출 순서는 GameEngine/EditorEngine::Init

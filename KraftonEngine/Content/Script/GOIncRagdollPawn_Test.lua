@@ -67,6 +67,11 @@ local RAGDOLL_ID = DEFAULT_RAGDOLL_ID
 local ragdollConfig = nil
 local bRagdollConfigApplied = false
 local bCanRevive = true
+local canReviveHere = true
+local aliveCapsuleHalfHeight = 1.0
+
+local GROUND_TRACE_UP = 50.0
+local GROUND_TRACE_DOWN = 300.0
 
 
 local function is_valid(value)
@@ -220,6 +225,9 @@ local function apply_ragdoll_config()
 
     -- Runtime behavior values used by this Lua state machine.
     bCanRevive = bool_or(config.canRevive, bCanRevive)
+    if config.aliveCapsule ~= nil then
+        aliveCapsuleHalfHeight = number_or(config.aliveCapsule.halfHeight, aliveCapsuleHalfHeight)
+    end
 
     FLEE_END_DISTANCE = number_or(flee.endDistance, FLEE_END_DISTANCE)
     FLEE_STOP_DURATION = number_or(flee.stopDuration, FLEE_STOP_DURATION)
@@ -331,15 +339,56 @@ local function get_ragdoll_actor_sync_location()
     return mesh:GetRagdollBodyWorldLocation(SYNC_BONE_NAME)
 end
 
-local function align_actor_to_ragdoll()
-    local location = get_ragdoll_actor_sync_location()
-    if location ~= nil then
-        if initialMeshWorldOffsetFromActor ~= nil then
-            obj.Location = location - initialMeshWorldOffsetFromActor
-        else
-            obj.Location = location
-        end
+local function project_to_ground(actorTargetLocation, sourceZ)
+    if World == nil or World.LineTraceGround == nil then
+        return Vector.new(actorTargetLocation.X, actorTargetLocation.Y, obj.Location.Z), true
     end
+
+    local start = Vector.new(
+        actorTargetLocation.X,
+        actorTargetLocation.Y,
+        sourceZ + GROUND_TRACE_UP
+    )
+
+    local finish = Vector.new(
+        actorTargetLocation.X,
+        actorTargetLocation.Y,
+        sourceZ - GROUND_TRACE_DOWN
+    )
+
+    local hit = World.LineTraceGround(start, finish, obj)
+
+    if hit == nil or not hit.bHit or hit.WorldHitLocation == nil then
+        return obj.Location, false
+    end
+
+    return Vector.new(
+        actorTargetLocation.X,
+        actorTargetLocation.Y,
+        hit.WorldHitLocation.Z + aliveCapsuleHalfHeight
+    ), true
+end
+
+local function align_actor_to_ragdoll()
+    local meshSyncLocation = get_ragdoll_actor_sync_location()
+    if meshSyncLocation == nil then
+        return false
+    end
+
+    local actorTargetLocation = meshSyncLocation
+    if initialMeshWorldOffsetFromActor ~= nil then
+        actorTargetLocation = meshSyncLocation - initialMeshWorldOffsetFromActor
+    end
+
+    local projectedLocation, bGroundValid = project_to_ground(actorTargetLocation, meshSyncLocation.Z)
+    canReviveHere = bGroundValid
+
+    if not bGroundValid then
+        return false
+    end
+
+    obj.Location = projectedLocation
+    return true
 end
 
 local function sync_actor_capsule_to_ragdoll()
@@ -361,11 +410,15 @@ local function sync_actor_capsule_to_ragdoll()
         actorTargetLocation = meshSyncLocation - initialMeshWorldOffsetFromActor
     end
 
-    obj.Location = actorTargetLocation
+    -- Actor/Alive Capsule X/Y follows ragdoll sync, while Z is projected to ground.
+    local projectedLocation, bGroundValid = project_to_ground(actorTargetLocation, meshSyncLocation.Z)
+    canReviveHere = bGroundValid
 
-    -- Moving the actor/root capsule also moves child components through the hierarchy.
-    -- Put the skeletal mesh component back onto the existing ragdoll sync position so
-    -- this trigger-follow update does not drag the simulated ragdoll bodies around.
+    if bGroundValid then
+        obj.Location = projectedLocation
+    end
+
+    -- Moving Actor also moves child mesh, so restore mesh to the simulated ragdoll position.
     mesh.Location = meshSyncLocation
 end
 
@@ -624,7 +677,11 @@ function EnterReviving()
     print("[GOIncRagdollPawn_Test] EnterReviving")
 
     -- Ragdoll 결과 위치로 Actor/Root를 먼저 맞춘 뒤 recovery를 시작한다.
-    align_actor_to_ragdoll()
+    if not align_actor_to_ragdoll() then
+        print("[GOIncRagdollPawn_Test] EnterReviving failed: no valid ground.")
+        state = STATE_DEAD
+        return
+    end
 
     -- Recovery 중 Actor yaw도 도망 방향으로 서서히 보간한다.
     -- Recovery가 끝난 뒤 첫 Alive tick에서 face_direction()이 yaw를 확 돌리는 문제를 줄인다.
@@ -890,6 +947,11 @@ function OnOverlap(other, overlappedComp, otherComp)
     end
 
     -- overlappedComp와 reviveTrigger는 같은 C++ 객체여도 Lua userdata 비교가 실패할 수 있으므로 직접 비교하지 않는다.
+    if not canReviveHere then
+        print("[GOIncRagdollPawn_Test] Revive blocked: no valid ground.")
+        return
+    end
+
     print("[GOIncRagdollPawn_Test] Player overlapped revive capsule -> Reviving")
     player = other
     EnterReviving()
