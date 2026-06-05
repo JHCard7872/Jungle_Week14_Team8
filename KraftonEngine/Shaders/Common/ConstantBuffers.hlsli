@@ -27,6 +27,10 @@ cbuffer PerObjectBuffer : register(b1)
     float4x4 Model;
     float4x4 NormalMatrix;
     float4 PrimitiveColor;
+    float4 HitRimColorAndIntensity;
+    float4 HitRimParams;
+    float4 HitImpactCenterAndRadius;
+    float4 HitImpactParams;
 };
 
 cbuffer BoneHeatMapBuffer : register(b6)

@@ -39,6 +39,13 @@ namespace
 			&& std::abs(A.Y - B.Y) <= Tolerance
 			&& std::abs(A.Z - B.Z) <= Tolerance;
 	}
+
+	constexpr float MinHitRimDuration = 0.001f;
+	constexpr float MinHitRimPower = 0.001f;
+	constexpr float HitRimHoldGraceTime = 0.08f;
+	constexpr float HitRimReleaseFadeDuration = 0.12f;
+	constexpr float MinHitImpactRadius = 0.001f;
+	constexpr float MinHitImpactCoreRadius = 0.001f;
 }
 
 HIDE_FROM_COMPONENT_LIST(UPrimitiveComponent)
@@ -214,6 +221,178 @@ void UPrimitiveComponent::SetCastShadow(bool bNewCastShadow)
 	if (bCastShadow == bNewCastShadow) return;
 	bCastShadow = bNewCastShadow;
 	MarkRenderVisibilityDirty();
+}
+
+void UPrimitiveComponent::TriggerHitRim(float Duration, float Intensity, float Power, float SustainIntensity)
+{
+	if (Duration <= 0.0f || (Intensity <= 0.0f && SustainIntensity <= 0.0f))
+	{
+		ClearHitRim();
+		return;
+	}
+
+	const float ClampedSustainIntensity = SustainIntensity > 0.0f ? SustainIntensity : 0.0f;
+	const float ClampedPeakIntensity = Intensity > ClampedSustainIntensity ? Intensity : ClampedSustainIntensity;
+
+	HitRimPeakIntensity = ClampedPeakIntensity;
+	HitRimSustainIntensity = ClampedSustainIntensity;
+	HitRimIntensity = ClampedPeakIntensity;
+	HitRimPower = Power > MinHitRimPower ? Power : MinHitRimPower;
+	HitRimDuration = Duration > MinHitRimDuration ? Duration : MinHitRimDuration;
+	HitRimRemainingTime = HitRimDuration;
+	HitRimHoldRemainingTime = HitRimSustainIntensity > 0.0f ? HitRimHoldGraceTime : 0.0f;
+	MarkHitRimRenderDirty();
+}
+
+void UPrimitiveComponent::RefreshHitRim(float SustainIntensity, float Power)
+{
+	if (SustainIntensity <= 0.0f)
+	{
+		return;
+	}
+
+	HitRimSustainIntensity = SustainIntensity;
+	HitRimPower = Power > MinHitRimPower ? Power : MinHitRimPower;
+	HitRimHoldRemainingTime = HitRimHoldGraceTime;
+
+	if (HitRimRemainingTime <= 0.0f && HitRimIntensity < HitRimSustainIntensity)
+	{
+		HitRimIntensity = HitRimSustainIntensity;
+	}
+
+	MarkHitRimRenderDirty();
+}
+
+void UPrimitiveComponent::SetHitImpactGlow(const FVector& WorldLocation, float Radius, float CoreRadius, float Intensity)
+{
+	if (Radius <= 0.0f || CoreRadius <= 0.0f || Intensity <= 0.0f)
+	{
+		HitImpactRadius = 0.0f;
+		HitImpactCoreRadius = 0.0f;
+		HitImpactIntensity = 0.0f;
+		MarkHitRimRenderDirty();
+		return;
+	}
+
+	HitImpactLocalLocation = GetWorldInverseMatrix().TransformPositionWithW(WorldLocation);
+	HitImpactRadius = Radius > MinHitImpactRadius ? Radius : MinHitImpactRadius;
+	const float ClampedCoreRadius = CoreRadius > MinHitImpactCoreRadius ? CoreRadius : MinHitImpactCoreRadius;
+	HitImpactCoreRadius = ClampedCoreRadius < HitImpactRadius ? ClampedCoreRadius : HitImpactRadius * 0.5f;
+	HitImpactIntensity = Intensity;
+	MarkHitRimRenderDirty();
+}
+
+void UPrimitiveComponent::TriggerHitRimAt(const FVector& WorldLocation, float Duration, float Intensity, float Power, float SustainIntensity, float ImpactRadius, float ImpactCoreRadius, float ImpactIntensity)
+{
+	TriggerHitRim(Duration, Intensity, Power, SustainIntensity);
+
+	if (HitRimIntensity > 0.0f)
+	{
+		SetHitImpactGlow(WorldLocation, ImpactRadius, ImpactCoreRadius, ImpactIntensity);
+	}
+}
+
+void UPrimitiveComponent::RefreshHitRimAt(const FVector& WorldLocation, float SustainIntensity, float Power, float ImpactRadius, float ImpactCoreRadius, float ImpactIntensity)
+{
+	RefreshHitRim(SustainIntensity, Power);
+
+	if (HitRimIntensity > 0.0f)
+	{
+		SetHitImpactGlow(WorldLocation, ImpactRadius, ImpactCoreRadius, ImpactIntensity);
+	}
+}
+
+void UPrimitiveComponent::ClearHitRim()
+{
+	if (HitRimIntensity <= 0.0f && HitRimRemainingTime <= 0.0f && HitRimPeakIntensity <= 0.0f && HitRimHoldRemainingTime <= 0.0f && HitImpactIntensity <= 0.0f)
+	{
+		return;
+	}
+
+	HitRimIntensity = 0.0f;
+	HitRimPeakIntensity = 0.0f;
+	HitRimSustainIntensity = 0.0f;
+	HitRimRemainingTime = 0.0f;
+	HitRimHoldRemainingTime = 0.0f;
+	HitImpactRadius = 0.0f;
+	HitImpactCoreRadius = 0.0f;
+	HitImpactIntensity = 0.0f;
+	MarkHitRimRenderDirty();
+}
+
+FVector4 UPrimitiveComponent::GetHitImpactCenterAndRadius() const
+{
+	if (HitRimIntensity <= 0.0f || HitImpactIntensity <= 0.0f || HitImpactRadius <= 0.0f)
+	{
+		return FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
+	const FVector WorldCenter = GetWorldMatrix().TransformPositionWithW(HitImpactLocalLocation);
+	return FVector4(WorldCenter.X, WorldCenter.Y, WorldCenter.Z, HitImpactRadius);
+}
+
+FVector4 UPrimitiveComponent::GetHitImpactParams() const
+{
+	if (HitRimIntensity <= 0.0f || HitImpactIntensity <= 0.0f)
+	{
+		return FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+
+	return FVector4(HitImpactCoreRadius, HitImpactIntensity, 0.0f, 1.0f);
+}
+
+void UPrimitiveComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
+{
+	USceneComponent::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (HitRimRemainingTime > 0.0f)
+	{
+		HitRimRemainingTime -= DeltaTime;
+
+		const float Duration = HitRimDuration > MinHitRimDuration ? HitRimDuration : MinHitRimDuration;
+		const float FadeAlpha = HitRimRemainingTime > 0.0f ? HitRimRemainingTime / Duration : 0.0f;
+		HitRimIntensity = HitRimSustainIntensity + (HitRimPeakIntensity - HitRimSustainIntensity) * FadeAlpha;
+		if (HitRimRemainingTime <= 0.0f && HitRimSustainIntensity <= 0.0f)
+		{
+			ClearHitRim();
+			return;
+		}
+
+		MarkHitRimRenderDirty();
+		return;
+	}
+
+	if (HitRimHoldRemainingTime > 0.0f)
+	{
+		HitRimHoldRemainingTime -= DeltaTime;
+		HitRimIntensity = HitRimSustainIntensity;
+		MarkHitRimRenderDirty();
+		return;
+	}
+
+	if (HitRimIntensity <= 0.0f)
+	{
+		return;
+	}
+
+	const float FadeStep = HitRimReleaseFadeDuration > MinHitRimDuration ? DeltaTime / HitRimReleaseFadeDuration : 1.0f;
+	const float FadeBaseIntensity = HitRimSustainIntensity > 0.0f ? HitRimSustainIntensity : HitRimIntensity;
+	HitRimIntensity -= FadeBaseIntensity * FadeStep;
+	if (HitRimIntensity <= 0.0f)
+	{
+		ClearHitRim();
+		return;
+	}
+
+	MarkHitRimRenderDirty();
+}
+
+void UPrimitiveComponent::MarkHitRimRenderDirty()
+{
+	if (SceneProxy)
+	{
+		SceneProxy->RefreshHitRimFromOwner();
+	}
 }
 
 // ============================================================

@@ -13,6 +13,7 @@
 #include "Common/Functions.hlsli"
 #include "Common/VertexLayouts.hlsli"
 #include "Common/SystemSamplers.hlsli"
+#include "Common/RimLight.hlsli"
 #include "Common/Skinning.hlsli"
 #include "Common/Fog.hlsli"
 
@@ -64,6 +65,10 @@ struct UberVS_Output
     float3 worldPos : TEXCOORD1;
     float4 tangent : TANGENT;
     float selectedBoneWeight : TEXCOORD4;
+    float4 hitRimColorAndIntensity : TEXCOORD5;
+    float4 hitRimParams : TEXCOORD6;
+    float4 hitImpactCenterAndRadius : TEXCOORD7;
+    float4 hitImpactParams : TEXCOORD8;
 #if defined(LIGHTING_MODEL_GOURAUD) && LIGHTING_MODEL_GOURAUD
     float3 litDiffuse  : TEXCOORD2;
     float3 litSpecular : TEXCOORD3;
@@ -86,6 +91,10 @@ UberVS_Output VS_StaticMesh(VS_Input_PNCTT input)
     output.color = input.color * SectionColor;
     output.texcoord = input.texcoord;
     output.selectedBoneWeight = 0.0f;
+    output.hitRimColorAndIntensity = HitRimColorAndIntensity;
+    output.hitRimParams = HitRimParams;
+    output.hitImpactCenterAndRadius = HitImpactCenterAndRadius;
+    output.hitImpactParams = HitImpactParams;
 
     float3 T = normalize(mul(input.tangent.xyz, M));
     T = normalize(T - output.normal * dot(output.normal, T));
@@ -138,6 +147,10 @@ UberVS_Output VS_WheelMesh(VS_Input_PNCTT input)
     output.color = input.color * SectionColor;
     output.texcoord = input.texcoord;
     output.selectedBoneWeight = 0.0f;
+    output.hitRimColorAndIntensity = HitRimColorAndIntensity;
+    output.hitRimParams = HitRimParams;
+    output.hitImpactCenterAndRadius = HitImpactCenterAndRadius;
+    output.hitImpactParams = HitImpactParams;
 
     float3 T = normalize(mul(input.tangent.xyz, M));
     T = normalize(T - output.normal * dot(output.normal, T));
@@ -188,6 +201,10 @@ UberVS_Output VS_SkeletalMesh(VS_Input_PNCTTBB input)
     output.color = input.color * SectionColor;
     output.texcoord = input.texcoord;
     output.selectedBoneWeight = SelectedWeight;
+    output.hitRimColorAndIntensity = HitRimColorAndIntensity;
+    output.hitRimParams = HitRimParams;
+    output.hitImpactCenterAndRadius = HitImpactCenterAndRadius;
+    output.hitImpactParams = HitImpactParams;
 
     float3 T = normalize(mul(WeightedTangent, M));
     T = normalize(T - output.normal * dot(output.normal, T));
@@ -286,10 +303,12 @@ return output;
     }
 
     float3 V = normalize(CameraWorldPos - input.worldPos);
+    float3 hitRim = ComputeHitRim(N, V, input.texcoord, input.hitRimColorAndIntensity, input.hitRimParams.x);
+    float3 hitImpact = ComputeHitImpactGlow(input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitImpactCenterAndRadius, input.hitImpactParams);
 
 #if defined(LIGHTING_MODEL_UNLIT) && LIGHTING_MODEL_UNLIT
     // Unlit: 라이팅 없이 Albedo만 출력
-    float3 finalColor = ApplyWireframe(baseColor.rgb);
+    float3 finalColor = ApplyWireframe(baseColor.rgb + hitRim + hitImpact);
 #if !defined(UBER_COLOR_ONLY) || !UBER_COLOR_ONLY
     output.Culling = float4(0, 0, 0, 0);
 #endif
@@ -317,7 +336,7 @@ return output;
 #endif
     // Diffuse에만 albedo를 곱하고, Specular는 빛 색상 그대로 더한다
     // (비금속 표면: specular 반사 = 빛의 색, 물체 색이 아님)
-    float3 finalColor = baseColor.rgb * diffuse + specular + g_DefaultEmissive.rgb;
+    float3 finalColor = baseColor.rgb * diffuse + specular + g_DefaultEmissive.rgb + hitRim + hitImpact;
     finalColor = ApplyWireframe(finalColor);
 #endif
 

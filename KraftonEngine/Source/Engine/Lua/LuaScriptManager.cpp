@@ -11,14 +11,17 @@
 #include "Component/Camera/CameraComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/SceneComponent.h"
-#include "Component/Primitive/StaticMeshComponent.h"
 #include "Component/Primitive/ParticleSystemComponent.h"
+#include "Component/Primitive/StaticMeshComponent.h"
+
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemManager.h"
 #include "Core/Types/CollisionTypes.h"
 #include "Runtime/Engine.h"
 #include "Viewport/GameViewportClient.h"
+#include "Viewport/Viewport.h"
 #include "Input/InputSystem.h"
+#include "Physics/BodyInstance.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/Pawn/Character.h"
 #include "GameFramework/Pawn/Pawn.h"
@@ -28,6 +31,7 @@
 #include "GameFramework/Camera/SequenceCameraShake.h"
 #include "GameFramework/GameMode/GameplayStatics.h"
 #include "GameFramework/World.h"
+#include "Render/Types/MinimalViewInfo.h"
 #include "Object/Reflection/UClass.h"
 #include "Object/Reflection/UStruct.h"
 #include "Object/Object.h"
@@ -46,10 +50,12 @@
 #include "Math/Vector.h"
 #include "Math/Rotator.h"
 #include "Math/MathUtils.h"
+#include "Particles/ParticleEmitterInstances.h"
 #include "Platform/WindowsWindow.h"
 #include "UI/UIManager.h"
 #include "UI/UserWidget.h"
 #include <algorithm>
+#include <cmath>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -65,6 +71,39 @@ FSubscriptionID FLuaScriptManager::WatchSub = 0;
 
 namespace
 {
+	bool GetLuaViewportSize(float& OutWidth, float& OutHeight)
+	{
+		OutWidth = 0.0f;
+		OutHeight = 0.0f;
+
+		if (!GEngine)
+		{
+			return false;
+		}
+
+		if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+		{
+			if (FViewport* Viewport = GameViewportClient->GetViewport())
+			{
+				OutWidth = static_cast<float>(Viewport->GetWidth());
+				OutHeight = static_cast<float>(Viewport->GetHeight());
+				if (OutWidth > 0.0f && OutHeight > 0.0f)
+				{
+					return true;
+				}
+			}
+		}
+
+		if (FWindowsWindow* Window = GEngine->GetWindow())
+		{
+			OutWidth = static_cast<float>(Window->GetWidth());
+			OutHeight = static_cast<float>(Window->GetHeight());
+			return OutWidth > 0.0f && OutHeight > 0.0f;
+		}
+
+		return false;
+	}
+
 	struct FLuaReflectedEventOverride
 	{
 		TWeakObjectPtr<UObject> Target;
@@ -93,6 +132,101 @@ namespace
 			}
 			++It;
 		}
+	}
+
+	template <typename FuncType>
+	bool ApplyToBeamEmitters(UPrimitiveComponent& Component, FuncType Func)
+	{
+		UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+		if (!ParticleComponent)
+		{
+			return false;
+		}
+
+		if (ParticleComponent->GetEmitterInstances().empty())
+		{
+			ParticleComponent->InitializeSystem();
+		}
+
+		bool bApplied = false;
+		for (FParticleEmitterInstance* Instance : ParticleComponent->GetEmitterInstances())
+		{
+			FParticleBeam2EmitterInstance* BeamInstance = dynamic_cast<FParticleBeam2EmitterInstance*>(Instance);
+			if (!BeamInstance)
+			{
+				continue;
+			}
+
+			Func(*BeamInstance);
+			bApplied = true;
+		}
+
+		return bApplied;
+	}
+
+	sol::table LuaPhysicsRaycast(
+		sol::this_state        State,
+		const FVector&         Start,
+		const FVector&         Direction,
+		float                  MaxDistance,
+		sol::optional<AActor*> IgnoreActor)
+	{
+		sol::state_view L(State);
+		sol::table      Result = L.create_table();
+
+		FHitResult Hit{};
+		FVector    TraceDir = Direction;
+		FVector    End = Start;
+		bool       bHit = false;
+
+		const float DirLength = TraceDir.Length();
+		if (DirLength > 1.0e-4f && MaxDistance > 0.0f)
+		{
+			TraceDir = TraceDir * (1.0f / DirLength);
+			End = Start + TraceDir * MaxDistance;
+
+			UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+			if (CurrentWorld)
+			{
+				bHit = CurrentWorld->PhysicsRaycast(
+					Start,
+					TraceDir,
+					MaxDistance,
+					Hit,
+					ECollisionChannel::WorldStatic,
+					IgnoreActor.value_or(nullptr));
+			}
+
+			if (bHit && Hit.bHit)
+			{
+				End = Hit.WorldHitLocation;
+			}
+			else
+			{
+				Hit = {};
+				Hit.bHit = false;
+				Hit.Distance = MaxDistance;
+				Hit.WorldHitLocation = End;
+			}
+		}
+		else
+		{
+			Hit = {};
+			Hit.bHit = false;
+			Hit.Distance = 0.0f;
+			Hit.WorldHitLocation = Start;
+		}
+
+		Result["bHit"] = bHit && Hit.bHit;
+		Result["Hit"] = Hit;
+		Result["Location"] = Hit.WorldHitLocation;
+		Result["WorldHitLocation"] = Hit.WorldHitLocation;
+		Result["End"] = End;
+		Result["Distance"] = Hit.Distance;
+		Result["HitActor"] = Hit.HitActor;
+		Result["HitComponent"] = Hit.HitComponent;
+		Result["PhysicsBody"] = Hit.PhysicsBody;
+		return Result;
 	}
 }
 
@@ -1799,15 +1933,164 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 		Result["Width"] = 0.0f;
 		Result["Height"] = 0.0f;
 
-		if (GEngine)
+		float ViewportWidth = 0.0f;
+		float ViewportHeight = 0.0f;
+		if (GetLuaViewportSize(ViewportWidth, ViewportHeight))
 		{
-			if (FWindowsWindow* Window = GEngine->GetWindow())
-			{
-				Result["Width"] = Window->GetWidth();
-				Result["Height"] = Window->GetHeight();
-			}
+			Result["Width"] = ViewportWidth;
+			Result["Height"] = ViewportHeight;
 		}
 
+		return Result;
+	});
+	Engine.set_function("GetViewportCenterRay", []() -> sol::table
+	{
+		sol::table Result = FLuaScriptManager::GetState().create_table();
+		Result["bValid"] = false;
+		Result["Width"] = 0.0f;
+		Result["Height"] = 0.0f;
+		Result["ScreenX"] = 0.0f;
+		Result["ScreenY"] = 0.0f;
+		Result["Origin"] = FVector(0.0f, 0.0f, 0.0f);
+		Result["NearOrigin"] = FVector(0.0f, 0.0f, 0.0f);
+		Result["Direction"] = FVector(1.0f, 0.0f, 0.0f);
+
+		if (!GEngine)
+		{
+			return Result;
+		}
+
+		UWorld* World = GEngine->GetWorld();
+		if (!World)
+		{
+			return Result;
+		}
+
+		float ViewportWidth = 0.0f;
+		float ViewportHeight = 0.0f;
+		GetLuaViewportSize(ViewportWidth, ViewportHeight);
+		const float ScreenX = ViewportWidth * 0.5f;
+		const float ScreenY = ViewportHeight * 0.5f;
+		Result["Width"] = ViewportWidth;
+		Result["Height"] = ViewportHeight;
+		Result["ScreenX"] = ScreenX;
+		Result["ScreenY"] = ScreenY;
+		if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+		{
+			return Result;
+		}
+
+		FMinimalViewInfo POV;
+		bool bHasPOV = false;
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APlayerCameraManager* CameraManager = PC->GetPlayerCameraManager())
+			{
+				bHasPOV = CameraManager->GetCameraView(POV);
+			}
+		}
+		if (!bHasPOV)
+		{
+			bHasPOV = World->GetActivePOV(POV);
+		}
+		if (!bHasPOV)
+		{
+			return Result;
+		}
+
+		POV.AspectRatio = ViewportWidth / ViewportHeight;
+		const FRay Ray = POV.DeprojectScreenToWorld(ScreenX, ScreenY, ViewportWidth, ViewportHeight);
+		FVector Direction = Ray.Direction;
+		if (Direction.Length() <= 0.0001f)
+		{
+			Direction = POV.Rotation.GetForwardVector();
+		}
+		Direction.Normalize();
+
+		Result["Origin"] = POV.Location;
+		Result["NearOrigin"] = Ray.Origin;
+		Result["Direction"] = Direction;
+		Result["bValid"] = true;
+		return Result;
+	});
+	Engine.set_function("ProjectWorldToScreen", [](const FVector& WorldPosition) -> sol::table
+	{
+		sol::table Result = FLuaScriptManager::GetState().create_table();
+		Result["X"] = 0.0f;
+		Result["Y"] = 0.0f;
+		Result["Depth"] = 0.0f;
+		Result["Width"] = 0.0f;
+		Result["Height"] = 0.0f;
+		Result["bValid"] = false;
+		Result["bInFront"] = false;
+		Result["bOnScreen"] = false;
+
+		if (!GEngine)
+		{
+			return Result;
+		}
+
+		UWorld* World = GEngine->GetWorld();
+		if (!World)
+		{
+			return Result;
+		}
+
+		float ViewportWidth = 0.0f;
+		float ViewportHeight = 0.0f;
+		GetLuaViewportSize(ViewportWidth, ViewportHeight);
+		Result["Width"] = ViewportWidth;
+		Result["Height"] = ViewportHeight;
+		if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+		{
+			return Result;
+		}
+
+		FMinimalViewInfo POV;
+		bool bHasPOV = false;
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APlayerCameraManager* CameraManager = PC->GetPlayerCameraManager())
+			{
+				bHasPOV = CameraManager->GetCameraView(POV);
+			}
+		}
+		if (!bHasPOV)
+		{
+			bHasPOV = World->GetActivePOV(POV);
+		}
+		if (!bHasPOV)
+		{
+			return Result;
+		}
+
+		POV.AspectRatio = ViewportWidth / ViewportHeight;
+		const FMatrix ViewProjection = POV.CalculateViewProjectionMatrix();
+		const FVector Clip = ViewProjection.TransformPositionWithW(WorldPosition);
+		if (!std::isfinite(Clip.X) || !std::isfinite(Clip.Y) || !std::isfinite(Clip.Z))
+		{
+			return Result;
+		}
+
+		const FVector ToPoint = WorldPosition - POV.Location;
+		const float Depth = ToPoint.Dot(POV.Rotation.GetForwardVector());
+		Result["Depth"] = Depth;
+		Result["bInFront"] = Depth > 0.0001f;
+		if (Depth <= 0.0001f)
+		{
+			return Result;
+		}
+
+		const float ScreenX = (Clip.X * 0.5f + 0.5f) * ViewportWidth;
+		const float ScreenY = (0.5f - Clip.Y * 0.5f) * ViewportHeight;
+
+		Result["X"] = ScreenX;
+		Result["Y"] = ScreenY;
+		Result["bValid"] = true;
+		Result["bOnScreen"] = ScreenX >= 0.0f
+			&& ScreenX <= ViewportWidth
+			&& ScreenY >= 0.0f
+			&& ScreenY <= ViewportHeight;
 		return Result;
 	});
 	Engine.set_function("Exit", []()
@@ -2516,6 +2799,61 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"SetRelativeScale", [](USceneComponent& Component, const FVector& V) { Component.SetRelativeScale(V); }
 		);
 
+	Lua.new_usertype<FBodyInstance>("PhysicsBody",
+		"IsValid", [](FBodyInstance& Body)
+		{
+			return Body.IsValidBodyInstance();
+		},
+		"IsDynamic", [](FBodyInstance& Body)
+		{
+			return Body.GetRigidDynamic() != nullptr;
+		},
+		"IsKinematic", [](FBodyInstance& Body)
+		{
+			return Body.bKinematic;
+		},
+		"SetKinematic", &FBodyInstance::SetKinematic,
+		"SetGravityEnabled", &FBodyInstance::SetGravityEnabled,
+		"WakeUp", &FBodyInstance::WakeUp,
+		"AddForce", &FBodyInstance::AddForce,
+		"AddImpulse", &FBodyInstance::AddImpulse,
+		"AddForceAtLocation", &FBodyInstance::AddForceAtLocation,
+		"AddTorque", &FBodyInstance::AddTorque,
+		"GetLinearVelocity", &FBodyInstance::GetLinearVelocity,
+		"SetLinearVelocity", &FBodyInstance::SetLinearVelocity,
+		"GetAngularVelocity", &FBodyInstance::GetAngularVelocity,
+		"SetAngularVelocity", &FBodyInstance::SetAngularVelocity,
+		"GetMass", &FBodyInstance::GetMass,
+		"SetMass", &FBodyInstance::SetMass,
+		"GetLocation", [](FBodyInstance& Body)
+		{
+			return Body.GetBodyTransform().GetLocation();
+		},
+		"WorldToLocalPoint", [](FBodyInstance& Body, const FVector& WorldPoint)
+		{
+			return Body.GetBodyTransform().ToMatrix().GetAffineInverse().TransformPositionWithW(WorldPoint);
+		},
+		"LocalToWorldPoint", [](FBodyInstance& Body, const FVector& LocalPoint)
+		{
+			return Body.GetBodyTransform().TransformPosition(LocalPoint);
+		},
+		"GetOwnerActor", [](FBodyInstance& Body) -> AActor*
+		{
+			return Body.GetOwnerActor();
+		},
+		"GetOwnerComponent", [](FBodyInstance& Body) -> UPrimitiveComponent*
+		{
+			return Body.OwnerComponent ? Body.OwnerComponent : Body.OwnerSkeletalComponent;
+		},
+		"GetBoneName", [](FBodyInstance& Body)
+		{
+			return Body.BoneName.ToString();
+		},
+		"BoneName", sol::property([](FBodyInstance& Body)
+		{
+			return Body.BoneName.ToString();
+		}));
+
 	Lua.new_usertype<UPrimitiveComponent>("PrimitiveComponent",
 		sol::base_classes,
 		sol::bases<USceneComponent, UActorComponent, UObject>(),
@@ -2532,7 +2870,76 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"SetMass", &UPrimitiveComponent::SetMass,
 		"SetVisibility", &UPrimitiveComponent::SetVisibility,
 		"IsVisible", &UPrimitiveComponent::IsVisible,
-		"GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents);
+		"GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents,
+		"TriggerHitRim", [](UPrimitiveComponent& Component, sol::optional<float> Duration, sol::optional<float> Intensity, sol::optional<float> Power, sol::optional<float> SustainIntensity)
+		{
+			Component.TriggerHitRim(Duration.value_or(0.18f), Intensity.value_or(3.5f), Power.value_or(3.0f), SustainIntensity.value_or(0.0f));
+		},
+		"RefreshHitRim", [](UPrimitiveComponent& Component, sol::optional<float> SustainIntensity, sol::optional<float> Power)
+		{
+			Component.RefreshHitRim(SustainIntensity.value_or(1.0f), Power.value_or(3.0f));
+		},
+		"SetHitImpactGlow", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> Radius, sol::optional<float> CoreRadius, sol::optional<float> Intensity)
+		{
+			Component.SetHitImpactGlow(WorldLocation, Radius.value_or(0.32f), CoreRadius.value_or(0.055f), Intensity.value_or(2.6f));
+		},
+		"TriggerHitRimAt", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> Duration, sol::optional<float> Intensity, sol::optional<float> Power, sol::optional<float> SustainIntensity, sol::optional<float> ImpactRadius, sol::optional<float> ImpactCoreRadius, sol::optional<float> ImpactIntensity)
+		{
+			Component.TriggerHitRimAt(
+				WorldLocation,
+				Duration.value_or(0.18f),
+				Intensity.value_or(3.5f),
+				Power.value_or(3.0f),
+				SustainIntensity.value_or(0.0f),
+				ImpactRadius.value_or(0.32f),
+				ImpactCoreRadius.value_or(0.055f),
+				ImpactIntensity.value_or(2.6f));
+		},
+		"RefreshHitRimAt", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> SustainIntensity, sol::optional<float> Power, sol::optional<float> ImpactRadius, sol::optional<float> ImpactCoreRadius, sol::optional<float> ImpactIntensity)
+		{
+			Component.RefreshHitRimAt(
+				WorldLocation,
+				SustainIntensity.value_or(1.0f),
+				Power.value_or(3.0f),
+				ImpactRadius.value_or(0.32f),
+				ImpactCoreRadius.value_or(0.055f),
+				ImpactIntensity.value_or(2.6f));
+		},
+		"ClearHitRim", &UPrimitiveComponent::ClearHitRim,
+		"ResetParticleSystem", [](UPrimitiveComponent& Component)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			ParticleComponent->ResetSystem();
+			return true;
+		},
+		"SetBeamEndPoint", [](UPrimitiveComponent& Component, const FVector& EndPoint)
+		{
+			return ApplyToBeamEmitters(Component, [&EndPoint](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamEndPoint(EndPoint);
+			});
+		},
+		"SetBeamSourcePoint", [](UPrimitiveComponent& Component, const FVector& SourcePoint, sol::optional<int32> SourceIndex)
+		{
+			const int32 ResolvedIndex = SourceIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [&SourcePoint, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamSourcePoint(SourcePoint, ResolvedIndex);
+			});
+		},
+		"SetBeamTargetPoint", [](UPrimitiveComponent& Component, const FVector& TargetPoint, sol::optional<int32> TargetIndex)
+		{
+			const int32 ResolvedIndex = TargetIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [&TargetPoint, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamTargetPoint(TargetPoint, ResolvedIndex);
+			});
+		});
 
 	// 메시 에셋 경로로 컴포넌트 식별 가능하게 노출. 자동 생성된 FName ("UStaticMeshComponent_41")
 	// 은 월드 초기화 순서에 따라 카운터가 달라져 빌드별로 매칭이 깨질 수 있다. 메시 경로는
@@ -2546,6 +2953,7 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 	Lua.new_usertype<FHitResult>("HitResult",
 		"HitComponent", &FHitResult::HitComponent,
 		"HitActor", &FHitResult::HitActor,
+		"PhysicsBody", &FHitResult::PhysicsBody,
 		"Distance", &FHitResult::Distance,
 		"PenetrationDepth", &FHitResult::PenetrationDepth,
 		"WorldHitLocation", &FHitResult::WorldHitLocation,
@@ -2879,6 +3287,8 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 
 		return sol::make_object(LuaState, Hit);
 	});
+	World.set_function("PhysicsRaycast", &LuaPhysicsRaycast);
+	World.set_function("Raycast", &LuaPhysicsRaycast);
 
 	// 게임 특화 usertype/enum/global(GetGameState 등) 은 Game 모듈의
 	// RegisterGameLuaBindings 가 등록한다. 호출 순서는 GameEngine/EditorEngine::Init
