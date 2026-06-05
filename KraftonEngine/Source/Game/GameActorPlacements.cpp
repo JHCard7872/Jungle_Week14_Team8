@@ -5,6 +5,7 @@
 #include "GameFramework/Actor/4WVehicleActor.h"
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
 #include "GameFramework/Actor/RagdollActor.h"
+#include "GameFramework/Pawn/RespawnRagdollPawn.h"
 #include "GameFramework/World.h"
 
 // ============================================================
@@ -40,6 +41,19 @@ void RegisterGameActorPlacements()
 				Actor->SetActorLocation(Location);
 			}
 			return Actor;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"Respawn Ragdoll Pawn",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			ARespawnRagdollPawn* Pawn = World ? World->SpawnActor<ARespawnRagdollPawn>() : nullptr;
+			if (Pawn)
+			{
+				Pawn->InitDefaultComponents();
+				Pawn->SetActorLocation(Location);
+			}
+			return Pawn;
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(
