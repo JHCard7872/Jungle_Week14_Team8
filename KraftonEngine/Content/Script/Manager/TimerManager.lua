@@ -2,7 +2,8 @@
 -- TimerManager — 코루틴 래핑 타이머 유틸 (require 모듈)
 -- fire-and-forget·반복·취소용. 순차 흐름("A하고 2초 뒤 B")은
 -- 그냥 StartCoroutine + Wait 를 직접 쓸 것 (보완 관계).
--- 씬 전환 시 FireWorldReset 이 pending 코루틴을 비워주고,
+-- 씬 전환 정리: 엔진의 FireWorldReset 정리가 현재 버그(no-op)라,
+-- GameplayScene.BeginPlay 첫 줄의 StopAllCoroutines() 가 이전 판 타이머를 청소한다.
 -- pause 중엔 구동 틱(UpdateCoroutines)이 멈춰서 타이머도 같이 멈춘다.
 -- ======================================================
 local T = {}

@@ -1827,8 +1827,8 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	});
 	Engine.set_function("LoadScene", [](const FString& ScenePath)
 	{
-		// 다음 프레임 끝에 안전 교체 (GameEngine::ProcessPendingTransition — 월드 destroy
-		// + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
+		// 요청한 프레임 끝(WorldTick·Render 이후)에 안전 교체 (GameEngine::ProcessPendingTransition
+		// — 월드 destroy + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
 		// PIE 에선 세션 종료(에디터 복귀)로 매핑된다.
 		if (GEngine)
 		{
