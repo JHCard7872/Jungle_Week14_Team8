@@ -2505,7 +2505,16 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"RelativeLocation", sol::property(
 		[](USceneComponent& Component) { return Component.GetRelativeLocation(); },
 		[](USceneComponent& Component, const FVector& V) { Component.SetRelativeLocation(V); }
-		));
+		),
+		"GetRelativeLocation", [](USceneComponent& Component) { return Component.GetRelativeLocation(); },
+		"SetRelativeLocation", [](USceneComponent& Component, const FVector& V) { Component.SetRelativeLocation(V); },
+		"RelativeScale", sol::property(
+		[](USceneComponent& Component) { return Component.GetRelativeScale(); },
+		[](USceneComponent& Component, const FVector& V) { Component.SetRelativeScale(V); }
+		),
+		"GetRelativeScale", [](USceneComponent& Component) { return Component.GetRelativeScale(); },
+		"SetRelativeScale", [](USceneComponent& Component, const FVector& V) { Component.SetRelativeScale(V); }
+		);
 
 	Lua.new_usertype<UPrimitiveComponent>("PrimitiveComponent",
 		sol::base_classes,

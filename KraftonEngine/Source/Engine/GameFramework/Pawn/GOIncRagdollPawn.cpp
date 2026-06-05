@@ -47,16 +47,12 @@ void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileNam
 	Mesh = AddComponent<USkeletalMeshComponent>();
 	Mesh->AttachToComponent(CapsuleComponent);
 
-	const FString SelectedSkeletalMeshFileName = SkeletalMeshFileName.empty()
+	SkeletalMeshPath = SkeletalMeshFileName.empty()
 		? DefaultGOIncRagdollSkeletalMeshFileName
 		: SkeletalMeshFileName;
+	FleeAnimationPath = DefaultGOIncRagdollRunAnimationFileName;
 
-	if (!SelectedSkeletalMeshFileName.empty() && GEngine)
-	{
-		ID3D11Device* Device = GEngine->GetRenderer().GetFD3DDevice().GetDevice();
-		USkeletalMesh* Asset = FMeshManager::LoadSkeletalMesh(SelectedSkeletalMeshFileName, Device);
-		Mesh->SetSkeletalMesh(Asset);
-	}
+	SetSkeletalMeshPath(SkeletalMeshPath);
 
 	ApplyInitialRagdollState();
 
@@ -171,6 +167,63 @@ void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 	}
 }
 
+void AGOIncRagdollPawn::SetSkeletalMeshPath(const FString& InSkeletalMeshPath)
+{
+	SkeletalMeshPath = InSkeletalMeshPath;
+	if (!Mesh || SkeletalMeshPath.empty() || !GEngine)
+	{
+		return;
+	}
+
+	ID3D11Device* Device = GEngine->GetRenderer().GetFD3DDevice().GetDevice();
+	USkeletalMesh* Asset = FMeshManager::LoadSkeletalMesh(SkeletalMeshPath, Device);
+	if (!Asset)
+	{
+		UE_LOG("[GOIncRagdollPawn] Failed to load skeletal mesh: %s", SkeletalMeshPath.c_str());
+		return;
+	}
+
+	Mesh->SetSkeletalMesh(Asset);
+}
+
+void AGOIncRagdollPawn::SetFleeAnimationPath(const FString& InFleeAnimationPath)
+{
+	FleeAnimationPath = InFleeAnimationPath;
+}
+
+void AGOIncRagdollPawn::SetMeshRelativeLocation(const FVector& InRelativeLocation)
+{
+	if (Mesh)
+	{
+		Mesh->SetRelativeLocation(InRelativeLocation);
+	}
+}
+
+void AGOIncRagdollPawn::SetMeshRelativeScale(const FVector& InRelativeScale)
+{
+	if (Mesh)
+	{
+		Mesh->SetRelativeScale(InRelativeScale);
+	}
+}
+
+void AGOIncRagdollPawn::SetAliveCapsuleSize(float Radius, float HalfHeight)
+{
+	if (CapsuleComponent)
+	{
+		CapsuleComponent->SetCapsuleSize(Radius, HalfHeight);
+	}
+}
+
+void AGOIncRagdollPawn::SetReviveTriggerCapsuleSize(float Radius, float HalfHeight)
+{
+	EnsureReviveTriggerCapsuleComponent();
+	if (ReviveTriggerCapsuleComponent)
+	{
+		ReviveTriggerCapsuleComponent->SetCapsuleSize(Radius, HalfHeight);
+	}
+}
+
 void AGOIncRagdollPawn::BeginPlay()
 {
 	RefreshGOIncRagdollPawnComponents();
@@ -187,12 +240,16 @@ void AGOIncRagdollPawn::PlayFleeAnimation()
 {
 	if (!Mesh) return;
 
-	UAnimSequenceBase* RunAnim = FAnimationManager::Get().LoadAnimation(DefaultGOIncRagdollRunAnimationFileName);
+	const FString& AnimationPath = FleeAnimationPath.empty()
+		? DefaultGOIncRagdollRunAnimationFileName
+		: FleeAnimationPath;
+
+	UAnimSequenceBase* RunAnim = FAnimationManager::Get().LoadAnimation(AnimationPath);
 
 	if (!RunAnim)
 	{
 		UE_LOG("[GOIncRagdollPawn] Failed to load flee animation: %s",
-			DefaultGOIncRagdollRunAnimationFileName.c_str());
+			AnimationPath.c_str());
 		return;
 	}
 

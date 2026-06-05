@@ -44,6 +44,25 @@ public:
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
 	ULuaScriptComponent* GetLuaScriptComponent() const { return LuaScriptComponent; }
 
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetSkeletalMeshPath(const FString& InSkeletalMeshPath);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	FString GetSkeletalMeshPath() const { return SkeletalMeshPath; }
+
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetFleeAnimationPath(const FString& InFleeAnimationPath);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	FString GetFleeAnimationPath() const { return FleeAnimationPath; }
+
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetMeshRelativeLocation(const FVector& InRelativeLocation);
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetMeshRelativeScale(const FVector& InRelativeScale);
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetAliveCapsuleSize(float Radius, float HalfHeight);
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetReviveTriggerCapsuleSize(float Radius, float HalfHeight);
+
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Animation")
 	void PlayFleeAnimation();
 
@@ -63,4 +82,7 @@ protected:
 	USkeletalMeshComponent* Mesh = nullptr;
 	UGOIncRagdollMovementComponent* RagdollMovementComponent = nullptr;
 	ULuaScriptComponent* LuaScriptComponent = nullptr;
+
+	FString SkeletalMeshPath;
+	FString FleeAnimationPath;
 };

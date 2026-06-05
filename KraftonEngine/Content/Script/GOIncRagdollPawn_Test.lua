@@ -60,6 +60,13 @@ local bWarnedMissingSetPlayRate = false
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
+-- 1차 데이터 기반화: 우선 Sonic 기준 id를 고정한다.
+-- 이후 SpawnManager가 붙으면 pawn:GetRagdollId() 같은 방식으로 교체하면 된다.
+local RAGDOLL_ID = "blue-speedster"
+local ragdollConfig = nil
+local bRagdollConfigApplied = false
+local bCanRevive = true
+
 
 local function is_valid(value)
     return value ~= nil and (value.IsValid == nil or value:IsValid())
@@ -104,12 +111,182 @@ local function cache_components()
         print("[GOIncRagdollPawn_Test] Missing GOIncRagdollMovementComponent")
     end
 
+    -- initial mesh offsets are captured after RagdollData.lua config is applied.
+    return capsule ~= nil and reviveTrigger ~= nil and mesh ~= nil and movement ~= nil
+end
+
+
+local function number_or(value, fallback)
+    if type(value) == "number" then
+        return value
+    end
+    return fallback
+end
+
+local function bool_or(value, fallback)
+    if type(value) == "boolean" then
+        return value
+    end
+    return fallback
+end
+
+local function string_or(value, fallback)
+    if type(value) == "string" and value ~= "" then
+        return value
+    end
+    return fallback
+end
+
+local function vector_from_table(value, fallback)
+    if value == nil then
+        return fallback
+    end
+
+    local x = number_or(value.x, number_or(value.X, fallback ~= nil and fallback.X or 0.0))
+    local y = number_or(value.y, number_or(value.Y, fallback ~= nil and fallback.Y or 0.0))
+    local z = number_or(value.z, number_or(value.Z, fallback ~= nil and fallback.Z or 0.0))
+    return Vector.new(x, y, z)
+end
+
+local function load_ragdoll_config()
+    if ragdollConfig ~= nil then
+        return ragdollConfig
+    end
+
+    local moduleNames = {
+        "Data.RagdollData",
+        "RagdollData",
+    }
+
+    local data = nil
+    for _, moduleName in ipairs(moduleNames) do
+        local ok, result = pcall(require, moduleName)
+        if ok and result ~= nil then
+            data = result
+            print("[GOIncRagdollPawn_Test] Loaded " .. moduleName)
+            break
+        end
+    end
+
+    if data == nil then
+        print("[GOIncRagdollPawn_Test] Failed to require RagdollData.lua. Using script defaults.")
+        return nil
+    end
+
+    ragdollConfig = data[RAGDOLL_ID]
+    if ragdollConfig == nil then
+        print("[GOIncRagdollPawn_Test] Missing RagdollData entry: " .. tostring(RAGDOLL_ID) .. ". Using script defaults.")
+        return nil
+    end
+
+    print("[GOIncRagdollPawn_Test] RagdollData applied target: " .. tostring(RAGDOLL_ID) .. " / " .. tostring(ragdollConfig.displayName))
+    return ragdollConfig
+end
+
+local function capture_initial_mesh_offsets()
     if capsule ~= nil and mesh ~= nil then
         initialMeshRelativeLocation = mesh.RelativeLocation
         initialMeshWorldOffsetFromActor = mesh.Location - obj.Location
     end
+end
 
-    return capsule ~= nil and reviveTrigger ~= nil and mesh ~= nil and movement ~= nil
+local function apply_ragdoll_config()
+    if bRagdollConfigApplied then
+        return
+    end
+
+    local config = load_ragdoll_config()
+    if config == nil then
+        bRagdollConfigApplied = true
+        return
+    end
+
+    local flee = config.flee or {}
+
+    -- Runtime behavior values used by this Lua state machine.
+    bCanRevive = bool_or(config.canRevive, bCanRevive)
+
+    FLEE_END_DISTANCE = number_or(flee.endDistance, FLEE_END_DISTANCE)
+    FLEE_STOP_DURATION = number_or(flee.stopDuration, FLEE_STOP_DURATION)
+    FLEE_STOP_MIN_BRAKING_DECELERATION = number_or(flee.stopMinBrakingDeceleration, FLEE_STOP_MIN_BRAKING_DECELERATION)
+
+    FLEE_ANIMATION_BASE_SPEED = number_or(flee.animationBaseSpeed, FLEE_ANIMATION_BASE_SPEED)
+    FLEE_ANIMATION_MIN_PLAY_RATE = number_or(flee.animationMinPlayRate, FLEE_ANIMATION_MIN_PLAY_RATE)
+    FLEE_ANIMATION_MAX_PLAY_RATE = number_or(flee.animationMaxPlayRate, FLEE_ANIMATION_MAX_PLAY_RATE)
+    FLEE_STOP_START_PLAY_RATE = number_or(flee.stopStartPlayRate, FLEE_STOP_START_PLAY_RATE)
+    FLEE_STOP_END_PLAY_RATE = number_or(flee.stopEndPlayRate, FLEE_STOP_END_PLAY_RATE)
+    FLEE_ROTATION_YAW_OFFSET_DEGREES = number_or(flee.rotationYawOffset, FLEE_ROTATION_YAW_OFFSET_DEGREES)
+
+    REVIVE_BLEND_DURATION = number_or(config.reviveBlendDuration, REVIVE_BLEND_DURATION)
+    REVIVE_BLEND_FALLBACK_DURATION = REVIVE_BLEND_DURATION
+
+    -- Asset / component settings. Functions are guarded so the script also survives older builds.
+    if pawn ~= nil then
+        local meshPath = string_or(config.mesh, "")
+        if meshPath ~= "" and pawn.SetSkeletalMeshPath ~= nil then
+            pawn:SetSkeletalMeshPath(meshPath)
+        end
+
+        local fleeAnimationPath = string_or(config.fleeAnimation, "")
+        if fleeAnimationPath ~= "" and pawn.SetFleeAnimationPath ~= nil then
+            pawn:SetFleeAnimationPath(fleeAnimationPath)
+        end
+
+        if config.meshRelativeLocation ~= nil and pawn.SetMeshRelativeLocation ~= nil then
+            pawn:SetMeshRelativeLocation(vector_from_table(config.meshRelativeLocation, Vector.Zero()))
+        elseif config.meshRelativeLocation ~= nil and mesh ~= nil then
+            mesh.RelativeLocation = vector_from_table(config.meshRelativeLocation, mesh.RelativeLocation)
+        end
+
+        if config.meshRelativeScale ~= nil and pawn.SetMeshRelativeScale ~= nil then
+            pawn:SetMeshRelativeScale(vector_from_table(config.meshRelativeScale, Vector.new(1.0, 1.0, 1.0)))
+        elseif config.meshRelativeScale ~= nil and mesh ~= nil then
+            local scaleVector = vector_from_table(config.meshRelativeScale, Vector.new(1.0, 1.0, 1.0))
+            if mesh.SetRelativeScale ~= nil then
+                mesh:SetRelativeScale(scaleVector)
+            else
+                mesh.RelativeScale = scaleVector
+            end
+        end
+
+        if config.aliveCapsule ~= nil and pawn.SetAliveCapsuleSize ~= nil then
+            pawn:SetAliveCapsuleSize(
+                number_or(config.aliveCapsule.radius, 1.8),
+                number_or(config.aliveCapsule.halfHeight, 3.0)
+            )
+        elseif config.aliveCapsule ~= nil and capsule ~= nil and capsule.SetCapsuleSize ~= nil then
+            capsule:SetCapsuleSize(
+                number_or(config.aliveCapsule.radius, 1.8),
+                number_or(config.aliveCapsule.halfHeight, 3.0)
+            )
+        end
+
+        if config.reviveTriggerCapsule ~= nil and pawn.SetReviveTriggerCapsuleSize ~= nil then
+            pawn:SetReviveTriggerCapsuleSize(
+                number_or(config.reviveTriggerCapsule.radius, 2.4),
+                number_or(config.reviveTriggerCapsule.halfHeight, 3.4)
+            )
+        elseif config.reviveTriggerCapsule ~= nil and reviveTrigger ~= nil and reviveTrigger.SetCapsuleSize ~= nil then
+            reviveTrigger:SetCapsuleSize(
+                number_or(config.reviveTriggerCapsule.radius, 2.4),
+                number_or(config.reviveTriggerCapsule.halfHeight, 3.4)
+            )
+        end
+    end
+
+    if movement ~= nil then
+        if movement.SetMaxSpeed ~= nil then
+            movement:SetMaxSpeed(number_or(flee.speed, FLEE_ANIMATION_BASE_SPEED))
+        end
+        if movement.SetAcceleration ~= nil then
+            movement:SetAcceleration(number_or(flee.acceleration, 15.0))
+        end
+        if movement.SetBrakingDeceleration ~= nil then
+            movement:SetBrakingDeceleration(number_or(flee.brakingDeceleration, 10.0))
+        end
+    end
+
+    bRagdollConfigApplied = true
 end
 
 local function cache_player()
@@ -414,6 +591,11 @@ function EnterReviving()
         return
     end
 
+    if not bCanRevive then
+        print("[GOIncRagdollPawn_Test] Revive blocked. canRevive=false for " .. tostring(RAGDOLL_ID))
+        return
+    end
+
     state = STATE_REVIVING
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
@@ -622,6 +804,8 @@ function BeginPlay()
         return
     end
 
+    apply_ragdoll_config()
+    capture_initial_mesh_offsets()
     cache_player()
 
     EnterDeadRagdoll()
@@ -633,6 +817,9 @@ function Tick(dt)
         if not cache_components() then
             return
         end
+
+        apply_ragdoll_config()
+        capture_initial_mesh_offsets()
     end
 
     if Input.GetKeyDown(Key.R) then

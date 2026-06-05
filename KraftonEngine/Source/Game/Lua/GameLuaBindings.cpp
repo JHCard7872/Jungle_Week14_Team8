@@ -251,6 +251,14 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"GetMesh", &AGOIncRagdollPawn::GetMesh,
 		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
 		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent,
+		"SetSkeletalMeshPath", &AGOIncRagdollPawn::SetSkeletalMeshPath,
+		"GetSkeletalMeshPath", &AGOIncRagdollPawn::GetSkeletalMeshPath,
+		"SetFleeAnimationPath", &AGOIncRagdollPawn::SetFleeAnimationPath,
+		"GetFleeAnimationPath", &AGOIncRagdollPawn::GetFleeAnimationPath,
+		"SetMeshRelativeLocation", &AGOIncRagdollPawn::SetMeshRelativeLocation,
+		"SetMeshRelativeScale", &AGOIncRagdollPawn::SetMeshRelativeScale,
+		"SetAliveCapsuleSize", &AGOIncRagdollPawn::SetAliveCapsuleSize,
+		"SetReviveTriggerCapsuleSize", &AGOIncRagdollPawn::SetReviveTriggerCapsuleSize,
 		"PlayFleeAnimation", &AGOIncRagdollPawn::PlayFleeAnimation,
 		"StopFleeAnimation", &AGOIncRagdollPawn::StopFleeAnimation);
 
