@@ -1,4 +1,4 @@
-#include "MeshEditorViewportClient.h"
+﻿#include "MeshEditorViewportClient.h"
 
 #include "Render/Types/MinimalViewInfo.h"
 #include "Viewport/Viewport.h"
@@ -14,10 +14,15 @@
 #include "Component/Debug/BoneDebugComponent.h"
 #include "Component/Debug/PhysicsAssetDebugComponent.h"
 #include "Collision/Ray/RayUtils.h"
+#include "Physics/BodyInstance.h"
+#include "PhysicsEngine/BodySetup.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 #include "Settings/EditorSettings.h"
 #include "Slate/SlateApplication.h"
 
 #include <imgui.h>
+#include <algorithm>
+#include <cmath>
 #include <utility>
 
 void FMeshEditorViewportClient::Initialize(ID3D11Device* Device, uint32 Width, uint32 Height)
@@ -82,6 +87,7 @@ void FMeshEditorViewportClient::Release()
 	PhysicsAssetConstraintTarget.Clear();
 	bPhysicsAssetPickingEnabled = false;
 	SelectedPhysicsConstraintIndex = -1;
+	EndRagdollBodyPan();
 	OnPhysicsAssetBodyPicked = nullptr;
 	OnPhysicsAssetConstraintPicked = nullptr;
 	OnPhysicsAssetShapeEdited = nullptr;
@@ -164,6 +170,10 @@ void FMeshEditorViewportClient::SyncPhysicsAssetDebugComponent(
 void FMeshEditorViewportClient::SetPhysicsAssetPickingEnabled(bool bInEnabled)
 {
 	bPhysicsAssetPickingEnabled = bInEnabled;
+	if (!bPhysicsAssetPickingEnabled)
+	{
+		EndRagdollBodyPan();
+	}
 	if (!bPhysicsAssetPickingEnabled && PhysicsAssetDebugComponent)
 	{
 		PhysicsAssetDebugComponent->SetSelectedBodyIndex(-1);
@@ -198,6 +208,46 @@ void FMeshEditorViewportClient::SetOnPhysicsAssetConstraintEdited(TFunction<void
 	OnPhysicsAssetConstraintEdited = std::move(InCallback);
 }
 
+bool FMeshEditorViewportClient::GetRagdollBodyPanInfo(
+	FName& OutBoneName,
+	FVector& OutWorldHitPoint,
+	FVector& OutLocalHitPoint,
+	FVector* OutTargetWorldPoint,
+	float* OutPinDistance,
+	float* OutBodyMass) const
+{
+	if (!bRagdollBodyPanning)
+	{
+		return false;
+	}
+
+	const FBodyInstance* Body = FindRagdollBodyForPhysicsAssetBodyIndex(RagdollPanBodyIndex);
+	if (!Body)
+	{
+		return false;
+	}
+
+	OutBoneName = RagdollPanBoneName;
+	OutLocalHitPoint = RagdollPanLocalHitPoint;
+
+	// 빔 끝점은 숨은 목표점이 아니라 실제 물리 바디 위의 현재 피킹 지점에 붙입니다.
+	// 그래야 물체가 늦게 따라와도 빔이 물체를 계속 잡고 있는 것처럼 보입니다.
+	OutWorldHitPoint = Body->GetBodyTransform().TransformPosition(RagdollPanLocalHitPoint);
+	if (OutTargetWorldPoint)
+	{
+		*OutTargetWorldPoint = RagdollPanTargetWorldPoint;
+	}
+	if (OutPinDistance)
+	{
+		*OutPinDistance = (RagdollPanTargetWorldPoint - OutWorldHitPoint).Length();
+	}
+	if (OutBodyMass)
+	{
+		*OutBodyMass = Body->GetMass();
+	}
+	return true;
+}
+
 void FMeshEditorViewportClient::NotifyPhysicsAssetBodyPicked(int32 BodyIndex)
 {
 	if (PhysicsAssetDebugComponent)
@@ -205,7 +255,14 @@ void FMeshEditorViewportClient::NotifyPhysicsAssetBodyPicked(int32 BodyIndex)
 		PhysicsAssetDebugComponent->SetSelectedBodyIndex(BodyIndex);
 		PhysicsAssetDebugComponent->SetSelectedConstraintIndex(-1);
 		SelectedPhysicsConstraintIndex = -1;
-		SyncPhysicsAssetShapeGizmoTarget(PhysicsAssetDebugComponent->GetPhysicsAsset(), BodyIndex);
+		if (CanUsePhysicsAssetGizmo())
+		{
+			SyncPhysicsAssetShapeGizmoTarget(PhysicsAssetDebugComponent->GetPhysicsAsset(), BodyIndex);
+		}
+		else
+		{
+			DeactivatePhysicsAssetGizmo();
+		}
 	}
 
 	if (OnPhysicsAssetBodyPicked)
@@ -221,7 +278,14 @@ void FMeshEditorViewportClient::NotifyPhysicsAssetConstraintPicked(int32 Constra
 		PhysicsAssetDebugComponent->SetSelectedBodyIndex(-1);
 		PhysicsAssetDebugComponent->SetSelectedConstraintIndex(ConstraintIndex);
 		SelectedPhysicsConstraintIndex = ConstraintIndex;
-		SyncPhysicsAssetConstraintGizmoTarget(PhysicsAssetDebugComponent->GetPhysicsAsset(), ConstraintIndex);
+		if (CanUsePhysicsAssetGizmo())
+		{
+			SyncPhysicsAssetConstraintGizmoTarget(PhysicsAssetDebugComponent->GetPhysicsAsset(), ConstraintIndex);
+		}
+		else
+		{
+			DeactivatePhysicsAssetGizmo();
+		}
 	}
 
 	if (OnPhysicsAssetConstraintPicked)
@@ -539,10 +603,10 @@ void FMeshEditorViewportClient::TickInteraction(float DeltaTime)
 			}
 			else
 			{
-				//foot zoom 발줌은 절대 delta time를 곱하지 않음. 노치당 이동 거리가 일정해야 하기 때문.
-				// Instead of moving directly, update TargetLocation for smooth zoom
+				// 발줌은 절대 delta time를 곱하지 않음. 노치당 이동 거리가 일정해야 하기 때문.
+				// 바로 이동시키지 않고 TargetLocation을 갱신해서 부드럽게 줌합니다.
 				TargetLocation += ViewTransform.ViewRotation.GetForwardVector() * (ScrollNotches * ZoomSpeed * 0.015f);
-				// UnrealEngine의 Mouse Scroll Camera Speed는 노치당 5
+				// 언리얼 엔진의 마우스 스크롤 카메라 속도는 노치당 5
 			}
 		}
 	}
@@ -558,11 +622,30 @@ void FMeshEditorViewportClient::TickInteraction(float DeltaTime)
 	FMinimalViewInfo POV;
 	GetCameraView(POV);
 	FRay Ray = POV.DeprojectScreenToWorld(LocalMouseX, LocalMouseY, VPWidth, VPHeight);
+
+	if (!CanUsePhysicsAssetGizmo())
+	{
+		DeactivatePhysicsAssetGizmo();
+	}
+
 	FHitResult HitResult;
 
 	FRayUtils::RaycastComponent(Gizmo, Ray, HitResult);
 
 	InputSystem& Input = InputSystem::Get();
+
+	if (bRagdollBodyPanning)
+	{
+		if (Input.GetKey(VK_LBUTTON))
+		{
+			UpdateRagdollBodyPan(Ray, DeltaTime);
+		}
+		else
+		{
+			EndRagdollBodyPan();
+		}
+		return;
+	}
 
 	if (Input.GetKeyDown(VK_LBUTTON))
 	{
@@ -650,7 +733,7 @@ void FMeshEditorViewportClient::SyncPhysicsAssetShapeGizmoTarget(UPhysicsAsset* 
 		return;
 	}
 
-	if (!bPhysicsAssetPickingEnabled || !PhysicsAssetDebugComponent || !PhysicsAsset || SelectedBodyIndex < 0)
+	if (!CanUsePhysicsAssetGizmo() || !bPhysicsAssetPickingEnabled || !PhysicsAssetDebugComponent || !PhysicsAsset || SelectedBodyIndex < 0)
 	{
 		if (IsPhysicsAssetShapeGizmoActive() || IsPhysicsAssetConstraintGizmoActive())
 		{
@@ -691,7 +774,7 @@ void FMeshEditorViewportClient::SyncPhysicsAssetConstraintGizmoTarget(UPhysicsAs
 		return;
 	}
 
-	if (!bPhysicsAssetPickingEnabled || !PhysicsAssetDebugComponent || !PhysicsAsset || SelectedConstraintIndex < 0)
+	if (!CanUsePhysicsAssetGizmo() || !bPhysicsAssetPickingEnabled || !PhysicsAssetDebugComponent || !PhysicsAsset || SelectedConstraintIndex < 0)
 	{
 		if (IsPhysicsAssetShapeGizmoActive() || IsPhysicsAssetConstraintGizmoActive())
 		{
@@ -741,6 +824,288 @@ void FMeshEditorViewportClient::ApplyTransformSettingsToGizmo()
 	);
 }
 
+bool FMeshEditorViewportClient::IsRagdollPreviewActive() const
+{
+	return PreviewDebugMeshComponent && PreviewDebugMeshComponent->IsRagdollEnabled();
+}
+
+bool FMeshEditorViewportClient::CanUsePhysicsAssetGizmo() const
+{
+	return !IsRagdollPreviewActive() && !bRagdollBodyPanning;
+}
+
+void FMeshEditorViewportClient::DeactivatePhysicsAssetGizmo()
+{
+	if (Gizmo && (IsPhysicsAssetShapeGizmoActive() || IsPhysicsAssetConstraintGizmoActive()))
+	{
+		Gizmo->Deactivate();
+	}
+
+	PhysicsAssetShapeTarget.Clear();
+	PhysicsAssetConstraintTarget.Clear();
+}
+
+FBodyInstance* FMeshEditorViewportClient::FindRagdollBodyForPhysicsAssetBodyIndex(int32 BodyIndex) const
+{
+	if (!PreviewDebugMeshComponent || !PhysicsAssetDebugComponent || BodyIndex < 0)
+	{
+		return nullptr;
+	}
+
+	UPhysicsAsset* PhysicsAsset = PhysicsAssetDebugComponent->GetPhysicsAsset();
+	if (!PhysicsAsset)
+	{
+		return nullptr;
+	}
+
+	const TArray<UBodySetup*>& BodySetups = PhysicsAsset->GetBodySetups();
+	if (BodyIndex >= static_cast<int32>(BodySetups.size()) || !BodySetups[BodyIndex])
+	{
+		return nullptr;
+	}
+
+	const FName BodyBoneName = BodySetups[BodyIndex]->BoneName;
+	// 에디터 피커는 PhysicsAsset 물리 바디 인덱스를 돌려주지만, 힘은 실제 시뮬레이션 중인
+	// 랙돌 물리 바디 인스턴스에 적용해야 합니다. BoneName으로 두 대상을 안정적으로 연결합니다.
+	for (FBodyInstance* Body : PreviewDebugMeshComponent->GetRagdollBodies())
+	{
+		if (Body && Body->IsValidBodyInstance() && Body->BoneName == BodyBoneName)
+		{
+			return Body;
+		}
+	}
+
+	return nullptr;
+}
+
+bool FMeshEditorViewportClient::BeginRagdollBodyPan(const FRay& Ray, const FPhysicsAssetDebugHitResult& Hit)
+{
+	FBodyInstance* Body = FindRagdollBodyForPhysicsAssetBodyIndex(Hit.BodyIndex);
+	if (!Body)
+	{
+		EndRagdollBodyPan();
+		return false;
+	}
+
+	const FVector RayDirection = Ray.Direction.GetSafeNormal();
+	if (RayDirection.IsNearlyZero())
+	{
+		EndRagdollBodyPan();
+		return false;
+	}
+
+	const FTransform BodyTransform = Body->GetBodyTransform();
+	const FVector BodyCenterWorld = BodyTransform.GetLocation();
+	FVector GrabOffsetWorld = Hit.WorldHitLocation - BodyCenterWorld;
+
+	// 디버그 충돌 지점이 물리 바디 중심에서 너무 멀면 큰 지렛대가 되어 토크가 폭발할 수 있습니다.
+	// 초기 패닝 기준 평면의 거리만 제한하고, 실제 피킹 지점은 아래에서 별도로 저장합니다.
+	constexpr float MaxInitialGrabOffset = 50.0f;
+	const float GrabOffsetLength = GrabOffsetWorld.Length();
+	if (GrabOffsetLength > MaxInitialGrabOffset)
+	{
+		GrabOffsetWorld *= MaxInitialGrabOffset / GrabOffsetLength;
+	}
+
+	RagdollPanBodyIndex = Hit.BodyIndex;
+	RagdollPanBoneName = Body->BoneName;
+
+	// 정확히 피킹한 지점을 물리 바디의 로컬 좌표로 저장합니다. 매 프레임 다시 월드 좌표로 바꿔
+	// 물리 바디가 회전한 뒤에도 같은 표면 지점을 목표 위치로 끌 수 있게 합니다.
+	RagdollPanLocalHitPoint = BodyTransform.ToMatrix().GetAffineInverse().TransformPositionWithW(Hit.WorldHitLocation);
+
+	// 잡은 지점을 지나는 카메라 방향 평면을 마우스 드래그 기준면으로 사용합니다.
+	// 2D 마우스 이동에서 깊이를 직접 추정하지 않아도 되어 패닝이 안정적입니다.
+	RagdollPanPlaneOrigin = BodyCenterWorld + GrabOffsetWorld;
+	RagdollPanPlaneNormal = RayDirection;
+	RagdollPanTargetWorldPoint = RagdollPanPlaneOrigin;
+	RagdollPanGrabOffsetWorld = GrabOffsetWorld;
+	RagdollPanDistance = (Hit.WorldHitLocation - Ray.Origin).Dot(RayDirection);
+	if (RagdollPanDistance <= 0.0f)
+	{
+		RagdollPanDistance = Hit.Distance;
+	}
+
+	bRagdollBodyPanning = RagdollPanDistance > 0.0f;
+	if (!bRagdollBodyPanning)
+	{
+		EndRagdollBodyPan();
+		return false;
+	}
+	bRagdollPanSpringActive = false;
+
+	Body->WakeUp();
+	DeactivatePhysicsAssetGizmo();
+	return true;
+}
+
+bool FMeshEditorViewportClient::ComputeRagdollBodyPanTarget(const FRay& Ray, FVector& OutTargetWorldPoint) const
+{
+	const FVector RayDirection = Ray.Direction.GetSafeNormal();
+	if (RayDirection.IsNearlyZero() || RagdollPanPlaneNormal.IsNearlyZero())
+	{
+		return false;
+	}
+
+	const float Denom = RayDirection.Dot(RagdollPanPlaneNormal);
+	constexpr float ParallelTolerance = 1.0e-4f;
+	if (FMath::Abs(Denom) <= ParallelTolerance)
+	{
+		// ray가 평면과 거의 평행하면 멀리 있는 불안정한 교차점을 만들지 않고
+		// 이전 목표점을 유지합니다.
+		OutTargetWorldPoint = RagdollPanTargetWorldPoint;
+		return true;
+	}
+
+	const float PlaneDistance = (RagdollPanPlaneOrigin - Ray.Origin).Dot(RagdollPanPlaneNormal) / Denom;
+	if (PlaneDistance <= 0.0f)
+	{
+		// 카메라 뒤쪽 평면 교차점은 드래그 목표점으로 사용할 수 없습니다.
+		OutTargetWorldPoint = RagdollPanTargetWorldPoint;
+		return true;
+	}
+
+	OutTargetWorldPoint = Ray.Origin + RayDirection * PlaneDistance;
+	return !OutTargetWorldPoint.ContainsNaN();
+}
+
+void FMeshEditorViewportClient::UpdateRagdollBodyPan(const FRay& Ray, float DeltaTime)
+{
+	(void)DeltaTime;
+
+	if (!bRagdollBodyPanning)
+	{
+		return;
+	}
+
+	FBodyInstance* Body = FindRagdollBodyForPhysicsAssetBodyIndex(RagdollPanBodyIndex);
+	if (!Body && PreviewDebugMeshComponent && RagdollPanBoneName != FName::None)
+	{
+		for (FBodyInstance* Candidate : PreviewDebugMeshComponent->GetRagdollBodies())
+		{
+			if (Candidate && Candidate->IsValidBodyInstance() && Candidate->BoneName == RagdollPanBoneName)
+			{
+				Body = Candidate;
+				break;
+			}
+		}
+	}
+
+	if (!Body)
+	{
+		EndRagdollBodyPan();
+		return;
+	}
+
+	const FTransform BodyTransform = Body->GetBodyTransform();
+	const FVector CurrentBodyCenter = BodyTransform.GetLocation();
+
+	// 저장된 로컬 지점으로 현재 월드 좌표의 잡기 지점을 다시 계산합니다.
+	// 화면상으로 마우스 아래에 붙어 있어야 하는 지점입니다.
+	const FVector CurrentGrabWorld = BodyTransform.TransformPosition(RagdollPanLocalHitPoint);
+	if (!bRagdollPanSpringActive)
+	{
+		if (!InputSystem::Get().GetLeftDragging())
+		{
+			return;
+		}
+
+		// 실제 드래그가 시작된 뒤에만 스프링을 활성화합니다.
+		// 가만히 클릭만 했을 때 힘이 주입되는 것을 막기 위해서입니다.
+		bRagdollPanSpringActive = true;
+		RagdollPanPlaneOrigin = CurrentGrabWorld;
+		RagdollPanTargetWorldPoint = CurrentGrabWorld;
+	}
+
+	FVector DesiredGrabWorld = RagdollPanTargetWorldPoint;
+	if (!ComputeRagdollBodyPanTarget(Ray, DesiredGrabWorld))
+	{
+		EndRagdollBodyPan();
+		return;
+	}
+	RagdollPanTargetWorldPoint = DesiredGrabWorld;
+
+	const FVector GrabOffsetWorld = CurrentGrabWorld - CurrentBodyCenter;
+
+	// 1번 방식: DesiredGrabWorld는 보이지 않는 목표점이고, CurrentGrabWorld는 실제 물체 위의 피킹 지점입니다.
+	// 두 지점 사이의 거리를 허용하기 때문에 물체가 스프링처럼 늦게 따라오는 느낌이 납니다.
+	const FVector Error = DesiredGrabWorld - CurrentGrabWorld;
+
+	// 가속도 단위의 PD 스프링입니다. 기본 grip은 핀포인트에 더 잘 붙도록 강하게 두고,
+	// 아래의 질량 스케일로 무거운 물리 바디만 살짝 더 늦게 따라오게 합니다.
+	constexpr float SpringAcceleration = 220.0f;
+	constexpr float DampingAcceleration = 36.0f;
+	constexpr float MaxError = 80.0f;
+	constexpr float MaxAcceleration = 20000.0f;
+	constexpr float GrabTorqueScale = 0.65f;
+	constexpr float GrabAngularDamping = 10.0f;
+	constexpr float MaxGrabTorque = 100000.0f;
+	constexpr float ReferenceGripMass = 1.0f;
+	constexpr float MassGripPower = 0.35f;
+	constexpr float MinMassGripScale = 0.45f;
+	constexpr float MaxMassGripScale = 1.15f;
+
+	FVector ClampedError = Error;
+	const float ErrorLength = ClampedError.Length();
+	if (ErrorLength > MaxError)
+	{
+		ClampedError *= MaxError / ErrorLength;
+	}
+
+	const float Mass = std::max(Body->GetMass(), 0.001f);
+
+	// Force = Acceleration * Mass만 쓰면 모든 질량이 거의 같은 반응성을 가집니다.
+	// grip 가속도 자체를 질량에 따라 줄여서 무거운 물체는 중력/관성의 영향을 조금 더 받게 합니다.
+	const float MassGripScale = std::clamp(
+		std::pow(ReferenceGripMass / Mass, MassGripPower),
+		MinMassGripScale,
+		MaxMassGripScale
+	);
+	const float EffectiveSpringAcceleration = SpringAcceleration * MassGripScale;
+	const float EffectiveDampingAcceleration = DampingAcceleration * MassGripScale;
+	const float EffectiveMaxAcceleration = MaxAcceleration * MassGripScale;
+
+	FVector Acceleration = ClampedError * EffectiveSpringAcceleration
+		- Body->GetLinearVelocity() * EffectiveDampingAcceleration;
+	const float AccelerationLength = Acceleration.Length();
+	if (AccelerationLength > EffectiveMaxAcceleration)
+	{
+		Acceleration *= EffectiveMaxAcceleration / AccelerationLength;
+	}
+
+	const FVector Force = Acceleration * Mass;
+	Body->AddForce(Force);
+
+	if (GrabOffsetWorld.Length() > 1.0f)
+	{
+		// 중심에서 벗어난 잡기 토크를 선형 힘과 분리해서 토크만 별도로 제한합니다.
+		FVector Torque = GrabOffsetWorld.Cross(Force) * (GrabTorqueScale * MassGripScale)
+			- Body->GetAngularVelocity() * (GrabAngularDamping * Mass * MassGripScale);
+		const float TorqueLength = Torque.Length();
+		const float MaxTorqueForBody = MaxGrabTorque * Mass * MassGripScale;
+		if (TorqueLength > MaxTorqueForBody && TorqueLength > FMath::KINDA_SMALL_NUMBER)
+		{
+			Torque *= MaxTorqueForBody / TorqueLength;
+		}
+		Body->AddTorque(Torque);
+	}
+	Body->WakeUp();
+}
+
+void FMeshEditorViewportClient::EndRagdollBodyPan()
+{
+	bRagdollBodyPanning = false;
+	bRagdollPanSpringActive = false;
+	RagdollPanBodyIndex = -1;
+	RagdollPanBoneName = FName::None;
+	RagdollPanLocalHitPoint = FVector::ZeroVector;
+	RagdollPanPlaneOrigin = FVector::ZeroVector;
+	RagdollPanPlaneNormal = FVector::ForwardVector;
+	RagdollPanTargetWorldPoint = FVector::ZeroVector;
+	RagdollPanGrabOffsetWorld = FVector::ZeroVector;
+	RagdollPanDistance = 0.0f;
+}
+
 bool FMeshEditorViewportClient::IsPhysicsAssetShapeGizmoActive() const
 {
 	return Gizmo && Gizmo->GetTarget() == &PhysicsAssetShapeTarget;
@@ -753,6 +1118,24 @@ bool FMeshEditorViewportClient::IsPhysicsAssetConstraintGizmoActive() const
 
 void FMeshEditorViewportClient::HandleDragStart(const FRay& Ray)
 {
+	if (bPhysicsAssetPickingEnabled && PhysicsAssetDebugComponent && IsRagdollPreviewActive())
+	{
+		// 랙돌 미리보기에서는 물리 바디 클릭 시 일반 PhysicsAsset 도형 기즈모 대신
+		// 물리 잡기 프로토타입을 시작합니다.
+		FPhysicsAssetDebugHitResult PhysicsHit;
+		if (PhysicsAssetDebugComponent->PickBody(Ray, PhysicsHit))
+		{
+			NotifyPhysicsAssetBodyPicked(PhysicsHit.BodyIndex);
+			BeginRagdollBodyPan(Ray, PhysicsHit);
+		}
+		else
+		{
+			NotifyPhysicsAssetBodyPicked(-1);
+			EndRagdollBodyPan();
+		}
+		return;
+	}
+
 	FHitResult Hit;
 	if (Gizmo && FRayUtils::RaycastComponent(Gizmo, Ray, Hit))
 	{
