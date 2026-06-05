@@ -295,14 +295,9 @@ FString FLuaScriptManager::GetModuleNameFromPath(const FString& ScriptPath)
 	}
 
 	Normalized.erase(Normalized.size() - 4);
-	for (char& Ch : Normalized)
-	{
-		if (Ch == '/')
-		{
-			Ch = '.';
-		}
-	}
 
+	// 캐시 키는 슬래시 형태로 통일 — require 래퍼(Initialize)가 '.' 를 '/' 로
+	// 정규화해서 로드하므로, 핫리로드 무효화 키도 같은 형태여야 맞는다.
 	return Normalized;
 }
 
@@ -516,6 +511,22 @@ void FLuaScriptManager::Initialize()
 		}
 		return LR.get<sol::object>();
 	};
+
+	// require 이름 정규화 — require("Manager.ScoreManager") 와 require("Manager/ScoreManager")
+	// 를 같은 모듈로 취급한다. '.' 를 '/' 로 바꿔 한 가지 키로만 package.loaded 에 캐시되게 함
+	// (키가 둘로 갈리면 같은 모듈 인스턴스가 2개 생겨 상태가 분열된다).
+	// 핫리로드 무효화(GetModuleNameFromPath)도 같은 슬래시 키를 지운다.
+	sol::protected_function_result WrapResult = Lua->safe_script(R"(
+		local _require = require
+		require = function(name)
+			return _require((string.gsub(name, "[%.\\]", "/")))
+		end
+	)", sol::script_pass_on_error);
+	if (!WrapResult.valid())
+	{
+		sol::error WrapErr = WrapResult;
+		UE_LOG("[Lua] require wrapper error: %s", WrapErr.what());
+	}
 
 	RegisterBindings(*Lua);
 
@@ -2100,8 +2111,8 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	});
 	Engine.set_function("LoadScene", [](const FString& ScenePath)
 	{
-		// 다음 프레임 끝에 안전 교체 (GameEngine::ProcessPendingTransition — 월드 destroy
-		// + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
+		// 요청한 프레임 끝(WorldTick·Render 이후)에 안전 교체 (GameEngine::ProcessPendingTransition
+		// — 월드 destroy + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
 		// PIE 에선 세션 종료(에디터 복귀)로 매핑된다.
 		if (GEngine)
 		{

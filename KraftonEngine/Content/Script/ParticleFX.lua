@@ -3,7 +3,7 @@
 -- ParticleManager.SpawnAt(C++ 바인딩)에 수명 자동 정리만 얹는다.
 -- 주의: 액터 핸들을 모듈/전역에 보관하지 말 것 — 씬 전환 후 dangling.
 -- ======================================================
-local Timer = require("TimerManager")
+local Timer = require("Manager/TimerManager")
 
 local P = {}
 
