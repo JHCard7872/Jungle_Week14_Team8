@@ -1904,6 +1904,14 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	{
 		return GetLuaInputSnapshot().MouseDeltaY;
 	});
+	Input.set_function("GetMouseX", []()
+	{
+		return InputSystem::Get().GetMouseClientPos().x;
+	});
+	Input.set_function("GetMouseY", []()
+	{
+		return InputSystem::Get().GetMouseClientPos().y;
+	});
 
 	// Engine — 게임 일시정지 / 종료.
 	sol::table Engine = Lua.create_named_table("Engine");
@@ -1925,6 +1933,18 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 			{
 				World->SetPaused(false);
 			}
+		}
+	});
+	Engine.set_function("SetCursorVisible", [](bool bVisible)
+	{
+		if (!GEngine)
+		{
+			return;
+		}
+
+		if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+		{
+			GameViewportClient->SetCursorVisible(bVisible);
 		}
 	});
 	Engine.set_function("IsPaused", []()

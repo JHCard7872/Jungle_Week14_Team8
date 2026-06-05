@@ -1,0 +1,174 @@
+body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: NanumGothic;
+}
+
+#menu_root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#menu_background {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#screen_dim {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.menu_button {
+    position: absolute;
+    width: 20%;
+    margin: 0px;
+    padding: 0px;
+    background-color: transparent;
+    border: 0px;
+    z-index: 5;
+    transform-origin: center center;
+}
+
+.menu_button:hover {
+    transform: scale(1.2);
+    z-index: 30;
+}
+
+.menu_image {
+    display: block;
+    width: 100%;
+    height: auto;
+    vertical-align: top;
+    pointer-events: none;
+}
+
+.menu_hover {
+    display: none;
+}
+
+.menu_button:hover .menu_default {
+    display: none;
+}
+
+.menu_button:hover .menu_hover {
+    display: block;
+}
+
+#menu_help {
+    left: 10%;
+    top: 7%;
+}
+
+#menu_option {
+    right: 10%;
+    top: 7%;
+
+}
+
+#menu_play {
+    left: 50%;
+    top: 30%;
+    margin-left: -10.5%;
+}
+
+#menu_scoreboard {
+    left: 10%;
+    bottom: 7%;
+}
+
+#menu_credits {
+    right: 10%;
+    bottom: 7%;
+}
+
+.menu_label {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 6%;
+    width: 34%;
+    height: 72px;
+    margin-left: -17%;
+    background-color: #1f86e5;
+    border: 3px solid #88c7ff;
+    border-radius: 18px;
+    color: #ffffff;
+    font-family: NanumGothic;
+    font-weight: bold;
+    font-size: 34px;
+    text-align: center;
+    line-height: 72px;
+    z-index: 40;
+}
+
+#menu_help:hover + #label_help {
+    display: block;
+}
+
+#menu_option:hover + #label_option {
+    display: block;
+}
+
+#menu_play:hover + #label_play {
+    display: block;
+}
+
+#menu_scoreboard:hover + #label_scoreboard {
+    display: block;
+}
+
+#menu_credits:hover + #label_credits {
+    display: block;
+}
+
+#menu_back_to_title {
+    position: absolute;
+    right: 3%;
+    bottom: 4%;
+    width: 8%;
+    margin: 0px;
+    padding: 0px;
+    background-color: transparent;
+    border: 0px;
+    z-index: 30;
+    transform-origin: center center;
+}
+
+#menu_back_to_title:hover {
+    transform: scale(1.08);
+}
+
+.back_button_image {
+    display: block;
+    width: 100%;
+    height: auto;
+    vertical-align: top;
+    pointer-events: none;
+}
+
+.cursor_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 150px;
+    height: 150px;
+    display: none;
+    z-index: 1000;
+    pointer-events: none;
+}
