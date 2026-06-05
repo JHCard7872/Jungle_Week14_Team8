@@ -1,4 +1,4 @@
-#include "Editor/Viewport/Level/FLevelViewportLayout.h"
+﻿#include "Editor/Viewport/Level/FLevelViewportLayout.h"
 
 #include "Editor/EditorEngine.h"
 #include "Editor/Viewport/Level/LevelEditorViewportClient.h"
@@ -65,6 +65,88 @@ namespace
 		return false;
 	}
 
+	bool IsAsciiDigit(char Value)
+	{
+		return Value >= '0' && Value <= '9';
+	}
+
+	bool TrySplitLegacyDuplicateSuffix(const FString& Name, FString& OutBaseName, int32& OutCopyIndex)
+	{
+		static const FString CopySuffix = "_Copy";
+		static const FString NumberedCopySuffix = "_Copy_";
+
+		if (Name.size() >= CopySuffix.size() &&
+			Name.compare(Name.size() - CopySuffix.size(), CopySuffix.size(), CopySuffix) == 0)
+		{
+			OutBaseName  = Name.substr(0, Name.size() - CopySuffix.size());
+			OutCopyIndex = 1;
+			return !OutBaseName.empty();
+		}
+
+		size_t NumberStart = Name.size();
+		while (NumberStart > 0 && IsAsciiDigit(Name[NumberStart - 1]))
+		{
+			--NumberStart;
+		}
+
+		if (NumberStart == Name.size() || NumberStart < NumberedCopySuffix.size())
+		{
+			return false;
+		}
+
+		const size_t SuffixStart = NumberStart - NumberedCopySuffix.size();
+		if (Name.compare(SuffixStart, NumberedCopySuffix.size(), NumberedCopySuffix) != 0)
+		{
+			return false;
+		}
+
+		int32 ParsedIndex = 0;
+		for (size_t Index = NumberStart; Index < Name.size(); ++Index)
+		{
+			ParsedIndex = ParsedIndex * 10 + static_cast<int32>(Name[Index] - '0');
+		}
+
+		OutBaseName  = Name.substr(0, SuffixStart);
+		OutCopyIndex = ParsedIndex;
+		return ParsedIndex > 0 && !OutBaseName.empty();
+	}
+
+	FString StripLegacyDuplicateSuffixes(FString Name)
+	{
+		FString StrippedBase;
+		int32   IgnoredCopyIndex = 0;
+		while (TrySplitLegacyDuplicateSuffix(Name, StrippedBase, IgnoredCopyIndex))
+		{
+			Name = StrippedBase;
+		}
+
+		return Name;
+	}
+
+	bool TrySplitNumericSuffix(const FString& Name, FString& OutPrefix, int32& OutNumber)
+	{
+		size_t NumberStart = Name.size();
+		while (NumberStart > 0 && IsAsciiDigit(Name[NumberStart - 1]))
+		{
+			--NumberStart;
+		}
+
+		if (NumberStart == Name.size() || NumberStart == 0)
+		{
+			return false;
+		}
+
+		int32 ParsedNumber = 0;
+		for (size_t Index = NumberStart; Index < Name.size(); ++Index)
+		{
+			ParsedNumber = ParsedNumber * 10 + static_cast<int32>(Name[Index] - '0');
+		}
+
+		OutPrefix = Name.substr(0, NumberStart);
+		OutNumber = ParsedNumber;
+		return ParsedNumber > 0 && !OutPrefix.empty();
+	}
+
 	FString MakeUniqueDuplicateActorName(UWorld* World, const AActor* SourceActor)
 	{
 		FString BaseName = SourceActor ? SourceActor->GetFName().ToString() : FString();
@@ -76,12 +158,45 @@ namespace
 		{
 			BaseName = "Actor";
 		}
+		BaseName = StripLegacyDuplicateSuffixes(BaseName);
 
-		FString Candidate = BaseName + "_Copy";
-		int32 Suffix = 2;
+		FString NumericPrefix;
+		int32   SourceNumber = 0;
+		if (!TrySplitNumericSuffix(BaseName, NumericPrefix, SourceNumber))
+		{
+			NumericPrefix = BaseName + "_";
+			SourceNumber = 1;
+		}
+
+		int32 HighestNumber = SourceNumber;
+		if (World)
+		{
+			for (AActor* Actor : World->GetActors())
+			{
+				if (!IsValid(Actor))
+				{
+					continue;
+				}
+
+				FString ActorPrefix;
+				int32   ActorNumber = 0;
+				const FString ActorName = StripLegacyDuplicateSuffixes(Actor->GetFName().ToString());
+				if (TrySplitNumericSuffix(ActorName, ActorPrefix, ActorNumber) && ActorPrefix == NumericPrefix)
+				{
+					if (ActorNumber > HighestNumber)
+					{
+						HighestNumber = ActorNumber;
+					}
+				}
+			}
+		}
+
+		int32 Suffix = HighestNumber + 1;
+		FString Candidate = NumericPrefix + std::to_string(Suffix);
 		while (IsActorNameInUse(World, Candidate))
 		{
-			Candidate = BaseName + "_Copy_" + std::to_string(Suffix++);
+			++Suffix;
+			Candidate = NumericPrefix + std::to_string(Suffix);
 		}
 		return Candidate;
 	}
