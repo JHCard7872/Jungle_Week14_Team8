@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "GameFramework/Pawn/Pawn.h"
 
@@ -35,6 +35,12 @@ public:
 	UGOIncRagdollMovementComponent* GetRagdollMovementComponent() const { return RagdollMovementComponent; }
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
 	ULuaScriptComponent* GetLuaScriptComponent() const { return LuaScriptComponent; }
+
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Animation")
+	void PlayFleeAnimation();
+
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Animation")
+	void StopFleeAnimation();
 
 protected:
 	void OnOwnedComponentRemoved(UActorComponent* Component) override;

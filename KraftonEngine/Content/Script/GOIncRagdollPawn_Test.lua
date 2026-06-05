@@ -21,6 +21,10 @@ local state = STATE_DEAD
 local initialMeshRelativeLocation = nil
 local initialMeshWorldOffsetFromActor = nil
 
+local RAD_TO_DEG = 57.29577951308232
+local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
+
+
 local function is_valid(value)
     return value ~= nil and (value.IsValid == nil or value:IsValid())
 end
@@ -160,8 +164,66 @@ local function get_flee_direction()
     return Vector.Forward()
 end
 
+local function atan2_safe(y, x)
+    if math.atan2 ~= nil then
+        return math.atan2(y, x)
+    end
+
+    if x > 0.0 then
+        return math.atan(y / x)
+    end
+
+    if x < 0.0 and y >= 0.0 then
+        return math.atan(y / x) + math.pi
+    end
+
+    if x < 0.0 and y < 0.0 then
+        return math.atan(y / x) - math.pi
+    end
+
+    if x == 0.0 and y > 0.0 then
+        return math.pi * 0.5
+    end
+
+    if x == 0.0 and y < 0.0 then
+        return -math.pi * 0.5
+    end
+
+    return 0.0
+end
+
+local function face_direction(direction)
+    if direction == nil then
+        return
+    end
+
+    local x = direction.X
+    local y = direction.Y
+
+    local len = math.sqrt(x * x + y * y)
+    if len <= 0.001 then
+        return
+    end
+
+    x = x / len
+    y = y / len
+
+    local yaw = atan2_safe(y, x) * RAD_TO_DEG + FLEE_ROTATION_YAW_OFFSET_DEGREES
+
+    local rot = obj.Rotation
+    rot.X = 0.0
+    rot.Y = 0.0
+    rot.Z = yaw
+
+    obj.Rotation = rot
+end
+
 function EnterDeadRagdoll()
     state = STATE_DEAD
+
+    if pawn ~= nil then
+        pawn:StopFleeAnimation()
+    end
 
     if movement ~= nil then
         movement:StopMovementImmediately()
@@ -206,6 +268,10 @@ function EnterAliveFlee()
         if initialMeshRelativeLocation ~= nil then
             mesh.RelativeLocation = initialMeshRelativeLocation
         end
+    end
+
+    if pawn ~= nil then
+        pawn:PlayFleeAnimation()
     end
 
     if capsule ~= nil then
@@ -256,7 +322,9 @@ function Tick(dt)
     end
 
     if state == STATE_ALIVE and movement ~= nil then
-        movement:AddInputVector(get_flee_direction())
+        local fleeDir = get_flee_direction()
+        face_direction(fleeDir)
+        movement:AddInputVector(fleeDir)
     end
 end
 

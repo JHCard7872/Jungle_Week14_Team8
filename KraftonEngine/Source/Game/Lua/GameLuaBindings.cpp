@@ -1,4 +1,4 @@
-#include "Game/Lua/GameLuaBindings.h"
+﻿#include "Game/Lua/GameLuaBindings.h"
 
 #include "sol/sol.hpp"
 
@@ -238,7 +238,9 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"GetCapsuleComponent", &AGOIncRagdollPawn::GetCapsuleComponent,
 		"GetMesh", &AGOIncRagdollPawn::GetMesh,
 		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
-		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent);
+		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent,
+		"PlayFleeAnimation", &AGOIncRagdollPawn::PlayFleeAnimation,
+		"StopFleeAnimation", &AGOIncRagdollPawn::StopFleeAnimation);
 
 	{
 		sol::table ActorType = Lua["Actor"];

@@ -1,16 +1,19 @@
-#include "GameFramework/Pawn/GOIncRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncRagdollPawn.h"
 
+#include "Animation/AnimationManager.h"
 #include "Component/Movement/GOIncRagdollMovementComponent.h"
 #include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Component/Script/LuaScriptComponent.h"
 #include "Component/Shape/CapsuleComponent.h"
+#include "Core/Logging/Log.h"
 #include "Mesh/MeshManager.h"
 #include "Runtime/Engine.h"
 
 namespace
 {
-	const FString DefaultGOIncRagdollSkeletalMeshFileName = "Content/Data/Mario2/Mario2_SkeletalMesh.uasset";
+	const FString DefaultGOIncRagdollSkeletalMeshFileName = "Content/Data/Sonic/sc_dash_loop_anm_hkx_SkeletalMesh.uasset";
 	const FString DefaultGOIncRagdollLuaScriptFileName = "GOIncRagdollPawn_Test.lua";
+	const FString DefaultGOIncRagdollRunAnimationFileName = "Content/Data/Sonic/sc_dash_loop_anm_hkx_sc_dash_loop.uasset";
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents()
@@ -92,6 +95,29 @@ void AGOIncRagdollPawn::PostDuplicate()
 {
 	Super::PostDuplicate();
 	RefreshGOIncRagdollPawnComponents();
+}
+
+void AGOIncRagdollPawn::PlayFleeAnimation()
+{
+	if (!Mesh) return;
+
+	UAnimSequenceBase* RunAnim = FAnimationManager::Get().LoadAnimation(DefaultGOIncRagdollRunAnimationFileName);
+
+	if (!RunAnim)
+	{
+		UE_LOG("[GOIncRagdollPawn] Failed to load flee animation: %s",
+			DefaultGOIncRagdollRunAnimationFileName.c_str());
+		return;
+	}
+
+	Mesh->PlayAnimation(RunAnim, true);
+}
+
+void AGOIncRagdollPawn::StopFleeAnimation()
+{
+	if (!Mesh) return;
+
+	Mesh->StopAnimation();
 }
 
 void AGOIncRagdollPawn::OnOwnedComponentRemoved(UActorComponent* Component)
