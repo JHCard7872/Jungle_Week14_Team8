@@ -11,6 +11,7 @@
 #include "Component/Camera/CameraComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/SceneComponent.h"
+#include "Component/Primitive/ParticleSystemComponent.h"
 #include "Component/Primitive/StaticMeshComponent.h"
 #include "Core/Types/CollisionTypes.h"
 #include "Runtime/Engine.h"
@@ -42,6 +43,7 @@
 #include "Platform/Paths.h"
 #include "Math/Vector.h"
 #include "Math/Rotator.h"
+#include "Particles/ParticleEmitterInstances.h"
 #include "Platform/WindowsWindow.h"
 #include "UI/UIManager.h"
 #include "UI/UserWidget.h"
@@ -89,6 +91,100 @@ namespace
 			}
 			++It;
 		}
+	}
+
+	template <typename FuncType>
+	bool ApplyToBeamEmitters(UPrimitiveComponent& Component, FuncType Func)
+	{
+		UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+		if (!ParticleComponent)
+		{
+			return false;
+		}
+
+		if (ParticleComponent->GetEmitterInstances().empty())
+		{
+			ParticleComponent->InitializeSystem();
+		}
+
+		bool bApplied = false;
+		for (FParticleEmitterInstance* Instance : ParticleComponent->GetEmitterInstances())
+		{
+			FParticleBeam2EmitterInstance* BeamInstance = dynamic_cast<FParticleBeam2EmitterInstance*>(Instance);
+			if (!BeamInstance)
+			{
+				continue;
+			}
+
+			Func(*BeamInstance);
+			bApplied = true;
+		}
+
+		return bApplied;
+	}
+
+	sol::table LuaPhysicsRaycast(
+		sol::this_state        State,
+		const FVector&         Start,
+		const FVector&         Direction,
+		float                  MaxDistance,
+		sol::optional<AActor*> IgnoreActor)
+	{
+		sol::state_view L(State);
+		sol::table      Result = L.create_table();
+
+		FHitResult Hit{};
+		FVector    TraceDir = Direction;
+		FVector    End = Start;
+		bool       bHit = false;
+
+		const float DirLength = TraceDir.Length();
+		if (DirLength > 1.0e-4f && MaxDistance > 0.0f)
+		{
+			TraceDir = TraceDir * (1.0f / DirLength);
+			End = Start + TraceDir * MaxDistance;
+
+			UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+			if (CurrentWorld)
+			{
+				bHit = CurrentWorld->PhysicsRaycast(
+					Start,
+					TraceDir,
+					MaxDistance,
+					Hit,
+					ECollisionChannel::WorldStatic,
+					IgnoreActor.value_or(nullptr));
+			}
+
+			if (bHit && Hit.bHit)
+			{
+				End = Hit.WorldHitLocation;
+			}
+			else
+			{
+				Hit = {};
+				Hit.bHit = false;
+				Hit.Distance = MaxDistance;
+				Hit.WorldHitLocation = End;
+			}
+		}
+		else
+		{
+			Hit = {};
+			Hit.bHit = false;
+			Hit.Distance = 0.0f;
+			Hit.WorldHitLocation = Start;
+		}
+
+		Result["bHit"] = bHit && Hit.bHit;
+		Result["Hit"] = Hit;
+		Result["Location"] = Hit.WorldHitLocation;
+		Result["WorldHitLocation"] = Hit.WorldHitLocation;
+		Result["End"] = End;
+		Result["Distance"] = Hit.Distance;
+		Result["HitActor"] = Hit.HitActor;
+		Result["HitComponent"] = Hit.HitComponent;
+		return Result;
 	}
 }
 
@@ -2456,7 +2552,41 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"SetMass", &UPrimitiveComponent::SetMass,
 		"SetVisibility", &UPrimitiveComponent::SetVisibility,
 		"IsVisible", &UPrimitiveComponent::IsVisible,
-		"GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents);
+		"GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents,
+		"ResetParticleSystem", [](UPrimitiveComponent& Component)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			ParticleComponent->ResetSystem();
+			return true;
+		},
+		"SetBeamEndPoint", [](UPrimitiveComponent& Component, const FVector& EndPoint)
+		{
+			return ApplyToBeamEmitters(Component, [&EndPoint](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamEndPoint(EndPoint);
+			});
+		},
+		"SetBeamSourcePoint", [](UPrimitiveComponent& Component, const FVector& SourcePoint, sol::optional<int32> SourceIndex)
+		{
+			const int32 ResolvedIndex = SourceIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [&SourcePoint, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamSourcePoint(SourcePoint, ResolvedIndex);
+			});
+		},
+		"SetBeamTargetPoint", [](UPrimitiveComponent& Component, const FVector& TargetPoint, sol::optional<int32> TargetIndex)
+		{
+			const int32 ResolvedIndex = TargetIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [&TargetPoint, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamTargetPoint(TargetPoint, ResolvedIndex);
+			});
+		});
 
 	// 메시 에셋 경로로 컴포넌트 식별 가능하게 노출. 자동 생성된 FName ("UStaticMeshComponent_41")
 	// 은 월드 초기화 순서에 따라 카운터가 달라져 빌드별로 매칭이 깨질 수 있다. 메시 경로는
@@ -2768,6 +2898,8 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
 		return CurrentWorld ? CurrentWorld->GetGameTimeSeconds() : 0.0f;
 	});
+	World.set_function("PhysicsRaycast", &LuaPhysicsRaycast);
+	World.set_function("Raycast", &LuaPhysicsRaycast);
 
 	// 게임 특화 usertype/enum/global(GetGameState 등) 은 Game 모듈의
 	// RegisterGameLuaBindings 가 등록한다. 호출 순서는 GameEngine/EditorEngine::Init

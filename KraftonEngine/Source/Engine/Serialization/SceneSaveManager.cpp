@@ -482,6 +482,16 @@ void FSceneSaveManager::LoadSceneFromJSON(const string& filepath, FWorldContext&
 	string FileContent((std::istreambuf_iterator<char>(File)),
 		std::istreambuf_iterator<char>());
 
+	// Some Windows editors write UTF-8 scene files with a BOM. SimpleJSON expects
+	// the first byte to be the JSON token itself, so strip it before parsing.
+	if (FileContent.size() >= 3
+		&& static_cast<unsigned char>(FileContent[0]) == 0xEF
+		&& static_cast<unsigned char>(FileContent[1]) == 0xBB
+		&& static_cast<unsigned char>(FileContent[2]) == 0xBF)
+	{
+		FileContent.erase(0, 3);
+	}
+
 	JSON root = JSON::Load(FileContent);
 
 	string ClassName = root[SceneKeys::ClassName].ToString();
