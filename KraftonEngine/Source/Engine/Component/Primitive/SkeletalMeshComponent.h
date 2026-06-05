@@ -110,11 +110,26 @@ public:
     UFUNCTION(Pure, Category="Physics|Ragdoll")
     bool IsRagdollEnabled() const { return bRagdollActive; }
 
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    bool IsRagdollRecovering() const { return bRagdollRecovering; }
+
     UFUNCTION(Callable, Category="Physics|Ragdoll")
     void WakeAllRagdollBodies();
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")
     void AddImpulseToBone(FName BoneName, const FVector& Impulse);
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollBodyWorldTransform(FName BoneName, FTransform& OutTransform) const;
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollBodyWorldLocation(FName BoneName, FVector& OutLocation) const;
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollComponentSyncWorldTransform(FTransform& OutTransform) const;
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    bool GetRagdollComponentSyncWorldLocation(FVector& OutLocation) const;
 
     UFUNCTION(Callable, Category = "Physics|Ragdoll")
     void SetAllBodiesPhysicsBlendWeight(float InPhysicsBlendWeight);
@@ -127,6 +142,12 @@ public:
 
     UFUNCTION(Callable, Category = "Physics|Ragdoll")
     void SetAllBodiesBelowSimulatePhysics(FName InBoneName, bool bSimulate, bool bIncludeSelf = true);
+
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    float GetRagdollRecoveryDuration() const { return RagdollRecoveryDuration; }
+
+    UFUNCTION(Call, Category = "Physics|Ragdoll")
+    void SetRagdollRecoveryDuration(float InDuration) {  RagdollRecoveryDuration = InDuration < 0.0f ? 0.0f : InDuration; }
 
     UFUNCTION(Callable, Exec, Category = "Physics|Ragdoll")
     void SetRagdollGravityEnabled(bool bEnableGravity);
@@ -141,6 +162,12 @@ public:
 
     UFUNCTION(Pure, Category = "Physics|PhysicalAnimation")
     bool IsPhysicalAnimationActive() const { return SkeletalPhysicsMode == ESkeletalPhysicsMode::PhysicalAnimation; }
+
+    UFUNCTION(Callable, Category = "Physics|Ragdoll")
+    void SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode InMode);
+
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    ERagdollSelfCollisionMode GetRagdollSelfCollisionMode() const { return RagdollSelfCollisionMode; }
 
     bool EvaluateAnimationPoseOnly(float DeltaTime, FPoseContext& OutPose);
     bool BuildWorldTransformsFromLocalPose(const TArray<FTransform>& LocalPose, TArray<FTransform>& OutWorldTransforms) const;

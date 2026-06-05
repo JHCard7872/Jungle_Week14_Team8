@@ -1,0 +1,29 @@
+{
+  "Actors" : [],
+  "ClassName" : "UWorld",
+  "ContextHandle" : "NewScene",
+  "ContextName" : "New Scene",
+  "Name" : "Result",
+  "ObjectId" : 1,
+  "PerspectiveCamera" : {
+    "FOV" : 1.047198,
+    "FarClip" : 1000.000000,
+    "Location" : [10.000000, 0.000000, 5.000000],
+    "NearClip" : 0.100000,
+    "Rotation" : [0.000000, 26.565050, 180.000000]
+  },
+  "Version" : 2,
+  "WorldSettings" : {
+    "ClothWind" : {
+      "Direction" : [1.000000, 0.000000, 0.000000],
+      "Enabled" : false,
+      "Strength" : 0.000000,
+      "TurbulenceSeed" : 1337,
+      "TurbulenceSpatialScale" : 100.000000,
+      "TurbulenceStrength" : 0.000000,
+      "TurbulenceTemporalScale" : 1.000000
+    },
+    "GameMode" : ""
+  },
+  "WorldType" : "Editor"
+}

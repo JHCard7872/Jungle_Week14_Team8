@@ -4,6 +4,8 @@
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "GameFramework/Actor/4WVehicleActor.h"
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
+#include "GameFramework/Actor/RagdollActor.h"
+#include "GameFramework/Pawn/GOIncRagdollPawn.h"
 #include "GameFramework/World.h"
 
 // ============================================================
@@ -16,6 +18,19 @@
 void RegisterGameActorPlacements()
 {
 	FActorPlacementRegistry::Get().RegisterEntry(
+		"Ragdoll Actor",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			ARagdollActor* Actor = World ? World->SpawnActor<ARagdollActor>() : nullptr;
+			if (Actor)
+			{
+				Actor->InitDefaultComponents();
+				Actor->SetActorLocation(Location);
+			}
+			return Actor;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
 		"Physical Animation Actor",
 		[](UWorld* World, const FVector& Location) -> AActor*
 		{
@@ -26,6 +41,19 @@ void RegisterGameActorPlacements()
 				Actor->SetActorLocation(Location);
 			}
 			return Actor;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc Ragdoll Pawn",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncRagdollPawn>() : nullptr;
+			if (Pawn)
+			{
+				Pawn->InitDefaultComponents();
+				Pawn->SetActorLocation(Location);
+			}
+			return Pawn;
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(

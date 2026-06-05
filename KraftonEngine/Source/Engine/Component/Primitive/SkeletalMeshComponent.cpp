@@ -710,6 +710,74 @@ void USkeletalMeshComponent::AddImpulseToBone(FName BoneName, const FVector& Imp
     }
 }
 
+bool USkeletalMeshComponent::GetRagdollBodyWorldTransform(FName BoneName, FTransform& OutTransform) const
+{
+    OutTransform = FTransform();
+
+    FBodyInstance* Body = FindRagdollBodyByBoneName(BoneName);
+    if (!Body || !Body->IsValidBodyInstance())
+    {
+        return false;
+    }
+
+    OutTransform = Body->GetBodyTransform();
+    return true;
+}
+
+bool USkeletalMeshComponent::GetRagdollBodyWorldLocation(FName BoneName, FVector& OutLocation) const
+{
+    FTransform BodyWorldTransform;
+    if (!GetRagdollBodyWorldTransform(BoneName, BodyWorldTransform))
+    {
+        OutLocation = FVector::ZeroVector;
+        return false;
+    }
+
+    OutLocation = BodyWorldTransform.Location;
+    return true;
+}
+
+bool USkeletalMeshComponent::GetRagdollComponentSyncWorldTransform(FTransform& OutTransform) const
+{
+    OutTransform = FTransform();
+
+    if (!bHasRagdollComponentSyncOffset)
+    {
+        return false;
+    }
+
+    FBodyInstance* SyncBody = FindRagdollComponentSyncBody();
+    if (!SyncBody || !SyncBody->IsValidBodyInstance())
+    {
+        return false;
+    }
+
+    const FTransform BodyWorldTransform = SyncBody->GetBodyTransform();
+    const FVector BodyWorldLocation = BodyWorldTransform.Location;
+
+    FMatrix ComponentWorldNoTranslation = GetWorldMatrix();
+    ComponentWorldNoTranslation.SetLocation(FVector::ZeroVector);
+
+    const FVector WorldOffset = RagdollComponentSyncLocalOffset * ComponentWorldNoTranslation;
+    const FVector NewComponentWorldLocation = BodyWorldLocation - WorldOffset;
+
+    OutTransform = FTransform::FromMatrixWithScale(GetWorldMatrix());
+    OutTransform.Location = NewComponentWorldLocation;
+    return true;
+}
+
+bool USkeletalMeshComponent::GetRagdollComponentSyncWorldLocation(FVector& OutLocation) const
+{
+    FTransform ComponentSyncWorldTransform;
+    if (!GetRagdollComponentSyncWorldTransform(ComponentSyncWorldTransform))
+    {
+        OutLocation = FVector::ZeroVector;
+        return false;
+    }
+
+    OutLocation = ComponentSyncWorldTransform.Location;
+    return true;
+}
 
 void USkeletalMeshComponent::LoadAnimationFromPath()
 {
@@ -1711,6 +1779,39 @@ void USkeletalMeshComponent::EndPhysicalAnimation(bool bUseRecovery)
 {
     if (bUseRecovery) DisableRagdollPhysics();
     else ForceStopRagdollWithoutRecovery();
+}
+
+void USkeletalMeshComponent::SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode InMode)
+{
+    if (RagdollSelfCollisionMode == InMode)
+    {
+        return;
+    }
+
+    RagdollSelfCollisionMode = InMode;
+
+    if (!bRagdollActive)
+    {
+        return;
+    }
+
+    DestroyRagdollConstraints();
+    DestroyRagdollBodies();
+
+    if (!CreateRagdollBodiesFromPhysicsAsset())
+    {
+        UE_LOG("SetRagdollSelfCollisionMode warning: no ragdoll bodies created");
+        return;
+    }
+
+    if (bCreateRagdollConstraints && !CreateRagdollConstraintsFromPhysicsAsset())
+    {
+        UE_LOG("SetRagdollSelfCollisionMode warning: no ragdoll constraints created");
+    }
+
+    ApplyRagdollBodySimulationFlags();
+    SetAllRagdollBodiesGravityEnabled(bRagdollGravityEnabled);
+    WakeAllRagdollBodies();
 }
 
 bool USkeletalMeshComponent::EvaluateAnimationPoseOnly(float DeltaTime, FPoseContext& OutPose)

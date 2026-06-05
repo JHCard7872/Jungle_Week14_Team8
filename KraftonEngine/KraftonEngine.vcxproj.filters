@@ -1229,6 +1229,9 @@
     <ClCompile Include="Source\Engine\Component\Movement\FloatingPawnMovementComponent.cpp">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Component\Movement\GOIncRagdollMovementComponent.cpp">
+      <Filter>Source\Engine\Component\Movement</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Component\Movement\MovementComponent.cpp">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClCompile>
@@ -1397,6 +1400,9 @@
     <ClCompile Include="Source\Engine\GameFramework\Actor\PhysicalAnimationActor.cpp">
       <Filter>Source\Engine\GameFramework\Actor</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Actor\RagdollActor.cpp">
+      <Filter>Source\Engine\GameFramework\Actor</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Actor\SkeletalMeshActor.cpp">
       <Filter>Source\Engine\GameFramework\Actor</Filter>
     </ClCompile>
@@ -1458,6 +1464,9 @@
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\LuaCharacter.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\Pawn.cpp">
@@ -2056,6 +2065,9 @@
       <Filter>Intermediate\Generated</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.cpp" />
+    <ClCompile Include="Source\Game\GameMode\GOIncGameMode.cpp" />
+    <ClCompile Include="Source\Game\GameMode\GOIncGameState.cpp" />
+    <ClCompile Include="Source\Game\GameMode\GOIncPlayerController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Editor\EditorEngine.h">
@@ -2526,6 +2538,9 @@
     <ClInclude Include="Source\Engine\Component\Movement\FloatingPawnMovementComponent.h">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Component\Movement\GOIncRagdollMovementComponent.h">
+      <Filter>Source\Engine\Component\Movement</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Component\Movement\MovementComponent.h">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClInclude>
@@ -2727,6 +2742,9 @@
     <ClInclude Include="Source\Engine\GameFramework\Actor\PhysicalAnimationActor.h">
       <Filter>Source\Engine\GameFramework\Actor</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Actor\RagdollActor.h">
+      <Filter>Source\Engine\GameFramework\Actor</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Actor\SkeletalMeshActor.h">
       <Filter>Source\Engine\GameFramework\Actor</Filter>
     </ClInclude>
@@ -2791,6 +2809,9 @@
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\LuaCharacter.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\Pawn.h">
@@ -5806,6 +5827,10 @@
       <Filter>ThirdParty\sol2\include\sol\utility</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.h" />
+    <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
+    <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
+    <ClInclude Include="Source\Game\GameMode\GOIncGameMode.h" />
+    <ClInclude Include="Source\Game\GameMode\GOIncGameState.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KraftonEngine.rc" />
