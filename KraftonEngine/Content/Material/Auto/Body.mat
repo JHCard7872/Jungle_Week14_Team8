@@ -6,13 +6,13 @@
     "AlphaCutoff" : 0.000000,
     "HasNormalMap" : 0.000000,
     "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
-    "_pad" : [0.000000, 0.000000, 0.000000]
+    "_pad" : null
   },
   "PathFileName" : "Content/Material/Auto/Body.mat",
   "RasterizerState" : "",
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Galio/Body.png"
+    "DiffuseTexture" : "Content/Texture/Auto/sc_dash_loop_anm_hkx/stx_btest1.dds"
   }
 }
