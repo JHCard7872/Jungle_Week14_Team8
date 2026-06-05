@@ -8,6 +8,8 @@
 #include "Profiling/Time/Timer.h"
 #include "GameFramework/World.h"
 #include "Core/Logging/Notification.h"
+#include "Platform/Paths.h"
+#include "Texture/Texture2D.h"
 
 void FTileCullingResource::Create(ID3D11Device* Dev, uint32 InTileCountX, uint32 InTileCountY)
 {
@@ -811,6 +813,8 @@ void FSystemResources::Release()
 	FogConstantBuffer.Release();
 	ForwardLights.Release();
 	TileCullingResource.Release();
+	HitRimNoiseTexture = nullptr;
+	bTriedLoadHitRimNoiseTexture = false;
 }
 
 void FSystemResources::UpdateFrameBuffer(FD3DDevice& Device, const FFrameContext& Frame)
@@ -974,6 +978,42 @@ void FSystemResources::BindSystemSamplers(FD3DDevice& Device)
 	SamplerStateManager.BindSystemSamplers(Device.GetDeviceContext());
 }
 
+void FSystemResources::EnsureHitRimNoiseTexture(ID3D11Device* InDevice)
+{
+	if (!InDevice)
+	{
+		return;
+	}
+
+	if (HitRimNoiseTexture && HitRimNoiseTexture->GetSRV())
+	{
+		return;
+	}
+
+	if (HitRimNoiseTexture)
+	{
+		HitRimNoiseTexture = nullptr;
+		bTriedLoadHitRimNoiseTexture = false;
+	}
+
+	if (bTriedLoadHitRimNoiseTexture)
+	{
+		return;
+	}
+
+	bTriedLoadHitRimNoiseTexture = true;
+	const FString NoisePath = FPaths::ToUtf8(FPaths::Combine(FPaths::AssetDir(), L"VoronoiNoise.png"));
+	HitRimNoiseTexture = UTexture2D::LoadFromFile(NoisePath, InDevice, ETextureColorSpace::Linear);
+}
+
+void FSystemResources::BindHitRimNoiseTexture(FD3DDevice& Device)
+{
+	EnsureHitRimNoiseTexture(Device.GetDevice());
+
+	ID3D11ShaderResourceView* SRV = HitRimNoiseTexture ? HitRimNoiseTexture->GetSRV() : nullptr;
+	Device.GetDeviceContext()->PSSetShaderResources(ESystemTexSlot::HitRimNoise, 1, &SRV);
+}
+
 void FSystemResources::SetDepthStencilState(FD3DDevice& Device, EDepthStencilState InState)
 {
 	DepthStencilStateManager.Set(Device.GetDeviceContext(), InState);
@@ -1006,6 +1046,9 @@ void FSystemResources::UnbindSystemTextures(FD3DDevice& Device)
 
 	// t21~t25: Shadow (CSM/SpotAtlas/PointCube/SpotData/PointData)
 	Ctx->PSSetShaderResources(ESystemTexSlot::ShadowMapCSM, 5, nullSRVs);
+
+	// t26: Hit rim Voronoi noise
+	Ctx->PSSetShaderResources(ESystemTexSlot::HitRimNoise, 1, nullSRVs);
 }
 
 // ============================================================

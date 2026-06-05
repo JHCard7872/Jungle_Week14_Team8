@@ -76,6 +76,7 @@ namespace ESystemTexSlot
 	constexpr uint32 ShadowMapPointLightTextureArray = 23;  // t23: Point Light
 	constexpr uint32 SpotShadowDatas    = 24;  // t24: StructuredBuffer<FSpotShadowDataGPU>
 	constexpr uint32 PointShadowDatas   = 25;  // t25: StructuredBuffer<FPointShadowDataGPU>
+	constexpr uint32 HitRimNoise        = 26;  // t26: Hit rim Voronoi noise
 
 	// 하위 호환용 별칭
 	constexpr uint32 ShadowMap = ShadowMapCSM;
@@ -98,6 +99,10 @@ struct FPerObjectConstants
 	FMatrix Model;
 	FMatrix NormalMatrix;
 	FVector4 Color;
+	FVector4 HitRimColorAndIntensity;
+	FVector4 HitRimParams;
+	FVector4 HitImpactCenterAndRadius;
+	FVector4 HitImpactParams;
 
 	// 기본 PerObject: WorldMatrix + White
 	static FPerObjectConstants FromWorldMatrix(const FMatrix& WorldMatrix)
@@ -106,6 +111,10 @@ struct FPerObjectConstants
 		Result.Model = WorldMatrix;
 		Result.NormalMatrix = WorldMatrix.GetInverse().GetTransposed();
 		Result.Color = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+		Result.HitRimColorAndIntensity = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+		Result.HitRimParams = FVector4(3.0f, 0.0f, 0.0f, 0.0f);
+		Result.HitImpactCenterAndRadius = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
+		Result.HitImpactParams = FVector4(0.0f, 0.0f, 0.0f, 0.0f);
 		return Result;
 	}
 };

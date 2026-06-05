@@ -2796,6 +2796,41 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"SetVisibility", &UPrimitiveComponent::SetVisibility,
 		"IsVisible", &UPrimitiveComponent::IsVisible,
 		"GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents,
+		"TriggerHitRim", [](UPrimitiveComponent& Component, sol::optional<float> Duration, sol::optional<float> Intensity, sol::optional<float> Power, sol::optional<float> SustainIntensity)
+		{
+			Component.TriggerHitRim(Duration.value_or(0.18f), Intensity.value_or(3.5f), Power.value_or(3.0f), SustainIntensity.value_or(0.0f));
+		},
+		"RefreshHitRim", [](UPrimitiveComponent& Component, sol::optional<float> SustainIntensity, sol::optional<float> Power)
+		{
+			Component.RefreshHitRim(SustainIntensity.value_or(1.0f), Power.value_or(3.0f));
+		},
+		"SetHitImpactGlow", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> Radius, sol::optional<float> CoreRadius, sol::optional<float> Intensity)
+		{
+			Component.SetHitImpactGlow(WorldLocation, Radius.value_or(0.32f), CoreRadius.value_or(0.055f), Intensity.value_or(2.6f));
+		},
+		"TriggerHitRimAt", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> Duration, sol::optional<float> Intensity, sol::optional<float> Power, sol::optional<float> SustainIntensity, sol::optional<float> ImpactRadius, sol::optional<float> ImpactCoreRadius, sol::optional<float> ImpactIntensity)
+		{
+			Component.TriggerHitRimAt(
+				WorldLocation,
+				Duration.value_or(0.18f),
+				Intensity.value_or(3.5f),
+				Power.value_or(3.0f),
+				SustainIntensity.value_or(0.0f),
+				ImpactRadius.value_or(0.32f),
+				ImpactCoreRadius.value_or(0.055f),
+				ImpactIntensity.value_or(2.6f));
+		},
+		"RefreshHitRimAt", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> SustainIntensity, sol::optional<float> Power, sol::optional<float> ImpactRadius, sol::optional<float> ImpactCoreRadius, sol::optional<float> ImpactIntensity)
+		{
+			Component.RefreshHitRimAt(
+				WorldLocation,
+				SustainIntensity.value_or(1.0f),
+				Power.value_or(3.0f),
+				ImpactRadius.value_or(0.32f),
+				ImpactCoreRadius.value_or(0.055f),
+				ImpactIntensity.value_or(2.6f));
+		},
+		"ClearHitRim", &UPrimitiveComponent::ClearHitRim,
 		"ResetParticleSystem", [](UPrimitiveComponent& Component)
 		{
 			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);

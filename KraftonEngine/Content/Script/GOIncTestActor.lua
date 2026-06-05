@@ -21,6 +21,13 @@ local MAX_PITCH = 20.0         -- 1인칭 카메라가 아래를 볼 수 있는 
 local CAMERA_HEIGHT = 1.2      -- Root 기준 카메라 피벗 높이
 local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
 local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
+local HIT_RIM_DURATION = 0.50
+local HIT_RIM_FLASH_INTENSITY = 3.5
+local HIT_RIM_SUSTAIN_INTENSITY = 1.6
+local HIT_RIM_POWER = 2.8
+local HIT_IMPACT_RADIUS = 0.16
+local HIT_IMPACT_CORE_RADIUS = 0.055
+local HIT_IMPACT_INTENSITY = 2.6
 local GRAB_SPRING_ACCELERATION = 220.0
 local GRAB_DAMPING_ACCELERATION = 36.0
 local GRAB_MAX_ERROR = 80.0
@@ -93,6 +100,7 @@ local base_muzzle_rotation = nil           -- 씬에서 읽은 MuzzlePoint 기�
 local base_beam_location = nil             -- 씬에서 읽은 BeamParticle 기본 위치
 local base_beam_rotation = nil             -- 씬에서 읽은 BeamParticle 기본 회전
 local grabbed_body = nil
+local grabbed_hit_component = nil
 local grabbed_local_hit_point = nil
 local grabbed_aim_distance = nil
 local grabbed_target_world = nil
@@ -619,6 +627,7 @@ end
 
 local function clear_grab_state()
     grabbed_body = nil
+    grabbed_hit_component = nil
     grabbed_local_hit_point = nil
     grabbed_aim_distance = nil
     grabbed_target_world = nil
@@ -657,6 +666,71 @@ local function get_hit_physics_body(hit)
     return nil
 end
 
+local function get_hit_component(hit)
+    if hit == nil then
+        return nil
+    end
+    if hit.HitComponent ~= nil then
+        return hit.HitComponent
+    end
+    if hit.Hit ~= nil and hit.Hit.HitComponent ~= nil then
+        return hit.Hit.HitComponent
+    end
+    return nil
+end
+
+local function get_hit_location(hit)
+    if hit == nil then
+        return nil
+    end
+    if hit.WorldHitLocation ~= nil then
+        return hit.WorldHitLocation
+    end
+    if hit.Location ~= nil then
+        return hit.Location
+    end
+    if hit.Hit ~= nil and hit.Hit.WorldHitLocation ~= nil then
+        return hit.Hit.WorldHitLocation
+    end
+    if hit.Hit ~= nil and hit.Hit.Location ~= nil then
+        return hit.Hit.Location
+    end
+    return nil
+end
+
+local function trigger_hit_rim_on_component(hit_component, should_flash, hit_location)
+    if hit_component == nil or hit_component.GetSimulatePhysics == nil or not hit_component:GetSimulatePhysics() then
+        return
+    end
+
+    if hit_location ~= nil then
+        if should_flash and hit_component.TriggerHitRimAt ~= nil then
+            hit_component:TriggerHitRimAt(hit_location, HIT_RIM_DURATION, HIT_RIM_FLASH_INTENSITY, HIT_RIM_POWER, HIT_RIM_SUSTAIN_INTENSITY, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
+            return
+        elseif hit_component.RefreshHitRimAt ~= nil then
+            hit_component:RefreshHitRimAt(hit_location, HIT_RIM_SUSTAIN_INTENSITY, HIT_RIM_POWER, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
+            return
+        end
+    end
+
+    if should_flash and hit_component.TriggerHitRim ~= nil then
+        hit_component:TriggerHitRim(HIT_RIM_DURATION, HIT_RIM_FLASH_INTENSITY, HIT_RIM_POWER, HIT_RIM_SUSTAIN_INTENSITY)
+        if hit_location ~= nil and hit_component.SetHitImpactGlow ~= nil then
+            hit_component:SetHitImpactGlow(hit_location, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
+        end
+    elseif hit_component.RefreshHitRim ~= nil then
+        hit_component:RefreshHitRim(HIT_RIM_SUSTAIN_INTENSITY, HIT_RIM_POWER)
+    end
+end
+
+local function trigger_hit_rim(hit, should_flash)
+    if hit == nil or not hit.bHit then
+        return
+    end
+
+    trigger_hit_rim_on_component(get_hit_component(hit), should_flash, get_hit_location(hit))
+end
+
 local function begin_beam_grab(hit, start, direction, fallback_end)
     if hit == nil or not hit.bHit then
         return false
@@ -674,6 +748,7 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     local grab_distance = compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
     local target_point = start + direction * grab_distance
     grabbed_body = body
+    grabbed_hit_component = get_hit_component(hit)
     grabbed_local_hit_point = body:WorldToLocalPoint(grab_point)
     grabbed_aim_distance = grab_distance
     grabbed_target_world = target_point
@@ -705,6 +780,11 @@ local function apply_grab_force(delta_time, start, direction)
         set_beam_visible(false)
         return
     end
+
+    if grabbed_hit_component == nil and grabbed_body.GetOwnerComponent ~= nil then
+        grabbed_hit_component = grabbed_body:GetOwnerComponent()
+    end
+    trigger_hit_rim_on_component(grabbed_hit_component)
 
     grabbed_target_world = desired
 
@@ -890,20 +970,22 @@ local function apply_fire(delta_time)
         return
     end
 
-    update_beam_fade(delta_time)
-
-    if not Input.GetKeyDown(KEY_LBUTTON) then
+    local is_fire_pressed = Input.GetKeyDown(KEY_LBUTTON)
+    local is_fire_held = Input.GetKey(KEY_LBUTTON)
+    if not is_fire_held then
+        update_beam_fade(delta_time)
         return
     end
 
     local hit, fallback_end, start, direction = center_physics_raycast(MAX_TRACE_DISTANCE)
-    if begin_beam_grab(hit, start, direction, fallback_end) then
+    trigger_hit_rim(hit, is_fire_pressed)
+    if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
         return
     end
 
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
 
-    if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
+    if is_fire_pressed and beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
         beam_particle:ResetParticleSystem()
     end
     update_beam_points(last_aim_point)

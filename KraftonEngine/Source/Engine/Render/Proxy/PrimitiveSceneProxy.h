@@ -91,6 +91,7 @@ public:
 	void MarkPerObjectCBDirty()   const { bPerObjectCBDirty = true; }
 	void ClearPerObjectCBDirty()  const { bPerObjectCBDirty = false; }
 	bool NeedsPerObjectCBUpload() const { return bPerObjectCBDirty; }
+	void RefreshHitRimFromOwner();
 
 	// --- LOD (RenderCollector에서 접근) ---
 	uint32 GetCurrentLOD()         const { return CurrentLOD; }

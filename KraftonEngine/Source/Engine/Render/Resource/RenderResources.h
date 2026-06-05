@@ -167,6 +167,7 @@ struct FShadowMapResources
 
 class FD3DDevice;
 class FScene;
+class UTexture2D;
 struct FFrameContext;
 
 struct FLightingResource
@@ -284,6 +285,10 @@ struct FSystemResources
 	// --- Shadow ---
 	TMap<const FScene*, FPerSceneShadowResources> PerSceneShadowResources;
 
+	// --- System Textures ---
+	UTexture2D* HitRimNoiseTexture = nullptr;		// t26
+	bool bTriedLoadHitRimNoiseTexture = false;
+
 	// --- Render State Managers ---
 	FRasterizerStateManager RasterizerStateManager;
 	FDepthStencilStateManager DepthStencilStateManager;
@@ -317,8 +322,10 @@ struct FSystemResources
 	void BindTileCullingBuffers(FD3DDevice& Device);
 	void UnbindTileCullingBuffers(FD3DDevice& Device);
 
-	// 시스템 텍스처 슬롯 언바인딩 (t16-t19)
+	// 시스템 텍스처 슬롯 언바인딩 (t16+)
 	void UnbindSystemTextures(FD3DDevice& Device);
+	void EnsureHitRimNoiseTexture(ID3D11Device* InDevice);
+	void BindHitRimNoiseTexture(FD3DDevice& Device);
 
 	// --- Light Culling Dispatch/Bind ---
 	void DispatchTileCulling(ID3D11DeviceContext* DC, const FFrameContext& Frame);
