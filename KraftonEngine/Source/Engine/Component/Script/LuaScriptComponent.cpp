@@ -399,6 +399,34 @@ bool ULuaScriptComponent::CallFunction(const FString& FunctionName)
 	return bOk;
 }
 
+bool ULuaScriptComponent::CallFunctionString(const FString& FunctionName, const FString& Arg0)
+{
+	if (!Env.valid())
+	{
+		return false;
+	}
+
+	sol::object Target = Env[FunctionName.c_str()];
+	if (!Target.valid() || Target.get_type() != sol::type::function)
+	{
+		return false;
+	}
+
+	sol::protected_function Fn = Target;
+	bool bOk = false;
+	{
+		FLuaCallScope Scope(this);
+		sol::protected_function_result Result = Fn(Arg0);
+		bOk = Result.valid();
+		if (!bOk)
+		{
+			sol::error Err = Result;
+			UE_LOG("Lua %s error in %s: %s", FunctionName.c_str(), ScriptFile.c_str(), Err.what());
+		}
+	}
+	return bOk;
+}
+
 void ULuaScriptComponent::DispatchOverlap(AActor* OtherActor)
 {
 	if (LuaOnOverlap)

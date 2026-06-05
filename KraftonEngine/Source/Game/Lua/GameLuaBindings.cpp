@@ -13,6 +13,7 @@
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
+#include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
 #include "Math/Transform.h"
 
@@ -130,6 +131,55 @@ namespace
 
 void RegisterGameLuaBindings(sol::state& Lua)
 {
+
+	// GOInc game-level helpers. Keep game-specific spawn policy out of Engine/Lua bindings,
+	// but still guarantee GOIncRagdollPawn receives its RagdollId before BeginPlay.
+	{
+		sol::object ExistingGOInc = Lua["GOInc"];
+		sol::table GOInc = (ExistingGOInc.valid() && ExistingGOInc.get_type() == sol::type::table)
+			? ExistingGOInc.as<sol::table>()
+			: Lua.create_named_table("GOInc");
+
+		GOInc.set_function("SpawnRagdollPawn", [](const FString& RagdollId, const FVector& Location) -> AGOIncRagdollPawn*
+		{
+			if (!GEngine)
+			{
+				UE_LOG("[GOInc] SpawnRagdollPawn failed. Missing GEngine.");
+				return nullptr;
+			}
+
+			UWorld* World = GEngine->GetWorld();
+			if (!World)
+			{
+				UE_LOG("[GOInc] SpawnRagdollPawn failed. Missing World.");
+				return nullptr;
+			}
+
+			AGOIncRagdollPawn* SpawnedPawn = World->SpawnActorWithInitializer<AGOIncRagdollPawn>(
+				[&](AGOIncRagdollPawn* Pawn)
+				{
+					if (!Pawn)
+					{
+						return;
+					}
+
+					Pawn->SetRagdollId(RagdollId);
+					Pawn->InitDefaultComponents();
+					Pawn->SetActorLocation(Location);
+				});
+
+			if (!SpawnedPawn)
+			{
+				UE_LOG("[GOInc] SpawnRagdollPawn failed. RagdollId=%s", RagdollId.c_str());
+				return nullptr;
+			}
+
+			UE_LOG("[GOInc] Spawned ragdoll pawn. RagdollId=%s Location=(%.2f, %.2f, %.2f)",
+				SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
+			return SpawnedPawn;
+		});
+	}
+
 	// 이미 엔진 공통 바인딩에서 등록된 usertype에 게임 테스트용 convenience API만 덧붙인다.
 	// 문자열 기반 collision mode를 노출해 Lua 스크립트에서 enum 숫자에 의존하지 않게 한다.
 	{
@@ -173,6 +223,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		sol::bases<UActorComponent, UObject>(),
 		"ReloadScript", &ULuaScriptComponent::ReloadScript,
 		"CallFunction", &ULuaScriptComponent::CallFunction,
+		"CallFunctionString", &ULuaScriptComponent::CallFunctionString,
 		"GetScriptFile", &ULuaScriptComponent::GetScriptFile,
 		"SetScriptFile", &ULuaScriptComponent::SetScriptFile);
 
@@ -251,6 +302,8 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"GetMesh", &AGOIncRagdollPawn::GetMesh,
 		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
 		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent,
+		"SetRagdollId", &AGOIncRagdollPawn::SetRagdollId,
+		"GetRagdollId", &AGOIncRagdollPawn::GetRagdollId,
 		"SetSkeletalMeshPath", &AGOIncRagdollPawn::SetSkeletalMeshPath,
 		"GetSkeletalMeshPath", &AGOIncRagdollPawn::GetSkeletalMeshPath,
 		"SetFleeAnimationPath", &AGOIncRagdollPawn::SetFleeAnimationPath,
@@ -259,6 +312,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"SetMeshRelativeScale", &AGOIncRagdollPawn::SetMeshRelativeScale,
 		"SetAliveCapsuleSize", &AGOIncRagdollPawn::SetAliveCapsuleSize,
 		"SetReviveTriggerCapsuleSize", &AGOIncRagdollPawn::SetReviveTriggerCapsuleSize,
+		"RequestDeadRagdoll", &AGOIncRagdollPawn::RequestDeadRagdoll,
 		"PlayFleeAnimation", &AGOIncRagdollPawn::PlayFleeAnimation,
 		"StopFleeAnimation", &AGOIncRagdollPawn::StopFleeAnimation);
 

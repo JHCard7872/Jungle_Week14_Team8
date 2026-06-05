@@ -45,6 +45,11 @@ public:
 	ULuaScriptComponent* GetLuaScriptComponent() const { return LuaScriptComponent; }
 
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetRagdollId(const FString& InRagdollId);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	FString GetRagdollId() const { return RagdollId; }
+
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetSkeletalMeshPath(const FString& InSkeletalMeshPath);
 	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
 	FString GetSkeletalMeshPath() const { return SkeletalMeshPath; }
@@ -62,6 +67,10 @@ public:
 	void SetAliveCapsuleSize(float Radius, float HalfHeight);
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetReviveTriggerCapsuleSize(float Radius, float HalfHeight);
+
+	// 외부 시스템(Player beam, trap 등)은 Lua 상태값을 직접 만지지 않고 이 API만 호출한다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
+	void RequestDeadRagdoll(const FString& Reason);
 
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Animation")
 	void PlayFleeAnimation();
@@ -83,6 +92,7 @@ protected:
 	UGOIncRagdollMovementComponent* RagdollMovementComponent = nullptr;
 	ULuaScriptComponent* LuaScriptComponent = nullptr;
 
+	FString RagdollId = "blue-speedster";
 	FString SkeletalMeshPath;
 	FString FleeAnimationPath;
 };

@@ -167,6 +167,27 @@ void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 	}
 }
 
+void AGOIncRagdollPawn::SetRagdollId(const FString& InRagdollId)
+{
+	RagdollId = InRagdollId.empty() ? FString("blue-speedster") : InRagdollId;
+}
+
+void AGOIncRagdollPawn::RequestDeadRagdoll(const FString& Reason)
+{
+	RefreshGOIncRagdollPawnComponents();
+	if (!LuaScriptComponent)
+	{
+		UE_LOG("[GOIncRagdollPawn] RequestDeadRagdoll ignored. Missing LuaScriptComponent. Reason: %s", Reason.c_str());
+		return;
+	}
+
+	const FString SafeReason = Reason.empty() ? FString("ExternalRequest") : Reason;
+	if (!LuaScriptComponent->CallFunctionString("RequestDeadRagdoll", SafeReason))
+	{
+		UE_LOG("[GOIncRagdollPawn] Lua RequestDeadRagdoll handler missing or failed. Reason: %s", SafeReason.c_str());
+	}
+}
+
 void AGOIncRagdollPawn::SetSkeletalMeshPath(const FString& InSkeletalMeshPath)
 {
 	SkeletalMeshPath = InSkeletalMeshPath;

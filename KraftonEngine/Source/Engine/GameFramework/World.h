@@ -51,6 +51,8 @@ public:
 	// Actor lifecycle
 	template<typename T>
 	T* SpawnActor();
+	template<typename T, typename TInitFunc>
+	T* SpawnActorWithInitializer(TInitFunc&& Initializer);
 	// UClass 기반 spawn — 런타임에 클래스가 결정되는 경우(GameMode/GameState 등) 사용.
 	AActor* SpawnActorByClass(UClass* Class);
 	void DestroyActor(AActor* Actor);
@@ -188,5 +190,26 @@ inline T* UWorld::SpawnActor()
 	// create and register an actor
 	T* Actor = UObjectManager::Get().CreateObject<T>(PersistentLevel);
 	AddActor(Actor); // BeginPlay 트리거는 AddActor 내부에서 bHasBegunPlay 가드로 처리
+	return Actor;
+}
+
+template<typename T, typename TInitFunc>
+inline T* UWorld::SpawnActorWithInitializer(TInitFunc&& Initializer)
+{
+	// Runtime spawn path that must set actor-owned config before BeginPlay.
+	// AddActor is intentionally last because it may immediately route BeginPlay when the world is already playing.
+	if (!PersistentLevel)
+	{
+		return nullptr;
+	}
+
+	T* Actor = UObjectManager::Get().CreateObject<T>(PersistentLevel);
+	if (!Actor)
+	{
+		return nullptr;
+	}
+
+	Initializer(Actor);
+	AddActor(Actor);
 	return Actor;
 }

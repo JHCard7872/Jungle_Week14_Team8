@@ -39,6 +39,11 @@ public:
 	UFUNCTION(Callable, Exec, Category="Script")
 	bool CallFunction(const FString& FunctionName);
 
+	// Lua script 의 환경(env)에서 문자열 인자 하나를 받는 전역 함수 하나를 호출한다.
+	// Actor 외부 API가 Lua 상태머신에 reason/event id를 전달할 때 사용한다.
+	UFUNCTION(Callable, Exec, Category="Script")
+	bool CallFunctionString(const FString& FunctionName, const FString& Arg0);
+
 protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction) override;
 
