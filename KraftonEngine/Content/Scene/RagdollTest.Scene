@@ -18,7 +18,7 @@
         "ClassName" : "UStaticMeshComponent",
         "ObjectId" : 3,
         "Properties" : {
-          "CachedEditRotator" : [0.000000, 0.000000, 0.000000],
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
           "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
           "Mass" : 1.000000,
@@ -78,7 +78,7 @@
             "bPlaying" : true
           },
           "AnimationMode" : [2, 0, 0, 0, 0, 0, 0, 0],
-          "CachedEditRotator" : [0.000000, 0.000000, 0.000000],
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
           "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
           "LuaAnimScriptFile" : "",
@@ -144,17 +144,17 @@
             "bPlaying" : true
           },
           "AnimationMode" : [2, 0, 0, 0, 0, 0, 0, 0],
-          "CachedEditRotator" : [0.000000, 0.000000, 0.000000],
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
           "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
           "LuaAnimScriptFile" : "",
           "Mass" : 1.000000,
-          "MaterialSlots" : ["Content/Material/Auto/eye_tx.002.mat", "Content/Material/Auto/all_tx.002.mat"],
+          "MaterialSlots" : ["Content/Material/Auto/TexMap.mat"],
           "ObjectName" : "USkeletalMeshComponent_15",
           "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
           "RagdollPhysicsBlendWeight" : 1.000000,
           "RagdollRecoveryDuration" : 0.350000,
-          "RagdollSelfCollisionMode" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RagdollSelfCollisionMode" : [0, 0, 0, 0, 0, 0, 0, 0],
           "RelativeTransform.Location" : [1.977407, 3.575844, 0.999798],
           "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
           "ResponseContainer" : {
@@ -164,7 +164,7 @@
             "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
             "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
           },
-          "SkeletalMeshPath" : "Content/Data/Mario/Mario_SkeletalMesh.uasset",
+          "SkeletalMeshPath" : "Content/Data/Mario2/Mario2_SkeletalMesh.uasset",
           "bAutoActivate" : true,
           "bCastShadow" : true,
           "bCastShadowAsTwoSided" : false,
@@ -191,9 +191,9 @@
   "PerspectiveCamera" : {
     "FOV" : 1.047198,
     "FarClip" : 1000.000000,
-    "Location" : [9.471455, 1.916794, 6.035910],
+    "Location" : [6.565279, 1.831530, 4.442009],
     "NearClip" : 0.100000,
-    "Rotation" : [0.000000, 30.165033, 184.949844]
+    "Rotation" : [0.000000, 29.115036, 176.700150]
   },
   "Version" : 2,
   "WorldSettings" : {
