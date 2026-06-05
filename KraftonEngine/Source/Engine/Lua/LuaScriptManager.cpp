@@ -1,4 +1,4 @@
-#include "LuaScriptManager.h"
+﻿#include "LuaScriptManager.h"
 
 #include "Core/Logging/Log.h"
 #include "Core/Logging/Notification.h"
@@ -42,6 +42,7 @@
 #include "Platform/Paths.h"
 #include "Math/Vector.h"
 #include "Math/Rotator.h"
+#include "Math/MathUtils.h"
 #include "Platform/WindowsWindow.h"
 #include "UI/UIManager.h"
 #include "UI/UserWidget.h"
@@ -2096,6 +2097,27 @@ void FLuaScriptManager::RegisterMathBindings(sol::state& Lua)
 		"XAxis", []() { return FVector::XAxisVector; },
 		"YAxis", []() { return FVector::YAxisVector; },
 		"ZAxis", []() { return FVector::ZAxisVector; });
+
+	sol::table Math = Lua.create_named_table("Math");
+
+	Math["Pi"] = FMath::Pi;
+	Math["DegToRad"] = FMath::DegToRad;
+	Math["RadToDeg"] = FMath::RadToDeg;
+
+	Math.set_function("Atan2", [](float Y, float X)
+		{
+			return std::atan2(Y, X);
+		});
+
+	Math.set_function("RadiansToDegrees", [](float Radians)
+		{
+			return Radians * FMath::RadToDeg;
+		});
+
+	Math.set_function("DegreesToRadians", [](float Degrees)
+		{
+			return Degrees * FMath::DegToRad;
+		});
 }
 
 void FLuaScriptManager::RegisterReflectionBindings(sol::state& Lua)

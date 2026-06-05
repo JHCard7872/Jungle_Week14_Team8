@@ -21,7 +21,6 @@ local state = STATE_DEAD
 local initialMeshRelativeLocation = nil
 local initialMeshWorldOffsetFromActor = nil
 
-local RAD_TO_DEG = 57.29577951308232
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
 
@@ -164,58 +163,22 @@ local function get_flee_direction()
     return Vector.Forward()
 end
 
-local function atan2_safe(y, x)
-    if math.atan2 ~= nil then
-        return math.atan2(y, x)
-    end
-
-    if x > 0.0 then
-        return math.atan(y / x)
-    end
-
-    if x < 0.0 and y >= 0.0 then
-        return math.atan(y / x) + math.pi
-    end
-
-    if x < 0.0 and y < 0.0 then
-        return math.atan(y / x) - math.pi
-    end
-
-    if x == 0.0 and y > 0.0 then
-        return math.pi * 0.5
-    end
-
-    if x == 0.0 and y < 0.0 then
-        return -math.pi * 0.5
-    end
-
-    return 0.0
-end
-
 local function face_direction(direction)
     if direction == nil then
         return
     end
 
-    local x = direction.X
-    local y = direction.Y
+    local dir = Vector.new(direction.X, direction.Y, 0.0)
 
-    local len = math.sqrt(x * x + y * y)
-    if len <= 0.001 then
+    if dir:Length() <= 0.001 then
         return
     end
 
-    x = x / len
-    y = y / len
+    dir = dir:Normalized()
 
-    local yaw = atan2_safe(y, x) * RAD_TO_DEG + FLEE_ROTATION_YAW_OFFSET_DEGREES
+    local yaw = Math.RadiansToDegrees(Math.Atan2(dir.Y, dir.X)) + FLEE_ROTATION_YAW_OFFSET_DEGREES
 
-    local rot = obj.Rotation
-    rot.X = 0.0
-    rot.Y = 0.0
-    rot.Z = yaw
-
-    obj.Rotation = rot
+    obj.Rotation = Vector.new(0.0, 0.0, yaw)
 end
 
 function EnterDeadRagdoll()
