@@ -18,6 +18,9 @@ local mesh = nil
 local movement = nil
 local state = STATE_DEAD
 
+local initialMeshRelativeLocation = nil
+local initialMeshWorldOffsetFromActor = nil
+
 local function is_valid(value)
     return value ~= nil and (value.IsValid == nil or value:IsValid())
 end
@@ -47,6 +50,11 @@ local function cache_components()
         print("[GOIncRagdollPawn_Test] Missing GOIncRagdollMovementComponent")
     end
 
+    if capsule ~= nil and mesh ~= nil then
+        initialMeshRelativeLocation = mesh.RelativeLocation
+        initialMeshWorldOffsetFromActor = mesh.Location - obj.Location
+    end
+
     return capsule ~= nil and mesh ~= nil and movement ~= nil
 end
 
@@ -69,8 +77,39 @@ end
 local function align_actor_to_ragdoll()
     local location = get_ragdoll_actor_sync_location()
     if location ~= nil then
-        obj.Location = location
+        if initialMeshWorldOffsetFromActor ~= nil then
+            obj.Location = location - initialMeshWorldOffsetFromActor
+        else
+            obj.Location = location
+        end
     end
+end
+
+local function sync_actor_capsule_to_ragdoll()
+    if state ~= STATE_DEAD then
+        return
+    end
+
+    if capsule == nil or mesh == nil then
+        return
+    end
+
+    local meshSyncLocation = get_ragdoll_actor_sync_location()
+    if meshSyncLocation == nil then
+        return
+    end
+
+    local actorTargetLocation = meshSyncLocation
+    if initialMeshWorldOffsetFromActor ~= nil then
+        actorTargetLocation = meshSyncLocation - initialMeshWorldOffsetFromActor
+    end
+
+    obj.Location = actorTargetLocation
+
+    -- Moving the actor/root capsule also moves child components through the hierarchy.
+    -- Put the skeletal mesh component back onto the existing ragdoll sync position so
+    -- this trigger-follow update does not drag the simulated ragdoll bodies around.
+    mesh.Location = meshSyncLocation
 end
 
 local function get_manual_move_direction()
@@ -163,6 +202,10 @@ function EnterAliveFlee()
         mesh:SetRagdollGravityEnabled(false)
         mesh:SetRagdollEnabled(false)
         mesh:SetCollisionEnabled("NoCollision")
+
+        if initialMeshRelativeLocation ~= nil then
+            mesh.RelativeLocation = initialMeshRelativeLocation
+        end
     end
 
     if capsule ~= nil then
@@ -204,6 +247,11 @@ function Tick(dt)
         else
             EnterDeadRagdoll()
         end
+        return
+    end
+
+    if state == STATE_DEAD then
+        sync_actor_capsule_to_ragdoll()
         return
     end
 
