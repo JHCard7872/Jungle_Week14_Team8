@@ -187,6 +187,12 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"SetMaxSpeed", &UGOIncRagdollMovementComponent::SetMaxSpeed,
 		"SetAcceleration", &UGOIncRagdollMovementComponent::SetAcceleration,
 		"SetBrakingDeceleration", &UGOIncRagdollMovementComponent::SetBrakingDeceleration,
+		"SetFloorRaycastEnabled", &UGOIncRagdollMovementComponent::SetFloorRaycastEnabled,
+		"IsFloorRaycastEnabled", &UGOIncRagdollMovementComponent::IsFloorRaycastEnabled,
+		"SetGravityEnabled", &UGOIncRagdollMovementComponent::SetGravityEnabled,
+		"IsGravityEnabled", &UGOIncRagdollMovementComponent::IsGravityEnabled,
+		"SnapUpdatedComponentToFloor", &UGOIncRagdollMovementComponent::SnapUpdatedComponentToFloor,
+		"IsGrounded", &UGOIncRagdollMovementComponent::IsGrounded,
 		"GetVelocity", &UGOIncRagdollMovementComponent::GetVelocity);
 
 	Lua.new_usertype<USkeletalMeshComponent>("SkeletalMeshComponent",
@@ -194,7 +200,11 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		sol::bases<UPrimitiveComponent, USceneComponent, UActorComponent, UObject>(),
 		"SetRagdollEnabled", &USkeletalMeshComponent::SetRagdollEnabled,
 		"IsRagdollEnabled", &USkeletalMeshComponent::IsRagdollEnabled,
+		"SetPlayRate", &USkeletalMeshComponent::SetPlayRate,
+		"IsRagdollRecovering", &USkeletalMeshComponent::IsRagdollRecovering,
 		"WakeAllRagdollBodies", &USkeletalMeshComponent::WakeAllRagdollBodies,
+		"GetRagdollRecoveryDuration", &USkeletalMeshComponent::GetRagdollRecoveryDuration,
+		"SetRagdollRecoveryDuration", &USkeletalMeshComponent::SetRagdollRecoveryDuration,
 		"AddImpulseToBone", [](USkeletalMeshComponent& Component, const FString& BoneName, const FVector& Impulse)
 		{
 			Component.AddImpulseToBone(FName(BoneName), Impulse);
@@ -236,6 +246,8 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		sol::base_classes,
 		sol::bases<APawn, AActor, UObject>(),
 		"GetCapsuleComponent", &AGOIncRagdollPawn::GetCapsuleComponent,
+		"GetAliveCollisionCapsuleComponent", &AGOIncRagdollPawn::GetAliveCollisionCapsuleComponent,
+		"GetReviveTriggerCapsuleComponent", &AGOIncRagdollPawn::GetReviveTriggerCapsuleComponent,
 		"GetMesh", &AGOIncRagdollPawn::GetMesh,
 		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
 		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent,
