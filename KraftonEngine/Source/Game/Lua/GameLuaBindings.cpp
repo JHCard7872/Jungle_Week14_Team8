@@ -144,6 +144,10 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			{
 				return CollisionEnabledToLuaString(Component.GetCollisionEnabled());
 			});
+			PrimitiveComponentType.set_function("SetGenerateOverlapEvents", &UPrimitiveComponent::SetGenerateOverlapEvents);
+			PrimitiveComponentType.set_function("GetGenerateOverlapEvents", &UPrimitiveComponent::GetGenerateOverlapEvents);
+			PrimitiveComponentType.set_function("SetKinematicPhysics", &UPrimitiveComponent::SetKinematicPhysics);
+			PrimitiveComponentType.set_function("GetKinematicPhysics", &UPrimitiveComponent::GetKinematicPhysics);
 			PrimitiveComponentType.set_function("IsCollisionEnabled", &UPrimitiveComponent::IsCollisionEnabled);
 			PrimitiveComponentType.set_function("IsQueryCollisionEnabled", &UPrimitiveComponent::IsQueryCollisionEnabled);
 			PrimitiveComponentType.set_function("IsPhysicsCollisionEnabled", &UPrimitiveComponent::IsPhysicsCollisionEnabled);

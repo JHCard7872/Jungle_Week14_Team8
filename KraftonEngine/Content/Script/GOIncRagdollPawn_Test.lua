@@ -10,6 +10,7 @@
 local STATE_DEAD = "DeadRagdoll"
 local STATE_ALIVE = "AliveFlee"
 local SYNC_BONE_NAME = "Pelvis"
+local PLAYER_TAG = "Player"
 
 local pawn = nil
 local capsule = nil
@@ -19,6 +20,10 @@ local state = STATE_DEAD
 
 local function is_valid(value)
     return value ~= nil and (value.IsValid == nil or value:IsValid())
+end
+
+local function is_player_actor(actor)
+    return is_valid(actor) and actor.HasTag ~= nil and actor:HasTag(PLAYER_TAG)
 end
 
 local function cache_components()
@@ -93,7 +98,7 @@ local function get_manual_move_direction()
 end
 
 local function get_flee_direction()
-    local player = World.FindFirstActorByTag("Player")
+    local player = World.FindFirstActorByTag(PLAYER_TAG)
     if is_valid(player) then
         local dir = obj.Location - player.Location
         dir.Z = 0.0
@@ -125,8 +130,15 @@ function EnterDeadRagdoll()
     end
 
     if capsule ~= nil then
+        -- Dead state uses the pawn capsule as a revive trigger.
+        -- The ragdoll mesh remains physical, but revive detection is based on
+        -- Player entering this capsule area, not on hitting individual bones.
+        -- Keep the capsule kinematic so PhysX can generate trigger pairs
+        -- against non-simulating player/controller shapes.
         capsule:SetSimulatePhysics(false)
-        capsule:SetCollisionEnabled("NoCollision")
+        capsule:SetKinematicPhysics(true)
+        capsule:SetGenerateOverlapEvents(true)
+        capsule:SetCollisionEnabled("QueryOnly")
     end
 
     if mesh ~= nil then
@@ -155,6 +167,8 @@ function EnterAliveFlee()
 
     if capsule ~= nil then
         capsule:SetSimulatePhysics(false)
+        capsule:SetKinematicPhysics(true)
+        capsule:SetGenerateOverlapEvents(false)
         capsule:SetCollisionEnabled("QueryOnly")
     end
 
@@ -198,8 +212,15 @@ function Tick(dt)
     end
 end
 
-function OnHit(other, hitComp, otherComp, normalImpulse, hitResult)
-    if state == STATE_ALIVE then
-        EnterDeadRagdoll()
+function OnOverlap(other, overlappedComp, otherComp)
+    if state ~= STATE_DEAD then
+        return
     end
+
+    if not is_player_actor(other) then
+        return
+    end
+
+    print("[GOIncRagdollPawn_Test] Player overlapped revive capsule -> AliveFlee")
+    EnterAliveFlee()
 end

@@ -182,6 +182,192 @@
           "bTickEnable" : true
         }
       }
+    }, {
+      "ClassName" : "AGOIncRagdollPawn",
+      "Name" : "AGOIncRagdollPawn_0",
+      "NonSceneComponents" : [{
+          "ClassName" : "UGOIncRagdollMovementComponent",
+          "ObjectId" : 11,
+          "Properties" : {
+            "Acceleration" : 15.000000,
+            "BrakingDeceleration" : 10.000000,
+            "MaxSpeed" : 4.000000,
+            "ObjectName" : "UGOIncRagdollMovementComponent_0",
+            "bAutoActivate" : true,
+            "bAutoRegisterUpdatedComponent" : false,
+            "bEditorOnly" : false,
+            "bHiddenInComponentTree" : false,
+            "bIsActive" : true,
+            "bMovementEnabled" : false,
+            "bTickEnable" : true
+          }
+        }, {
+          "ClassName" : "ULuaScriptComponent",
+          "ObjectId" : 12,
+          "Properties" : {
+            "ObjectName" : "ULuaScriptComponent_0",
+            "ScriptFile" : "GOIncRagdollPawn_Test.lua",
+            "bAutoActivate" : true,
+            "bEditorOnly" : false,
+            "bHiddenInComponentTree" : false,
+            "bIsActive" : true,
+            "bTickEnable" : true
+          }
+        }],
+      "ObjectId" : 8,
+      "Properties" : {
+        "ObjectName" : "AGOIncRagdollPawn_0",
+        "PendingActorLocation" : [-6.031500, -4.466535, 2.999797],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bAutoPossessPlayer" : false,
+        "bNeedsTick" : true,
+        "bUseControllerRotationPitch" : true,
+        "bUseControllerRotationRoll" : false,
+        "bUseControllerRotationYaw" : false
+      },
+      "RootComponent" : {
+        "Children" : [{
+            "Children" : [],
+            "ClassName" : "USkeletalMeshComponent",
+            "ObjectId" : 10,
+            "Properties" : {
+              "AnimInstanceClass" : "None",
+              "AnimationData" : {
+                "AnimToPlay" : null,
+                "AnimToPlayPath" : "None",
+                "PlayRate" : 1.000000,
+                "bLooping" : true,
+                "bPlaying" : true
+              },
+              "AnimationMode" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "LuaAnimScriptFile" : "",
+              "Mass" : 1.000000,
+              "MaterialSlots" : ["Content/Material/Auto/TexMap.mat"],
+              "ObjectName" : "USkeletalMeshComponent_2",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RagdollPhysicsBlendWeight" : 1.000000,
+              "RagdollRecoveryDuration" : 0.350000,
+              "RagdollSelfCollisionMode" : [1, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "SkeletalMeshPath" : "Content/Data/Mario2/Mario2_SkeletalMesh.uasset",
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bCreateRagdollConstraints" : true,
+              "bEditorOnly" : false,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : false,
+              "bIsActive" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bRagdollEnabled" : true,
+              "bRagdollGravityEnabled" : true,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            }
+          }],
+        "ClassName" : "UCapsuleComponent",
+        "ObjectId" : 9,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CapsuleHalfHeight" : 3.000000,
+          "CapsuleRadius" : 1.800000,
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "ObjectName" : "UCapsuleComponent_0",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-6.031500, -4.466535, 2.999797],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "ShapeColor" : [0.000000, 1.000000, 0.000000, 1.000000],
+          "bAutoActivate" : true,
+          "bCastShadow" : false,
+          "bCastShadowAsTwoSided" : false,
+          "bDrawOnlyIfSelected" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true
+        }
+      }
+    }, {
+      "ClassName" : "ABoxActor",
+      "Name" : "ABoxActor_0",
+      "NonSceneComponents" : [],
+      "ObjectId" : 13,
+      "Properties" : {
+        "ObjectName" : "ABoxActor_0",
+        "PendingActorLocation" : [-2.481875, -5.913435, -0.000203],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "Player",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UBoxComponent",
+        "ObjectId" : 14,
+        "Properties" : {
+          "BoxExtent" : [1.000000, 1.000000, 1.000000],
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "ObjectName" : "UBoxComponent_0",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-2.481875, -5.913435, -0.000203],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "ShapeColor" : [0.000000, 1.000000, 0.000000, 1.000000],
+          "bAutoActivate" : true,
+          "bCastShadow" : false,
+          "bCastShadowAsTwoSided" : false,
+          "bDrawOnlyIfSelected" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : true,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : true,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true
+        }
+      }
     }],
   "ClassName" : "UWorld",
   "ContextHandle" : "NewScene",
@@ -191,9 +377,9 @@
   "PerspectiveCamera" : {
     "FOV" : 1.047198,
     "FarClip" : 1000.000000,
-    "Location" : [6.565279, 1.831530, 4.442009],
+    "Location" : [1.127294, -0.409644, 6.477699],
     "NearClip" : 0.100000,
-    "Rotation" : [0.000000, 29.115036, 176.700150]
+    "Rotation" : [0.000000, 32.565033, 203.099503]
   },
   "Version" : 2,
   "WorldSettings" : {
