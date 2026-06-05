@@ -10,11 +10,12 @@
 namespace
 {
 	const FString DefaultGOIncRagdollSkeletalMeshFileName = "Content/Data/Mario2/Mario2_SkeletalMesh.uasset";
+	const FString DefaultGOIncRagdollLuaScriptFileName = "GOIncRagdollPawn_Test.lua";
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents()
 {
-	InitDefaultComponents(DefaultGOIncRagdollSkeletalMeshFileName, FString());
+	InitDefaultComponents(DefaultGOIncRagdollSkeletalMeshFileName, DefaultGOIncRagdollLuaScriptFileName);
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileName, const FString& ScriptFile)
