@@ -4,6 +4,7 @@
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "GameFramework/Actor/4WVehicleActor.h"
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
+#include "GameFramework/Actor/RagdollActor.h"
 #include "GameFramework/World.h"
 
 // ============================================================
@@ -15,6 +16,19 @@
 // ============================================================
 void RegisterGameActorPlacements()
 {
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"Ragdoll Actor",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			ARagdollActor* Actor = World ? World->SpawnActor<ARagdollActor>() : nullptr;
+			if (Actor)
+			{
+				Actor->InitDefaultComponents();
+				Actor->SetActorLocation(Location);
+			}
+			return Actor;
+		});
+
 	FActorPlacementRegistry::Get().RegisterEntry(
 		"Physical Animation Actor",
 		[](UWorld* World, const FVector& Location) -> AActor*

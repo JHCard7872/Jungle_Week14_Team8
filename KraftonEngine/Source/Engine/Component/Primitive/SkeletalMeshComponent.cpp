@@ -1713,6 +1713,39 @@ void USkeletalMeshComponent::EndPhysicalAnimation(bool bUseRecovery)
     else ForceStopRagdollWithoutRecovery();
 }
 
+void USkeletalMeshComponent::SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode InMode)
+{
+    if (RagdollSelfCollisionMode == InMode)
+    {
+        return;
+    }
+
+    RagdollSelfCollisionMode = InMode;
+
+    if (!bRagdollActive)
+    {
+        return;
+    }
+
+    DestroyRagdollConstraints();
+    DestroyRagdollBodies();
+
+    if (!CreateRagdollBodiesFromPhysicsAsset())
+    {
+        UE_LOG("SetRagdollSelfCollisionMode warning: no ragdoll bodies created");
+        return;
+    }
+
+    if (bCreateRagdollConstraints && !CreateRagdollConstraintsFromPhysicsAsset())
+    {
+        UE_LOG("SetRagdollSelfCollisionMode warning: no ragdoll constraints created");
+    }
+
+    ApplyRagdollBodySimulationFlags();
+    SetAllRagdollBodiesGravityEnabled(bRagdollGravityEnabled);
+    WakeAllRagdollBodies();
+}
+
 bool USkeletalMeshComponent::EvaluateAnimationPoseOnly(float DeltaTime, FPoseContext& OutPose)
 {
     return EvaluateAnimationPose(DeltaTime, OutPose);

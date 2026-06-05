@@ -142,6 +142,12 @@ public:
     UFUNCTION(Pure, Category = "Physics|PhysicalAnimation")
     bool IsPhysicalAnimationActive() const { return SkeletalPhysicsMode == ESkeletalPhysicsMode::PhysicalAnimation; }
 
+    UFUNCTION(Callable, Category = "Physics|Ragdoll")
+    void SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode InMode);
+
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    ERagdollSelfCollisionMode GetRagdollSelfCollisionMode() const { return RagdollSelfCollisionMode; }
+
     bool EvaluateAnimationPoseOnly(float DeltaTime, FPoseContext& OutPose);
     bool BuildWorldTransformsFromLocalPose(const TArray<FTransform>& LocalPose, TArray<FTransform>& OutWorldTransforms) const;
     void TickPhysicalAnimationPose(float DeltaTime);
