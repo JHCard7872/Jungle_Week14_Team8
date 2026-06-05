@@ -4,6 +4,7 @@
 #include "Editor/Subsystem/OverlayStatSystem.h"
 #include "Editor/Settings/EditorSettings.h"
 #include "Editor/Slate/SlateApplication.h"
+#include "Core/ProjectSettings.h"
 #include "Engine/Input/InputSystem.h"
 #include "Engine/Profiling/Time/PlatformTime.h"
 #include "Engine/Platform/WindowsWindow.h"
@@ -565,8 +566,12 @@ void FEditorViewportClient::TickInteraction(float DeltaTime)
 	// 마우스 좌표를 뷰포트 슬롯 로컬 좌표로 변환
 	// (ImGui screen space = 윈도우 클라이언트 좌표)
 	ImVec2 MousePos = ImGui::GetIO().MousePos;
-	float LocalMouseX = MousePos.x - ViewportScreenRect.X;
-	float LocalMouseY = MousePos.y - ViewportScreenRect.Y;
+	float LocalMouseX = 0.0f;
+	float LocalMouseY = 0.0f;
+	if (!ScreenToViewportPosition(MousePos.x, MousePos.y, LocalMouseX, LocalMouseY))
+	{
+		return;
+	}
 
 	// FViewport 크기 기준으로 디프로젝션 (슬롯 크기와 동기화됨)
 	float VPWidth = Viewport ? static_cast<float>(Viewport->GetWidth()) : WindowWidth;
@@ -652,8 +657,16 @@ void FEditorViewportClient::TickInteraction(float DeltaTime)
 						FVector ClipSpace = VP.TransformPositionWithW(WorldPos);
 
 						// NDX to Screen
-						float ScreenX = (ClipSpace.X * 0.5f + 0.5f) * VPWidth + ViewportScreenRect.X;
-						float ScreenY = (1.0f - (ClipSpace.Y * 0.5f + 0.5f)) * VPHeight + ViewportScreenRect.Y;
+						float ScreenX = 0.0f;
+						float ScreenY = 0.0f;
+						if (!ViewportToScreenPosition(
+							(ClipSpace.X * 0.5f + 0.5f) * VPWidth,
+							(1.0f - (ClipSpace.Y * 0.5f + 0.5f)) * VPHeight,
+							ScreenX,
+							ScreenY))
+						{
+							continue;
+						}
 
 						if (ScreenX >= MinX && ScreenX <= MaxX && ScreenY >= MinY && ScreenY <= MaxY)
 						{
@@ -747,13 +760,32 @@ void FEditorViewportClient::UpdateLayoutRect()
 	if (!LayoutWindow) return;
 
 	const FRect& R = LayoutWindow->GetRect();
+	ViewportLayoutRect = R;
 	ViewportScreenRect = R;
 
 	// FViewport 리사이즈 요청 (슬롯 크기와 RT 크기 동기화)
 	if (Viewport)
 	{
+		const FProjectSettings& ProjectSettings = FProjectSettings::Get();
 		uint32 SlotW = static_cast<uint32>(R.Width);
 		uint32 SlotH = static_cast<uint32>(R.Height);
+		if (ProjectSettings.Game.bLockEditorPIEResolution)
+		{
+			SlotW = ProjectSettings.Game.GameWindowWidth;
+			SlotH = ProjectSettings.Game.GameWindowHeight;
+			if (SlotW > 0 && SlotH > 0 && R.Width > 0.0f && R.Height > 0.0f)
+			{
+				const float WidthScale = R.Width / static_cast<float>(SlotW);
+				const float HeightScale = R.Height / static_cast<float>(SlotH);
+				const float Scale = (std::min)(WidthScale, HeightScale);
+				const float DrawWidth = static_cast<float>(SlotW) * Scale;
+				const float DrawHeight = static_cast<float>(SlotH) * Scale;
+				ViewportScreenRect.X = R.X + (R.Width - DrawWidth) * 0.5f;
+				ViewportScreenRect.Y = R.Y + (R.Height - DrawHeight) * 0.5f;
+				ViewportScreenRect.Width = DrawWidth;
+				ViewportScreenRect.Height = DrawHeight;
+			}
+		}
 		if (SlotW > 0 && SlotH > 0 && (SlotW != Viewport->GetWidth() || SlotH != Viewport->GetHeight()))
 		{
 			Viewport->RequestResize(SlotW, SlotH);
@@ -766,9 +798,17 @@ void FEditorViewportClient::RenderViewportImage(bool bIsActiveViewport)
 	if (!Viewport || !Viewport->GetSRV()) return;
 
 	const FRect& R = ViewportScreenRect;
+	const FRect& LayoutR = ViewportLayoutRect;
 	if (R.Width <= 0 || R.Height <= 0) return;
 
 	ImDrawList* DrawList = ImGui::GetWindowDrawList();
+	if (LayoutR.Width > 0.0f && LayoutR.Height > 0.0f)
+	{
+		DrawList->AddRectFilled(
+			ImVec2(LayoutR.X, LayoutR.Y),
+			ImVec2(LayoutR.X + LayoutR.Width, LayoutR.Y + LayoutR.Height),
+			IM_COL32(0, 0, 0, 255));
+	}
 	ImVec2 Min(R.X, R.Y);
 	ImVec2 Max(R.X + R.Width, R.Y + R.Height);
 
@@ -798,14 +838,64 @@ bool FEditorViewportClient::GetCursorViewportPosition(uint32& OutX, uint32& OutY
 	if (!bIsActive) return false;
 
 	ImVec2 MousePos = ImGui::GetIO().MousePos;
-	float LocalX = MousePos.x - ViewportScreenRect.X;
-	float LocalY = MousePos.y - ViewportScreenRect.Y;
+	float LocalX = 0.0f;
+	float LocalY = 0.0f;
+	if (!ScreenToViewportPosition(MousePos.x, MousePos.y, LocalX, LocalY))
+	{
+		return false;
+	}
 
-	if (LocalX >= 0 && LocalY >= 0 && LocalX < ViewportScreenRect.Width && LocalY < ViewportScreenRect.Height)
+	const float VPWidth = Viewport ? static_cast<float>(Viewport->GetWidth()) : ViewportScreenRect.Width;
+	const float VPHeight = Viewport ? static_cast<float>(Viewport->GetHeight()) : ViewportScreenRect.Height;
+
+	if (MousePos.x >= ViewportScreenRect.X && MousePos.y >= ViewportScreenRect.Y &&
+		MousePos.x < ViewportScreenRect.X + ViewportScreenRect.Width &&
+		MousePos.y < ViewportScreenRect.Y + ViewportScreenRect.Height &&
+		LocalX >= 0.0f && LocalY >= 0.0f && LocalX < VPWidth && LocalY < VPHeight)
 	{
 		OutX = static_cast<uint32>(LocalX);
 		OutY = static_cast<uint32>(LocalY);
 		return true;
 	}
 	return false;
+}
+
+bool FEditorViewportClient::ScreenToViewportPosition(float ScreenX, float ScreenY, float& OutViewportX, float& OutViewportY) const
+{
+	const float ScreenWidth = ViewportScreenRect.Width;
+	const float ScreenHeight = ViewportScreenRect.Height;
+	const float VPWidth = Viewport ? static_cast<float>(Viewport->GetWidth()) : ScreenWidth;
+	const float VPHeight = Viewport ? static_cast<float>(Viewport->GetHeight()) : ScreenHeight;
+	if (ScreenWidth <= 0.0f || ScreenHeight <= 0.0f || VPWidth <= 0.0f || VPHeight <= 0.0f)
+	{
+		return false;
+	}
+	if (ScreenX < ViewportScreenRect.X || ScreenY < ViewportScreenRect.Y ||
+		ScreenX >= ViewportScreenRect.X + ScreenWidth ||
+		ScreenY >= ViewportScreenRect.Y + ScreenHeight)
+	{
+		return false;
+	}
+
+	const float NormalizedX = (ScreenX - ViewportScreenRect.X) / ScreenWidth;
+	const float NormalizedY = (ScreenY - ViewportScreenRect.Y) / ScreenHeight;
+	OutViewportX = NormalizedX * VPWidth;
+	OutViewportY = NormalizedY * VPHeight;
+	return true;
+}
+
+bool FEditorViewportClient::ViewportToScreenPosition(float ViewportX, float ViewportY, float& OutScreenX, float& OutScreenY) const
+{
+	const float ScreenWidth = ViewportScreenRect.Width;
+	const float ScreenHeight = ViewportScreenRect.Height;
+	const float VPWidth = Viewport ? static_cast<float>(Viewport->GetWidth()) : ScreenWidth;
+	const float VPHeight = Viewport ? static_cast<float>(Viewport->GetHeight()) : ScreenHeight;
+	if (ScreenWidth <= 0.0f || ScreenHeight <= 0.0f || VPWidth <= 0.0f || VPHeight <= 0.0f)
+	{
+		return false;
+	}
+
+	OutScreenX = ViewportScreenRect.X + (ViewportX / VPWidth) * ScreenWidth;
+	OutScreenY = ViewportScreenRect.Y + (ViewportY / VPHeight) * ScreenHeight;
+	return true;
 }

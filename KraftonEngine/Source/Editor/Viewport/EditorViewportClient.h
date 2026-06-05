@@ -80,6 +80,8 @@ public:
 
 	// 마우스가 뷰포트 안에 있으면 뷰포트 로컬 좌표 반환 (시각화용)
 	bool GetCursorViewportPosition(uint32& OutX, uint32& OutY) const;
+	bool ScreenToViewportPosition(float ScreenX, float ScreenY, float& OutViewportX, float& OutViewportY) const;
+	bool ViewportToScreenPosition(float ViewportX, float ViewportY, float& OutScreenX, float& OutScreenY) const;
 
 	// SWindow 레이아웃 연결 — SSplitter 리프 노드
 	void SetLayoutWindow(SWindow* InWindow) { LayoutWindow = InWindow; }
@@ -129,6 +131,7 @@ private:
 	float WindowHeight = 1080.f;
 
 	bool bIsActive = false;
+	FRect ViewportLayoutRect;
 	// 뷰포트 슬롯의 스크린 좌표 (ImGui screen space = 윈도우 클라이언트 좌표)
 	FRect ViewportScreenRect;
 

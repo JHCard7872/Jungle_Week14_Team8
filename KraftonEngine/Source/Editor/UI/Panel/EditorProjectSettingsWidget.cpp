@@ -5,6 +5,8 @@
 #include "Object/Reflection/UClass.h"
 #include "ImGui/imgui.h"
 
+#include <algorithm>
+
 void EditorProjectSettingsWidget::Render(const FEditorPanelContext& Context)
 {
 	(void)Context;
@@ -87,7 +89,23 @@ void EditorProjectSettingsWidget::Render(const FEditorPanelContext& Context)
 			}
 			ImGui::EndCombo();
 		}
+		int GameWindowWidth = static_cast<int>(PS.Game.GameWindowWidth);
+		if (ImGui::InputInt("Game Window Width", &GameWindowWidth))
+		{
+			PS.Game.GameWindowWidth = static_cast<uint32>(std::clamp(GameWindowWidth, 320, 8192));
+		}
+
+		int GameWindowHeight = static_cast<int>(PS.Game.GameWindowHeight);
+		if (ImGui::InputInt("Game Window Height", &GameWindowHeight))
+		{
+			PS.Game.GameWindowHeight = static_cast<uint32>(std::clamp(GameWindowHeight, 240, 8192));
+		}
+
+		ImGui::Checkbox("Start Fullscreen", &PS.Game.bStartFullscreen);
+		ImGui::Checkbox("Lock Editor / PIE Resolution", &PS.Game.bLockEditorPIEResolution);
 		ImGui::TextDisabled("Requires scene reload to take effect.");
+		ImGui::TextDisabled("Standalone uses these values on next launch.");
+		ImGui::TextDisabled("Editor / PIE lock applies to viewport render resolution.");
 	}
 
 	if (ImGui::CollapsingHeader("Shadow", ImGuiTreeNodeFlags_DefaultOpen))

@@ -30,6 +30,10 @@ class FProjectSettings : public TSingleton<FProjectSettings>
 		FString StartLevelName;     // Scene 파일 이름 (확장자 제외)
 		FString GameModeClassName;  // ""면 GameEngine이 코드로 지정한 디폴트 사용.
 		                            // 잘못된 이름이거나 AGameModeBase 파생이 아니면 디폴트 fallback.
+		uint32 GameWindowWidth = 1920;   // Standalone / build 시작 클라이언트 해상도 너비
+		uint32 GameWindowHeight = 1080;  // Standalone / build 시작 클라이언트 해상도 높이
+		bool bStartFullscreen = false;   // true면 시작 시 전체화면(보더리스)으로 생성
+		bool bLockEditorPIEResolution = false; // true면 에디터/PIE 렌더 타깃을 위 해상도로 고정
 	};
 
 public:

@@ -4,10 +4,31 @@
 #include <windowsx.h>
 #include <vector>
 
+#include "Core/ProjectSettings.h"
 #include "Engine/Input/InputSystem.h"
 
 // ImGui Win32 메시지 핸들러
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, unsigned int Msg, WPARAM wParam, LPARAM lParam);
+
+namespace
+{
+	constexpr uint32 DefaultGameWindowWidth = 1920;
+	constexpr uint32 DefaultGameWindowHeight = 1080;
+
+	void ResolveGameWindowSettings(uint32& OutWidth, uint32& OutHeight, bool& OutFullscreen)
+	{
+		FProjectSettings& ProjectSettings = FProjectSettings::Get();
+		ProjectSettings.LoadFromFile(FProjectSettings::GetDefaultPath());
+
+		OutWidth = ProjectSettings.Game.GameWindowWidth > 0 ? ProjectSettings.Game.GameWindowWidth : DefaultGameWindowWidth;
+		OutHeight = ProjectSettings.Game.GameWindowHeight > 0 ? ProjectSettings.Game.GameWindowHeight : DefaultGameWindowHeight;
+#if WITH_STANDALONE
+		OutFullscreen = ProjectSettings.Game.bStartFullscreen;
+#else
+		OutFullscreen = false;
+#endif
+	}
+}
 
 LRESULT CALLBACK FWindowsApplication::StaticWndProc(HWND hWnd, unsigned int Msg, WPARAM wParam, LPARAM lParam)
 {
@@ -114,13 +135,45 @@ bool FWindowsApplication::Init(HINSTANCE InHInstance)
 
 	RegisterClassExW(&WndClass);
 
+	uint32 RequestedWidth = DefaultGameWindowWidth;
+	uint32 RequestedHeight = DefaultGameWindowHeight;
+	bool bStartFullscreen = false;
+	ResolveGameWindowSettings(RequestedWidth, RequestedHeight, bStartFullscreen);
+
+	DWORD WindowStyle = WS_VISIBLE | (bStartFullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW);
+	int WindowX = CW_USEDEFAULT;
+	int WindowY = CW_USEDEFAULT;
+	int WindowWidth = static_cast<int>(RequestedWidth);
+	int WindowHeight = static_cast<int>(RequestedHeight);
+
+	if (bStartFullscreen)
+	{
+		MONITORINFO MonitorInfo = {};
+		MonitorInfo.cbSize = sizeof(MONITORINFO);
+		HMONITOR Monitor = MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY);
+		if (GetMonitorInfoW(Monitor, &MonitorInfo))
+		{
+			WindowX = MonitorInfo.rcMonitor.left;
+			WindowY = MonitorInfo.rcMonitor.top;
+			WindowWidth = MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left;
+			WindowHeight = MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top;
+		}
+	}
+	else
+	{
+		RECT WindowRect = { 0, 0, static_cast<LONG>(RequestedWidth), static_cast<LONG>(RequestedHeight) };
+		AdjustWindowRect(&WindowRect, WindowStyle, FALSE);
+		WindowWidth = WindowRect.right - WindowRect.left;
+		WindowHeight = WindowRect.bottom - WindowRect.top;
+	}
+
 	HWND HWindow = CreateWindowExW(
 		0,
 		WindowClass,
 		Title,
-		WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT,
-		1920, 1080,
+		WindowStyle,
+		WindowX, WindowY,
+		WindowWidth, WindowHeight,
 		nullptr, nullptr, HInstance, this);
 
 	if (!HWindow)
