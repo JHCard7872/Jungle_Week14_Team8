@@ -2056,6 +2056,9 @@
       <Filter>Intermediate\Generated</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.cpp" />
+    <ClCompile Include="Source\Game\GameMode\GOIncGameMode.cpp" />
+    <ClCompile Include="Source\Game\GameMode\GOIncGameState.cpp" />
+    <ClCompile Include="Source\Game\GameMode\GOIncPlayerController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Editor\EditorEngine.h">
@@ -5806,6 +5809,10 @@
       <Filter>ThirdParty\sol2\include\sol\utility</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.h" />
+    <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
+    <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
+    <ClInclude Include="Source\Game\GameMode\GOIncGameMode.h" />
+    <ClInclude Include="Source\Game\GameMode\GOIncGameState.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="KraftonEngine.rc" />
