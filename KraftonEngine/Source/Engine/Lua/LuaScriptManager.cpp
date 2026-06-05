@@ -13,10 +13,13 @@
 #include "Component/SceneComponent.h"
 #include "Component/Primitive/ParticleSystemComponent.h"
 #include "Component/Primitive/StaticMeshComponent.h"
+#include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Core/Types/CollisionTypes.h"
 #include "Runtime/Engine.h"
 #include "Viewport/GameViewportClient.h"
+#include "Viewport/Viewport.h"
 #include "Input/InputSystem.h"
+#include "Physics/BodyInstance.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/Pawn/Character.h"
 #include "GameFramework/Pawn/Pawn.h"
@@ -26,6 +29,7 @@
 #include "GameFramework/Camera/SequenceCameraShake.h"
 #include "GameFramework/GameMode/GameplayStatics.h"
 #include "GameFramework/World.h"
+#include "Render/Types/MinimalViewInfo.h"
 #include "Object/Reflection/UClass.h"
 #include "Object/Reflection/UStruct.h"
 #include "Object/Object.h"
@@ -48,6 +52,7 @@
 #include "UI/UIManager.h"
 #include "UI/UserWidget.h"
 #include <algorithm>
+#include <cmath>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -63,6 +68,39 @@ FSubscriptionID FLuaScriptManager::WatchSub = 0;
 
 namespace
 {
+	bool GetLuaViewportSize(float& OutWidth, float& OutHeight)
+	{
+		OutWidth = 0.0f;
+		OutHeight = 0.0f;
+
+		if (!GEngine)
+		{
+			return false;
+		}
+
+		if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+		{
+			if (FViewport* Viewport = GameViewportClient->GetViewport())
+			{
+				OutWidth = static_cast<float>(Viewport->GetWidth());
+				OutHeight = static_cast<float>(Viewport->GetHeight());
+				if (OutWidth > 0.0f && OutHeight > 0.0f)
+				{
+					return true;
+				}
+			}
+		}
+
+		if (FWindowsWindow* Window = GEngine->GetWindow())
+		{
+			OutWidth = static_cast<float>(Window->GetWidth());
+			OutHeight = static_cast<float>(Window->GetHeight());
+			return OutWidth > 0.0f && OutHeight > 0.0f;
+		}
+
+		return false;
+	}
+
 	struct FLuaReflectedEventOverride
 	{
 		TWeakObjectPtr<UObject> Target;
@@ -184,6 +222,7 @@ namespace
 		Result["Distance"] = Hit.Distance;
 		Result["HitActor"] = Hit.HitActor;
 		Result["HitComponent"] = Hit.HitComponent;
+		Result["PhysicsBody"] = Hit.PhysicsBody;
 		return Result;
 	}
 }
@@ -1891,15 +1930,164 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 		Result["Width"] = 0.0f;
 		Result["Height"] = 0.0f;
 
-		if (GEngine)
+		float ViewportWidth = 0.0f;
+		float ViewportHeight = 0.0f;
+		if (GetLuaViewportSize(ViewportWidth, ViewportHeight))
 		{
-			if (FWindowsWindow* Window = GEngine->GetWindow())
-			{
-				Result["Width"] = Window->GetWidth();
-				Result["Height"] = Window->GetHeight();
-			}
+			Result["Width"] = ViewportWidth;
+			Result["Height"] = ViewportHeight;
 		}
 
+		return Result;
+	});
+	Engine.set_function("GetViewportCenterRay", []() -> sol::table
+	{
+		sol::table Result = FLuaScriptManager::GetState().create_table();
+		Result["bValid"] = false;
+		Result["Width"] = 0.0f;
+		Result["Height"] = 0.0f;
+		Result["ScreenX"] = 0.0f;
+		Result["ScreenY"] = 0.0f;
+		Result["Origin"] = FVector(0.0f, 0.0f, 0.0f);
+		Result["NearOrigin"] = FVector(0.0f, 0.0f, 0.0f);
+		Result["Direction"] = FVector(1.0f, 0.0f, 0.0f);
+
+		if (!GEngine)
+		{
+			return Result;
+		}
+
+		UWorld* World = GEngine->GetWorld();
+		if (!World)
+		{
+			return Result;
+		}
+
+		float ViewportWidth = 0.0f;
+		float ViewportHeight = 0.0f;
+		GetLuaViewportSize(ViewportWidth, ViewportHeight);
+		const float ScreenX = ViewportWidth * 0.5f;
+		const float ScreenY = ViewportHeight * 0.5f;
+		Result["Width"] = ViewportWidth;
+		Result["Height"] = ViewportHeight;
+		Result["ScreenX"] = ScreenX;
+		Result["ScreenY"] = ScreenY;
+		if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+		{
+			return Result;
+		}
+
+		FMinimalViewInfo POV;
+		bool bHasPOV = false;
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APlayerCameraManager* CameraManager = PC->GetPlayerCameraManager())
+			{
+				bHasPOV = CameraManager->GetCameraView(POV);
+			}
+		}
+		if (!bHasPOV)
+		{
+			bHasPOV = World->GetActivePOV(POV);
+		}
+		if (!bHasPOV)
+		{
+			return Result;
+		}
+
+		POV.AspectRatio = ViewportWidth / ViewportHeight;
+		const FRay Ray = POV.DeprojectScreenToWorld(ScreenX, ScreenY, ViewportWidth, ViewportHeight);
+		FVector Direction = Ray.Direction;
+		if (Direction.Length() <= 0.0001f)
+		{
+			Direction = POV.Rotation.GetForwardVector();
+		}
+		Direction.Normalize();
+
+		Result["Origin"] = POV.Location;
+		Result["NearOrigin"] = Ray.Origin;
+		Result["Direction"] = Direction;
+		Result["bValid"] = true;
+		return Result;
+	});
+	Engine.set_function("ProjectWorldToScreen", [](const FVector& WorldPosition) -> sol::table
+	{
+		sol::table Result = FLuaScriptManager::GetState().create_table();
+		Result["X"] = 0.0f;
+		Result["Y"] = 0.0f;
+		Result["Depth"] = 0.0f;
+		Result["Width"] = 0.0f;
+		Result["Height"] = 0.0f;
+		Result["bValid"] = false;
+		Result["bInFront"] = false;
+		Result["bOnScreen"] = false;
+
+		if (!GEngine)
+		{
+			return Result;
+		}
+
+		UWorld* World = GEngine->GetWorld();
+		if (!World)
+		{
+			return Result;
+		}
+
+		float ViewportWidth = 0.0f;
+		float ViewportHeight = 0.0f;
+		GetLuaViewportSize(ViewportWidth, ViewportHeight);
+		Result["Width"] = ViewportWidth;
+		Result["Height"] = ViewportHeight;
+		if (ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+		{
+			return Result;
+		}
+
+		FMinimalViewInfo POV;
+		bool bHasPOV = false;
+		if (APlayerController* PC = World->GetFirstPlayerController())
+		{
+			if (APlayerCameraManager* CameraManager = PC->GetPlayerCameraManager())
+			{
+				bHasPOV = CameraManager->GetCameraView(POV);
+			}
+		}
+		if (!bHasPOV)
+		{
+			bHasPOV = World->GetActivePOV(POV);
+		}
+		if (!bHasPOV)
+		{
+			return Result;
+		}
+
+		POV.AspectRatio = ViewportWidth / ViewportHeight;
+		const FMatrix ViewProjection = POV.CalculateViewProjectionMatrix();
+		const FVector Clip = ViewProjection.TransformPositionWithW(WorldPosition);
+		if (!std::isfinite(Clip.X) || !std::isfinite(Clip.Y) || !std::isfinite(Clip.Z))
+		{
+			return Result;
+		}
+
+		const FVector ToPoint = WorldPosition - POV.Location;
+		const float Depth = ToPoint.Dot(POV.Rotation.GetForwardVector());
+		Result["Depth"] = Depth;
+		Result["bInFront"] = Depth > 0.0001f;
+		if (Depth <= 0.0001f)
+		{
+			return Result;
+		}
+
+		const float ScreenX = (Clip.X * 0.5f + 0.5f) * ViewportWidth;
+		const float ScreenY = (0.5f - Clip.Y * 0.5f) * ViewportHeight;
+
+		Result["X"] = ScreenX;
+		Result["Y"] = ScreenY;
+		Result["bValid"] = true;
+		Result["bOnScreen"] = ScreenX >= 0.0f
+			&& ScreenX <= ViewportWidth
+			&& ScreenY >= 0.0f
+			&& ScreenY <= ViewportHeight;
 		return Result;
 	});
 	Engine.set_function("Exit", []()
@@ -2536,6 +2724,61 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		[](USceneComponent& Component, const FVector& V) { Component.SetRelativeLocation(V); }
 		));
 
+	Lua.new_usertype<FBodyInstance>("PhysicsBody",
+		"IsValid", [](FBodyInstance& Body)
+		{
+			return Body.IsValidBodyInstance();
+		},
+		"IsDynamic", [](FBodyInstance& Body)
+		{
+			return Body.GetRigidDynamic() != nullptr;
+		},
+		"IsKinematic", [](FBodyInstance& Body)
+		{
+			return Body.bKinematic;
+		},
+		"SetKinematic", &FBodyInstance::SetKinematic,
+		"SetGravityEnabled", &FBodyInstance::SetGravityEnabled,
+		"WakeUp", &FBodyInstance::WakeUp,
+		"AddForce", &FBodyInstance::AddForce,
+		"AddImpulse", &FBodyInstance::AddImpulse,
+		"AddForceAtLocation", &FBodyInstance::AddForceAtLocation,
+		"AddTorque", &FBodyInstance::AddTorque,
+		"GetLinearVelocity", &FBodyInstance::GetLinearVelocity,
+		"SetLinearVelocity", &FBodyInstance::SetLinearVelocity,
+		"GetAngularVelocity", &FBodyInstance::GetAngularVelocity,
+		"SetAngularVelocity", &FBodyInstance::SetAngularVelocity,
+		"GetMass", &FBodyInstance::GetMass,
+		"SetMass", &FBodyInstance::SetMass,
+		"GetLocation", [](FBodyInstance& Body)
+		{
+			return Body.GetBodyTransform().GetLocation();
+		},
+		"WorldToLocalPoint", [](FBodyInstance& Body, const FVector& WorldPoint)
+		{
+			return Body.GetBodyTransform().ToMatrix().GetAffineInverse().TransformPositionWithW(WorldPoint);
+		},
+		"LocalToWorldPoint", [](FBodyInstance& Body, const FVector& LocalPoint)
+		{
+			return Body.GetBodyTransform().TransformPosition(LocalPoint);
+		},
+		"GetOwnerActor", [](FBodyInstance& Body) -> AActor*
+		{
+			return Body.GetOwnerActor();
+		},
+		"GetOwnerComponent", [](FBodyInstance& Body) -> UPrimitiveComponent*
+		{
+			return Body.OwnerComponent ? Body.OwnerComponent : Body.OwnerSkeletalComponent;
+		},
+		"GetBoneName", [](FBodyInstance& Body)
+		{
+			return Body.BoneName.ToString();
+		},
+		"BoneName", sol::property([](FBodyInstance& Body)
+		{
+			return Body.BoneName.ToString();
+		}));
+
 	Lua.new_usertype<UPrimitiveComponent>("PrimitiveComponent",
 		sol::base_classes,
 		sol::bases<USceneComponent, UActorComponent, UObject>(),
@@ -2600,6 +2843,7 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 	Lua.new_usertype<FHitResult>("HitResult",
 		"HitComponent", &FHitResult::HitComponent,
 		"HitActor", &FHitResult::HitActor,
+		"PhysicsBody", &FHitResult::PhysicsBody,
 		"Distance", &FHitResult::Distance,
 		"PenetrationDepth", &FHitResult::PenetrationDepth,
 		"WorldHitLocation", &FHitResult::WorldHitLocation,

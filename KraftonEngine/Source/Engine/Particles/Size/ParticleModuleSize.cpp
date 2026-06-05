@@ -8,10 +8,10 @@ void UParticleModuleSize::Spawn(const FSpawnContext& Context)
 	SPAWN_INIT;
 	FVector Size = StartSize.GetValue(Context.Owner.EmitterTime);
 
-	Particle.Size += Size;
+	Particle.Size = Size;
 	// Flip 을 Scale 로 표현. 
 	// AdjustParticleBaseSizeForUVFlipping(Size, Context.Owner.GetCurrentLODLevelChecked()->RequiredModule.UVFlippingMode, *InRandomStream);
-	Particle.BaseSize += Size;
+	Particle.BaseSize = Size;
 }
 
 #if WITH_EDITOR

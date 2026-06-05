@@ -38,6 +38,7 @@ private:
 		FDynamicVertexBuffer InstanceVB;
 		FDynamicIndexBuffer  DynamicIB;
 		FConstantBuffer      ParticleFrameCB;
+		FConstantBuffer      BeamTrailMaterialCB;
 		TArray<uint8>        StagingBuffer;
 		TArray<uint32>       StagingIndices;
 
