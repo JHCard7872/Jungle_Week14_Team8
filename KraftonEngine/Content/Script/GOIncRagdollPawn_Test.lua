@@ -60,9 +60,10 @@ local bWarnedMissingSetPlayRate = false
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
--- 1차 데이터 기반화: 우선 Sonic 기준 id를 고정한다.
--- 이후 SpawnManager가 붙으면 pawn:GetRagdollId() 같은 방식으로 교체하면 된다.
-local RAGDOLL_ID = "blue-speedster"
+-- SpawnManager가 RagdollId를 넣어주면 그 id를 쓰고,
+-- 씬에 직접 배치된 테스트 Pawn처럼 id가 없으면 기본 Sonic 데이터로 fallback한다.
+local DEFAULT_RAGDOLL_ID = "blue-speedster"
+local RAGDOLL_ID = DEFAULT_RAGDOLL_ID
 local ragdollConfig = nil
 local bRagdollConfigApplied = false
 local bCanRevive = true
@@ -148,10 +149,24 @@ local function vector_from_table(value, fallback)
     return Vector.new(x, y, z)
 end
 
+local function resolve_ragdoll_id()
+    if pawn ~= nil and pawn.GetRagdollId ~= nil then
+        local id = pawn:GetRagdollId()
+        if type(id) == "string" and id ~= "" then
+            return id
+        end
+    end
+
+    return DEFAULT_RAGDOLL_ID
+end
+
 local function load_ragdoll_config()
-    if ragdollConfig ~= nil then
+    local resolvedId = resolve_ragdoll_id()
+    if ragdollConfig ~= nil and RAGDOLL_ID == resolvedId then
         return ragdollConfig
     end
+
+    RAGDOLL_ID = resolvedId
 
     local moduleNames = {
         "Data.RagdollData",
@@ -583,7 +598,11 @@ local function RequestEnterDeadRagdoll(reason)
     end
 
     print("[GOIncRagdollPawn_Test] RequestEnterDeadRagdoll reason: " .. tostring(reason))
-    EnterDeadRagdoll()
+    EnterDeadRagdoll(reason)
+end
+
+function RequestDeadRagdoll(reason)
+    RequestEnterDeadRagdoll(reason or "ExternalRequest")
 end
 
 function EnterReviving()
