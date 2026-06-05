@@ -18,7 +18,7 @@ return {
     BgmTitle    = "BgmTitle.mp3",     -- 타이틀 화면
     BgmGameplay = "BgmGameplay.mp3",  -- 게임플레이
     BgmResult   = "BgmResult.mp3",    -- 결과 화면
-    BgmTruck    = "BgmTruck.mp3",     -- 수거 차량 순회음 (PlayLoop로 재생, 차량 담당)
+    BgmTruck    = "BgmCollectorTruck.mp3",  -- 수거 차량 순회음 (PlayLoop로 재생, 차량 담당)
 
     -- 효과음
     SfxShock    = "SfxShock.mp3",     -- 전기 빔 공격
