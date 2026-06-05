@@ -2,6 +2,7 @@
 #include "Object/GarbageCollection.h"
 
 #include "Core/Logging/Log.h"
+#include "Core/Logging/Notification.h"
 #include "Input/InputSystem.h"
 #include "Object/Object.h"
 #include "Platform/Paths.h"
@@ -21,8 +22,10 @@
 #undef GetFirstChild
 #endif
 #include <RmlUi/Core.h>
+#include <RmlUi/Core/Factory.h>
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <filesystem>
 #include <memory>
@@ -77,6 +80,79 @@ namespace
 	Rml::String ToRmlPath(const std::filesystem::path& Path)
 	{
 		return FPaths::ToUtf8(Path.generic_wstring());
+	}
+
+	FString NormalizeProjectRelativePath(const FString& Path)
+	{
+		std::filesystem::path AbsolutePath = ToProjectPath(Path).lexically_normal();
+		std::filesystem::path RootPath(FPaths::RootDir());
+		RootPath = RootPath.lexically_normal();
+
+		std::error_code ErrorCode;
+		std::filesystem::path RelativePath = std::filesystem::relative(AbsolutePath, RootPath, ErrorCode);
+		FString Result = ErrorCode ? FPaths::ToUtf8(AbsolutePath.generic_wstring()) : FPaths::ToUtf8(RelativePath.generic_wstring());
+		for (char& Ch : Result)
+		{
+			if (Ch == '\\')
+			{
+				Ch = '/';
+			}
+		}
+		return Result;
+	}
+
+	FString ToLowerCopy(FString Value)
+	{
+		std::transform(Value.begin(), Value.end(), Value.begin(),
+			[](unsigned char Ch)
+			{
+				return static_cast<char>(std::tolower(Ch));
+			});
+		return Value;
+	}
+
+	bool HasExtensionCI(const FString& Path, const char* Extension)
+	{
+		const FString LowerPath = ToLowerCopy(Path);
+		const FString LowerExtension = ToLowerCopy(Extension);
+		return LowerPath.size() >= LowerExtension.size()
+			&& LowerPath.substr(LowerPath.size() - LowerExtension.size()) == LowerExtension;
+	}
+
+	bool ShouldReloadWidgetForChanges(const UUserWidget* Widget, const TSet<FString>& ChangedFiles)
+	{
+		if (!Widget)
+		{
+			return false;
+		}
+
+		const FString NormalizedDocumentPath = NormalizeProjectRelativePath(Widget->GetDocumentPath());
+		for (const FString& ChangedFile : ChangedFiles)
+		{
+			if (HasExtensionCI(ChangedFile, ".rcss"))
+			{
+				return true;
+			}
+
+			if (HasExtensionCI(ChangedFile, ".rml") && NormalizeProjectRelativePath(ChangedFile) == NormalizedDocumentPath)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool ContainsFileExtensionCI(const TSet<FString>& ChangedFiles, const char* Extension)
+	{
+		for (const FString& ChangedFile : ChangedFiles)
+		{
+			if (HasExtensionCI(ChangedFile, Extension))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
@@ -577,10 +653,27 @@ void UUIManager::Initialize(ID3D11Device* InDevice)
 	{
 		UE_LOG("[RmlUi] Failed to load font: Content/Font/Maplestory Bold.ttf");
 	}
+
+	const std::filesystem::path NanumGothicPath = ToProjectPath("Content/Font/nanum-gothic/NanumGothic.ttf");
+	if (!Rml::LoadFontFace(ToRmlPath(NanumGothicPath), "NanumGothic", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Normal))
+	{
+		UE_LOG("[RmlUi] Failed to load font: Content/Font/nanum-gothic/NanumGothic.ttf");
+	}
+
+	const std::filesystem::path NanumGothicBoldPath = ToProjectPath("Content/Font/nanum-gothic/NanumGothicBold.ttf");
+	if (!Rml::LoadFontFace(ToRmlPath(NanumGothicBoldPath), "NanumGothic", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Bold))
+	{
+		UE_LOG("[RmlUi] Failed to load font: Content/Font/nanum-gothic/NanumGothicBold.ttf");
+	}
+
+	SetupHotReloadWatcher();
 }
 
 void UUIManager::Shutdown()
 {
+	TeardownHotReloadWatcher();
+	PendingHotReloadFiles.clear();
+
 	DestroyAllWidgets();
 
 	if (RmlContext)
@@ -767,6 +860,28 @@ bool UUIManager::LoadDocument(UUserWidget* Widget)
 	return true;
 }
 
+bool UUIManager::ReloadDocument(UUserWidget* Widget)
+{
+	if (!Widget)
+	{
+		return false;
+	}
+
+	if (Widget->GetDocument() && RmlContext)
+	{
+		Widget->ClearEventListeners();
+		RmlContext->UnloadDocument(Widget->GetDocument());
+		RmlContext->Update();
+		Widget->ClearDocument();
+	}
+	else
+	{
+		CloseDocument(Widget);
+	}
+
+	return LoadDocument(Widget);
+}
+
 void UUIManager::CloseDocument(UUserWidget* Widget)
 {
 	if (!Widget || !Widget->GetDocument())
@@ -791,13 +906,14 @@ void UUIManager::Render(const FPassContext& Ctx)
 		static_cast<int>(Ctx.Frame.ViewportHeight)
 	});
 
-	ProcessInput(Ctx.Frame);
 	FlushDeferredViewportRemovals();
+	ProcessHotReloadChanges();
 	if (ViewportWidgets.empty())
 	{
 		return;
 	}
 
+	ProcessInput(Ctx.Frame);
 	RmlContext->Update();
 	RenderInterface->BeginFrame(Ctx);
 	RmlContext->Render();
@@ -854,5 +970,130 @@ void UUIManager::FlushDeferredViewportRemovals()
 	for (UUserWidget* Widget : WidgetsToRemove)
 	{
 		RemoveFromViewportImmediate(Widget);
+	}
+}
+
+void UUIManager::SetupHotReloadWatcher()
+{
+	if (UIWatchSub != 0)
+	{
+		return;
+	}
+
+	const std::filesystem::path UIDirectory = ToProjectPath("Content/UI");
+	if (!std::filesystem::exists(UIDirectory))
+	{
+		return;
+	}
+
+	UIWatchID = FDirectoryWatcher::Get().Watch(UIDirectory.wstring(), "Content/UI/");
+	if (UIWatchID == 0)
+	{
+		return;
+	}
+
+	UIWatchSub = FDirectoryWatcher::Get().Subscribe(UIWatchID,
+		[this](const TSet<FString>& ChangedFiles)
+		{
+			OnUIFilesChanged(ChangedFiles);
+		});
+}
+
+void UUIManager::TeardownHotReloadWatcher()
+{
+	if (UIWatchSub != 0)
+	{
+		FDirectoryWatcher::Get().Unsubscribe(UIWatchSub);
+		UIWatchSub = 0;
+	}
+
+	if (UIWatchID != 0)
+	{
+		FDirectoryWatcher::Get().Unwatch(UIWatchID);
+		UIWatchID = 0;
+	}
+}
+
+void UUIManager::OnUIFilesChanged(const TSet<FString>& ChangedFiles)
+{
+	for (const FString& ChangedFile : ChangedFiles)
+	{
+		const FString NormalizedPath = NormalizeProjectRelativePath(ChangedFile);
+		if (!HasExtensionCI(NormalizedPath, ".rml") && !HasExtensionCI(NormalizedPath, ".rcss"))
+		{
+			continue;
+		}
+
+		PendingHotReloadFiles.insert(NormalizedPath);
+		UE_LOG("[RmlUi] Detected UI source change: %s", NormalizedPath.c_str());
+	}
+}
+
+void UUIManager::ProcessHotReloadChanges()
+{
+	if (PendingHotReloadFiles.empty() || ViewportWidgets.empty())
+	{
+		return;
+	}
+
+	TSet<FString> ChangedFiles = std::move(PendingHotReloadFiles);
+	PendingHotReloadFiles.clear();
+
+	const bool bHasRcssChange = ContainsFileExtensionCI(ChangedFiles, ".rcss");
+	const bool bHasRmlChange = ContainsFileExtensionCI(ChangedFiles, ".rml");
+	if (bHasRcssChange)
+	{
+		Rml::Factory::ClearStyleSheetCache();
+	}
+	if (bHasRmlChange)
+	{
+		Rml::Factory::ClearTemplateCache();
+	}
+
+	bool bReloadedAny = false;
+	FString ReloadSummary;
+	for (UUserWidget* Widget : ViewportWidgets)
+	{
+		if (!IsValid(Widget) || !Widget->IsInViewport())
+		{
+			continue;
+		}
+
+		if (!ShouldReloadWidgetForChanges(Widget, ChangedFiles))
+		{
+			continue;
+		}
+
+		bool bReloadedThisWidget = false;
+		if (bHasRcssChange && Widget->GetDocument())
+		{
+			Widget->GetDocument()->ReloadStyleSheet();
+			Widget->GetDocument()->UpdateDocument();
+			Widget->RegisterEventListeners();
+			bReloadedThisWidget = true;
+		}
+
+		if (bHasRmlChange && ReloadDocument(Widget))
+		{
+			bReloadedThisWidget = true;
+		}
+
+		if (bReloadedThisWidget)
+		{
+			bReloadedAny = true;
+			if (ReloadSummary.empty())
+			{
+				ReloadSummary = Widget->GetDocumentPath();
+			}
+		}
+	}
+
+	if (bReloadedAny)
+	{
+		UE_LOG("[RmlUi] Hot reloaded UI document(s) after RML/RCSS change.");
+		if (!ReloadSummary.empty())
+		{
+			FNotificationManager::Get().AddNotification("UI Reloaded: " + ReloadSummary, ENotificationType::Success, 2.0f);
+		}
 	}
 }

@@ -4,6 +4,7 @@
 #include "Core/Singleton.h"
 #include "Render/Types/RenderTypes.h"
 #include "Object/GarbageCollection.h"
+#include "Engine/Platform/DirectoryWatcher.h"
 
 #ifdef GetNextSibling
 #undef GetNextSibling
@@ -113,15 +114,21 @@ private:
 	~UUIManager() = default;
 
 	bool LoadDocument(UUserWidget* Widget);
+	bool ReloadDocument(UUserWidget* Widget);
 	void CloseDocument(UUserWidget* Widget);
 	void ProcessInput(const FFrameContext& Frame);
 	void RemoveFromViewportImmediate(UUserWidget* Widget);
 	void FlushDeferredViewportRemovals();
+	void SetupHotReloadWatcher();
+	void TeardownHotReloadWatcher();
+	void OnUIFilesChanged(const TSet<FString>& ChangedFiles);
+	void ProcessHotReloadChanges();
 
 private:
 	TArray<UUserWidget*> ViewportWidgets;
 	TArray<UUserWidget*> CreatedWidgets;
 	TArray<UUserWidget*> PendingRemoveWidgets;
+	TSet<FString> PendingHotReloadFiles;
 
 	ID3D11Device* CachedDevice = nullptr;
 	FRmlSystemInterface* SystemInterface = nullptr;
@@ -130,4 +137,6 @@ private:
 	Rml::Context* RmlContext = nullptr;
 	bool bRmlInitialized = false;
 	bool bDispatchingRmlEvents = false;
+	FWatchID UIWatchID = 0;
+	FSubscriptionID UIWatchSub = 0;
 };
