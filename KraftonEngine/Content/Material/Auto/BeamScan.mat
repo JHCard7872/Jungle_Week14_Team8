@@ -1,0 +1,25 @@
+{
+  "BlendState" : "AlphaBlend",
+  "DepthStencilState" : "DepthReadOnly",
+  "Domain" : "ParticleSprite",
+  "Origin" : "ParticleEmitter",
+  "Parameters" : {
+    "EffectMode" : 1.000000,
+    "EmissiveStrength" : 4.500000,
+    "FlickerStrength" : 0.180000,
+    "LightningScrollSpeed" : 0.000000,
+    "ScanSoftness" : 0.055000,
+    "ScanSpeed" : 12.000000,
+    "ScanTrailStrength" : 0.420000,
+    "ScanWidth" : 0.070000,
+    "SectionColor" : [0.160000, 0.900000, 1.000000, 1.000000]
+  },
+  "PathFileName" : "Content/Material/Auto/BeamScan.mat",
+  "RasterizerState" : "SolidNoCull",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Particle/BeamTrail.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Data/Particle/Beam.png",
+    "EmissiveTexture" : "Content/Data/Particle/Beam.png"
+  }
+}

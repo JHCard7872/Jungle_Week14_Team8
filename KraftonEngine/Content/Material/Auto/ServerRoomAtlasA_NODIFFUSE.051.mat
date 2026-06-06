@@ -4,6 +4,8 @@
   "Origin" : "FbxImport",
   "Parameters" : {
     "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [0.000000, 0.000000, 0.000000],
+    "EmissiveIntensity" : 0.000000,
     "HasNormalMap" : 1.000000,
     "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
     "_pad" : null
@@ -13,7 +15,7 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/ServerRoomSet_AtlasA_albedo.png",
-    "NormalTexture" : "Server.fbm/ServerRoomSet_AtlasA_normal.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_Box/ServerRoomSet_AtlasA_albedo.png",
+    "NormalTexture" : "C:/Users/jungle/Downloads/fnaf-sb-fazerblast-server-room/source/TEXTURES/Game/ShadingAssets/Textures/ServerRoomSet_AtlasA_normal.png"
   }
 }

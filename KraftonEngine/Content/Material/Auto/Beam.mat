@@ -4,7 +4,14 @@
   "Domain" : "ParticleSprite",
   "Origin" : "ParticleEmitter",
   "Parameters" : {
+    "EffectMode" : 0.000000,
     "EmissiveStrength" : 3.000000,
+    "FlickerStrength" : 0.150000,
+    "LightningScrollSpeed" : 1.800000,
+    "ScanSoftness" : 0.040000,
+    "ScanSpeed" : 0.000000,
+    "ScanTrailStrength" : 0.000000,
+    "ScanWidth" : 0.080000,
     "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000]
   },
   "PathFileName" : "Content/Material/Auto/Beam.mat",
