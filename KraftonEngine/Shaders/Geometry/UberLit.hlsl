@@ -39,6 +39,8 @@ cbuffer PerShader1 : register(b2)
     float HasNormalMap;
     float AlphaCutoff;
     float2 _pad;
+    float3 EmissiveColor;
+    float EmissiveIntensity;
 };
 
 cbuffer WheelDeformationBuffer : register(b8)
@@ -50,7 +52,6 @@ cbuffer WheelDeformationBuffer : register(b8)
 
 
 // 머티리얼 확장 파라미터 — 팀원 A CB 시스템 완성 후 b2 확장 예정
-static const float4 g_DefaultEmissive = float4(0, 0, 0, 0);
 static const float g_DefaultShininess = 32.0f;
 
 // =============================================================================
@@ -305,10 +306,12 @@ return output;
     float3 V = normalize(CameraWorldPos - input.worldPos);
     float3 hitRim = ComputeHitRim(N, V, input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitRimParams.x);
     float3 hitImpact = ComputeHitImpactGlow(input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitImpactCenterAndRadius, input.hitImpactParams);
+    // 픽셀별 디퓨즈 결과색을 그대로 발광색으로 사용하고, 세기는 Intensity만으로 조절한다.
+    float3 materialEmissive = baseColor.rgb * max(EmissiveIntensity, 0.0f);
 
 #if defined(LIGHTING_MODEL_UNLIT) && LIGHTING_MODEL_UNLIT
     // Unlit: 라이팅 없이 Albedo만 출력
-    float3 finalColor = ApplyWireframe(baseColor.rgb + hitRim + hitImpact);
+    float3 finalColor = ApplyWireframe(baseColor.rgb + materialEmissive + hitRim + hitImpact);
 #if !defined(UBER_COLOR_ONLY) || !UBER_COLOR_ONLY
     output.Culling = float4(0, 0, 0, 0);
 #endif
@@ -336,7 +339,7 @@ return output;
 #endif
     // Diffuse에만 albedo를 곱하고, Specular는 빛 색상 그대로 더한다
     // (비금속 표면: specular 반사 = 빛의 색, 물체 색이 아님)
-    float3 finalColor = baseColor.rgb * diffuse + specular + g_DefaultEmissive.rgb + hitRim + hitImpact;
+    float3 finalColor = baseColor.rgb * diffuse + specular + materialEmissive + hitRim + hitImpact;
     finalColor = ApplyWireframe(finalColor);
 #endif
 

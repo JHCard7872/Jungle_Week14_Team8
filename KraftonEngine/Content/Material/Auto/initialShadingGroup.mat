@@ -1,0 +1,17 @@
+{
+  "BlendState" : "AlphaBlend",
+  "DepthStencilState" : "DepthReadOnly",
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [0.000000, 0.000000, 0.000000],
+    "EmissiveIntensity" : 0.000000,
+    "HasNormalMap" : 0.000000,
+    "SectionColor" : [0.001712, 0.001690, 0.001690, 0.129764],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Auto/initialShadingGroup.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl"
+}

@@ -25,7 +25,13 @@ struct FBeamTrailMaterialConstants
 {
 	float SectionColor[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	float EmissiveStrength = 1.0f;
-	float _Pad0[3] = {};
+	float EffectMode = 0.0f;
+	float ScanSpeed = 0.0f;
+	float ScanWidth = 0.08f;
+	float ScanSoftness = 0.04f;
+	float ScanTrailStrength = 0.0f;
+	float FlickerStrength = 0.15f;
+	float LightningScrollSpeed = 0.0f;
 };
 
 // EParticleBlendMode → Pass / BlendState / DepthStencil 결정
