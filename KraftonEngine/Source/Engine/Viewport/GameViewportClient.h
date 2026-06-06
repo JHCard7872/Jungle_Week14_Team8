@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Object/Object.h"
 #include "Slate/SWindow.h"
@@ -48,6 +48,9 @@ public:
 private:
 	void SetCursorCaptured(bool bCaptured);
 	void ApplyCursorClip();
+
+	bool GetEffectiveCursorClientRect(RECT& OutClientRect) const;
+	void LockCursorToViewportCenter();
 
 	void SetGameInputSnapshot(const FInputSystemSnapshot& Snapshot);
 	void ClearGameInputSnapshot();

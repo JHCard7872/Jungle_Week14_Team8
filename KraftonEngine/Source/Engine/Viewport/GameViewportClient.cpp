@@ -1,4 +1,4 @@
-#include "Viewport/GameViewportClient.h"
+﻿#include "Viewport/GameViewportClient.h"
 #include "Viewport/Viewport.h"
 
 #include "Component/Camera/CameraComponent.h"
@@ -53,6 +53,7 @@ void UGameViewportClient::ProcessInput(const FInputSystemSnapshot& Snapshot, flo
 
 	InputSystem::Get().SetUseRawMouse(true);
 	SetCursorCaptured(true);
+	LockCursorToViewportCenter();
 }
 
 void UGameViewportClient::SetInputPossessed(bool bPossessed)
@@ -118,6 +119,7 @@ void UGameViewportClient::SetCursorCaptured(bool bCaptured)
 	{
 		while (::ShowCursor(FALSE) >= 0) {}
 		ApplyCursorClip();
+		LockCursorToViewportCenter();
 		return;
 	}
 
@@ -208,11 +210,7 @@ void UGameViewportClient::ApplyCursorClip()
 	}
 
 	RECT ClientRect = {};
-	if (bHasCursorClipRect)
-	{
-		ClientRect = CursorClipClientRect;
-	}
-	else if (!::GetClientRect(OwnerHWnd, &ClientRect))
+	if (!GetEffectiveCursorClientRect(ClientRect))
 	{
 		return;
 	}
@@ -229,6 +227,61 @@ void UGameViewportClient::ApplyCursorClip()
 	{
 		::ClipCursor(&ScreenRect);
 	}
+}
+
+bool UGameViewportClient::GetEffectiveCursorClientRect(RECT& OutClientRect) const
+{
+	if (!OwnerHWnd)
+	{
+		return false;
+	}
+
+	if (bHasCursorClipRect)
+	{
+		OutClientRect = CursorClipClientRect;
+	}
+	else if (!::GetClientRect(OwnerHWnd, &OutClientRect))
+	{
+		return false;
+	}
+
+	return OutClientRect.right > OutClientRect.left
+		&& OutClientRect.bottom > OutClientRect.top;
+}
+
+void UGameViewportClient::LockCursorToViewportCenter()
+{
+	if (!bCursorCaptured || !OwnerHWnd)
+	{
+		return;
+	}
+
+	RECT ClientRect = {};
+	if (!GetEffectiveCursorClientRect(ClientRect))
+	{
+		return;
+	}
+
+	POINT CenterClient = {
+		ClientRect.left + (ClientRect.right - ClientRect.left) / 2,
+		ClientRect.top + (ClientRect.bottom - ClientRect.top) / 2
+	};
+
+	POINT CenterScreen = CenterClient;
+	if (!::ClientToScreen(OwnerHWnd, &CenterScreen))
+	{
+		return;
+	}
+
+	POINT CurrentScreen = {};
+	if (::GetCursorPos(&CurrentScreen) &&
+		CurrentScreen.x == CenterScreen.x &&
+		CurrentScreen.y == CenterScreen.y)
+	{
+		return;
+	}
+
+	::SetCursorPos(CenterScreen.x, CenterScreen.y);
 }
 
 void UGameViewportClient::SetGameInputSnapshot(const FInputSystemSnapshot& Snapshot)
