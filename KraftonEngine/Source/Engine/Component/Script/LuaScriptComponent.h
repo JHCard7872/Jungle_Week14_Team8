@@ -35,6 +35,8 @@ public:
 	void DispatchOverlap(class AActor* OtherActor);
 	void TickPrePhysics(float DeltaTime);
 	void TickPostCamera(float DeltaTime);
+	// 물리 고정 스텝 서브스텝마다 호출 — Lua 전역 FixedTick(fixed_dt) 디스패치
+	void TickFixed(float FixedDeltaTime);
 
 	// Lua script 의 환경(env)에서 인자 없는 전역 함수 하나를 호출. 함수가 없거나
 	// nil 이면 조용히 false 반환 — 호출자는 lua 쪽 함수 정의 여부에 신경 쓸 필요 없음.
@@ -88,6 +90,7 @@ private:
 	sol::protected_function LuaPrePhysicsTick;
 	sol::protected_function LuaTick;
 	sol::protected_function LuaPostCameraTick;
+	sol::protected_function LuaFixedTick;
 	sol::protected_function LuaEndPlay;
 	sol::protected_function LuaOnOverlap;
 	sol::protected_function LuaOnEndOverlap;

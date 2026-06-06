@@ -63,6 +63,7 @@ local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
 local beamed_ragdoll_actor = nil
+local grab_fixed_ray = { start = nil, direction = nil }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
 
 local RAGDOLL_TAG = "Ragdoll"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
@@ -859,6 +860,9 @@ local function clear_grab_state()
     grabbed_target_world = nil
     grabbed_last_target_world = nil
     grabbed_target_velocity = nil
+    -- 레이 캐시도 반드시 비운다 — 안 비우면 다음 grab의 첫 물리 스텝이 이전 조준으로 당긴다
+    grab_fixed_ray.start = nil
+    grab_fixed_ray.direction = nil
 end
 
 local function compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
@@ -1023,6 +1027,8 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     grabbed_target_world = target_point
     grabbed_last_target_world = target_point
     grabbed_target_velocity = Vector.Zero()
+    grab_fixed_ray.start = copy_vec(start)
+    grab_fixed_ray.direction = copy_vec(direction)
     set_beamed_ragdoll_actor(owner)
 
     body:WakeUp()
@@ -1037,6 +1043,9 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     return true
 end
 
+-- 물리 전용 — FixedTick(물리 고정 스텝)에서만 호출된다. delta_time = fixed_dt(1/60).
+-- 렌더 프레임당 AddForce를 누적하면 고FPS GameBuild에서 같은 물리 스텝에 N배 힘이
+-- 쌓여 래그돌이 폭발한다. rim/빔 비주얼은 update_grab_visuals(렌더 프레임)가 담당.
 local function apply_grab_force(delta_time, start, direction)
     -- 액터 생사 확인이 반드시 먼저다 — 수거(Destroy)로 액터가 죽으면 본 바디
     -- 메모리가 해제돼 grabbed_body:IsValid() 호출 자체가 Use-After-Free가 된다.
@@ -1058,11 +1067,6 @@ local function apply_grab_force(delta_time, start, direction)
         set_beam_visible(false)
         return
     end
-
-    if grabbed_hit_component == nil and grabbed_body.GetOwnerComponent ~= nil then
-        grabbed_hit_component = grabbed_body:GetOwnerComponent()
-    end
-    trigger_hit_rim_on_component(grabbed_hit_component)
 
     grabbed_target_world = desired
 
@@ -1127,6 +1131,29 @@ local function apply_grab_force(delta_time, start, direction)
     grabbed_last_target_world = desired
 
     grabbed_body:WakeUp()
+end
+
+-- 렌더 프레임 레이트로 도는 grab 비주얼/rim — 물리(apply_grab_force)는 FixedTick에서만.
+-- UAF 가드를 여기에도 두는 이유: 물리 스텝이 없는 프레임(고FPS 다수)에서도
+-- 액터가 죽으면 같은 프레임에 grab을 정리하기 위함 (기존 시멘틱 유지).
+local function update_grab_visuals()
+    if grabbed_owner_actor == nil or not grabbed_owner_actor:IsValid() then
+        clear_grab_state()
+        set_beam_visible(false)
+        return
+    end
+    if grabbed_body == nil or grabbed_body.IsValid == nil or not grabbed_body:IsValid() then
+        clear_grab_state()
+        set_beam_visible(false)
+        return
+    end
+
+    if grabbed_hit_component == nil and grabbed_body.GetOwnerComponent ~= nil then
+        grabbed_hit_component = grabbed_body:GetOwnerComponent()
+    end
+    trigger_hit_rim_on_component(grabbed_hit_component)
+
+    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
     last_aim_point = current_grab_world
     update_beam_points(current_grab_world)
     set_beam_visible(true)
@@ -1162,9 +1189,12 @@ local function update_active_grab(delta_time)
         return true
     end
 
+    -- 힘 적용은 FixedTick 몫 — 여기(렌더 프레임)서는 조준 레이 캐시와 비주얼만 갱신
     local start, direction = get_camera_aim_ray()
     update_grab_distance_from_mouse_wheel()
-    apply_grab_force(delta_time, start, direction)
+    grab_fixed_ray.start = copy_vec(start)
+    grab_fixed_ray.direction = copy_vec(direction)
+    update_grab_visuals()
     return true
 end
 
@@ -1694,4 +1724,18 @@ function PostCameraTick(delta_time)
     apply_fire(delta_time)
     update_crosshair_aim_position(delta_time)
     update_crosshair_ui()
+end
+
+-- 물리 고정 스텝(1/60)마다 호출 — grab 힘/토크는 여기서만 적용한다 (스텝당 정확히 1회).
+-- 프레임당 0~4회 가변 호출이므로 프레임당 1회를 가정하는 코드를 넣지 말 것.
+-- 이 안에서 액터 스폰/파괴/씬 로드 금지 (물리 서브스텝 루프 내부).
+function FixedTick(fixed_delta_time)
+    if grabbed_body == nil then
+        return
+    end
+    if grab_fixed_ray.start == nil or grab_fixed_ray.direction == nil then
+        return
+    end
+
+    apply_grab_force(fixed_delta_time, grab_fixed_ray.start, grab_fixed_ray.direction)
 end

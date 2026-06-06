@@ -33,6 +33,7 @@ void ULuaScriptComponent::ClearLuaRuntime()
 	LuaPrePhysicsTick = sol::nil;
 	LuaTick = sol::nil;
 	LuaPostCameraTick = sol::nil;
+	LuaFixedTick = sol::nil;
 	LuaEndPlay = sol::nil;
 	LuaOnOverlap = sol::nil;
 	LuaOnEndOverlap = sol::nil;
@@ -107,6 +108,7 @@ void ULuaScriptComponent::InitializeLua()
 	LuaPrePhysicsTick = Env["PrePhysicsTick"];
 	LuaTick = Env["Tick"];
 	LuaPostCameraTick = Env["PostCameraTick"];
+	LuaFixedTick = Env["FixedTick"];
 	LuaEndPlay = Env["EndPlay"];
 	LuaOnOverlap = Env["OnOverlap"];
 	LuaOnEndOverlap = Env["OnEndOverlap"];
@@ -244,6 +246,16 @@ void ULuaScriptComponent::TickPostCamera(float DeltaTime)
 	}
 
 	InvokeLuaTickFunction(LuaPostCameraTick, DeltaTime, "PostCameraTick");
+}
+
+void ULuaScriptComponent::TickFixed(float FixedDeltaTime)
+{
+	if (!IsActive() || !PrimaryComponentTick.bTickEnabled)
+	{
+		return;
+	}
+
+	InvokeLuaTickFunction(LuaFixedTick, FixedDeltaTime, "FixedTick");
 }
 
 void ULuaScriptComponent::BindOwnerCollisionEvents()

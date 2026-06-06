@@ -43,6 +43,8 @@ public:
 	static void UnregisterComponent(ULuaScriptComponent* Component);
 	static void TickPrePhysics(float DeltaTime);
 	static void TickPostCamera(float DeltaTime);
+	// 물리 고정 스텝(1/60) 서브스텝마다 발화 — World::Tick의 PhysicsScene->Tick 람다에서 호출
+	static void TickFixed(float FixedDeltaTime);
 
 	// Lua 로 구동되는 AnimInstance — .lua 변경 시 ReloadScript 받음.
 	static void RegisterAnimInstance(ULuaAnimInstance* Instance);
