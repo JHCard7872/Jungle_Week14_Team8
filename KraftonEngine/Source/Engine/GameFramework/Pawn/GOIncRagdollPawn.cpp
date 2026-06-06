@@ -7,6 +7,7 @@
 #include "Component/Shape/CapsuleComponent.h"
 #include "Core/Logging/Log.h"
 #include "Core/Types/CollisionTypes.h"
+#include "GameFramework/World.h"
 #include "Mesh/MeshManager.h"
 #include "Runtime/Engine.h"
 
@@ -20,6 +21,9 @@ namespace
 	constexpr float DefaultAliveCapsuleHalfHeight = 3.0f;
 	constexpr float DefaultReviveTriggerCapsuleRadius = 2.4f;
 	constexpr float DefaultReviveTriggerCapsuleHalfHeight = 3.4f;
+	constexpr float ReviveGroundTraceUp = 50.0f;
+	constexpr float ReviveGroundTraceDown = 300.0f;
+	constexpr float ReviveGroundSkinWidth = 0.02f;
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents()
@@ -81,6 +85,9 @@ void AGOIncRagdollPawn::ConfigureAliveCollisionCapsuleDefaults()
 	CapsuleComponent->SetSimulatePhysics(false);
 	CapsuleComponent->SetKinematicPhysics(true);
 	CapsuleComponent->SetGenerateOverlapEvents(false);
+	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::Pawn);
+	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
+	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
 	CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -176,6 +183,9 @@ void AGOIncRagdollPawn::SetAliveCollisionCapsuleEnabled(bool bEnabled)
 	CapsuleComponent->SetSimulatePhysics(false);
 	CapsuleComponent->SetKinematicPhysics(true);
 	CapsuleComponent->SetGenerateOverlapEvents(false);
+	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::Pawn);
+	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
+	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
 
 	if (bEnabled)
 	{
@@ -225,6 +235,101 @@ void AGOIncRagdollPawn::SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorA
 	RagdollMovementComponent->SetMovementEnabled(bEnabled);
 	RagdollMovementComponent->SetFloorRaycastEnabled(bEnabled && bUseFloorAndGravity);
 	RagdollMovementComponent->SetGravityEnabled(bEnabled && bUseFloorAndGravity);
+}
+
+bool AGOIncRagdollPawn::GetRagdollMeshSyncWorldLocation(FVector& OutLocation) const
+{
+	OutLocation = FVector::ZeroVector;
+	if (!Mesh)
+	{
+		return false;
+	}
+
+	if (Mesh->GetRagdollComponentSyncWorldLocation(OutLocation))
+	{
+		return true;
+	}
+
+	// Fallback for assets that have not captured the component sync offset yet.
+	return Mesh->GetRagdollBodyWorldLocation(FName("Pelvis"), OutLocation);
+}
+
+bool AGOIncRagdollPawn::ProjectAliveCapsuleLocationToGround(
+	const FVector& ActorTargetLocation,
+	float SourceZ,
+	FVector& OutProjectedLocation) const
+{
+	OutProjectedLocation = ActorTargetLocation;
+
+	UWorld* World = GetWorld();
+	if (!World || !CapsuleComponent)
+	{
+		return false;
+	}
+
+	const float HalfHeight = CapsuleComponent->GetScaledCapsuleHalfHeight();
+	if (HalfHeight <= 0.0f)
+	{
+		return false;
+	}
+
+	const FVector Start(ActorTargetLocation.X, ActorTargetLocation.Y, SourceZ + ReviveGroundTraceUp);
+	const FVector Dir(0.0f, 0.0f, -1.0f);
+	const float MaxDist = ReviveGroundTraceUp + ReviveGroundTraceDown;
+
+	FHitResult Hit;
+	if (!World->PhysicsRaycastByObjectTypes(
+		Start,
+		Dir,
+		MaxDist,
+		Hit,
+		ObjectTypeBit(ECollisionChannel::WorldStatic),
+		this))
+	{
+		return false;
+	}
+
+	OutProjectedLocation = FVector(
+		ActorTargetLocation.X,
+		ActorTargetLocation.Y,
+		Hit.WorldHitLocation.Z + HalfHeight + ReviveGroundSkinWidth);
+	return true;
+}
+
+bool AGOIncRagdollPawn::PrepareReviveFromRagdoll()
+{
+	RefreshGOIncRagdollPawnComponents();
+	if (!CapsuleComponent || !Mesh)
+	{
+		UE_LOG("[GOIncRagdollPawn] PrepareReviveFromRagdoll failed. Missing Capsule or Mesh.");
+		return false;
+	}
+
+	FVector MeshSyncLocation;
+	if (!GetRagdollMeshSyncWorldLocation(MeshSyncLocation))
+	{
+		UE_LOG("[GOIncRagdollPawn] PrepareReviveFromRagdoll failed. Missing ragdoll sync location.");
+		return false;
+	}
+
+	// GetRagdollComponentSyncWorldLocation() returns the desired SkeletalMeshComponent world location.
+	// Convert it back to the owning Actor/AliveCapsule location using the current mesh-to-actor offset.
+	const FVector MeshWorldOffsetFromActor = Mesh->GetWorldLocation() - GetActorLocation();
+	const FVector ActorTargetLocation = MeshSyncLocation - MeshWorldOffsetFromActor;
+
+	FVector ProjectedActorLocation;
+	if (!ProjectAliveCapsuleLocationToGround(ActorTargetLocation, MeshSyncLocation.Z, ProjectedActorLocation))
+	{
+		UE_LOG("[GOIncRagdollPawn] PrepareReviveFromRagdoll failed. No valid ground.");
+		return false;
+	}
+
+	// Collision stays off during Reviving; this move only prepares a safe AliveCapsule location.
+	SetAliveCollisionCapsuleEnabled(false);
+	SetReviveTriggerCapsuleEnabled(false);
+	SetActorLocation(ProjectedActorLocation);
+
+	return true;
 }
 
 void AGOIncRagdollPawn::EnterDeadRagdollState()

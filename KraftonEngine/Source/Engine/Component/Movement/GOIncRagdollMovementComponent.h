@@ -49,6 +49,11 @@ public:
 	bool IsGravityEnabled() const { return bGravityEnabled; }
 	UFUNCTION(Callable, Category="GOIncRagdollMovement|Floor")
 	bool SnapUpdatedComponentToFloor();
+
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Collision")
+	void SetSweepMovementEnabled(bool bEnabled) { bSweepMovementEnabled = bEnabled; }
+	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
+	bool IsSweepMovementEnabled() const { return bSweepMovementEnabled; }
 	UFUNCTION(Pure, Category="GOIncRagdollMovement|Floor")
 	bool IsGrounded() const { return bIsGrounded; }
 
@@ -78,6 +83,13 @@ public:
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Floor", DisplayName="Floor Probe Distance", Min=0.0f, Max=5.0f, Speed=0.01f)
 	float FloorProbeDistance = 0.2f;
 
+	// Alive 상태에서는 UpdatedComponent를 그냥 teleport하지 않고 capsule sweep으로 이동한다.
+	// UpdatedComponent가 UCapsuleComponent가 아니면 기존 직접 이동으로 fallback한다.
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Use Sweep Movement")
+	bool bSweepMovementEnabled = true;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Sweep Skin Width", Min=0.0f, Max=0.5f, Speed=0.005f)
+	float SweepSkinWidth = 0.02f;
+
 private:
 	void ApplyInputToVelocity(const FVector& Input, float DeltaTime);
 	void ApplyBraking(float DeltaTime);
@@ -85,6 +97,10 @@ private:
 	bool TraceFloor(FHitResult& OutHit) const;
 	float GetCapsuleHalfHeight() const;
 	void ResolveFloorAfterMove();
+	void MoveUpdatedComponent(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits = false);
+	bool MoveUpdatedComponentWithSweep(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits);
+	bool SweepCapsuleMove(const FVector& MoveDelta, FHitResult& OutHit) const;
+	bool CanUseCapsuleSweep() const;
 
 	FVector PendingInputVector = FVector(0.0f, 0.0f, 0.0f);
 	FVector Velocity = FVector(0.0f, 0.0f, 0.0f);

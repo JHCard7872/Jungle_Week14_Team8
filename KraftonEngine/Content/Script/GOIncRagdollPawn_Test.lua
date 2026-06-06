@@ -402,12 +402,12 @@ local function align_actor_to_ragdoll()
     return true
 end
 
-local function sync_actor_capsule_to_ragdoll()
+local function sync_revive_trigger_to_ragdoll()
     if state ~= STATE_DEAD then
         return
     end
 
-    if capsule == nil or mesh == nil then
+    if reviveTrigger == nil or mesh == nil then
         return
     end
 
@@ -421,16 +421,17 @@ local function sync_actor_capsule_to_ragdoll()
         actorTargetLocation = meshSyncLocation - initialMeshWorldOffsetFromActor
     end
 
-    -- Actor/Alive Capsule X/Y follows ragdoll sync, while Z is projected to ground.
+    -- Dead 상태에서는 Actor/AliveCapsule을 ragdoll 위치로 끌고 가지 않는다.
+    -- Player revive 감지용 trigger만 ragdoll 근처의 안전한 바닥 위치를 따라가게 한다.
     local projectedLocation, bGroundValid = project_to_ground(actorTargetLocation, meshSyncLocation.Z)
     canReviveHere = bGroundValid
 
     if bGroundValid then
-        obj.Location = projectedLocation
+        reviveTrigger.Location = projectedLocation
+    else
+        -- Ground가 없으면 revive는 막되, trigger 자체는 ragdoll 근처에 남겨 debug 위치를 확인하기 쉽게 둔다.
+        reviveTrigger.Location = meshSyncLocation
     end
-
-    -- Moving Actor also moves child mesh, so restore mesh to the simulated ragdoll position.
-    mesh.Location = meshSyncLocation
 end
 
 local function set_alive_capsule_enabled(enabled)
@@ -621,6 +622,11 @@ function EnterDeadRagdoll()
     reviveStartYaw = obj.Rotation.Z
     reviveTargetYaw = obj.Rotation.Z
 
+    if pawn ~= nil and pawn.EnterDeadRagdollState ~= nil then
+        pawn:EnterDeadRagdollState()
+        return
+    end
+
     if movement ~= nil then
         movement:StopMovementImmediately()
         movement:SetMovementEnabled(false)
@@ -687,8 +693,16 @@ function EnterReviving()
 
     print("[GOIncRagdollPawn_Test] EnterReviving")
 
-    -- Ragdoll 결과 위치로 Actor/Root를 먼저 맞춘 뒤 recovery를 시작한다.
-    if not align_actor_to_ragdoll() then
+    -- Ragdoll 결과 위치로 Actor/Root를 Reviving 진입 순간에만 맞춘 뒤 recovery를 시작한다.
+    -- Dead tick에서는 Actor/AliveCapsule 위치를 더 이상 계속 동기화하지 않는다.
+    local bPrepared = false
+    if pawn ~= nil and pawn.PrepareReviveFromRagdoll ~= nil then
+        bPrepared = pawn:PrepareReviveFromRagdoll()
+    else
+        bPrepared = align_actor_to_ragdoll()
+    end
+
+    if not bPrepared then
         print("[GOIncRagdollPawn_Test] EnterReviving failed: no valid ground.")
         state = STATE_DEAD
         return
@@ -698,6 +712,18 @@ function EnterReviving()
     -- Recovery가 끝난 뒤 첫 Alive tick에서 face_direction()이 yaw를 확 돌리는 문제를 줄인다.
     reviveStartYaw = obj.Rotation.Z
     reviveTargetYaw = get_yaw_from_direction(get_flee_direction())
+
+    if pawn ~= nil and pawn.EnterRevivingState ~= nil then
+        if mesh ~= nil and mesh.SetRagdollRecoveryDuration ~= nil then
+            mesh:SetRagdollRecoveryDuration(REVIVE_BLEND_DURATION)
+        end
+        pawn:EnterRevivingState()
+        set_flee_animation_play_rate(1.0)
+        if mesh ~= nil and initialMeshRelativeLocation ~= nil then
+            mesh.RelativeLocation = initialMeshRelativeLocation
+        end
+        return
+    end
 
     if movement ~= nil then
         movement:StopMovementImmediately()
@@ -921,7 +947,7 @@ function Tick(dt)
     end
 
     if state == STATE_DEAD then
-        sync_actor_capsule_to_ragdoll()
+        sync_revive_trigger_to_ragdoll()
         return
     end
 

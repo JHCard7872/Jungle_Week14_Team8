@@ -75,6 +75,11 @@ public:
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetReviveTriggerCapsuleSize(float Radius, float HalfHeight);
 
+	// Dead ragdoll 결과를 기준으로 Reviving 시작 전에 Actor/AliveCapsule을 안전한 위치로 한 번만 정렬한다.
+	// 상태 전환 판단은 Lua가 담당하고, 이 함수는 위치 정렬 helper 역할만 한다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
+	bool PrepareReviveFromRagdoll();
+
 	// 상태 판단은 Lua가 담당하지만, 상태별 컴포넌트 on/off 조합은 Actor helper로 모아둔다.
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
 	void EnterDeadRagdollState();
@@ -103,6 +108,8 @@ protected:
 	void SetAliveCollisionCapsuleEnabled(bool bEnabled);
 	void SetReviveTriggerCapsuleEnabled(bool bEnabled);
 	void SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorAndGravity);
+	bool GetRagdollMeshSyncWorldLocation(FVector& OutLocation) const;
+	bool ProjectAliveCapsuleLocationToGround(const FVector& ActorTargetLocation, float SourceZ, FVector& OutProjectedLocation) const;
 
 	UCapsuleComponent* CapsuleComponent = nullptr;
 	UCapsuleComponent* ReviveTriggerCapsuleComponent = nullptr;

@@ -242,6 +242,8 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"IsFloorRaycastEnabled", &UGOIncRagdollMovementComponent::IsFloorRaycastEnabled,
 		"SetGravityEnabled", &UGOIncRagdollMovementComponent::SetGravityEnabled,
 		"IsGravityEnabled", &UGOIncRagdollMovementComponent::IsGravityEnabled,
+		"SetSweepMovementEnabled", &UGOIncRagdollMovementComponent::SetSweepMovementEnabled,
+		"IsSweepMovementEnabled", &UGOIncRagdollMovementComponent::IsSweepMovementEnabled,
 		"SnapUpdatedComponentToFloor", &UGOIncRagdollMovementComponent::SnapUpdatedComponentToFloor,
 		"IsGrounded", &UGOIncRagdollMovementComponent::IsGrounded,
 		"GetVelocity", &UGOIncRagdollMovementComponent::GetVelocity);
@@ -315,6 +317,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"SetMeshRelativeScale", &AGOIncRagdollPawn::SetMeshRelativeScale,
 		"SetAliveCapsuleSize", &AGOIncRagdollPawn::SetAliveCapsuleSize,
 		"SetReviveTriggerCapsuleSize", &AGOIncRagdollPawn::SetReviveTriggerCapsuleSize,
+		"PrepareReviveFromRagdoll", &AGOIncRagdollPawn::PrepareReviveFromRagdoll,
 		"EnterDeadRagdollState", &AGOIncRagdollPawn::EnterDeadRagdollState,
 		"EnterRevivingState", &AGOIncRagdollPawn::EnterRevivingState,
 		"EnterAliveFleeState", &AGOIncRagdollPawn::EnterAliveFleeState,
