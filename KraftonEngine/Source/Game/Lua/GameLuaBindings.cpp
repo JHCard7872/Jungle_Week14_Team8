@@ -13,6 +13,8 @@
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
 #include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
 #include "Math/Transform.h"
@@ -174,8 +176,82 @@ void RegisterGameLuaBindings(sol::state& Lua)
 				return nullptr;
 			}
 
-			UE_LOG("[GOInc] Spawned ragdoll pawn. RagdollId=%s Location=(%.2f, %.2f, %.2f)",
+			UE_LOG("[GOInc] Spawned legacy ragdoll pawn. RagdollId=%s Location=(%.2f, %.2f, %.2f)",
 				SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
+			return SpawnedPawn;
+		});
+
+		GOInc.set_function("SpawnRagdollCharacter", [](const FString& CharacterId, const FVector& Location) -> AGOIncRagdollPawn*
+		{
+			if (!GEngine)
+			{
+				UE_LOG("[GOInc] SpawnRagdollCharacter failed. Missing GEngine.");
+				return nullptr;
+			}
+
+			UWorld* World = GEngine->GetWorld();
+			if (!World)
+			{
+				UE_LOG("[GOInc] SpawnRagdollCharacter failed. Missing World.");
+				return nullptr;
+			}
+
+			AGOIncRagdollPawn* SpawnedPawn = nullptr;
+
+			if (CharacterId == "blue-speedster")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncSonicRagdollPawn>(
+					[&](AGOIncSonicRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else if (CharacterId == "pink-round")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncKirbyRagdollPawn>(
+					[&](AGOIncKirbyRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else
+			{
+				UE_LOG("[GOInc] Unknown ragdoll character id '%s'. Falling back to AGOIncRagdollPawn.", CharacterId.c_str());
+
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncRagdollPawn>(
+					[&](AGOIncRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->SetRagdollId(CharacterId);
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+
+			if (!SpawnedPawn)
+			{
+				UE_LOG("[GOInc] SpawnRagdollCharacter failed. CharacterId=%s", CharacterId.c_str());
+				return nullptr;
+			}
+
+			UE_LOG("[GOInc] Spawned ragdoll character. CharacterId=%s ActualRagdollId=%s Location=(%.2f, %.2f, %.2f)",
+				CharacterId.c_str(), SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
 			return SpawnedPawn;
 		});
 	}

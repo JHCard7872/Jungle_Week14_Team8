@@ -1,16 +1,11 @@
--- GOIncRagdollSpawnManager_MultiRandom.lua
+-- GOIncRagdollSpawnManager.lua
 --
--- Interval/max-count based ragdoll spawner.
+-- Interval/max-count based GOInc ragdoll character spawner.
 -- Requires:
---   GOInc.SpawnRagdollPawn(ragdollId, location)
---   RagdollData.lua entries with spawnWeight
+--   GOInc.SpawnRagdollCharacter(characterId, location)
 --
--- RagdollData.lua example:
---   ["blue-speedster"] = { displayName = "파란 고슴도치", spawnWeight = 10, ... }
---   ["pink-round"]     = { displayName = "분홍 동글이",   spawnWeight = 8,  ... }
---
--- spawnWeight <= 0 means the entry will not spawn.
--- canSpawn = false also disables the entry if the field exists.
+-- Character-specific mesh/physics/animation settings live in C++ Pawn subclasses.
+-- This manager only owns spawn policy: id, displayName, weight, interval, count, location.
 
 local SPAWN_MIN_X = -10.0
 local SPAWN_MAX_X = 10.0
@@ -22,9 +17,24 @@ local SPAWN_INTERVAL = 2.0
 local MAX_SPAWN_COUNT = 10
 local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = true
 
-local DEFAULT_RAGDOLL_ID = "blue-speedster"
+local DEFAULT_CHARACTER_ID = "blue-speedster"
 
-local RagdollData = nil
+-- 캐릭터별 mesh/physics/animation 데이터는 각 C++ Pawn subclass가 가진다.
+-- SpawnManager는 어떤 characterId를 어떤 weight로 뽑을지만 관리한다.
+local SpawnTable = {
+    {
+        id = "blue-speedster",
+        displayName = "파란 고슴도치",
+        weight = 10.0,
+        canSpawn = true,
+    },
+    {
+        id = "pink-round",
+        displayName = "분홍 동글이",
+        weight = 8.0,
+        canSpawn = true,
+    },
+}
 
 local spawnTimer = 0.0
 local spawnedCount = 0
@@ -42,58 +52,34 @@ local function random_range(minValue, maxValue)
     return minValue + (maxValue - minValue) * math.random()
 end
 
-local function load_ragdoll_data()
-    if RagdollData ~= nil then
-        return RagdollData
-    end
-
-    local moduleNames = {
-        "Data.RagdollData",
-        "RagdollData",
-    }
-
-    for _, moduleName in ipairs(moduleNames) do
-        local ok, result = pcall(require, moduleName)
-        if ok and result ~= nil then
-            RagdollData = result
-            print("[GOIncRagdollSpawnManager] Loaded " .. moduleName)
-            return RagdollData
-        end
-    end
-
-    print("[GOIncRagdollSpawnManager] Failed to load RagdollData.lua")
-    return nil
-end
-
-local function is_spawnable_config(config)
-    if type(config) ~= "table" then
+local function is_spawnable_entry(entry)
+    if type(entry) ~= "table" then
         return false
     end
 
-    if config.canSpawn == false then
+    if entry.canSpawn == false then
         return false
     end
 
-    return number_or(config.spawnWeight, 0.0) > 0.0
+    if type(entry.id) ~= "string" or entry.id == "" then
+        return false
+    end
+
+    return number_or(entry.weight, 0.0) > 0.0
 end
 
 local function build_spawn_candidates()
-    local data = load_ragdoll_data()
-    if data == nil then
-        return nil, 0.0
-    end
-
     local candidates = {}
     local totalWeight = 0.0
 
-    for id, config in pairs(data) do
-        if is_spawnable_config(config) then
-            local weight = number_or(config.spawnWeight, 0.0)
+    for _, entry in ipairs(SpawnTable) do
+        if is_spawnable_entry(entry) then
+            local weight = number_or(entry.weight, 0.0)
             totalWeight = totalWeight + weight
 
             table.insert(candidates, {
-                id = id,
-                displayName = config.displayName or id,
+                id = entry.id,
+                displayName = entry.displayName or entry.id,
                 weight = weight,
             })
         end
@@ -102,14 +88,14 @@ local function build_spawn_candidates()
     return candidates, totalWeight
 end
 
-local function pick_random_ragdoll_entry()
+local function pick_random_character_entry()
     local candidates, totalWeight = build_spawn_candidates()
 
     if candidates == nil or #candidates <= 0 or totalWeight <= 0.0 then
-        print("[GOIncRagdollSpawnManager] No spawnable ragdoll entries. Fallback: " .. DEFAULT_RAGDOLL_ID)
+        print("[GOIncRagdollSpawnManager] No spawnable character entries. Fallback: " .. DEFAULT_CHARACTER_ID)
         return {
-            id = DEFAULT_RAGDOLL_ID,
-            displayName = DEFAULT_RAGDOLL_ID,
+            id = DEFAULT_CHARACTER_ID,
+            displayName = DEFAULT_CHARACTER_ID,
             weight = 1.0,
         }
     end
@@ -160,18 +146,18 @@ local function spawn_one()
         return nil
     end
 
-    if GOInc == nil or GOInc.SpawnRagdollPawn == nil then
-        print("[GOIncRagdollSpawnManager] Missing GOInc.SpawnRagdollPawn binding")
+    if GOInc == nil or GOInc.SpawnRagdollCharacter == nil then
+        print("[GOIncRagdollSpawnManager] Missing GOInc.SpawnRagdollCharacter binding")
         return nil
     end
 
-    local entry = pick_random_ragdoll_entry()
-    local ragdollId = entry.id
+    local entry = pick_random_character_entry()
+    local characterId = entry.id
     local location = make_random_spawn_location()
-    local pawn = GOInc.SpawnRagdollPawn(ragdollId, location)
+    local pawn = GOInc.SpawnRagdollCharacter(characterId, location)
 
     if pawn == nil then
-        print("[GOIncRagdollSpawnManager] Failed to spawn ragdoll pawn: " .. tostring(ragdollId))
+        print("[GOIncRagdollSpawnManager] Failed to spawn ragdoll character: " .. tostring(characterId))
         return nil
     end
 
@@ -180,7 +166,7 @@ local function spawn_one()
 
     print(string.format(
         "[GOIncRagdollSpawnManager] Spawned %s (%s) at (%.2f, %.2f, %.2f) [%d / %d]",
-        tostring(ragdollId),
+        tostring(characterId),
         tostring(entry.displayName),
         location.X, location.Y, location.Z,
         spawnedCount,
