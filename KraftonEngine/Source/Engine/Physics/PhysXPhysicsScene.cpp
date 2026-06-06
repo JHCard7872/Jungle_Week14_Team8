@@ -588,6 +588,15 @@ public:
 			auto* OtherComp   = TP.otherShape   ? static_cast<UPrimitiveComponent*>(TP.otherShape->userData)   : nullptr;
 			if (!TriggerComp || !OtherComp) continue;
 
+			// onContact와 동일한 응답 매트릭스 가드 — 필터 셰이더의 트리거 분기는 응답을
+			// 보지 않고 무조건 통과시키므로 Ignore 쌍을 여기서 거른다.
+			// 예: ReviveTrigger는 WorldDynamic(래그돌 본)을 Ignore — 본이 스칠 때마다
+			// 오던 무의미한 OnOverlap 호출이 사라진다.
+			if (UPrimitiveComponent::GetMinResponse(TriggerComp, OtherComp) == ECollisionResponse::Ignore)
+			{
+				continue;
+			}
+
 			const bool bBegin = (TP.status == PxPairFlag::eNOTIFY_TOUCH_FOUND);
 			const bool bEnd   = (TP.status == PxPairFlag::eNOTIFY_TOUCH_LOST);
 			if (!bBegin && !bEnd) continue;
@@ -651,6 +660,13 @@ public:
 	{
 		PendingHits.clear();
 		PendingTriggers.clear();
+	}
+
+	// 트리거-트리거 수동 쿼리 패스(UpdateQueryTriggerOverlaps)가 PhysX 콜백과
+	// 같은 큐/디스패치 경로를 쓰게 하는 진입구.
+	void EnqueueTrigger(UPrimitiveComponent* Self, UPrimitiveComponent* Other, bool bBegin)
+	{
+		PendingTriggers.push_back({ Self, Other, bBegin });
 	}
 
 	void onConstraintBreak(PxConstraintInfo*, PxU32) override {}
@@ -863,6 +879,7 @@ void FPhysXPhysicsScene::Shutdown()
 	if (Scene) Scene->setSimulationEventCallback(nullptr);
 
 	ReleaseRegisteredBodies();
+	QueryTriggerOverlaps.clear();
 
 	if (Scene)
 	{
@@ -937,6 +954,7 @@ void FPhysXPhysicsScene::UnregisterComponent(UPrimitiveComponent* Comp)
 
 	RemoveRegisteredBody(&Body);
 	DestroyBodyInstance(Body);
+	QueryTriggerOverlaps.erase(Comp);
 }
 
 void FPhysXPhysicsScene::RebuildBody(UPrimitiveComponent* Comp)
@@ -1330,6 +1348,7 @@ void FPhysXPhysicsScene::Tick(float DeltaTime, const FPrePhysicsSubstepCallback&
 	}
 
 	SyncPhysicsToEngineAfterSim();
+	UpdateQueryTriggerOverlaps();
 	DispatchPhysicsEvents();
 }
 
@@ -1806,6 +1825,129 @@ void FPhysXPhysicsScene::SyncPhysicsToEngineAfterSim()
 
 		const PxTransform Pose = Dynamic->getGlobalPose();
 		SetComponentWorldPose(Comp, Pose);
+	}
+}
+
+// ============================================================
+// QueryOnly 트리거끼리의 오버랩 수동 감지
+//
+// PhysX는 트리거 셰입끼리의 쌍을 통지하지 않는다 (onTrigger 미발화 — 3.4+ 제약).
+// 이 엔진은 QueryOnly 바디를 전부 트리거 셰입으로 만들므로(ShouldBodyShapeBeTrigger)
+// "트리거 ↔ 트리거" 오버랩(예: Player QueryOnly 캡슐 ↔ 래그돌 ReviveTrigger)은
+// 물리 스텝마다 PxScene::overlap 쿼리로 직접 감지해 같은 트리거 큐로 보낸다.
+// 트리거 ↔ simulation 셰입 쌍은 기존 onTrigger가 처리하고, 여기서는 트리거 셰입
+// 결과만 받으므로 이중 통지가 없다. 응답 매트릭스/같은 액터 무시 규칙은
+// onTrigger 가드·필터 셰이더와 동일하게 적용한다.
+// ============================================================
+void FPhysXPhysicsScene::UpdateQueryTriggerOverlaps()
+{
+	if (!Scene || !EventCallback)
+	{
+		return;
+	}
+
+	for (FBodyInstance* Body : RegisteredBodies)
+	{
+		if (!Body || !Body->IsValidBodyInstance() || !Body->RigidActor || Body->Shapes.empty())
+		{
+			continue;
+		}
+
+		// 본(ragdoll bone) 바디는 OwnerComponent가 없어 자연히 제외된다
+		UPrimitiveComponent* Comp = Body->OwnerComponent;
+		if (!IsValid(Comp) || !Comp->GetGenerateOverlapEvents())
+		{
+			continue;
+		}
+		if (!(Body->Shapes[0]->getFlags() & PxShapeFlag::eTRIGGER_SHAPE))
+		{
+			continue;
+		}
+
+		// 현재 겹쳐 있는 "다른 트리거" 컴포넌트 수집
+		std::vector<UPrimitiveComponent*> Found;
+		for (PxShape* Shape : Body->Shapes)
+		{
+			if (!Shape)
+			{
+				continue;
+			}
+
+			const PxTransform ShapePose = PxShapeExt::getGlobalPose(*Shape, *Body->RigidActor);
+			PxOverlapHit Touches[64];
+			PxOverlapBuffer Hits(Touches, 64);
+			const PxQueryFilterData FilterData(
+				PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::eNO_BLOCK);
+
+			if (!Scene->overlap(Shape->getGeometry().any(), ShapePose, Hits, FilterData))
+			{
+				continue;
+			}
+
+			for (PxU32 i = 0; i < Hits.getNbTouches(); ++i)
+			{
+				PxShape* HitShape = Hits.getTouch(i).shape;
+				// 트리거 셰입만 — simulation 셰입과의 쌍은 onTrigger 담당
+				if (!HitShape || !(HitShape->getFlags() & PxShapeFlag::eTRIGGER_SHAPE))
+				{
+					continue;
+				}
+
+				auto* Other = static_cast<UPrimitiveComponent*>(HitShape->userData);
+				if (!Other || Other == Comp || !IsValid(Other))
+				{
+					continue;
+				}
+				if (Other->GetOwner() == Comp->GetOwner())
+				{
+					continue;
+				}
+				if (UPrimitiveComponent::GetMinResponse(Comp, Other) == ECollisionResponse::Ignore)
+				{
+					continue;
+				}
+				if (std::find(Found.begin(), Found.end(), Other) == Found.end())
+				{
+					Found.push_back(Other);
+				}
+			}
+		}
+
+		std::vector<TWeakObjectPtr<UPrimitiveComponent>>& Prev = QueryTriggerOverlaps[Comp];
+
+		// Begin — 이번 스텝에 새로 겹친 상대
+		for (UPrimitiveComponent* Other : Found)
+		{
+			bool bWasOverlapping = false;
+			for (const TWeakObjectPtr<UPrimitiveComponent>& PrevOther : Prev)
+			{
+				if (PrevOther.Get() == Other)
+				{
+					bWasOverlapping = true;
+					break;
+				}
+			}
+			if (!bWasOverlapping)
+			{
+				EventCallback->EnqueueTrigger(Comp, Other, true);
+			}
+		}
+
+		// End — 빠진 상대. 파괴된 상대는 onTrigger의 eREMOVED_SHAPE 스킵과 동일하게 통지 생략
+		for (const TWeakObjectPtr<UPrimitiveComponent>& PrevOther : Prev)
+		{
+			UPrimitiveComponent* PrevComp = PrevOther.Get();
+			if (!IsValid(PrevComp))
+			{
+				continue;
+			}
+			if (std::find(Found.begin(), Found.end(), PrevComp) == Found.end())
+			{
+				EventCallback->EnqueueTrigger(Comp, PrevComp, false);
+			}
+		}
+
+		Prev.assign(Found.begin(), Found.end());
 	}
 }
 
