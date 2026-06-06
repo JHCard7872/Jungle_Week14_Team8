@@ -2276,20 +2276,25 @@ bool FLevelViewportLayout::TryComputePlacementLocation(int32 SlotIndex, const FP
 		return false;
 	}
 
-	const FRect& ViewRect = ViewportWindows[SlotIndex]->GetRect();
 	const float VPWidth = ViewportClient->GetViewport()
 		? static_cast<float>(ViewportClient->GetViewport()->GetWidth())
-		: ViewRect.Width;
+		: ViewportClient->GetViewportScreenRect().Width;
 	const float VPHeight = ViewportClient->GetViewport()
 		? static_cast<float>(ViewportClient->GetViewport()->GetHeight())
-		: ViewRect.Height;
+		: ViewportClient->GetViewportScreenRect().Height;
 	if (VPWidth <= 0.0f || VPHeight <= 0.0f)
 	{
 		return false;
 	}
 
-	const float LocalX = Clamp(ClientPos.X - ViewRect.X, 0.0f, VPWidth - 1.0f);
-	const float LocalY = Clamp(ClientPos.Y - ViewRect.Y, 0.0f, VPHeight - 1.0f);
+	float LocalX = 0.0f;
+	float LocalY = 0.0f;
+	if (!ViewportClient->ScreenToViewportPosition(ClientPos.X, ClientPos.Y, LocalX, LocalY))
+	{
+		return false;
+	}
+	LocalX = Clamp(LocalX, 0.0f, VPWidth - 1.0f);
+	LocalY = Clamp(LocalY, 0.0f, VPHeight - 1.0f);
 	// 클릭한 화면 좌표를 월드 레이로 바꿔 카메라 전방의 기본 배치 위치를 계산한다.
 	// POV 통화에서 직접 산출 — 컴포넌트 의존 없음 (D.1).
 	FMinimalViewInfo POV;

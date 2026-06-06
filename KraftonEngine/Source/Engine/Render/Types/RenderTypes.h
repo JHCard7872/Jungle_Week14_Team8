@@ -49,8 +49,8 @@ enum class ERenderPass : uint32
 	GizmoOuter,			// 기즈모 외곽 (깊이 테스트 O)
 	GizmoInner,			// 기즈모 내부 (깊이 무시)
 	OverlayFont,		// 스크린 공간 텍스트 (깊이 무시)
-	UI,					// RmlUi 기반 게임 UI
 	GammaCorrection,	// 최종 선형 SceneColor를 디스플레이용 감마 공간으로 변환
+	UI,					// RmlUi 기반 게임 UI
 	MAX
 };
 

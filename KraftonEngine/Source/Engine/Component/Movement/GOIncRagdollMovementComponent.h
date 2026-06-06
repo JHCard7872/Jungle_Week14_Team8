@@ -49,8 +49,18 @@ public:
 	bool IsGravityEnabled() const { return bGravityEnabled; }
 	UFUNCTION(Callable, Category="GOIncRagdollMovement|Floor")
 	bool SnapUpdatedComponentToFloor();
+
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Collision")
+	void SetSweepMovementEnabled(bool bEnabled) { bSweepMovementEnabled = bEnabled; }
+	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
+	bool IsSweepMovementEnabled() const { return bSweepMovementEnabled; }
 	UFUNCTION(Pure, Category="GOIncRagdollMovement|Floor")
 	bool IsGrounded() const { return bIsGrounded; }
+
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Collision")
+	void SetMovementCollisionCapsule(float Radius, float HalfHeight, const FVector& LocalOffset);
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Collision")
+	void ClearMovementCollisionCapsule();
 
 	UFUNCTION(Pure, Category="GOIncRagdollMovement")
 	FVector GetVelocity() const { return Velocity; }
@@ -78,6 +88,24 @@ public:
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Floor", DisplayName="Floor Probe Distance", Min=0.0f, Max=5.0f, Speed=0.01f)
 	float FloorProbeDistance = 0.2f;
 
+	// Alive 상태에서는 UpdatedComponent를 그냥 teleport하지 않고 capsule sweep으로 이동한다.
+	// UpdatedComponent가 Capsule이 아니어도, 외부에서 sweep capsule shape/offset을 값으로 설정하면 사용할 수 있다.
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Use Sweep Movement")
+	bool bSweepMovementEnabled = true;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Sweep Skin Width", Min=0.0f, Max=0.5f, Speed=0.005f)
+	float SweepSkinWidth = 0.02f;
+
+	// Component 간 직접 참조를 피하기 위해 CapsuleComponent 포인터 대신 shape 값만 저장한다.
+	// Actor/Lua가 AliveCapsule의 크기와 UpdatedComponent 기준 local offset을 전달한다.
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Use Explicit Sweep Capsule")
+	bool bUseExplicitSweepCapsule = false;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Explicit Capsule Radius", Min=0.0f, Max=100.0f, Speed=0.01f)
+	float ExplicitSweepCapsuleRadius = 0.0f;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Explicit Capsule Half Height", Min=0.0f, Max=100.0f, Speed=0.01f)
+	float ExplicitSweepCapsuleHalfHeight = 0.0f;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Explicit Capsule Local Offset")
+	FVector ExplicitSweepCapsuleLocalOffset = FVector(0.0f, 0.0f, 0.0f);
+
 private:
 	void ApplyInputToVelocity(const FVector& Input, float DeltaTime);
 	void ApplyBraking(float DeltaTime);
@@ -85,6 +113,13 @@ private:
 	bool TraceFloor(FHitResult& OutHit) const;
 	float GetCapsuleHalfHeight() const;
 	void ResolveFloorAfterMove();
+	void MoveUpdatedComponent(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits = false);
+	bool MoveUpdatedComponentWithSweep(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits);
+	bool SweepCapsuleMove(const FVector& MoveDelta, FHitResult& OutHit) const;
+	bool CanUseCapsuleSweep() const;
+	FVector GetSweepCapsuleWorldLocation() const;
+	float GetSweepCapsuleRadius() const;
+	float GetSweepCapsuleHalfHeight() const;
 
 	FVector PendingInputVector = FVector(0.0f, 0.0f, 0.0f);
 	FVector Velocity = FVector(0.0f, 0.0f, 0.0f);

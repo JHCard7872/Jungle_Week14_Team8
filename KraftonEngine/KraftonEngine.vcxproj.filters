@@ -1469,6 +1469,18 @@
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncDonkeyKongRagdollPawn.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncKirbyRagdollPawn.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncPikachuRagdollPawn.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncSonicRagdollPawn.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\Pawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
@@ -2065,6 +2077,9 @@
       <Filter>Intermediate\Generated</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.cpp" />
+    <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp">
+      <Filter>Source\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\GameMode\GOIncGameMode.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncGameState.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncPlayerController.cpp" />
@@ -2812,6 +2827,18 @@
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncDonkeyKongRagdollPawn.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncKirbyRagdollPawn.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncPikachuRagdollPawn.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncSonicRagdollPawn.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\Pawn.h">
@@ -5829,6 +5856,9 @@
     <ClInclude Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.h" />
     <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
+    <ClInclude Include="Source\Game\Actors\GOIncTruck.h">
+      <Filter>Source\Game</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\GameMode\GOIncGameMode.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncGameState.h" />
   </ItemGroup>

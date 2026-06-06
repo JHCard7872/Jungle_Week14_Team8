@@ -36,20 +36,15 @@ void FAudioManager::Shutdown()
 		return;
 	}
 
-	StopBGM();
-	StopAllLoops();
-	if (MasterGroup)
-	{
-		MasterGroup->stop();
-		MasterGroup = nullptr;
-	}
+	StopAllPlayback();
+	MasterGroup = nullptr;
 	System->update();
 
 	for (auto& Pair : Audios)
 	{
-		if (Pair.second)
+		if (Pair.second.Sound)
 		{
-			Pair.second->release();
+			Pair.second.Sound->release();
 		}
 	}
 	Audios.clear();
@@ -75,6 +70,16 @@ bool FAudioManager::LoadAudio(const FString& Key, const FString& Path, bool bLoo
 		return false;
 	}
 
+	// 같은 키가 같은 파일/루프 모드로 이미 로드돼 있으면 그대로 재사용 —
+	// 씬 BeginPlay마다 AudioData 전체를 다시 Load해도 재디코드가 없어
+	// PIE 시작/씬 전환 렉을 막는다. 경로나 루프 모드가 바뀐 경우에만 재로드.
+	auto It = Audios.find(Key);
+	if (It != Audios.end() && It->second.Sound
+		&& It->second.Path == Path && It->second.bLoop == bLoop)
+	{
+		return true;
+	}
+
 	FString FullPath = FPaths::ToUtf8(FPaths::Combine(FPaths::AudioDir(), FPaths::ToWide(Path)));
 
 	FMOD::Sound* Sound = nullptr;
@@ -85,12 +90,12 @@ bool FAudioManager::LoadAudio(const FString& Key, const FString& Path, bool bLoo
 		return false;
 	}
 
-	if (Audios.contains(Key) && Audios[Key])
+	if (It != Audios.end() && It->second.Sound)
 	{
-		Audios[Key]->release();
+		It->second.Sound->release();
 	}
 
-	Audios[Key] = Sound;
+	Audios[Key] = { Sound, Path, bLoop };
 	return true;
 }
 
@@ -102,7 +107,7 @@ void FAudioManager::PlayAudio(const FString& Key, float Volume)
 	}
 
 	FMOD::Channel* Channel = nullptr;
-	System->playSound(Audios[Key], nullptr, false, &Channel);
+	System->playSound(Audios[Key].Sound, nullptr, false, &Channel);
 
 	if (Channel)
 	{
@@ -118,7 +123,7 @@ void FAudioManager::PlayBGM(const FString& Key, float Volume)
 	}
 
 	StopBGM();
-	System->playSound(Audios[Key], nullptr, false, &BGMChannel);
+	System->playSound(Audios[Key].Sound, nullptr, false, &BGMChannel);
 
 	if (BGMChannel)
 	{
@@ -133,6 +138,29 @@ void FAudioManager::StopBGM()
 		BGMChannel->stop();
 		BGMChannel = nullptr;
 	}
+}
+
+void FAudioManager::StopAllPlayback()
+{
+	if (!System)
+	{
+		BGMChannel = nullptr;
+		LoopChannels.clear();
+		return;
+	}
+
+	StopBGM();
+	StopAllLoops();
+
+	// Master group stop catches fire-and-forget one-shot channels that are not
+	// individually tracked by the audio manager. This keeps PIE end / scene
+	// teardown from leaking sound across world boundaries.
+	if (MasterGroup)
+	{
+		MasterGroup->stop();
+	}
+
+	System->update();
 }
 
 void FAudioManager::PlayLoop(const FString& Key, const FString& LoopName, float Volume, float Pitch)
@@ -150,7 +178,7 @@ void FAudioManager::PlayLoop(const FString& Key, const FString& LoopName, float 
 	}
 
 	FMOD::Channel* Channel = nullptr;
-	System->playSound(Audios[Key], nullptr, false, &Channel);
+	System->playSound(Audios[Key].Sound, nullptr, false, &Channel);
 
 	if (Channel)
 	{
@@ -251,4 +279,24 @@ void FAudioManager::LoadDefaultAudios()
 	LoadAudio("MeteorBoom", "meteor_boom.mp3");
 	LoadAudio("MeteorFall", "meteor_fall.mp3");
 	LoadAudio("Whoosh", "whoosh.mp3");
+
+	LoadAudio("bgm_title_0", "BgmTitle_0.mp3", true);
+	LoadAudio("bgm_title_1", "BgmTitle_1.mp3", true);
+	LoadAudio("bgm_gameplay_0", "BgmGameplay_0.mp3", true);
+	LoadAudio("bgm_gameplay_1", "BgmGameplay_1.mp3", true);
+	LoadAudio("bgm_main_0", "BgmMain_0.mp3", true);
+	LoadAudio("bgm_cutscene", "BgmCutScene.mp3", true);
+	LoadAudio("bgm_collector_truck", "BgmCollectorTruck.mp3", true);
+	LoadAudio("sfx_foot", "SfxFoot.mp3");
+	LoadAudio("sfx_result_high", "SfxResultHigh.mp3");
+	LoadAudio("sfx_result_medium", "SfxResultMedium.mp3");
+	LoadAudio("sfx_result_low", "SfxResultLow.mp3");
+	LoadAudio("sfx_gun_shoot", "SfxGunShoot.mp3");
+	LoadAudio("sfx_beam_grab", "SfxBeamGrab.mp3");
+	LoadAudio("sfx_collect", "SfxCollect.mp3");
+	LoadAudio("sfx_hit", "SfxHit.mp3");
+	LoadAudio("sfx_ui_click", "SfxUiClick.mp3");
+	LoadAudio("sfx_ui_hover", "SfxUiHover.mp3");
+	LoadAudio("sfx_game_over", "SfxGameOver.mp3");
+	LoadAudio("sfx_revive", "SfxRevive.mp3");
 }

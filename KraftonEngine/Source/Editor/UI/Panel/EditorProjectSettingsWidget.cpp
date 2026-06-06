@@ -1,9 +1,12 @@
 ﻿#include "Editor/UI/Panel/EditorProjectSettingsWidget.h"
 #include "Core/ProjectSettings.h"
+#include "Editor/Settings/EditorSettings.h"
 #include "Serialization/SceneSaveManager.h"
 #include "GameFramework/GameMode/GameModeBase.h"
 #include "Object/Reflection/UClass.h"
 #include "ImGui/imgui.h"
+
+#include <algorithm>
 
 void EditorProjectSettingsWidget::Render(const FEditorPanelContext& Context)
 {
@@ -87,7 +90,23 @@ void EditorProjectSettingsWidget::Render(const FEditorPanelContext& Context)
 			}
 			ImGui::EndCombo();
 		}
+		int GameWindowWidth = static_cast<int>(PS.Game.GameWindowWidth);
+		if (ImGui::InputInt("Game Window Width", &GameWindowWidth))
+		{
+			PS.Game.GameWindowWidth = static_cast<uint32>(std::clamp(GameWindowWidth, 320, 8192));
+		}
+
+		int GameWindowHeight = static_cast<int>(PS.Game.GameWindowHeight);
+		if (ImGui::InputInt("Game Window Height", &GameWindowHeight))
+		{
+			PS.Game.GameWindowHeight = static_cast<uint32>(std::clamp(GameWindowHeight, 240, 8192));
+		}
+
+		ImGui::Checkbox("Start Fullscreen", &PS.Game.bStartFullscreen);
+		ImGui::Checkbox("Lock Editor / PIE Resolution", &PS.Game.bLockEditorPIEResolution);
 		ImGui::TextDisabled("Requires scene reload to take effect.");
+		ImGui::TextDisabled("Standalone uses these values on next launch.");
+		ImGui::TextDisabled("Editor / PIE lock applies to viewport render resolution.");
 	}
 
 	if (ImGui::CollapsingHeader("Shadow", ImGuiTreeNodeFlags_DefaultOpen))
@@ -121,6 +140,17 @@ void EditorProjectSettingsWidget::Render(const FEditorPanelContext& Context)
 				PS.Shadow.MaxPointAtlasPages = static_cast<uint32>(pointPages);
 		}
 	}
+
+	ImGui::Separator();
+	if (ImGui::Button("Save"))
+	{
+		// 에디터 시작 레벨도 동기화 (에디터는 EditorSettings::EditorStartLevel을 사용)
+		FEditorSettings::Get().EditorStartLevel = FProjectSettings::Get().Game.StartLevelName;
+		FProjectSettings::Get().SaveToFile(FProjectSettings::GetDefaultPath());
+		FEditorSettings::Get().SaveToFile(FEditorSettings::GetDefaultSettingsPath());
+	}
+	ImGui::SameLine();
+	ImGui::TextDisabled("%s", FProjectSettings::GetDefaultPath().c_str());
 
 	ImGui::End();
 }

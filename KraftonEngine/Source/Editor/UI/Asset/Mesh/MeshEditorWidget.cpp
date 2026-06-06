@@ -167,7 +167,7 @@ void FMeshEditorWidget::CreatePreviewScene()
 
 	AStaticMeshActor* FloorActor = WorldContext.World->SpawnActor<AStaticMeshActor>();
 	FloorActor->InitDefaultComponents("Content/Data/BasicShape/Cube.OBJ");
-	FloorActor->SetActorLocation(FVector(0.0f, 0.0f, -0.05f));
+	FloorActor->SetActorLocation(FVector(0.0f, 0.0f, -1.0f));
 	FloorActor->SetActorScale(FVector(10.0f, 10.0f, 0.02f));
 	if (UStaticMeshComponent* FloorComponent = FloorActor->GetComponentByClass<UStaticMeshComponent>())
 	{

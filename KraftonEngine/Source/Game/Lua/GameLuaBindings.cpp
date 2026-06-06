@@ -13,6 +13,11 @@
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncDonkeyKongRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
+#include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
 #include "Math/Transform.h"
 
@@ -130,6 +135,157 @@ namespace
 
 void RegisterGameLuaBindings(sol::state& Lua)
 {
+
+	// GOInc game-level helpers. Keep game-specific spawn policy out of Engine/Lua bindings,
+	// but still guarantee GOIncRagdollPawn receives its RagdollId before BeginPlay.
+	{
+		sol::object ExistingGOInc = Lua["GOInc"];
+		sol::table GOInc = (ExistingGOInc.valid() && ExistingGOInc.get_type() == sol::type::table)
+			? ExistingGOInc.as<sol::table>()
+			: Lua.create_named_table("GOInc");
+
+		GOInc.set_function("SpawnRagdollPawn", [](const FString& RagdollId, const FVector& Location) -> AGOIncRagdollPawn*
+		{
+			if (!GEngine)
+			{
+				UE_LOG("[GOInc] SpawnRagdollPawn failed. Missing GEngine.");
+				return nullptr;
+			}
+
+			UWorld* World = GEngine->GetWorld();
+			if (!World)
+			{
+				UE_LOG("[GOInc] SpawnRagdollPawn failed. Missing World.");
+				return nullptr;
+			}
+
+			AGOIncRagdollPawn* SpawnedPawn = World->SpawnActorWithInitializer<AGOIncRagdollPawn>(
+				[&](AGOIncRagdollPawn* Pawn)
+				{
+					if (!Pawn)
+					{
+						return;
+					}
+
+					Pawn->SetRagdollId(RagdollId);
+					Pawn->InitDefaultComponents();
+					Pawn->SetActorLocation(Location);
+				});
+
+			if (!SpawnedPawn)
+			{
+				UE_LOG("[GOInc] SpawnRagdollPawn failed. RagdollId=%s", RagdollId.c_str());
+				return nullptr;
+			}
+
+			UE_LOG("[GOInc] Spawned legacy ragdoll pawn. RagdollId=%s Location=(%.2f, %.2f, %.2f)",
+				SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
+			return SpawnedPawn;
+		});
+
+		GOInc.set_function("SpawnRagdollCharacter", [](const FString& CharacterId, const FVector& Location) -> AGOIncRagdollPawn*
+		{
+			if (!GEngine)
+			{
+				UE_LOG("[GOInc] SpawnRagdollCharacter failed. Missing GEngine.");
+				return nullptr;
+			}
+
+			UWorld* World = GEngine->GetWorld();
+			if (!World)
+			{
+				UE_LOG("[GOInc] SpawnRagdollCharacter failed. Missing World.");
+				return nullptr;
+			}
+
+			AGOIncRagdollPawn* SpawnedPawn = nullptr;
+
+			if (CharacterId == "blue-speedster")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncSonicRagdollPawn>(
+					[&](AGOIncSonicRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else if (CharacterId == "pink-round")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncKirbyRagdollPawn>(
+					[&](AGOIncKirbyRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else if (CharacterId == "brown-gorilla")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncDonkeyKongRagdollPawn>(
+					[&](AGOIncDonkeyKongRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else if (CharacterId == "yellow-mouse")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncPikachuRagdollPawn>(
+					[&](AGOIncPikachuRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else
+			{
+				UE_LOG("[GOInc] Unknown ragdoll character id '%s'. Falling back to AGOIncRagdollPawn.", CharacterId.c_str());
+
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncRagdollPawn>(
+					[&](AGOIncRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->SetRagdollId(CharacterId);
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+
+			if (!SpawnedPawn)
+			{
+				UE_LOG("[GOInc] SpawnRagdollCharacter failed. CharacterId=%s", CharacterId.c_str());
+				return nullptr;
+			}
+
+			UE_LOG("[GOInc] Spawned ragdoll character. CharacterId=%s ActualRagdollId=%s Location=(%.2f, %.2f, %.2f)",
+				CharacterId.c_str(), SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
+			return SpawnedPawn;
+		});
+	}
+
 	// 이미 엔진 공통 바인딩에서 등록된 usertype에 게임 테스트용 convenience API만 덧붙인다.
 	// 문자열 기반 collision mode를 노출해 Lua 스크립트에서 enum 숫자에 의존하지 않게 한다.
 	{
@@ -173,6 +329,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		sol::bases<UActorComponent, UObject>(),
 		"ReloadScript", &ULuaScriptComponent::ReloadScript,
 		"CallFunction", &ULuaScriptComponent::CallFunction,
+		"CallFunctionString", &ULuaScriptComponent::CallFunctionString,
 		"GetScriptFile", &ULuaScriptComponent::GetScriptFile,
 		"SetScriptFile", &ULuaScriptComponent::SetScriptFile);
 
@@ -191,6 +348,10 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"IsFloorRaycastEnabled", &UGOIncRagdollMovementComponent::IsFloorRaycastEnabled,
 		"SetGravityEnabled", &UGOIncRagdollMovementComponent::SetGravityEnabled,
 		"IsGravityEnabled", &UGOIncRagdollMovementComponent::IsGravityEnabled,
+		"SetSweepMovementEnabled", &UGOIncRagdollMovementComponent::SetSweepMovementEnabled,
+		"IsSweepMovementEnabled", &UGOIncRagdollMovementComponent::IsSweepMovementEnabled,
+		"SetMovementCollisionCapsule", &UGOIncRagdollMovementComponent::SetMovementCollisionCapsule,
+		"ClearMovementCollisionCapsule", &UGOIncRagdollMovementComponent::ClearMovementCollisionCapsule,
 		"SnapUpdatedComponentToFloor", &UGOIncRagdollMovementComponent::SnapUpdatedComponentToFloor,
 		"IsGrounded", &UGOIncRagdollMovementComponent::IsGrounded,
 		"GetVelocity", &UGOIncRagdollMovementComponent::GetVelocity);
@@ -245,12 +406,52 @@ void RegisterGameLuaBindings(sol::state& Lua)
 	Lua.new_usertype<AGOIncRagdollPawn>("GOIncRagdollPawn",
 		sol::base_classes,
 		sol::bases<APawn, AActor, UObject>(),
+		"GetAliveCapsuleComponent", &AGOIncRagdollPawn::GetAliveCapsuleComponent,
 		"GetCapsuleComponent", &AGOIncRagdollPawn::GetCapsuleComponent,
 		"GetAliveCollisionCapsuleComponent", &AGOIncRagdollPawn::GetAliveCollisionCapsuleComponent,
 		"GetReviveTriggerCapsuleComponent", &AGOIncRagdollPawn::GetReviveTriggerCapsuleComponent,
+		"GetRagdollMeshComponent", &AGOIncRagdollPawn::GetRagdollMeshComponent,
 		"GetMesh", &AGOIncRagdollPawn::GetMesh,
+		"GetGOIncMovementComponent", &AGOIncRagdollPawn::GetGOIncMovementComponent,
 		"GetRagdollMovementComponent", &AGOIncRagdollPawn::GetRagdollMovementComponent,
 		"GetLuaScriptComponent", &AGOIncRagdollPawn::GetLuaScriptComponent,
+		"GetGOIncRootComponent", &AGOIncRagdollPawn::GetGOIncRootComponent,
+		"EnsureDefaultComponents", &AGOIncRagdollPawn::EnsureDefaultComponents,
+		"RefreshCharacterConfig", &AGOIncRagdollPawn::RefreshCharacterConfig,
+		"ApplyEditableCharacterConfig", &AGOIncRagdollPawn::ApplyEditableCharacterConfig,
+		"ResetCharacterConfigToClassDefaults", &AGOIncRagdollPawn::ResetCharacterConfigToClassDefaults,
+		"SetUseEditableCharacterConfig", &AGOIncRagdollPawn::SetUseEditableCharacterConfig,
+		"GetUseEditableCharacterConfig", &AGOIncRagdollPawn::GetUseEditableCharacterConfig,
+		"SetRagdollId", &AGOIncRagdollPawn::SetRagdollId,
+		"GetRagdollId", &AGOIncRagdollPawn::GetRagdollId,
+		"GetDisplayName", &AGOIncRagdollPawn::GetDisplayName,
+		"SetSkeletalMeshPath", &AGOIncRagdollPawn::SetSkeletalMeshPath,
+		"GetSkeletalMeshPath", &AGOIncRagdollPawn::GetSkeletalMeshPath,
+		"SetPhysicsAssetPath", &AGOIncRagdollPawn::SetPhysicsAssetPath,
+		"GetPhysicsAssetPath", &AGOIncRagdollPawn::GetPhysicsAssetPath,
+		"SetFleeAnimationPath", &AGOIncRagdollPawn::SetFleeAnimationPath,
+		"GetFleeAnimationPath", &AGOIncRagdollPawn::GetFleeAnimationPath,
+		"SetMeshRelativeLocation", &AGOIncRagdollPawn::SetMeshRelativeLocation,
+		"SetMeshRelativeScale", &AGOIncRagdollPawn::SetMeshRelativeScale,
+		"SetAliveCapsuleSize", &AGOIncRagdollPawn::SetAliveCapsuleSize,
+		"SetReviveTriggerCapsuleSize", &AGOIncRagdollPawn::SetReviveTriggerCapsuleSize,
+		"CanRevive", &AGOIncRagdollPawn::CanRevive,
+		"GetReviveBlendDuration", &AGOIncRagdollPawn::GetReviveBlendDuration,
+		"GetFleeEndDistance", &AGOIncRagdollPawn::GetFleeEndDistance,
+		"GetFleeStopDuration", &AGOIncRagdollPawn::GetFleeStopDuration,
+		"GetFleeStopMinBrakingDeceleration", &AGOIncRagdollPawn::GetFleeStopMinBrakingDeceleration,
+		"GetFleeRotationYawOffsetDegrees", &AGOIncRagdollPawn::GetFleeRotationYawOffsetDegrees,
+		"GetFleeAnimationBaseSpeed", &AGOIncRagdollPawn::GetFleeAnimationBaseSpeed,
+		"GetFleeAnimationMinPlayRate", &AGOIncRagdollPawn::GetFleeAnimationMinPlayRate,
+		"GetFleeAnimationMaxPlayRate", &AGOIncRagdollPawn::GetFleeAnimationMaxPlayRate,
+		"GetFleeStopStartPlayRate", &AGOIncRagdollPawn::GetFleeStopStartPlayRate,
+		"GetFleeStopEndPlayRate", &AGOIncRagdollPawn::GetFleeStopEndPlayRate,
+		"UpdateDeadRootFromRagdollSafe", &AGOIncRagdollPawn::UpdateDeadRootFromRagdollSafe,
+		"PrepareReviveFromRagdoll", &AGOIncRagdollPawn::PrepareReviveFromRagdoll,
+		"EnterDeadRagdollState", &AGOIncRagdollPawn::EnterDeadRagdollState,
+		"EnterRevivingState", &AGOIncRagdollPawn::EnterRevivingState,
+		"EnterAliveFleeState", &AGOIncRagdollPawn::EnterAliveFleeState,
+		"RequestDeadRagdoll", &AGOIncRagdollPawn::RequestDeadRagdoll,
 		"PlayFleeAnimation", &AGOIncRagdollPawn::PlayFleeAnimation,
 		"StopFleeAnimation", &AGOIncRagdollPawn::StopFleeAnimation);
 

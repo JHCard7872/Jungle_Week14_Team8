@@ -1,4 +1,4 @@
--- GOIncRagdollPawn_Test.lua
+﻿-- GOIncRagdollPawn_Test.lua
 --
 -- Test script for AGOIncRagdollPawn.
 -- C++ exposes component APIs; this script owns the DeadRagdoll -> Reviving -> AliveFlee -> FleeStopping -> DeadRagdoll state flow.
@@ -60,6 +60,19 @@ local bWarnedMissingSetPlayRate = false
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
+-- SpawnManager가 RagdollId를 넣어주면 그 id를 쓰고,
+-- 씬에 직접 배치된 테스트 Pawn처럼 id가 없으면 기본 Sonic 데이터로 fallback한다.
+local DEFAULT_RAGDOLL_ID = "blue-speedster"
+local RAGDOLL_ID = DEFAULT_RAGDOLL_ID
+local ragdollConfig = nil
+local bRagdollConfigApplied = false
+local bCanRevive = true
+local canReviveHere = true
+local aliveCapsuleHalfHeight = 1.0
+
+local GROUND_TRACE_UP = 50.0
+local GROUND_TRACE_DOWN = 300.0
+
 
 local function is_valid(value)
     return value ~= nil and (value.IsValid == nil or value:IsValid())
@@ -76,7 +89,9 @@ local function cache_components()
         return false
     end
 
-    if pawn.GetAliveCollisionCapsuleComponent ~= nil then
+    if pawn.GetAliveCapsuleComponent ~= nil then
+        capsule = pawn:GetAliveCapsuleComponent()
+    elseif pawn.GetAliveCollisionCapsuleComponent ~= nil then
         capsule = pawn:GetAliveCollisionCapsuleComponent()
     else
         capsule = pawn:GetCapsuleComponent()
@@ -88,8 +103,17 @@ local function cache_components()
         reviveTrigger = capsule
     end
 
-    mesh = pawn:GetMesh()
-    movement = pawn:GetRagdollMovementComponent()
+    if pawn.GetRagdollMeshComponent ~= nil then
+        mesh = pawn:GetRagdollMeshComponent()
+    else
+        mesh = pawn:GetMesh()
+    end
+
+    if pawn.GetGOIncMovementComponent ~= nil then
+        movement = pawn:GetGOIncMovementComponent()
+    else
+        movement = pawn:GetRagdollMovementComponent()
+    end
 
     if capsule == nil then
         print("[GOIncRagdollPawn_Test] Missing Alive CapsuleComponent")
@@ -104,12 +128,199 @@ local function cache_components()
         print("[GOIncRagdollPawn_Test] Missing GOIncRagdollMovementComponent")
     end
 
+    -- initial mesh offsets are captured after RagdollData.lua config is applied.
+    return capsule ~= nil and reviveTrigger ~= nil and mesh ~= nil and movement ~= nil
+end
+
+
+local function number_or(value, fallback)
+    if type(value) == "number" then
+        return value
+    end
+    return fallback
+end
+
+local function bool_or(value, fallback)
+    if type(value) == "boolean" then
+        return value
+    end
+    return fallback
+end
+
+local function string_or(value, fallback)
+    if type(value) == "string" and value ~= "" then
+        return value
+    end
+    return fallback
+end
+
+local function vector_from_table(value, fallback)
+    if value == nil then
+        return fallback
+    end
+
+    local x = number_or(value.x, number_or(value.X, fallback ~= nil and fallback.X or 0.0))
+    local y = number_or(value.y, number_or(value.Y, fallback ~= nil and fallback.Y or 0.0))
+    local z = number_or(value.z, number_or(value.Z, fallback ~= nil and fallback.Z or 0.0))
+    return Vector.new(x, y, z)
+end
+
+local function resolve_ragdoll_id()
+    if pawn ~= nil and pawn.GetRagdollId ~= nil then
+        local id = pawn:GetRagdollId()
+        if type(id) == "string" and id ~= "" then
+            return id
+        end
+    end
+
+    return DEFAULT_RAGDOLL_ID
+end
+
+local function load_ragdoll_config()
+    local resolvedId = resolve_ragdoll_id()
+    if ragdollConfig ~= nil and RAGDOLL_ID == resolvedId then
+        return ragdollConfig
+    end
+
+    RAGDOLL_ID = resolvedId
+
+    local moduleNames = {
+        "Data.RagdollData",
+        "RagdollData",
+    }
+
+    local data = nil
+    for _, moduleName in ipairs(moduleNames) do
+        local ok, result = pcall(require, moduleName)
+        if ok and result ~= nil then
+            data = result
+            print("[GOIncRagdollPawn_Test] Loaded " .. moduleName)
+            break
+        end
+    end
+
+    if data == nil then
+        print("[GOIncRagdollPawn_Test] Failed to require RagdollData.lua. Using script defaults.")
+        return nil
+    end
+
+    ragdollConfig = data[RAGDOLL_ID]
+    if ragdollConfig == nil then
+        print("[GOIncRagdollPawn_Test] Missing RagdollData entry: " .. tostring(RAGDOLL_ID) .. ". Using script defaults.")
+        return nil
+    end
+
+    print("[GOIncRagdollPawn_Test] RagdollData applied target: " .. tostring(RAGDOLL_ID) .. " / " .. tostring(ragdollConfig.displayName))
+    return ragdollConfig
+end
+
+local function capture_initial_mesh_offsets()
     if capsule ~= nil and mesh ~= nil then
         initialMeshRelativeLocation = mesh.RelativeLocation
         initialMeshWorldOffsetFromActor = mesh.Location - obj.Location
     end
+end
 
-    return capsule ~= nil and reviveTrigger ~= nil and mesh ~= nil and movement ~= nil
+local function apply_ragdoll_config()
+    if bRagdollConfigApplied then
+        return
+    end
+
+    local config = load_ragdoll_config()
+    if config == nil then
+        bRagdollConfigApplied = true
+        return
+    end
+
+    local flee = config.flee or {}
+
+    -- Runtime behavior values used by this Lua state machine.
+    bCanRevive = bool_or(config.canRevive, bCanRevive)
+    if config.aliveCapsule ~= nil then
+        aliveCapsuleHalfHeight = number_or(config.aliveCapsule.halfHeight, aliveCapsuleHalfHeight)
+    end
+
+    FLEE_END_DISTANCE = number_or(flee.endDistance, FLEE_END_DISTANCE)
+    FLEE_STOP_DURATION = number_or(flee.stopDuration, FLEE_STOP_DURATION)
+    FLEE_STOP_MIN_BRAKING_DECELERATION = number_or(flee.stopMinBrakingDeceleration, FLEE_STOP_MIN_BRAKING_DECELERATION)
+
+    FLEE_ANIMATION_BASE_SPEED = number_or(flee.animationBaseSpeed, FLEE_ANIMATION_BASE_SPEED)
+    FLEE_ANIMATION_MIN_PLAY_RATE = number_or(flee.animationMinPlayRate, FLEE_ANIMATION_MIN_PLAY_RATE)
+    FLEE_ANIMATION_MAX_PLAY_RATE = number_or(flee.animationMaxPlayRate, FLEE_ANIMATION_MAX_PLAY_RATE)
+    FLEE_STOP_START_PLAY_RATE = number_or(flee.stopStartPlayRate, FLEE_STOP_START_PLAY_RATE)
+    FLEE_STOP_END_PLAY_RATE = number_or(flee.stopEndPlayRate, FLEE_STOP_END_PLAY_RATE)
+    FLEE_ROTATION_YAW_OFFSET_DEGREES = number_or(flee.rotationYawOffset, FLEE_ROTATION_YAW_OFFSET_DEGREES)
+
+    REVIVE_BLEND_DURATION = number_or(config.reviveBlendDuration, REVIVE_BLEND_DURATION)
+    REVIVE_BLEND_FALLBACK_DURATION = REVIVE_BLEND_DURATION
+
+    -- Asset / component settings. Functions are guarded so the script also survives older builds.
+    if pawn ~= nil then
+        local meshPath = string_or(config.mesh, "")
+        if meshPath ~= "" and pawn.SetSkeletalMeshPath ~= nil then
+            pawn:SetSkeletalMeshPath(meshPath)
+        end
+
+        local fleeAnimationPath = string_or(config.fleeAnimation, "")
+        if fleeAnimationPath ~= "" and pawn.SetFleeAnimationPath ~= nil then
+            pawn:SetFleeAnimationPath(fleeAnimationPath)
+        end
+
+        if config.meshRelativeLocation ~= nil and pawn.SetMeshRelativeLocation ~= nil then
+            pawn:SetMeshRelativeLocation(vector_from_table(config.meshRelativeLocation, Vector.Zero()))
+        elseif config.meshRelativeLocation ~= nil and mesh ~= nil then
+            mesh.RelativeLocation = vector_from_table(config.meshRelativeLocation, mesh.RelativeLocation)
+        end
+
+        if config.meshRelativeScale ~= nil and pawn.SetMeshRelativeScale ~= nil then
+            pawn:SetMeshRelativeScale(vector_from_table(config.meshRelativeScale, Vector.new(1.0, 1.0, 1.0)))
+        elseif config.meshRelativeScale ~= nil and mesh ~= nil then
+            local scaleVector = vector_from_table(config.meshRelativeScale, Vector.new(1.0, 1.0, 1.0))
+            if mesh.SetRelativeScale ~= nil then
+                mesh:SetRelativeScale(scaleVector)
+            else
+                mesh.RelativeScale = scaleVector
+            end
+        end
+
+        if config.aliveCapsule ~= nil and pawn.SetAliveCapsuleSize ~= nil then
+            pawn:SetAliveCapsuleSize(
+                number_or(config.aliveCapsule.radius, 1.8),
+                number_or(config.aliveCapsule.halfHeight, 3.0)
+            )
+        elseif config.aliveCapsule ~= nil and capsule ~= nil and capsule.SetCapsuleSize ~= nil then
+            capsule:SetCapsuleSize(
+                number_or(config.aliveCapsule.radius, 1.8),
+                number_or(config.aliveCapsule.halfHeight, 3.0)
+            )
+        end
+
+        if config.reviveTriggerCapsule ~= nil and pawn.SetReviveTriggerCapsuleSize ~= nil then
+            pawn:SetReviveTriggerCapsuleSize(
+                number_or(config.reviveTriggerCapsule.radius, 2.4),
+                number_or(config.reviveTriggerCapsule.halfHeight, 3.4)
+            )
+        elseif config.reviveTriggerCapsule ~= nil and reviveTrigger ~= nil and reviveTrigger.SetCapsuleSize ~= nil then
+            reviveTrigger:SetCapsuleSize(
+                number_or(config.reviveTriggerCapsule.radius, 2.4),
+                number_or(config.reviveTriggerCapsule.halfHeight, 3.4)
+            )
+        end
+    end
+
+    if movement ~= nil then
+        if movement.SetMaxSpeed ~= nil then
+            movement:SetMaxSpeed(number_or(flee.speed, FLEE_ANIMATION_BASE_SPEED))
+        end
+        if movement.SetAcceleration ~= nil then
+            movement:SetAcceleration(number_or(flee.acceleration, 15.0))
+        end
+        if movement.SetBrakingDeceleration ~= nil then
+            movement:SetBrakingDeceleration(number_or(flee.brakingDeceleration, 10.0))
+        end
+    end
+
+    bRagdollConfigApplied = true
 end
 
 local function cache_player()
@@ -139,23 +350,64 @@ local function get_ragdoll_actor_sync_location()
     return mesh:GetRagdollBodyWorldLocation(SYNC_BONE_NAME)
 end
 
-local function align_actor_to_ragdoll()
-    local location = get_ragdoll_actor_sync_location()
-    if location ~= nil then
-        if initialMeshWorldOffsetFromActor ~= nil then
-            obj.Location = location - initialMeshWorldOffsetFromActor
-        else
-            obj.Location = location
-        end
+local function project_to_ground(actorTargetLocation, sourceZ)
+    if World == nil or World.LineTraceGround == nil then
+        return Vector.new(actorTargetLocation.X, actorTargetLocation.Y, obj.Location.Z), true
     end
+
+    local start = Vector.new(
+        actorTargetLocation.X,
+        actorTargetLocation.Y,
+        sourceZ + GROUND_TRACE_UP
+    )
+
+    local finish = Vector.new(
+        actorTargetLocation.X,
+        actorTargetLocation.Y,
+        sourceZ - GROUND_TRACE_DOWN
+    )
+
+    local hit = World.LineTraceGround(start, finish, obj)
+
+    if hit == nil or not hit.bHit or hit.WorldHitLocation == nil then
+        return obj.Location, false
+    end
+
+    return Vector.new(
+        actorTargetLocation.X,
+        actorTargetLocation.Y,
+        hit.WorldHitLocation.Z + aliveCapsuleHalfHeight
+    ), true
 end
 
-local function sync_actor_capsule_to_ragdoll()
+local function align_actor_to_ragdoll()
+    local meshSyncLocation = get_ragdoll_actor_sync_location()
+    if meshSyncLocation == nil then
+        return false
+    end
+
+    local actorTargetLocation = meshSyncLocation
+    if initialMeshWorldOffsetFromActor ~= nil then
+        actorTargetLocation = meshSyncLocation - initialMeshWorldOffsetFromActor
+    end
+
+    local projectedLocation, bGroundValid = project_to_ground(actorTargetLocation, meshSyncLocation.Z)
+    canReviveHere = bGroundValid
+
+    if not bGroundValid then
+        return false
+    end
+
+    obj.Location = projectedLocation
+    return true
+end
+
+local function sync_revive_trigger_to_ragdoll()
     if state ~= STATE_DEAD then
         return
     end
 
-    if capsule == nil or mesh == nil then
+    if reviveTrigger == nil or mesh == nil then
         return
     end
 
@@ -169,12 +421,31 @@ local function sync_actor_capsule_to_ragdoll()
         actorTargetLocation = meshSyncLocation - initialMeshWorldOffsetFromActor
     end
 
-    obj.Location = actorTargetLocation
+    -- Dead 상태에서는 Actor/AliveCapsule을 ragdoll 위치로 끌고 가지 않는다.
+    -- Player revive 감지용 trigger만 ragdoll 근처의 안전한 바닥 위치를 따라가게 한다.
+    local projectedLocation, bGroundValid = project_to_ground(actorTargetLocation, meshSyncLocation.Z)
+    canReviveHere = bGroundValid
 
-    -- Moving the actor/root capsule also moves child components through the hierarchy.
-    -- Put the skeletal mesh component back onto the existing ragdoll sync position so
-    -- this trigger-follow update does not drag the simulated ragdoll bodies around.
-    mesh.Location = meshSyncLocation
+    if bGroundValid then
+        reviveTrigger.Location = projectedLocation
+    else
+        -- Ground가 없으면 revive는 막되, trigger 자체는 ragdoll 근처에 남겨 debug 위치를 확인하기 쉽게 둔다.
+        reviveTrigger.Location = meshSyncLocation
+    end
+end
+
+local function sync_dead_root_to_ragdoll_safe()
+    if state ~= STATE_DEAD then
+        return
+    end
+
+    if pawn ~= nil and pawn.UpdateDeadRootFromRagdollSafe ~= nil then
+        canReviveHere = pawn:UpdateDeadRootFromRagdollSafe()
+        return
+    end
+
+    -- Older engine fallback.
+    sync_revive_trigger_to_ragdoll()
 end
 
 local function set_alive_capsule_enabled(enabled)
@@ -365,6 +636,11 @@ function EnterDeadRagdoll()
     reviveStartYaw = obj.Rotation.Z
     reviveTargetYaw = obj.Rotation.Z
 
+    if pawn ~= nil and pawn.EnterDeadRagdollState ~= nil then
+        pawn:EnterDeadRagdollState()
+        return
+    end
+
     if movement ~= nil then
         movement:StopMovementImmediately()
         movement:SetMovementEnabled(false)
@@ -406,11 +682,20 @@ local function RequestEnterDeadRagdoll(reason)
     end
 
     print("[GOIncRagdollPawn_Test] RequestEnterDeadRagdoll reason: " .. tostring(reason))
-    EnterDeadRagdoll()
+    EnterDeadRagdoll(reason)
+end
+
+function RequestDeadRagdoll(reason)
+    RequestEnterDeadRagdoll(reason or "ExternalRequest")
 end
 
 function EnterReviving()
     if state ~= STATE_DEAD then
+        return
+    end
+
+    if not bCanRevive then
+        print("[GOIncRagdollPawn_Test] Revive blocked. canRevive=false for " .. tostring(RAGDOLL_ID))
         return
     end
 
@@ -422,13 +707,37 @@ function EnterReviving()
 
     print("[GOIncRagdollPawn_Test] EnterReviving")
 
-    -- Ragdoll 결과 위치로 Actor/Root를 먼저 맞춘 뒤 recovery를 시작한다.
-    align_actor_to_ragdoll()
+    -- Ragdoll 결과 위치로 Actor/Root를 Reviving 진입 순간에만 맞춘 뒤 recovery를 시작한다.
+    -- Dead tick에서는 Actor/AliveCapsule 위치를 더 이상 계속 동기화하지 않는다.
+    local bPrepared = false
+    if pawn ~= nil and pawn.PrepareReviveFromRagdoll ~= nil then
+        bPrepared = pawn:PrepareReviveFromRagdoll()
+    else
+        bPrepared = align_actor_to_ragdoll()
+    end
+
+    if not bPrepared then
+        print("[GOIncRagdollPawn_Test] EnterReviving failed: no valid ground.")
+        state = STATE_DEAD
+        return
+    end
 
     -- Recovery 중 Actor yaw도 도망 방향으로 서서히 보간한다.
     -- Recovery가 끝난 뒤 첫 Alive tick에서 face_direction()이 yaw를 확 돌리는 문제를 줄인다.
     reviveStartYaw = obj.Rotation.Z
     reviveTargetYaw = get_yaw_from_direction(get_flee_direction())
+
+    if pawn ~= nil and pawn.EnterRevivingState ~= nil then
+        if mesh ~= nil and mesh.SetRagdollRecoveryDuration ~= nil then
+            mesh:SetRagdollRecoveryDuration(REVIVE_BLEND_DURATION)
+        end
+        pawn:EnterRevivingState()
+        set_flee_animation_play_rate(1.0)
+        if mesh ~= nil and initialMeshRelativeLocation ~= nil then
+            mesh.RelativeLocation = initialMeshRelativeLocation
+        end
+        return
+    end
 
     if movement ~= nil then
         movement:StopMovementImmediately()
@@ -622,6 +931,8 @@ function BeginPlay()
         return
     end
 
+    apply_ragdoll_config()
+    capture_initial_mesh_offsets()
     cache_player()
 
     EnterDeadRagdoll()
@@ -633,6 +944,9 @@ function Tick(dt)
         if not cache_components() then
             return
         end
+
+        apply_ragdoll_config()
+        capture_initial_mesh_offsets()
     end
 
     if Input.GetKeyDown(Key.R) then
@@ -647,7 +961,7 @@ function Tick(dt)
     end
 
     if state == STATE_DEAD then
-        sync_actor_capsule_to_ragdoll()
+        sync_dead_root_to_ragdoll_safe()
         return
     end
 
@@ -684,6 +998,11 @@ function OnOverlap(other, overlappedComp, otherComp)
     end
 
     -- overlappedComp와 reviveTrigger는 같은 C++ 객체여도 Lua userdata 비교가 실패할 수 있으므로 직접 비교하지 않는다.
+    if not canReviveHere then
+        print("[GOIncRagdollPawn_Test] Revive blocked: no valid ground.")
+        return
+    end
+
     print("[GOIncRagdollPawn_Test] Player overlapped revive capsule -> Reviving")
     player = other
     EnterReviving()

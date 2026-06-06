@@ -300,14 +300,9 @@ FString FLuaScriptManager::GetModuleNameFromPath(const FString& ScriptPath)
 	}
 
 	Normalized.erase(Normalized.size() - 4);
-	for (char& Ch : Normalized)
-	{
-		if (Ch == '/')
-		{
-			Ch = '.';
-		}
-	}
 
+	// 캐시 키는 슬래시 형태로 통일 — require 래퍼(Initialize)가 '.' 를 '/' 로
+	// 정규화해서 로드하므로, 핫리로드 무효화 키도 같은 형태여야 맞는다.
 	return Normalized;
 }
 
@@ -573,6 +568,22 @@ void FLuaScriptManager::Initialize()
 		}
 		return LR.get<sol::object>();
 	};
+
+	// require 이름 정규화 — require("Manager.ScoreManager") 와 require("Manager/ScoreManager")
+	// 를 같은 모듈로 취급한다. '.' 를 '/' 로 바꿔 한 가지 키로만 package.loaded 에 캐시되게 함
+	// (키가 둘로 갈리면 같은 모듈 인스턴스가 2개 생겨 상태가 분열된다).
+	// 핫리로드 무효화(GetModuleNameFromPath)도 같은 슬래시 키를 지운다.
+	sol::protected_function_result WrapResult = Lua->safe_script(R"(
+		local _require = require
+		require = function(name)
+			return _require((string.gsub(name, "[%.\\]", "/")))
+		end
+	)", sol::script_pass_on_error);
+	if (!WrapResult.valid())
+	{
+		sol::error WrapErr = WrapResult;
+		UE_LOG("[Lua] require wrapper error: %s", WrapErr.what());
+	}
 
 	RegisterBindings(*Lua);
 
@@ -1958,6 +1969,38 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	{
 		return static_cast<float>(GetLuaInputSnapshot().ScrollDelta) / static_cast<float>(WHEEL_DELTA);
 	});
+	Input.set_function("GetMouseX", []()
+	{
+		if (GEngine)
+		{
+			if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+			{
+				POINT MousePos = {};
+				if (GameViewportClient->GetMouseViewportPosition(MousePos))
+				{
+					return MousePos.x;
+				}
+			}
+		}
+
+		return InputSystem::Get().GetMouseClientPos().x;
+	});
+	Input.set_function("GetMouseY", []()
+	{
+		if (GEngine)
+		{
+			if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+			{
+				POINT MousePos = {};
+				if (GameViewportClient->GetMouseViewportPosition(MousePos))
+				{
+					return MousePos.y;
+				}
+			}
+		}
+
+		return InputSystem::Get().GetMouseClientPos().y;
+	});
 
 	// Engine — 게임 일시정지 / 종료.
 	sol::table Engine = Lua.create_named_table("Engine");
@@ -1979,6 +2022,18 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 			{
 				World->SetPaused(false);
 			}
+		}
+	});
+	Engine.set_function("SetCursorVisible", [](bool bVisible)
+	{
+		if (!GEngine)
+		{
+			return;
+		}
+
+		if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+		{
+			GameViewportClient->SetCursorVisible(bVisible);
 		}
 	});
 	Engine.set_function("IsPaused", []()
@@ -2165,8 +2220,8 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	});
 	Engine.set_function("LoadScene", [](const FString& ScenePath)
 	{
-		// 다음 프레임 끝에 안전 교체 (GameEngine::ProcessPendingTransition — 월드 destroy
-		// + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
+		// 요청한 프레임 끝(WorldTick·Render 이후)에 안전 교체 (GameEngine::ProcessPendingTransition
+		// — 월드 destroy + FireWorldReset + 새 씬 BeginPlay). "GameOver" 같은 짧은 이름도 됨.
 		// PIE 에선 세션 종료(에디터 복귀)로 매핑된다.
 		if (GEngine)
 		{
@@ -2853,7 +2908,16 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"RelativeLocation", sol::property(
 		[](USceneComponent& Component) { return Component.GetRelativeLocation(); },
 		[](USceneComponent& Component, const FVector& V) { Component.SetRelativeLocation(V); }
-		));
+		),
+		"GetRelativeLocation", [](USceneComponent& Component) { return Component.GetRelativeLocation(); },
+		"SetRelativeLocation", [](USceneComponent& Component, const FVector& V) { Component.SetRelativeLocation(V); },
+		"RelativeScale", sol::property(
+		[](USceneComponent& Component) { return Component.GetRelativeScale(); },
+		[](USceneComponent& Component, const FVector& V) { Component.SetRelativeScale(V); }
+		),
+		"GetRelativeScale", [](USceneComponent& Component) { return Component.GetRelativeScale(); },
+		"SetRelativeScale", [](USceneComponent& Component, const FVector& V) { Component.SetRelativeScale(V); }
+		);
 
 	Lua.new_usertype<FBodyInstance>("PhysicsBody",
 		"IsValid", [](FBodyInstance& Body)
@@ -3165,7 +3229,10 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"IsValid", [](AActor* Actor)
 	{
 		// Lua가 보유한 actor 핸들이 cpp 측에서 destroy됐는지 확인. nil/destroyed면 false.
-		return Actor != nullptr && IsAliveObject(Actor);
+		// IsAliveObject가 아니라 IsValid여야 한다 — DestroyActor는 MarkPendingKill만 하고
+		// 메모리는 GC까지 살아 있어서, PendingKill을 안 보면 destroy 직후 true가 나온다
+		// (빔이 잡은 래그돌을 트럭이 수거할 때 UAF 크래시의 원인이었음).
+		return Actor != nullptr && IsValid(Actor);
 	},
 
 		"HasTag", [](AActor& Actor, const FString& Tag)
@@ -3389,6 +3456,41 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
 		return CurrentWorld ? CurrentWorld->GetGameTimeSeconds() : 0.0f;
 	});
+	World.set_function("LineTraceGround", [](const FVector& Start, const FVector& End, AActor* IgnoreActor, sol::this_state State) -> sol::object
+	{
+		sol::state_view LuaState(State);
+		UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+		if (!CurrentWorld)
+		{
+			return sol::make_object(LuaState, sol::nil);
+		}
+
+		const FVector Delta = End - Start;
+		const float MaxDist = Delta.Length();
+		if (MaxDist <= 1.0e-6f)
+		{
+			return sol::make_object(LuaState, sol::nil);
+		}
+
+		FHitResult Hit;
+		const uint32 ObjectTypeMask =
+			ObjectTypeBit(ECollisionChannel::WorldStatic) |
+			ObjectTypeBit(ECollisionChannel::WorldDynamic);
+		const bool bHit = CurrentWorld->PhysicsRaycastByObjectTypes(
+			Start,
+			Delta / MaxDist,
+			MaxDist,
+			Hit,
+			ObjectTypeMask,
+			IgnoreActor);
+
+		if (!bHit)
+		{
+			return sol::make_object(LuaState, sol::nil);
+		}
+
+		return sol::make_object(LuaState, Hit);
+	});
 	World.set_function("PhysicsRaycast", &LuaPhysicsRaycast);
 	World.set_function("Raycast", &LuaPhysicsRaycast);
 
@@ -3426,10 +3528,20 @@ void FLuaScriptManager::RegisterUIBindings(sol::state& Lua)
 	{
 		Widget.BindClick(ElementId, Callback);
 	},
+		"bind_hover", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
+	{
+		Widget.BindHover(ElementId, Callback);
+	},
 		"SetText", &UUserWidget::SetText,
 		"set_text", &UUserWidget::SetText,
 		"SetProperty", &UUserWidget::SetProperty,
 		"set_property", &UUserWidget::SetProperty,
+		"SetAttribute", &UUserWidget::SetAttribute,
+		"set_attribute", &UUserWidget::SetAttribute,
+		"GetValue", &UUserWidget::GetValue,
+		"get_value", &UUserWidget::GetValue,
+		"SetValue", &UUserWidget::SetValue,
+		"set_value", &UUserWidget::SetValue,
 		"SetWantsMouse", &UUserWidget::SetWantsMouse,
 		"WantsMouse", &UUserWidget::WantsMouse);
 

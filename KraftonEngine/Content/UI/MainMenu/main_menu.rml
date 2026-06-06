@@ -1,0 +1,57 @@
+<rml>
+<head>
+    <title>Main Menu</title>
+    <link type="text/rcss" href="main_menu.rcss" />
+</head>
+
+<body>
+    <div id="menu_root">
+        <div id="menu_content">
+            <img id="menu_background" src="../../Sprite/main_menu_background.png" />
+
+            <button id="menu_help" class="menu_button">
+                <img class="menu_image menu_default" src="../../Sprite/main_menu_help.png" />
+                <img class="menu_image menu_hover" src="../../Sprite/main_menu_help_hover.png" />
+            </button>
+            <div id="label_help" class="menu_label">조작 방법</div>
+
+            <button id="menu_option" class="menu_button">
+                <img class="menu_image menu_default" src="../../Sprite/main_menu_option.png" />
+                <img class="menu_image menu_hover" src="../../Sprite/main_menu_option_hover.png" />
+            </button>
+            <div id="label_option" class="menu_label">옵션</div>
+
+            <button id="menu_play" class="menu_button">
+                <img class="menu_image menu_default" src="../../Sprite/main_menu_play.png" />
+                <img class="menu_image menu_hover" src="../../Sprite/main_menu_play_hover.png" />
+            </button>
+            <div id="label_play" class="menu_label">플레이</div>
+
+            <button id="menu_scoreboard" class="menu_button">
+                <img class="menu_image menu_default" src="../../Sprite/main_menu_scoreboard.png" />
+                <img class="menu_image menu_hover" src="../../Sprite/main_menu_scoreboard_hover.png" />
+            </button>
+            <div id="label_scoreboard" class="menu_label">스코어보드</div>
+
+            <button id="menu_credits" class="menu_button">
+                <img class="menu_image menu_default" src="../../Sprite/main_menu_credits.png" />
+                <img class="menu_image menu_hover" src="../../Sprite/main_menu_credits_hover.png" />
+            </button>
+            <div id="label_credits" class="menu_label">크레딧</div>
+
+            <button id="menu_back_to_title">
+                <img class="back_button_image" src="../../Sprite/main_menu_backtotitle.png" />
+            </button>
+            <div id="label_back_to_title" class="menu_label">타이틀로</div>
+
+            <img id="cursor_normal" class="cursor_image" src="../../Sprite/cursor.png" />
+            <img id="cursor_click" class="cursor_image" src="../../Sprite/cursor_click.png" />
+        </div>
+
+        <div id="title_overlay">
+            <img id="title_background" src="../../Sprite/title_background.png" />
+            <div id="press_any_button">PRESS ANY BUTTON TO START</div>
+        </div>
+    </div>
+</body>
+</rml>

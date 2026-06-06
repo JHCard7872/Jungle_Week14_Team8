@@ -151,6 +151,9 @@ void FRenderer::BlitToBackBuffer(ID3D11ShaderResourceView* SourceSRV)
 	}
 
 	ID3D11DeviceContext* Ctx = Device.GetDeviceContext();
+	Resources.SetDepthStencilState(Device, EDepthStencilState::NoDepth);
+	Resources.SetBlendState(Device, EBlendState::Opaque);
+	Resources.SetRasterizerState(Device, ERasterizerState::SolidNoCull);
 
 	FShader* Shader = FShaderManager::Get().FindOrCreate(EShaderPath::Blit);
 	Shader->Bind(Ctx);

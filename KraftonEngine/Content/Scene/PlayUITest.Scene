@@ -1,0 +1,343 @@
+{
+  "Actors" : [{
+      "ClassName" : "AActor",
+      "Name" : "PlayUITestSceneManager",
+      "NonSceneComponents" : [{
+          "ClassName" : "ULuaScriptComponent",
+          "ObjectId" : 4,
+          "Properties" : {
+            "ObjectName" : "ULuaScriptComponent_1",
+            "ScriptFile" : "Scenes/PlayUITestScene.lua",
+            "bAutoActivate" : true,
+            "bEditorOnly" : false,
+            "bHiddenInComponentTree" : false,
+            "bIsActive" : true,
+            "bTickEnable" : true
+          }
+        }],
+      "ObjectId" : 2,
+      "Properties" : {
+        "ObjectName" : "PlayUITestSceneManager",
+        "PendingActorLocation" : [1.167267, -0.262464, 0.108537],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "USceneComponent",
+        "ObjectId" : 3,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "ObjectName" : "USceneComponent_1",
+          "RelativeTransform.Location" : [1.167267, -0.262464, 0.108537],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "bAutoActivate" : true,
+          "bEditorOnly" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bTickEnable" : true
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "AStaticMeshActor_1",
+      "NonSceneComponents" : [],
+      "ObjectId" : 5,
+      "Properties" : {
+        "ObjectName" : "AStaticMeshActor_1",
+        "PendingActorLocation" : [0.000000, 0.000000, -5.000000],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [100.000000, 100.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [{
+            "Children" : [],
+            "ClassName" : "UBoxComponent",
+            "ObjectId" : 7,
+            "Properties" : {
+              "BoxExtent" : [1.000000, 1.000000, 1.000000],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+              "Mass" : 1.000000,
+              "ObjectName" : "UBoxComponent_0",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "ShapeColor" : [0.000000, 1.000000, 0.000000, 1.000000],
+              "bAutoActivate" : true,
+              "bCastShadow" : false,
+              "bCastShadowAsTwoSided" : false,
+              "bDrawOnlyIfSelected" : false,
+              "bEditorOnly" : false,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : false,
+              "bIsActive" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            }
+          }],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 6,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/BasicShapeMaterial.mat"],
+          "ObjectName" : "UStaticMeshComponent_1",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [0.000000, 0.000000, -5.000000],
+          "RelativeTransform.Scale" : [100.000000, 100.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Data/BasicShape/Cube_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "ALuaCharacter",
+      "Name" : "ALuaCharacter_0",
+      "NonSceneComponents" : [{
+          "ClassName" : "UCharacterMovementComponent",
+          "ObjectId" : 13,
+          "Properties" : {
+            "BrakingFriction" : 8.000000,
+            "FloorProbeDistance" : 0.100000,
+            "Gravity" : 9.800000,
+            "JumpZVelocity" : 6.000000,
+            "MaxAcceleration" : 20.000000,
+            "MaxWalkSpeed" : 6.000000,
+            "ObjectName" : "UCharacterMovementComponent_0",
+            "RotationYawRate" : 540.000000,
+            "bAutoActivate" : true,
+            "bAutoRegisterUpdatedComponent" : false,
+            "bEditorOnly" : false,
+            "bHiddenInComponentTree" : false,
+            "bIsActive" : true,
+            "bOrientRotationToMovement" : true,
+            "bTickEnable" : true
+          }
+        }, {
+          "ClassName" : "ULuaScriptComponent",
+          "ObjectId" : 14,
+          "Properties" : {
+            "ObjectName" : "ULuaScriptComponent_1",
+            "ScriptFile" : "",
+            "bAutoActivate" : true,
+            "bEditorOnly" : false,
+            "bHiddenInComponentTree" : false,
+            "bIsActive" : true,
+            "bTickEnable" : true
+          }
+        }],
+      "ObjectId" : 8,
+      "Properties" : {
+        "ObjectName" : "ALuaCharacter_0",
+        "PendingActorLocation" : [-24.229572, -6.643559, 1.000000],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bAutoPossessPlayer" : true,
+        "bNeedsTick" : true,
+        "bUseControllerRotationPitch" : true,
+        "bUseControllerRotationRoll" : false,
+        "bUseControllerRotationYaw" : false
+      },
+      "RootComponent" : {
+        "Children" : [{
+            "Children" : [],
+            "ClassName" : "USkeletalMeshComponent",
+            "ObjectId" : 10,
+            "Properties" : {
+              "AnimInstanceClass" : "None",
+              "AnimationData" : {
+                "AnimToPlay" : null,
+                "AnimToPlayPath" : "None",
+                "PlayRate" : 1.000000,
+                "bLooping" : true,
+                "bPlaying" : true
+              },
+              "AnimationMode" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "LuaAnimScriptFile" : "",
+              "Mass" : 1.000000,
+              "MaterialSlots" : ["Content/Material/Auto/eye_tx.002.mat", "Content/Material/Auto/all_tx.002.mat"],
+              "ObjectName" : "USkeletalMeshComponent_2",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RagdollPhysicsBlendWeight" : 1.000000,
+              "RagdollRecoveryDuration" : 0.350000,
+              "RagdollSelfCollisionMode" : [1, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, -1.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "SkeletalMeshPath" : "Content/Data/Mario/Mario_SkeletalMesh.uasset",
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bCreateRagdollConstraints" : true,
+              "bEditorOnly" : false,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : false,
+              "bIsActive" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bRagdollEnabled" : false,
+              "bRagdollGravityEnabled" : true,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            }
+          }, {
+            "Children" : [{
+                "Children" : [],
+                "ClassName" : "UCameraComponent",
+                "ObjectId" : 12,
+                "Properties" : {
+                  "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+                  "CameraState.FOV" : 1.047198,
+                  "CameraState.FarZ" : 1000.000000,
+                  "CameraState.NearZ" : 0.100000,
+                  "CameraState.OrthoWidth" : 10.000000,
+                  "CameraState.bIsOrthogonal" : false,
+                  "ObjectName" : "UCameraComponent_0",
+                  "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+                  "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+                  "bAutoActivate" : true,
+                  "bEditorOnly" : false,
+                  "bHiddenInComponentTree" : false,
+                  "bIsActive" : true,
+                  "bTickEnable" : true
+                }
+              }],
+            "ClassName" : "USpringArmComponent",
+            "ObjectId" : 11,
+            "Properties" : {
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CameraLagMaxDistance" : 0.000000,
+              "CameraLagSpeed" : 10.000000,
+              "CameraRotationLagSpeed" : 10.000000,
+              "ObjectName" : "USpringArmComponent_0",
+              "ProbeChannel" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "ProbeSize" : 0.120000,
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "SocketOffset" : [0.000000, 0.000000, 3.000000],
+              "TargetArmLength" : 10.000000,
+              "TargetOffset" : [0.000000, 0.000000, 0.000000],
+              "bAutoActivate" : true,
+              "bDoCollisionTest" : false,
+              "bEditorOnly" : false,
+              "bEnableCameraLag" : true,
+              "bEnableCameraRotationLag" : true,
+              "bHiddenInComponentTree" : false,
+              "bIsActive" : true,
+              "bTickEnable" : true
+            }
+          }],
+        "ClassName" : "UCapsuleComponent",
+        "ObjectId" : 9,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CapsuleHalfHeight" : 3.000000,
+          "CapsuleRadius" : 1.800000,
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "ObjectName" : "UCapsuleComponent_0",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-24.229572, -6.643559, 1.000000],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "ShapeColor" : [0.000000, 1.000000, 0.000000, 1.000000],
+          "bAutoActivate" : true,
+          "bCastShadow" : false,
+          "bCastShadowAsTwoSided" : false,
+          "bDrawOnlyIfSelected" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true
+        }
+      }
+    }],
+  "ClassName" : "UWorld",
+  "ContextHandle" : "NewScene",
+  "ContextName" : "New Scene",
+  "Name" : "PlayUITest",
+  "ObjectId" : 1,
+  "PerspectiveCamera" : {
+    "FOV" : 1.047198,
+    "FarClip" : 1000.000000,
+    "Location" : [-6.679770, 41.058262, 18.433823],
+    "NearClip" : 0.100000,
+    "Rotation" : [0.000000, 27.315035, 273.449860]
+  },
+  "Version" : 2,
+  "WorldSettings" : {
+    "ClothWind" : {
+      "Direction" : [1.000000, 0.000000, 0.000000],
+      "Enabled" : false,
+      "Strength" : 0.000000,
+      "TurbulenceSeed" : 1337,
+      "TurbulenceSpatialScale" : 100.000000,
+      "TurbulenceStrength" : 0.000000,
+      "TurbulenceTemporalScale" : 1.000000
+    },
+    "GameMode" : ""
+  },
+  "WorldType" : "Editor"
+}

@@ -131,6 +131,12 @@ public:
     UFUNCTION(Callable, Category="Physics|Ragdoll")
     bool GetRagdollComponentSyncWorldLocation(FVector& OutLocation) const;
 
+    // Parent/root transform was moved while this mesh is in ragdoll.
+    // Re-align only the component transform to the current ragdoll bodies,
+    // then refresh the cached component matrix so the next tick does not treat
+    // the parent move as an external component move that should move ragdoll bodies.
+    void ResyncComponentToRagdollBodiesAfterParentMove();
+
     UFUNCTION(Callable, Category = "Physics|Ragdoll")
     void SetAllBodiesPhysicsBlendWeight(float InPhysicsBlendWeight);
 

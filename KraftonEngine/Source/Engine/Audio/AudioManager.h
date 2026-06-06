@@ -17,6 +17,7 @@ public:
 	void PlayAudio(const FString& Key, float Volume = 1.0f);
 	void PlayBGM(const FString& Key, float Volume = 1.0f);
 	void StopBGM();
+	void StopAllPlayback();
 	void PlayLoop(const FString& Key, const FString& LoopName, float Volume = 1.0f, float Pitch = 1.0f);
 	void StopLoop(const FString& LoopName);
 	void StopAllLoops();
@@ -34,10 +35,18 @@ private:
 	FAudioManager() = default;
 	~FAudioManager() = default;
 
+	// 로드된 사운드 + 재로드 판정용 원본 인자 — 같은 키/경로/루프면 LoadAudio가 재사용
+	struct FLoadedAudio
+	{
+		FMOD::Sound* Sound = nullptr;
+		FString Path;
+		bool bLoop = false;
+	};
+
 	FMOD::System* System = nullptr;
 	FMOD::ChannelGroup* MasterGroup = nullptr;
 	FMOD::Channel* BGMChannel = nullptr;
 
-	TMap<FString, FMOD::Sound*> Audios;
+	TMap<FString, FLoadedAudio> Audios;
 	TMap<FString, FMOD::Channel*> LoopChannels;
 };
