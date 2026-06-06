@@ -407,6 +407,17 @@ void USkeletalMeshComponent::SyncComponentToRagdollBody()
     SetWorldLocation(NewComponentWorldLocation);
 }
 
+void USkeletalMeshComponent::ResyncComponentToRagdollBodiesAfterParentMove()
+{
+    if (!IsRagdollEnabled())
+    {
+        return;
+    }
+
+    SyncComponentToRagdollBody();
+    CacheRagdollComponentWorldMatrix();
+}
+
 FBodyInstance* USkeletalMeshComponent::FindRagdollComponentSyncBody() const
 {
     USkeletalMesh* Mesh = GetSkeletalMesh();

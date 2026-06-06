@@ -1,4 +1,4 @@
--- GOIncRagdollPawn_Test.lua
+﻿-- GOIncRagdollPawn_Test.lua
 --
 -- Test script for AGOIncRagdollPawn.
 -- C++ exposes component APIs; this script owns the DeadRagdoll -> Reviving -> AliveFlee -> FleeStopping -> DeadRagdoll state flow.
@@ -432,6 +432,20 @@ local function sync_revive_trigger_to_ragdoll()
         -- Ground가 없으면 revive는 막되, trigger 자체는 ragdoll 근처에 남겨 debug 위치를 확인하기 쉽게 둔다.
         reviveTrigger.Location = meshSyncLocation
     end
+end
+
+local function sync_dead_root_to_ragdoll_safe()
+    if state ~= STATE_DEAD then
+        return
+    end
+
+    if pawn ~= nil and pawn.UpdateDeadRootFromRagdollSafe ~= nil then
+        canReviveHere = pawn:UpdateDeadRootFromRagdollSafe()
+        return
+    end
+
+    -- Older engine fallback.
+    sync_revive_trigger_to_ragdoll()
 end
 
 local function set_alive_capsule_enabled(enabled)
@@ -947,7 +961,7 @@ function Tick(dt)
     end
 
     if state == STATE_DEAD then
-        sync_revive_trigger_to_ragdoll()
+        sync_dead_root_to_ragdoll_safe()
         return
     end
 

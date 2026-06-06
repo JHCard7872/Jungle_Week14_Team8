@@ -3,12 +3,13 @@
 #include "GameFramework/Pawn/Pawn.h"
 
 class UCapsuleComponent;
+class USceneComponent;
 class USkeletalMeshComponent;
 class UGOIncRagdollMovementComponent;
 class ULuaScriptComponent;
 
 // GOInc 게임 전용 ragdoll NPC Pawn의 기본 컴포넌트 구성.
-// UE Character 계열처럼 Capsule(Root) -> Mesh(Child) 구조를 유지하고,
+// Root는 collision/physics가 없는 SceneComponent로 두고, AliveCapsule / ReviveTrigger / Mesh를 형제로 분리한다.
 // 게임 상태 전환/AI는 C++이 아니라 Lua에서 처리한다.
 #include "Source/Engine/GameFramework/Pawn/GOIncRagdollPawn.generated.h"
 
@@ -28,7 +29,7 @@ public:
 	void PostDuplicate() override;
 
 	// Alive 상태에서 이동/중력/바닥 충돌을 담당하는 Capsule.
-	// 현재 1차 패치에서는 기존 Scene 호환을 위해 Root Capsule을 그대로 AliveCapsule로 사용한다.
+	// 기존 API 호환을 위해 이름은 CapsuleComponent를 유지하지만, 의미는 AliveCapsule이다.
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
 	UCapsuleComponent* GetAliveCapsuleComponent() const { return CapsuleComponent; }
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
@@ -50,6 +51,8 @@ public:
 	UGOIncRagdollMovementComponent* GetRagdollMovementComponent() const { return GetGOIncMovementComponent(); }
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
 	ULuaScriptComponent* GetLuaScriptComponent() const { return LuaScriptComponent; }
+	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
+	USceneComponent* GetGOIncRootComponent() const { return GOIncRootComponent; }
 
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetRagdollId(const FString& InRagdollId);
@@ -75,7 +78,13 @@ public:
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetReviveTriggerCapsuleSize(float Radius, float HalfHeight);
 
-	// Dead ragdoll 결과를 기준으로 Reviving 시작 전에 Actor/AliveCapsule을 안전한 위치로 한 번만 정렬한다.
+	// Dead 상태에서 ragdoll physics 결과 위치를 따라 GOIncRoot/AliveCapsule의 논리 위치를 안전하게 갱신한다.
+	// XY는 ragdoll sync 위치를 따라가고, Z는 AliveCapsule이 바닥 위에 서도록 보정한다.
+	// Mesh ragdoll body는 이동시키지 않고 기존 SkeletalMeshComponent sync 로직으로 다시 맞춘다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
+	bool UpdateDeadRootFromRagdollSafe();
+
+	// Dead ragdoll 결과를 기준으로 Reviving 시작 전에 Actor/AliveCapsule을 안전한 위치로 최종 보정한다.
 	// 상태 전환 판단은 Lua가 담당하고, 이 함수는 위치 정렬 helper 역할만 한다.
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
 	bool PrepareReviveFromRagdoll();
@@ -101,7 +110,10 @@ public:
 protected:
 	void OnOwnedComponentRemoved(UActorComponent* Component) override;
 	void RefreshGOIncRagdollPawnComponents();
+	void EnsureGOIncRootComponent();
 	void EnsureReviveTriggerCapsuleComponent();
+	void AttachGOIncSceneComponentsToRoot();
+	void ConfigureMovementUpdatedComponent();
 	void ConfigureAliveCollisionCapsuleDefaults();
 	void ConfigureReviveTriggerCapsuleDefaults();
 	void ApplyInitialRagdollState();
@@ -110,7 +122,9 @@ protected:
 	void SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorAndGravity);
 	bool GetRagdollMeshSyncWorldLocation(FVector& OutLocation) const;
 	bool ProjectAliveCapsuleLocationToGround(const FVector& ActorTargetLocation, float SourceZ, FVector& OutProjectedLocation) const;
+	void ResyncMeshComponentToCurrentRagdollBodies();
 
+	USceneComponent* GOIncRootComponent = nullptr;
 	UCapsuleComponent* CapsuleComponent = nullptr;
 	UCapsuleComponent* ReviveTriggerCapsuleComponent = nullptr;
 	USkeletalMeshComponent* Mesh = nullptr;

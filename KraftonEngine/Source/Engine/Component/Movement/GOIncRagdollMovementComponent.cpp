@@ -95,6 +95,22 @@ void UGOIncRagdollMovementComponent::SetGravityEnabled(bool bEnabled)
 	}
 }
 
+void UGOIncRagdollMovementComponent::SetMovementCollisionCapsule(float Radius, float HalfHeight, const FVector& LocalOffset)
+{
+	ExplicitSweepCapsuleRadius = std::max(0.0f, Radius);
+	ExplicitSweepCapsuleHalfHeight = std::max(0.0f, HalfHeight);
+	ExplicitSweepCapsuleLocalOffset = LocalOffset;
+	bUseExplicitSweepCapsule = ExplicitSweepCapsuleRadius > 0.0f && ExplicitSweepCapsuleHalfHeight > 0.0f;
+}
+
+void UGOIncRagdollMovementComponent::ClearMovementCollisionCapsule()
+{
+	bUseExplicitSweepCapsule = false;
+	ExplicitSweepCapsuleRadius = 0.0f;
+	ExplicitSweepCapsuleHalfHeight = 0.0f;
+	ExplicitSweepCapsuleLocalOffset = FVector(0.0f, 0.0f, 0.0f);
+}
+
 bool UGOIncRagdollMovementComponent::SnapUpdatedComponentToFloor()
 {
 	FHitResult FloorHit;
@@ -110,8 +126,10 @@ bool UGOIncRagdollMovementComponent::SnapUpdatedComponentToFloor()
 		return false;
 	}
 
+	const float DesiredCapsuleZ = FloorHit.WorldHitLocation.Z + GetCapsuleHalfHeight() + FloorSnapClearance;
+	const float CurrentCapsuleZ = GetSweepCapsuleWorldLocation().Z;
 	FVector Location = Updated->GetWorldLocation();
-	Location.Z = FloorHit.WorldHitLocation.Z + GetCapsuleHalfHeight() + FloorSnapClearance;
+	Location.Z += DesiredCapsuleZ - CurrentCapsuleZ;
 	Updated->SetWorldLocation(Location);
 	Velocity.Z = 0.0f;
 	bIsGrounded = true;
@@ -256,11 +274,9 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 
 bool UGOIncRagdollMovementComponent::SweepCapsuleMove(const FVector& MoveDelta, FHitResult& OutHit) const
 {
-	USceneComponent* Updated = GetUpdatedComponent();
-	UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(Updated);
 	UWorld* World = GetWorld();
 	AActor* Owner = GetOwner();
-	if (!Capsule || !World || !Owner)
+	if (!World || !Owner || !CanUseCapsuleSweep())
 	{
 		return false;
 	}
@@ -272,13 +288,15 @@ bool UGOIncRagdollMovementComponent::SweepCapsuleMove(const FVector& MoveDelta, 
 	}
 
 	const FVector MoveDir = MoveDelta * (1.0f / MoveDistance);
-	const float SweepShrink = std::min(SweepSkinWidth, Capsule->GetScaledCapsuleRadius() * 0.45f);
+	const float Radius = GetSweepCapsuleRadius();
+	const float HalfHeight = GetSweepCapsuleHalfHeight();
+	const float SweepShrink = std::min(SweepSkinWidth, Radius * 0.45f);
 	const FCollisionShape Shape = FCollisionShape::MakeCapsule(
-		std::max(0.001f, Capsule->GetScaledCapsuleRadius() - SweepShrink),
-		std::max(0.001f, Capsule->GetScaledCapsuleHalfHeight() - SweepShrink));
+		std::max(0.001f, Radius - SweepShrink),
+		std::max(0.001f, HalfHeight - SweepShrink));
 
 	return World->PhysicsSweep(
-		Updated->GetWorldLocation(),
+		GetSweepCapsuleWorldLocation(),
 		MoveDir,
 		MoveDistance,
 		Shape,
@@ -290,7 +308,53 @@ bool UGOIncRagdollMovementComponent::SweepCapsuleMove(const FVector& MoveDelta, 
 
 bool UGOIncRagdollMovementComponent::CanUseCapsuleSweep() const
 {
-	return Cast<UCapsuleComponent>(GetUpdatedComponent()) != nullptr;
+	return GetSweepCapsuleRadius() > 0.0f && GetSweepCapsuleHalfHeight() > 0.0f;
+}
+
+FVector UGOIncRagdollMovementComponent::GetSweepCapsuleWorldLocation() const
+{
+	USceneComponent* Updated = GetUpdatedComponent();
+	if (!Updated)
+	{
+		return FVector(0.0f, 0.0f, 0.0f);
+	}
+
+	if (bUseExplicitSweepCapsule)
+	{
+		return Updated->GetWorldMatrix().TransformPosition(ExplicitSweepCapsuleLocalOffset);
+	}
+
+	return Updated->GetWorldLocation();
+}
+
+float UGOIncRagdollMovementComponent::GetSweepCapsuleRadius() const
+{
+	if (bUseExplicitSweepCapsule)
+	{
+		return ExplicitSweepCapsuleRadius;
+	}
+
+	if (UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(GetUpdatedComponent()))
+	{
+		return Capsule->GetScaledCapsuleRadius();
+	}
+
+	return 0.0f;
+}
+
+float UGOIncRagdollMovementComponent::GetSweepCapsuleHalfHeight() const
+{
+	if (bUseExplicitSweepCapsule)
+	{
+		return ExplicitSweepCapsuleHalfHeight;
+	}
+
+	if (UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(GetUpdatedComponent()))
+	{
+		return Capsule->GetScaledCapsuleHalfHeight();
+	}
+
+	return 0.0f;
 }
 
 void UGOIncRagdollMovementComponent::ApplyInputToVelocity(const FVector& Input, float DeltaTime)
@@ -366,7 +430,7 @@ bool UGOIncRagdollMovementComponent::TraceFloor(FHitResult& OutHit) const
 		return false;
 	}
 
-	const FVector Start = Updated->GetWorldLocation();
+	const FVector Start = GetSweepCapsuleWorldLocation();
 	const FVector Dir(0.0f, 0.0f, -1.0f);
 	const float MaxDist = HalfHeight + FloorProbeDistance + FloorSnapClearance;
 
@@ -381,12 +445,7 @@ bool UGOIncRagdollMovementComponent::TraceFloor(FHitResult& OutHit) const
 
 float UGOIncRagdollMovementComponent::GetCapsuleHalfHeight() const
 {
-	if (UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(GetUpdatedComponent()))
-	{
-		return Capsule->GetScaledCapsuleHalfHeight();
-	}
-
-	return 0.0f;
+	return GetSweepCapsuleHalfHeight();
 }
 
 void UGOIncRagdollMovementComponent::ResolveFloorAfterMove()
@@ -412,4 +471,8 @@ void UGOIncRagdollMovementComponent::Serialize(FArchive& Ar)
 	Ar << FloorProbeDistance;
 	Ar << bSweepMovementEnabled;
 	Ar << SweepSkinWidth;
+	Ar << bUseExplicitSweepCapsule;
+	Ar << ExplicitSweepCapsuleRadius;
+	Ar << ExplicitSweepCapsuleHalfHeight;
+	Ar << ExplicitSweepCapsuleLocalOffset;
 }
