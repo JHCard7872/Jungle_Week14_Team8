@@ -1,0 +1,139 @@
+<rml>
+<head>
+    <title>Result Screen</title>
+    <link type="text/rcss" href="result_screen.rcss" />
+</head>
+
+<body>
+    <div id="result_root">
+        <img id="result_background" src="../../Sprite/result_background.png" />
+
+        <div id="result_clipboard_stage">
+            <img id="result_clipboard_image" src="../../Sprite/result_clipboard.png" />
+
+            <div id="result_overlay">
+                <div id="result_employee_no_value" class="result_employee_value">GO-2417</div>
+                <div id="result_employee_name_value" class="result_employee_value">Employee</div>
+                <div id="result_employee_dept_value" class="result_employee_value">Operations</div>
+                <div id="result_employee_rank_value" class="result_employee_value">Contract</div>
+
+                <div id="result_metric_count_value" class="result_metric_value">18</div>
+                <div id="result_metric_base_value" class="result_metric_value">8,400</div>
+                <div id="result_metric_urgent_value" class="result_metric_value">2,320</div>
+
+                <div id="result_total_value">10,720</div>
+                <div id="result_grade_letter">F</div>
+            </div>
+
+            <img id="result_stamp_device" src="../../Sprite/result_stamp.png" />
+
+            <div id="result_grade_stamp_wrap">
+                <img id="result_grade_stamp_image" src="../../Sprite/result_stamp_you_re_fired.png" />
+            </div>
+        </div>
+
+        <div id="result_input_hint">Next</div>
+
+        <div id="result_debug_panel">
+            <div id="result_debug_title">RESULT LAYOUT</div>
+            <div id="result_debug_subtitle">Adjust values, then use Dump to copy them back into Lua.</div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Clip Scale</div>
+                <input id="debug_clipboard_scale_input" class="result_debug_input" type="text" value="1.7" />
+                <button id="debug_clipboard_scale_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Clip EndY</div>
+                <input id="debug_clipboard_end_y_input" class="result_debug_input" type="text" value="-250" />
+                <button id="debug_clipboard_end_y_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Content X</div>
+                <input id="debug_content_x_input" class="result_debug_input" type="text" value="0" />
+                <button id="debug_content_x_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Content Y</div>
+                <input id="debug_content_y_input" class="result_debug_input" type="text" value="0" />
+                <button id="debug_content_y_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Device X</div>
+                <input id="debug_stamp_device_x_input" class="result_debug_input" type="text" value="730" />
+                <button id="debug_stamp_device_x_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Device Y</div>
+                <input id="debug_stamp_device_y_input" class="result_debug_input" type="text" value="0" />
+                <button id="debug_stamp_device_y_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Device Rot</div>
+                <input id="debug_stamp_device_rotation_input" class="result_debug_input" type="text" value="-10" />
+                <button id="debug_stamp_device_rotation_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Stamp X</div>
+                <input id="debug_stamp_x_input" class="result_debug_input" type="text" value="650" />
+                <button id="debug_stamp_x_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Stamp Y</div>
+                <input id="debug_stamp_y_input" class="result_debug_input" type="text" value="520" />
+                <button id="debug_stamp_y_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Stamp W</div>
+                <input id="debug_stamp_width_input" class="result_debug_input" type="text" value="360" />
+                <button id="debug_stamp_width_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Stamp Rot</div>
+                <input id="debug_stamp_rotation_input" class="result_debug_input" type="text" value="-13" />
+                <button id="debug_stamp_rotation_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Emp Scale</div>
+                <input id="debug_employee_scale_input" class="result_debug_input" type="text" value="1.0" />
+                <button id="debug_employee_scale_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Metric Scale</div>
+                <input id="debug_metric_scale_input" class="result_debug_input" type="text" value="1.0" />
+                <button id="debug_metric_scale_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Total Scale</div>
+                <input id="debug_total_scale_input" class="result_debug_input" type="text" value="1.0" />
+                <button id="debug_total_scale_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div class="result_debug_row">
+                <div class="result_debug_label">Grade Scale</div>
+                <input id="debug_grade_scale_input" class="result_debug_input" type="text" value="1.0" />
+                <button id="debug_grade_scale_apply" class="result_debug_button">Apply</button>
+            </div>
+
+            <div id="result_debug_actions">
+                <button id="debug_result_replay" class="result_debug_action_button">Replay</button>
+                <button id="debug_result_reset_layout" class="result_debug_action_button">Reset</button>
+                <button id="debug_result_dump_layout" class="result_debug_action_button">Dump</button>
+            </div>
+        </div>
+    </div>
+</body>
+</rml>
