@@ -120,6 +120,9 @@ public:
     void AddImpulseToBone(FName BoneName, const FVector& Impulse);
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")
+    void AddRandomImpulseToAllRagdollBodies(float Strength);
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
     bool GetRagdollBodyWorldTransform(FName BoneName, FTransform& OutTransform) const;
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")
@@ -159,6 +162,11 @@ public:
     void SetRagdollGravityEnabled(bool bEnableGravity);
     UFUNCTION(Pure, Category = "Physics|Ragdoll")
     bool IsRagdollGravityEnabled() const { return bRagdollGravityEnabled; }
+
+    UFUNCTION(Callable, Exec, Category = "Physics|Ragdoll")
+    void SetRagdollMassScale(float InMassScale);
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    float GetRagdollMassScale() const { return RagdollMassScale; }
 
     UFUNCTION(Callable, Category = "Physics|PhysicalAnimation")
     bool BeginPhysicalAnimation();
@@ -254,6 +262,8 @@ protected:
 
     bool ShouldRagdollIgnoreSameOwner() const;
     bool ShouldRagdollConstraintEnableCollision() const;
+    float CalculateScaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const;
+    void ApplyRagdollMassScaleToExistingBodies();
 
     bool BuildBodyInstanceInitDescFromBodySetup( const UBodySetup* BodySetup, int32 BoneIndex, const TArray<FMatrix>& BoneGlobals, FBodyInstanceInitDesc& OutDesc) const;
 
@@ -310,6 +320,8 @@ protected:
     float RagdollRecoveryDuration = 0.35f;
     UPROPERTY(Edit, Save, Category = "Physics|Ragdoll", DisplayName = "Ragdoll Physics Blend Weight")
     float RagdollPhysicsBlendWeight = 1.0f;
+    UPROPERTY(Edit, Save, Category = "Physics|Ragdoll", DisplayName = "Ragdoll Mass Scale", Min=0.001f, Speed=0.05f)
+    float RagdollMassScale = 1.0f;
 
     //Ragdoll runtime state
     TArray<FBodyInstance*> Bodies;

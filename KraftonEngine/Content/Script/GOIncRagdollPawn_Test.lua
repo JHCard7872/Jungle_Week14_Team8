@@ -15,6 +15,8 @@ local STATE_FLEE_STOPPING = "FleeStopping"
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
+local BEAM_SHOCK_INTERVAL = 0.05
+local BEAM_SHOCK_IMPULSE_STRENGTH = 0.005
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -58,6 +60,8 @@ local reviveStartYaw = 0.0
 local reviveTargetYaw = 0.0
 local currentFleeAnimationPlayRate = 1.0
 local bWarnedMissingSetPlayRate = false
+local bWarnedMissingBeamShockImpulse = false
+local beamShockElapsed = BEAM_SHOCK_INTERVAL
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
@@ -85,6 +89,49 @@ end
 
 local function is_revive_blocked_by_beam()
     return is_valid(obj) and obj.HasTag ~= nil and obj:HasTag(BEAM_BLOCK_REVIVE_TAG)
+end
+
+local function reset_beam_shock_timer()
+    beamShockElapsed = BEAM_SHOCK_INTERVAL
+end
+
+local function apply_beam_shock_impulse()
+    if mesh == nil then
+        return
+    end
+
+    if mesh.AddRandomImpulseToAllRagdollBodies ~= nil then
+        mesh:AddRandomImpulseToAllRagdollBodies(BEAM_SHOCK_IMPULSE_STRENGTH)
+        return
+    end
+
+    if not bWarnedMissingBeamShockImpulse then
+        print("[GOIncRagdollPawn_Test] Missing AddRandomImpulseToAllRagdollBodies binding. Beam shock impulse disabled.")
+        bWarnedMissingBeamShockImpulse = true
+    end
+
+    if mesh.WakeAllRagdollBodies ~= nil then
+        mesh:WakeAllRagdollBodies()
+    end
+end
+
+local function tick_beam_shock(dt)
+    if not is_revive_blocked_by_beam() then
+        reset_beam_shock_timer()
+        return
+    end
+
+    if type(dt) ~= "number" then
+        dt = 0.0
+    end
+
+    beamShockElapsed = beamShockElapsed + dt
+    if beamShockElapsed < BEAM_SHOCK_INTERVAL then
+        return
+    end
+
+    beamShockElapsed = 0.0
+    apply_beam_shock_impulse()
 end
 
 local function cache_components()
@@ -634,6 +681,7 @@ end
 
 function EnterDeadRagdoll()
     state = STATE_DEAD
+    reset_beam_shock_timer()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
     fleeStopStartSpeed = 0.0
@@ -710,6 +758,7 @@ function EnterReviving()
     end
 
     state = STATE_REVIVING
+    reset_beam_shock_timer()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
     fleeStopStartSpeed = 0.0
@@ -971,6 +1020,7 @@ function Tick(dt)
     end
 
     if state == STATE_DEAD then
+        tick_beam_shock(dt)
         sync_dead_root_to_ragdoll_safe()
         return
     end

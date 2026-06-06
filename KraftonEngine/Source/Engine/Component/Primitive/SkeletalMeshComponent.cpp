@@ -12,6 +12,7 @@
 #include "Core/Logging/Log.h"
 #include "GameFramework/AActor.h"
 #include "Math/Quat.h"
+#include "Math/MathUtils.h"
 #include "Math/Vector.h"
 #include "Mesh/Skeletal/SkeletalMesh.h"
 #include "Mesh/Skeletal/SkeletalMeshAsset.h"
@@ -232,6 +233,19 @@ void USkeletalMeshComponent::SetRagdollGravityEnabled(bool bEnableGravity)
 {
     bRagdollGravityEnabled = bEnableGravity;
     ApplyRagdollBodySimulationFlags();
+}
+
+void USkeletalMeshComponent::SetRagdollMassScale(float InMassScale)
+{
+    const float ClampedMassScale = std::max(InMassScale, 0.001f);
+    const bool bChanged = RagdollMassScale != ClampedMassScale;
+
+    RagdollMassScale = ClampedMassScale;
+
+    if (bChanged || !Bodies.empty())
+    {
+        ApplyRagdollMassScaleToExistingBodies();
+    }
 }
 
 void USkeletalMeshComponent::EnablePartialRagdollBelow(FName BoneName)
@@ -717,6 +731,39 @@ void USkeletalMeshComponent::AddImpulseToBone(FName BoneName, const FVector& Imp
     }
 }
 
+void USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies(float Strength)
+{
+    if (Strength <= 0.0f || Bodies.empty())
+    {
+        return;
+    }
+
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (!Body || !Body->IsValidBodyInstance() || !Body->bSimulatePhysics || Body->bKinematic)
+        {
+            continue;
+        }
+
+        FVector Direction(
+            FMath::FRand() * 2.0f - 1.0f,
+            FMath::FRand() * 2.0f - 1.0f,
+            FMath::FRand() * 2.0f - 1.0f
+        );
+
+        if (Direction.IsNearlyZero(0.001f))
+        {
+            Direction = FVector::UpVector;
+        }
+
+        Direction.Normalize();
+
+        const float PerBodyScale = 0.75f + FMath::FRand() * 0.5f;
+        Body->WakeUp();
+        Body->AddImpulse(Direction * (Strength * PerBodyScale));
+    }
+}
+
 bool USkeletalMeshComponent::GetRagdollBodyWorldTransform(FName BoneName, FTransform& OutTransform) const
 {
     OutTransform = FTransform();
@@ -1112,6 +1159,59 @@ bool USkeletalMeshComponent::ShouldRagdollConstraintEnableCollision() const
     return RagdollSelfCollisionMode == ERagdollSelfCollisionMode::EnableAll;
 }
 
+float USkeletalMeshComponent::CalculateScaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const
+{
+    if (!BodySetup)
+    {
+        return 0.001f;
+    }
+
+    const float MassScale = std::max(RagdollMassScale, 0.001f);
+    return std::max(BodySetup->CalculateMass(BodyScale) * MassScale, 0.001f);
+}
+
+void USkeletalMeshComponent::ApplyRagdollMassScaleToExistingBodies()
+{
+    if (Bodies.empty())
+    {
+        return;
+    }
+
+    UPhysicsAsset* PhysicsAsset = GetPhysicsAssetForRagdoll();
+    if (!PhysicsAsset)
+    {
+        return;
+    }
+
+    TArray<FMatrix> BoneGlobals;
+    GetCurrentBoneGlobalMatrices(BoneGlobals);
+
+    const FMatrix ComponentWorld = GetWorldMatrix();
+
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (!Body)
+        {
+            continue;
+        }
+
+        const UBodySetup* BodySetup = PhysicsAsset->FindBodySetupByBoneName(Body->BoneName);
+        if (!BodySetup)
+        {
+            continue;
+        }
+
+        FVector BodyScale = FVector::OneVector;
+        if (Body->BoneIndex >= 0 && Body->BoneIndex < static_cast<int32>(BoneGlobals.size()))
+        {
+            const FTransform BodyWorldTransform = FTransform::FromMatrixWithScale(BoneGlobals[Body->BoneIndex] * ComponentWorld);
+            BodyScale = BodyWorldTransform.Scale;
+        }
+
+        Body->SetMass(CalculateScaledRagdollBodyMass(BodySetup, BodyScale));
+    }
+}
+
 bool USkeletalMeshComponent::BuildBodyInstanceInitDescFromBodySetup( const UBodySetup* BodySetup, int32 BoneIndex, const TArray<FMatrix>& BoneGlobals, FBodyInstanceInitDesc& OutDesc) const
 {
     if (!BodySetup) return false;
@@ -1156,7 +1256,7 @@ bool USkeletalMeshComponent::BuildBodyInstanceInitDescFromBodySetup( const UBody
     OutDesc.bIgnoreSameOwner = ShouldRagdollIgnoreSameOwner();
 
     const FBodySetupPhysicsInfo& PhysicsInfo = BodySetup->GetPhysicsInfo();
-    OutDesc.Mass = BodySetup->CalculateMass(BodyScale);
+    OutDesc.Mass = CalculateScaledRagdollBodyMass(BodySetup, BodyScale);
     OutDesc.CenterOfMassOffset = PhysicsInfo.CenterOfMassOffset;
     OutDesc.LinearDamping = PhysicsInfo.LinearDamping;
     OutDesc.AngularDamping = PhysicsInfo.AngularDamping;
@@ -2336,6 +2436,11 @@ void USkeletalMeshComponent::PostEditProperty(const char* PropertyName)
         std::strcmp(PropertyName, "Enable Ragdoll Gravity") == 0)
     {
         SetRagdollGravityEnabled(bRagdollGravityEnabled);
+    }
+    else if (std::strcmp(PropertyName, "RagdollMassScale") == 0 ||
+        std::strcmp(PropertyName, "Ragdoll Mass Scale") == 0)
+    {
+        SetRagdollMassScale(RagdollMassScale);
     }
 
     // AnimInstance 자체 properties 는 자식이 자체 PostEdit 처리. 컴포넌트는 dispatch 만.
