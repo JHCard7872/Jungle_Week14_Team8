@@ -166,14 +166,9 @@ local function set_main_menu_controls_visible(is_visible)
     set_element_display("menu_credits", is_visible)
     set_element_display("menu_back_to_title", is_visible)
 
-    -- 라벨은 CSS :hover로만 보여야 한다.
-    -- Lua에서 block으로 복구하면 하위 페이지 Back 후 "타이틀로"가 계속 뜨는 문제가 생긴다.
-    set_element_display("label_help", false)
-    set_element_display("label_option", false)
-    set_element_display("label_play", false)
-    set_element_display("label_scoreboard", false)
-    set_element_display("label_credits", false)
-    set_element_display("label_back_to_title", false)
+    -- 라벨은 RCSS :hover에서만 제어한다.
+    -- 여기서 SetProperty("display", "none")을 걸면 inline style이 남아서
+    -- 하위 페이지를 닫은 뒤에도 :hover 규칙이 다시 적용되지 않는다.
 
     if not is_visible then
         set_cursor_hidden()
