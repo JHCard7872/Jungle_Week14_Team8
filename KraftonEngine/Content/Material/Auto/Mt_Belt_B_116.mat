@@ -1,0 +1,13 @@
+{
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "HasNormalMap" : 0.000000,
+    "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000]
+  },
+  "PathFileName" : "Content/Material/Auto/Mt_Belt_B_116.mat",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Texture/Auto/Link_Injured_Run/armor_116_belt_b_alb.png"
+  }
+}

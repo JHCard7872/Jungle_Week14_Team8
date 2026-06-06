@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/sc_dash_loop_anm_hkx/stx_btest1.dds"
+    "DiffuseTexture" : "Content/Texture/Auto/eggman/chr_eggman_body_abd.png"
   }
 }
