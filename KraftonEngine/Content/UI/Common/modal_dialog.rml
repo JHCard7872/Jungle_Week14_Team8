@@ -1,0 +1,30 @@
+<rml>
+<head>
+    <title>Common Modal Dialog</title>
+    <link type="text/rcss" href="modal_dialog.rcss" />
+</head>
+
+<body>
+    <div id="modal_root">
+        <div id="modal_dim"></div>
+
+        <div id="modal_box">
+            <img id="modal_popup_image" src="../../Sprite/result_popup.png" />
+            <div id="modal_title">Paused</div>
+            <div id="modal_message"></div>
+
+            <button id="modal_button_left" class="modal_button">
+                <img class="modal_button_image modal_button_default" src="../../Sprite/ui_horiz_button.png" />
+                <img class="modal_button_image modal_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
+                <div id="modal_button_left_label" class="modal_button_label">Continue</div>
+            </button>
+
+            <button id="modal_button_right" class="modal_button">
+                <img class="modal_button_image modal_button_default" src="../../Sprite/ui_horiz_button.png" />
+                <img class="modal_button_image modal_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
+                <div id="modal_button_right_label" class="modal_button_label">No</div>
+            </button>
+        </div>
+    </div>
+</body>
+</rml>

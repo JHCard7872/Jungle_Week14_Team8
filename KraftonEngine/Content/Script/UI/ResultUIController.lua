@@ -1,5 +1,6 @@
 -- 게임 결과 데이터가 저장된 세션 모듈
 local Session = require("GameSession")
+local UserSettings = require("Data/UserSettings")
 
 -- Result 화면에서 사용할 RML 문서 경로
 local UI_DOCUMENT_PATH = "Content/UI/Result/result_screen.rml"
@@ -442,6 +443,8 @@ local function build_result_payload()
         countText = tostring(count_value),
         baseScoreText = format_score(base_score),
         urgentScoreText = format_score(urgent_score),
+        totalScore = total_score,
+        collectedCount = count_value,
         totalScoreText = format_score(total_score),
         resultSfx = preset.resultSfx,
         stampImage = preset.stampImage,
@@ -696,14 +699,14 @@ local function enter_phase(phase_name)
     phase_elapsed = 0.0
 
     if phase_name == "printing" then
-        AudioManager.Play(PRINTER_SFX, 1.0)
+        AudioManager.Play(PRINTER_SFX, UserSettings.GetSfxVolumeScalar())
     elseif phase_name == "sliding" then
-        AudioManager.Play(SLIDE_SFX, 0.95)
+        AudioManager.Play(SLIDE_SFX, UserSettings.GetSfxVolumeScalar() * 0.95)
     elseif phase_name == "stamp_reveal" then
-        AudioManager.Play(STAMP_IMPACT_SFX, 1.0)
+        AudioManager.Play(STAMP_IMPACT_SFX, UserSettings.GetSfxVolumeScalar())
     elseif phase_name == "done" then
         if current_payload ~= nil then
-            AudioManager.Play(current_payload.resultSfx, 1.0)
+            AudioManager.Play(current_payload.resultSfx, UserSettings.GetSfxVolumeScalar())
         end
         sequence_finished = true
     end
@@ -1104,6 +1107,29 @@ end
 -- Result 연출 완료 여부 반환
 function M.IsSequenceFinished()
     return sequence_finished
+end
+
+-- ResultScene에서 점수 저장용으로 현재 결과 데이터를 가져간다.
+function M.GetResultData()
+    if current_payload == nil then
+        current_payload = build_result_payload()
+    end
+
+    return {
+        totalScore = current_payload.totalScore or 0,
+        collectedCount = current_payload.collectedCount or 0,
+        rank = current_payload.rank or "F",
+    }
+end
+
+-- Result popup이 떠 있을 때 Result 위젯 자체가 마우스를 가로막지 않도록 토글한다.
+function M.SetWantsMouse(enabled)
+    base_mouse_enabled = enabled == true
+    mouse_enabled = base_mouse_enabled or debug_panel_enabled
+
+    if widget ~= nil then
+        widget:SetWantsMouse(mouse_enabled)
+    end
 end
 
 -- Result UI 제거 및 내부 상태 초기화

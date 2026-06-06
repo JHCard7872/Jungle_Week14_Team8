@@ -1,0 +1,138 @@
+body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+    font-family: NanumGothic;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+#modal_root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+#modal_dim {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #00000080;
+    z-index: 10;
+}
+
+#modal_box {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 920px;
+    height: 430px;
+    margin-left: -460px;
+    margin-top: -215px;
+    z-index: 20;
+}
+
+#modal_popup_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 920px;
+    height: 430px;
+    pointer-events: none;
+}
+
+#modal_title {
+    position: absolute;
+    left: 70px;
+    top: 58px;
+    width: 780px;
+    height: 64px;
+    color: #ffffff;
+    font-size: 48px;
+    line-height: 64px;
+    text-align: center;
+    font-effect: shadow(3px 3px #000000aa);
+}
+
+#modal_message {
+    position: absolute;
+    left: 90px;
+    top: 140px;
+    width: 740px;
+    height: 80px;
+    color: #ffffff;
+    font-size: 34px;
+    line-height: 42px;
+    text-align: center;
+    font-effect: shadow(2px 2px #000000aa);
+}
+
+.modal_button {
+    position: absolute;
+    top: 270px;
+    width: 440px;
+    height: 104px;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    background-color: transparent;
+    transform-origin: center center;
+}
+
+#modal_button_left {
+    left: 40px;
+}
+
+#modal_button_right {
+    right: 40px;
+}
+
+.modal_button:hover {
+    transform: scale(1.06);
+}
+
+.modal_button:active {
+    transform: scale(0.98);
+}
+
+.modal_button_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.modal_button_hover {
+    display: none;
+}
+
+.modal_button:hover .modal_button_default {
+    display: none;
+}
+
+.modal_button:hover .modal_button_hover {
+    display: block;
+}
+
+.modal_button_label {
+    position: absolute;
+    left: 0px;
+    top: 26px;
+    width: 100%;
+    height: 52px;
+    color: #ffffff;
+    font-size: 40px;
+    line-height: 52px;
+    text-align: center;
+    pointer-events: none;
+    font-effect: shadow(2px 2px #000000aa);
+}
