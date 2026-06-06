@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Component/PrimitiveComponent.h"
 #include "Object/Ptr/WeakObjectPtr.h"
@@ -84,6 +84,9 @@ public:
 	void SetSelectedConstraintIndex(int32 InSelectedConstraintIndex);
 
 	void AddReferencedObjects(FReferenceCollector& Collector) override;
+
+	bool RecalculateConstraintFrameFromChildBone(
+		FConstraintInstanceInitDesc& ConstraintDesc);
 
 private:
 	TWeakObjectPtr<USkeletalMeshComponent> TargetSkeletalMeshComponent;

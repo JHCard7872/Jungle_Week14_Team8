@@ -1,4 +1,4 @@
-#include "PhysicsAssetViewerWidget.h"
+﻿#include "PhysicsAssetViewerWidget.h"
 
 #include "Mesh/Skeletal/SkeletalMesh.h"
 #include "Mesh/Skeletal/SkeletalMeshAsset.h"
@@ -64,6 +64,19 @@ bool RenderConstraintInitDescDetails(
 
 	FConstraintInstanceInitDesc* ConstraintDesc = &ConstraintDescs[ConstraintIndex];
 	ImGui::TextUnformatted("Constraint");
+
+	if (DebugComponent)
+	{
+		if (ImGui::Button("Recalculate Frame From Child Bone"))
+		{
+			if (DebugComponent->RecalculateConstraintFrameFromChildBone(*ConstraintDesc))
+			{
+				return true;
+			}
+		}
+
+		ImGui::TextDisabled("Sets ParentFrame = ChildBoneWorld * Inverse(ParentBoneWorld), ChildFrame = Identity");
+	}
 
 	const FVector PreviousParentLocation = ConstraintDesc->ParentFrame.Location;
 	const FVector PreviousChildLocation = ConstraintDesc->ChildFrame.Location;
