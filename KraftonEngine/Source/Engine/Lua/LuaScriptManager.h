@@ -41,6 +41,8 @@ public:
 
 	static void RegisterComponent(ULuaScriptComponent* Component);
 	static void UnregisterComponent(ULuaScriptComponent* Component);
+	static void TickPrePhysics(float DeltaTime);
+	static void TickPostCamera(float DeltaTime);
 
 	// Lua 로 구동되는 AnimInstance — .lua 변경 시 ReloadScript 받음.
 	static void RegisterAnimInstance(ULuaAnimInstance* Instance);

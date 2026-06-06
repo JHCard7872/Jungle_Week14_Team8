@@ -68,6 +68,9 @@ local BEAM_SOURCE_RIGHT_BIAS = -0.1     -- Beam 시작점 좌우 미세 보정
 local BEAM_SOURCE_UP_BIAS = 0.0        -- Beam 시작점 상하 미세 보정
 local BEAM_SOURCE_PITCH_INFLUENCE = 0.9 -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
 local BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45 -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
+local BEAM_RENDER_SHEETS = 1 -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
+local BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18 -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
+local BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08 -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
 
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
@@ -79,6 +82,15 @@ local crosshair_screen_x = nil
 local crosshair_screen_y = nil
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
+local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
+    serial = 0,
+    resolved_serial = -1,
+    max_distance = 0.0,
+    hit = nil,
+    fallback_end = nil,
+    start = nil,
+    direction = nil
+}
 
 local root_body = nil            -- PhysX 이동/점프 속도를 적용할 Root PrimitiveComponent
 local camera_pivot = nil         -- Pitch 회전을 담당하는 GOIncCameraPivot
@@ -596,6 +608,48 @@ local function get_beam_source_point()
     return obj.Location + obj.Forward * (WEAPON_FORWARD_OFFSET + MUZZLE_FORWARD_OFFSET + BEAM_SOURCE_FORWARD_BIAS)
 end
 
+local function get_beam_source_forward()
+    if muzzle_point ~= nil and muzzle_point.Forward ~= nil then
+        local muzzle_forward = muzzle_point.Forward
+        if muzzle_forward:Length() > 0.0001 then
+            return muzzle_forward:Normalized()
+        end
+    end
+
+    if camera ~= nil then
+        local pitch_influence = get_beam_source_pitch_influence()
+        local camera_forward = camera.Forward
+        if camera_forward == nil or camera_forward:Length() <= 0.0001 then
+            camera_forward = obj.Forward
+        end
+
+        local flat_forward = flat_normalized(camera_forward)
+        if flat_forward:Length() <= 0.0001 then
+            flat_forward = flat_normalized(obj.Forward)
+        end
+        if flat_forward:Length() <= 0.0001 then
+            return camera_forward:Normalized()
+        end
+
+        return blend_normalized(flat_forward, camera_forward:Normalized(), pitch_influence)
+    end
+
+    if obj.Forward ~= nil and obj.Forward:Length() > 0.0001 then
+        return obj.Forward:Normalized()
+    end
+    return Vector.Forward()
+end
+
+local function get_beam_target_direction(source_point, target_point)
+    if source_point ~= nil and target_point ~= nil then
+        local to_target = target_point - source_point
+        if to_target:Length() > 0.0001 then
+            return to_target:Normalized()
+        end
+    end
+    return get_beam_source_forward()
+end
+
 local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_location, base_pitch_rotation,
     gun_component, base_gun_location_value, base_gun_rotation_value,
     muzzle_component, base_muzzle_location_value, base_muzzle_rotation_value,
@@ -717,18 +771,31 @@ local function get_camera_aim_ray()
 end
 
 local function center_physics_raycast(max_distance)
-    local start, direction = get_camera_aim_ray()
     local distance = max_distance or MAX_TRACE_DISTANCE
-    local fallback_end = start + direction * distance
-
-    if World ~= nil and World.PhysicsRaycast ~= nil then
-        local hit = World.PhysicsRaycast(start, direction, distance, obj)
-        if hit ~= nil then
-            return hit, fallback_end, start, direction
-        end
+    if aim_trace_cache.resolved_serial == aim_trace_cache.serial
+        and aim_trace_cache.max_distance == distance then
+        return aim_trace_cache.hit,
+            aim_trace_cache.fallback_end,
+            aim_trace_cache.start,
+            aim_trace_cache.direction
     end
 
-    return nil, fallback_end, start, direction
+    local start, direction = get_camera_aim_ray()
+    local fallback_end = start + direction * distance
+    local hit = nil
+
+    if World ~= nil and World.PhysicsRaycast ~= nil then
+        hit = World.PhysicsRaycast(start, direction, distance, obj)
+    end
+
+    aim_trace_cache.resolved_serial = aim_trace_cache.serial
+    aim_trace_cache.max_distance = distance
+    aim_trace_cache.hit = hit
+    aim_trace_cache.fallback_end = fallback_end
+    aim_trace_cache.start = start
+    aim_trace_cache.direction = direction
+
+    return hit, fallback_end, start, direction
 end
 
 local function get_hit_point_or_end(hit, fallback_end)
@@ -1055,7 +1122,25 @@ set_beam_points = function(source_point, target_point)
         return
     end
 
-    beam_particle.Location = source_point
+    if beam_particle.SetBeamPointsWithTangents ~= nil then
+        local source_forward = get_beam_source_forward()
+        local target_direction = get_beam_target_direction(source_point, target_point)
+        beam_particle:SetBeamPointsWithTangents(
+            source_point,
+            target_point,
+            source_forward,
+            target_direction,
+            BEAM_RENDER_SHEETS,
+            0,
+            BEAM_SOURCE_TANGENT_STRENGTH_SCALE,
+            BEAM_TARGET_TANGENT_STRENGTH_SCALE)
+        return
+    end
+
+    if beam_particle.SetBeamPoints ~= nil then
+        beam_particle:SetBeamPoints(source_point, target_point, 0, BEAM_RENDER_SHEETS)
+        return
+    end
 
     if beam_particle.SetBeamSourcePoint ~= nil then
         beam_particle:SetBeamSourcePoint(source_point, 0)
@@ -1122,7 +1207,7 @@ local function update_weapon_swap(delta_time)
     end
 end
 
-local function apply_first_person_view()
+local function apply_look_input()
     local mouse_x = Input.GetMouseDeltaX()
     local mouse_y = Input.GetMouseDeltaY()
 
@@ -1130,9 +1215,6 @@ local function apply_first_person_view()
     pitch = clamp(pitch + mouse_y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 
     obj.Rotation = vec(0.0, 0.0, yaw)
-    select_active_beam_particle()
-    update_camera_view()
-    update_view_weapon()
 end
 
 local function is_grounded(velocity)
@@ -1248,10 +1330,21 @@ function BeginPlay()
     print("[GOInc] camera aim and view weapon separated")
 end
 
+function PrePhysicsTick(delta_time)
+    apply_look_input()
+    apply_physics_movement()
+end
+
 function Tick(delta_time)
     update_weapon_swap(delta_time)
-    apply_first_person_view()
-    apply_physics_movement()
+    obj.Rotation = vec(0.0, 0.0, yaw)
+    select_active_beam_particle()
+    update_camera_view()
+    update_view_weapon()
+end
+
+function PostCameraTick(delta_time)
+    aim_trace_cache.serial = aim_trace_cache.serial + 1
     apply_fire(delta_time)
     update_crosshair_aim_position(delta_time)
     update_crosshair_ui()

@@ -286,6 +286,7 @@ struct FParticleBeam2EmitterInstance : public FParticleEmitterInstance
     int32 BeamMethod = 0;
     TArray<int32> TextureTiles;
     int32 BeamCount = 0;
+    int32 BeamSheetCountOverride = INDEX_NONE;
     void* SourceActor = nullptr;
     FParticleEmitterInstance* SourceEmitter = nullptr;
     TArray<FVector> UserSetSourceArray;
@@ -306,6 +307,16 @@ struct FParticleBeam2EmitterInstance : public FParticleEmitterInstance
 
     void SetBeamEndPoint(FVector NewEndPoint);
     void SetBeamSourcePoint(FVector NewSourcePoint, int32 SourceIndex);
+    void SetBeamSourceAndTargetPoints(FVector NewSourcePoint, FVector NewTargetPoint, int32 BeamIndex);
+    void SetBeamSourceAndTargetPointsWithTangents(
+        FVector NewSourcePoint,
+        FVector NewTargetPoint,
+        FVector NewSourceTangent,
+        FVector NewTargetTangent,
+        float NewSourceStrength,
+        float NewTargetStrength,
+        int32 BeamIndex);
+    void SetBeamSheetCount(int32 NewSheetCount);
     void SetBeamSourceTangent(FVector NewTangentPoint, int32 SourceIndex);
     void SetBeamSourceStrength(float NewSourceStrength, int32 SourceIndex);
     void SetBeamTargetPoint(FVector NewTargetPoint, int32 TargetIndex);
@@ -334,6 +345,8 @@ struct FParticleBeam2EmitterInstance : public FParticleEmitterInstance
     float SpawnBeamParticles(float OldLeftover, float Rate, float DeltaTime, int32 Burst = 0, float BurstTime = 0.0f);
     void KillParticles() override;
     void SetupBeamModifierModulesOffsets();
+    int32 GetBeamSheetCount() const;
+    void EnforceMaxBeamCount();
     void ResolveSource();
     void ResolveTarget();
     void DetermineVertexAndTriangleCount();

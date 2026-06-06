@@ -1,0 +1,18 @@
+{
+  "BlendState" : "",
+  "DepthStencilState" : "",
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "HasNormalMap" : 0.000000,
+    "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Auto/M_Concrete_Wall_400x400_01_Inst_NODIFFUSE.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Texture/Auto/Server/T_Concrete_Wall_400x400_01_D.png"
+  }
+}

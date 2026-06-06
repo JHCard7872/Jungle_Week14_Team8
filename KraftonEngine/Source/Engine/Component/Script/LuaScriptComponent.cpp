@@ -30,7 +30,9 @@ void ULuaScriptComponent::AddReferencedObjects(FReferenceCollector& Collector)
 void ULuaScriptComponent::ClearLuaRuntime()
 {
 	LuaBeginPlay = sol::nil;
+	LuaPrePhysicsTick = sol::nil;
 	LuaTick = sol::nil;
+	LuaPostCameraTick = sol::nil;
 	LuaEndPlay = sol::nil;
 	LuaOnOverlap = sol::nil;
 	LuaOnEndOverlap = sol::nil;
@@ -102,7 +104,9 @@ void ULuaScriptComponent::InitializeLua()
 	}
 
 	LuaBeginPlay = Env["BeginPlay"];
+	LuaPrePhysicsTick = Env["PrePhysicsTick"];
 	LuaTick = Env["Tick"];
+	LuaPostCameraTick = Env["PostCameraTick"];
 	LuaEndPlay = Env["EndPlay"];
 	LuaOnOverlap = Env["OnOverlap"];
 	LuaOnEndOverlap = Env["OnEndOverlap"];
@@ -204,6 +208,42 @@ void ULuaScriptComponent::HandleDeferredLuaCleanup()
 		InvokeLuaEndPlay();
 	}
 	ClearLuaRuntime();
+}
+
+void ULuaScriptComponent::InvokeLuaTickFunction(sol::protected_function& Function, float DeltaTime, const char* DebugName)
+{
+	if (!Function)
+	{
+		return;
+	}
+
+	FLuaCallScope Scope(this);
+	sol::protected_function_result Result = Function(DeltaTime);
+	if (!Result.valid())
+	{
+		sol::error Err = Result;
+		UE_LOG("Lua %s error in %s: %s", DebugName, ScriptFile.c_str(), Err.what());
+	}
+}
+
+void ULuaScriptComponent::TickPrePhysics(float DeltaTime)
+{
+	if (!IsActive() || !PrimaryComponentTick.bTickEnabled)
+	{
+		return;
+	}
+
+	InvokeLuaTickFunction(LuaPrePhysicsTick, DeltaTime, "PrePhysicsTick");
+}
+
+void ULuaScriptComponent::TickPostCamera(float DeltaTime)
+{
+	if (!IsActive() || !PrimaryComponentTick.bTickEnabled)
+	{
+		return;
+	}
+
+	InvokeLuaTickFunction(LuaPostCameraTick, DeltaTime, "PostCameraTick");
 }
 
 void ULuaScriptComponent::BindOwnerCollisionEvents()
@@ -416,16 +456,7 @@ void ULuaScriptComponent::DispatchOverlap(AActor* OtherActor)
 void ULuaScriptComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction& ThisTickFunction)
 {
 	UActorComponent::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if (LuaTick)
-	{
-		FLuaCallScope Scope(this);
-		sol::protected_function_result Result = LuaTick(DeltaTime);
-		if (!Result.valid())
-		{
-			sol::error Err = Result;
-			UE_LOG("Lua Tick error in %s: %s", ScriptFile.c_str(), Err.what());
-		}
-	}
+	InvokeLuaTickFunction(LuaTick, DeltaTime, "Tick");
 }
 
 void ULuaScriptComponent::PreGetEditableProperties()

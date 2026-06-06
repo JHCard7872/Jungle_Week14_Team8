@@ -303,7 +303,7 @@ return output;
     }
 
     float3 V = normalize(CameraWorldPos - input.worldPos);
-    float3 hitRim = ComputeHitRim(N, V, input.texcoord, input.hitRimColorAndIntensity, input.hitRimParams.x);
+    float3 hitRim = ComputeHitRim(N, V, input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitRimParams.x);
     float3 hitImpact = ComputeHitImpactGlow(input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitImpactCenterAndRadius, input.hitImpactParams);
 
 #if defined(LIGHTING_MODEL_UNLIT) && LIGHTING_MODEL_UNLIT

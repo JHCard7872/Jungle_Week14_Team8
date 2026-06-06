@@ -11,6 +11,7 @@
 #include "GameFramework/GameMode/GameStateBase.h"
 #include "GameFramework/GameMode/PlayerController.h"
 #include "GameFramework/Camera/PlayerCameraManager.h"
+#include "Lua/LuaScriptManager.h"
 #include "Object/Reflection/UClass.h"
 #include "Profiling/Stats/Stats.h"
 #include "Profiling/Time/Timer.h"
@@ -450,6 +451,7 @@ void UWorld::Tick(float DeltaTime, ELevelTick TickType)
 	if (bHasBegunPlay)
 	{
 		GameTimeSeconds += DeltaTime;
+		FLuaScriptManager::TickPrePhysics(DeltaTime);
 	}
 
 	if (bHasBegunPlay && PhysicsScene)
@@ -469,6 +471,11 @@ void UWorld::Tick(float DeltaTime, ELevelTick TickType)
 	// 카메라는 물리/액터 Tick 이후 갱신 — 차량 1인칭처럼 physics body 에 붙은 카메라가
 	// 같은 프레임의 최신 transform 으로 POV cache 를 채운다.
 	TickPlayerCamera();
+
+	if (bHasBegunPlay)
+	{
+		FLuaScriptManager::TickPostCamera(DeltaTime);
+	}
 }
 
 void UWorld::TickPlayerCamera() const

@@ -2703,6 +2703,16 @@ namespace
 		}
 	}
 
+	FVector ResolveBeamDirection(const FVector& SourcePoint, const FVector& TargetPoint)
+	{
+		return (TargetPoint - SourcePoint).GetSafeNormal(1.0e-6f, FVector::XAxisVector);
+	}
+
+	FVector ResolveBeamTangent(const FVector& Tangent, const FVector& FallbackDirection)
+	{
+		return Tangent.GetSafeNormal(1.0e-6f, FallbackDirection);
+	}
+
 	FBeam2TypeDataPayload* GetActiveBeamPayloadByIndex(FParticleBeam2EmitterInstance& BeamInst, int32 BeamIndex)
 	{
 		if (BeamIndex < 0 || BeamIndex >= BeamInst.ActiveParticles || !BeamInst.BeamTypeData)
@@ -2802,6 +2812,24 @@ void FParticleBeam2EmitterInstance::SetupBeamModifierModulesOffsets()
 	}
 	BeamModule_SourceModifier_Offset = BeamModule_SourceModifier ? static_cast<int32>(GetModuleDataOffset(BeamModule_SourceModifier)) : INDEX_NONE;
 	BeamModule_TargetModifier_Offset = BeamModule_TargetModifier ? static_cast<int32>(GetModuleDataOffset(BeamModule_TargetModifier)) : INDEX_NONE;
+}
+
+int32 FParticleBeam2EmitterInstance::GetBeamSheetCount() const
+{
+	if (BeamSheetCountOverride > 0)
+	{
+		return BeamSheetCountOverride;
+	}
+	return BeamTypeData ? std::max(1, BeamTypeData->Sheets) : 1;
+}
+
+void FParticleBeam2EmitterInstance::EnforceMaxBeamCount()
+{
+	BeamCount = BeamTypeData ? std::max(1, BeamTypeData->MaxBeamCount) : std::max(1, BeamCount);
+	while (ActiveParticles > BeamCount)
+	{
+		KillParticle(0);
+	}
 }
 
 uint32 FParticleBeam2EmitterInstance::RequiredBytes()
@@ -2924,6 +2952,10 @@ float FParticleBeam2EmitterInstance::SpawnBeamParticles(float OldLeftover, float
 	}
 
 	const int32 LocalBeamCount = std::max(1, BeamCount);
+	if (ActiveParticles >= LocalBeamCount)
+	{
+		return 0.0f;
+	}
 	if (Number + ActiveParticles > LocalBeamCount)
 	{
 		Number = LocalBeamCount - ActiveParticles;
@@ -3017,7 +3049,7 @@ void FParticleBeam2EmitterInstance::DetermineVertexAndTriangleCount()
 	VertexCount = 0;
 	TriangleCount = 0;
 	BeamTrianglesPerSheet.clear();
-	const int32 Sheets = BeamTypeData ? std::max(1, BeamTypeData->Sheets) : 1;
+	const int32 Sheets = GetBeamSheetCount();
 	for (int32 i = 0; i < ActiveParticles; ++i)
 	{
 		DECLARE_PARTICLE(Particle, ParticleData + ParticleStride * ParticleIndices[i]);
@@ -3115,6 +3147,7 @@ void FParticleBeam2EmitterInstance::ForceUpdateBoundingBox()
 void FParticleBeam2EmitterInstance::KillParticles()
 {
 	FParticleEmitterInstance::KillParticles();
+	EnforceMaxBeamCount();
 }
 
 void FParticleBeam2EmitterInstance::SetBeamEndPoint(FVector NewEndPoint) { SetBeamTargetPoint(NewEndPoint, 0); }
@@ -3124,11 +3157,146 @@ void FParticleBeam2EmitterInstance::SetBeamSourcePoint(FVector NewSourcePoint, i
 	if (SourceIndex >= 0)
 	{
 		UserSetSourceArray[SourceIndex] = NewSourcePoint;
-		if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, SourceIndex))
+
+		auto ApplyToPayload = [this, &NewSourcePoint](int32 ActiveIndex)
 		{
-			BeamData->SourcePoint = NewSourcePoint;
+			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			{
+				BeamData->SourcePoint = NewSourcePoint;
+				BeamData->Direction = ResolveBeamDirection(BeamData->SourcePoint, BeamData->TargetPoint);
+			}
+		};
+
+		if (SourceIndex == 0)
+		{
+			for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+			{
+				ApplyToPayload(ActiveIndex);
+			}
+		}
+		else
+		{
+			ApplyToPayload(SourceIndex);
 		}
 	}
+}
+
+void FParticleBeam2EmitterInstance::SetBeamSourceAndTargetPoints(FVector NewSourcePoint, FVector NewTargetPoint, int32 BeamIndex)
+{
+	EnsureIndexedValue(UserSetSourceArray, BeamIndex, FVector::ZeroVector);
+	EnsureIndexedValue(UserSetTargetArray, BeamIndex, FVector::ZeroVector);
+	if (BeamIndex < 0)
+	{
+		return;
+	}
+
+	UserSetSourceArray[BeamIndex] = NewSourcePoint;
+	UserSetTargetArray[BeamIndex] = NewTargetPoint;
+
+	auto ApplyToPayload = [this, &NewSourcePoint, &NewTargetPoint](int32 ActiveIndex)
+	{
+		FBaseParticle* Particle = GetParticle(ActiveIndex);
+		FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+		if (!Particle || !BeamData)
+		{
+			return;
+		}
+
+		BeamData->SourcePoint = NewSourcePoint;
+		BeamData->TargetPoint = NewTargetPoint;
+		Particle->Location = NewTargetPoint;
+
+		BeamData->Direction = NewTargetPoint - NewSourcePoint;
+		BeamData->Direction.Normalize();
+	};
+
+	// UserSet index 0 is the Beam module fallback for particles without an
+	// explicit per-index value, so keep all active payloads coherent immediately.
+	if (BeamIndex == 0)
+	{
+		for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+		{
+			ApplyToPayload(ActiveIndex);
+		}
+	}
+	else
+	{
+		ApplyToPayload(BeamIndex);
+	}
+}
+
+void FParticleBeam2EmitterInstance::SetBeamSourceAndTargetPointsWithTangents(
+	FVector NewSourcePoint,
+	FVector NewTargetPoint,
+	FVector NewSourceTangent,
+	FVector NewTargetTangent,
+	float NewSourceStrength,
+	float NewTargetStrength,
+	int32 BeamIndex)
+{
+	if (BeamIndex < 0)
+	{
+		return;
+	}
+
+	EnsureIndexedValue(UserSetSourceArray, BeamIndex, FVector::ZeroVector);
+	EnsureIndexedValue(UserSetTargetArray, BeamIndex, FVector::ZeroVector);
+	EnsureIndexedValue(UserSetSourceTangentArray, BeamIndex, FVector::ZeroVector);
+	EnsureIndexedValue(UserSetTargetTangentArray, BeamIndex, FVector::ZeroVector);
+	EnsureIndexedValue(UserSetSourceStrengthArray, BeamIndex, 0.0f);
+	EnsureIndexedValue(UserSetTargetStrengthArray, BeamIndex, 0.0f);
+
+	const FVector BeamDirection = ResolveBeamDirection(NewSourcePoint, NewTargetPoint);
+	const FVector SourceTangent = ResolveBeamTangent(NewSourceTangent, BeamDirection);
+	const FVector TargetTangent = ResolveBeamTangent(NewTargetTangent, BeamDirection);
+	const float SourceStrength = std::max(0.0f, NewSourceStrength);
+	const float TargetStrength = std::max(0.0f, NewTargetStrength);
+
+	UserSetSourceArray[BeamIndex] = NewSourcePoint;
+	UserSetTargetArray[BeamIndex] = NewTargetPoint;
+	UserSetSourceTangentArray[BeamIndex] = SourceTangent;
+	UserSetTargetTangentArray[BeamIndex] = TargetTangent;
+	UserSetSourceStrengthArray[BeamIndex] = SourceStrength;
+	UserSetTargetStrengthArray[BeamIndex] = TargetStrength;
+
+	auto ApplyToPayload = [this, &NewSourcePoint, &NewTargetPoint, &BeamDirection,
+		&SourceTangent, &TargetTangent, SourceStrength, TargetStrength](int32 ActiveIndex)
+	{
+		FBaseParticle* Particle = GetParticle(ActiveIndex);
+		FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+		if (!Particle || !BeamData)
+		{
+			return;
+		}
+
+		BeamData->SourcePoint = NewSourcePoint;
+		BeamData->TargetPoint = NewTargetPoint;
+		BeamData->SourceTangent = SourceTangent;
+		BeamData->TargetTangent = TargetTangent;
+		BeamData->SourceStrength = SourceStrength;
+		BeamData->TargetStrength = TargetStrength;
+		BeamData->Direction = BeamDirection;
+		Particle->Location = NewTargetPoint;
+	};
+
+	// UserSet index 0 is the module fallback; keep all live payloads on the
+	// same curve so newly spawned/fallback beams do not momentarily disagree.
+	if (BeamIndex == 0)
+	{
+		for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+		{
+			ApplyToPayload(ActiveIndex);
+		}
+	}
+	else
+	{
+		ApplyToPayload(BeamIndex);
+	}
+}
+
+void FParticleBeam2EmitterInstance::SetBeamSheetCount(int32 NewSheetCount)
+{
+	BeamSheetCountOverride = std::max(1, NewSheetCount);
 }
 
 void FParticleBeam2EmitterInstance::SetBeamSourceTangent(FVector NewTangentPoint, int32 SourceIndex)
@@ -3136,10 +3304,27 @@ void FParticleBeam2EmitterInstance::SetBeamSourceTangent(FVector NewTangentPoint
 	EnsureIndexedValue(UserSetSourceTangentArray, SourceIndex, FVector::ZeroVector);
 	if (SourceIndex >= 0)
 	{
-		UserSetSourceTangentArray[SourceIndex] = NewTangentPoint;
-		if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, SourceIndex))
+		const FVector SourceTangent = NewTangentPoint.GetSafeNormal(1.0e-6f, FVector::XAxisVector);
+		UserSetSourceTangentArray[SourceIndex] = SourceTangent;
+
+		auto ApplyToPayload = [this, &SourceTangent](int32 ActiveIndex)
 		{
-			BeamData->SourceTangent = NewTangentPoint;
+			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			{
+				BeamData->SourceTangent = SourceTangent;
+			}
+		};
+
+		if (SourceIndex == 0)
+		{
+			for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+			{
+				ApplyToPayload(ActiveIndex);
+			}
+		}
+		else
+		{
+			ApplyToPayload(SourceIndex);
 		}
 	}
 }
@@ -3149,10 +3334,27 @@ void FParticleBeam2EmitterInstance::SetBeamSourceStrength(float NewSourceStrengt
 	EnsureIndexedValue(UserSetSourceStrengthArray, SourceIndex, 0.0f);
 	if (SourceIndex >= 0)
 	{
-		UserSetSourceStrengthArray[SourceIndex] = NewSourceStrength;
-		if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, SourceIndex))
+		const float SourceStrength = std::max(0.0f, NewSourceStrength);
+		UserSetSourceStrengthArray[SourceIndex] = SourceStrength;
+
+		auto ApplyToPayload = [this, SourceStrength](int32 ActiveIndex)
 		{
-			BeamData->SourceStrength = NewSourceStrength;
+			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			{
+				BeamData->SourceStrength = SourceStrength;
+			}
+		};
+
+		if (SourceIndex == 0)
+		{
+			for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+			{
+				ApplyToPayload(ActiveIndex);
+			}
+		}
+		else
+		{
+			ApplyToPayload(SourceIndex);
 		}
 	}
 }
@@ -3163,9 +3365,30 @@ void FParticleBeam2EmitterInstance::SetBeamTargetPoint(FVector NewTargetPoint, i
 	if (TargetIndex >= 0)
 	{
 		UserSetTargetArray[TargetIndex] = NewTargetPoint;
-		if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, TargetIndex))
+
+		auto ApplyToPayload = [this, &NewTargetPoint](int32 ActiveIndex)
 		{
+			FBaseParticle* Particle = GetParticle(ActiveIndex);
+			FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+			if (!Particle || !BeamData)
+			{
+				return;
+			}
 			BeamData->TargetPoint = NewTargetPoint;
+			BeamData->Direction = ResolveBeamDirection(BeamData->SourcePoint, BeamData->TargetPoint);
+			Particle->Location = NewTargetPoint;
+		};
+
+		if (TargetIndex == 0)
+		{
+			for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+			{
+				ApplyToPayload(ActiveIndex);
+			}
+		}
+		else
+		{
+			ApplyToPayload(TargetIndex);
 		}
 	}
 }
@@ -3175,10 +3398,27 @@ void FParticleBeam2EmitterInstance::SetBeamTargetTangent(FVector NewTangentPoint
 	EnsureIndexedValue(UserSetTargetTangentArray, TargetIndex, FVector::ZeroVector);
 	if (TargetIndex >= 0)
 	{
-		UserSetTargetTangentArray[TargetIndex] = NewTangentPoint;
-		if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, TargetIndex))
+		const FVector TargetTangent = NewTangentPoint.GetSafeNormal(1.0e-6f, FVector::XAxisVector);
+		UserSetTargetTangentArray[TargetIndex] = TargetTangent;
+
+		auto ApplyToPayload = [this, &TargetTangent](int32 ActiveIndex)
 		{
-			BeamData->TargetTangent = NewTangentPoint;
+			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			{
+				BeamData->TargetTangent = TargetTangent;
+			}
+		};
+
+		if (TargetIndex == 0)
+		{
+			for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+			{
+				ApplyToPayload(ActiveIndex);
+			}
+		}
+		else
+		{
+			ApplyToPayload(TargetIndex);
 		}
 	}
 }
@@ -3188,10 +3428,27 @@ void FParticleBeam2EmitterInstance::SetBeamTargetStrength(float NewTargetStrengt
 	EnsureIndexedValue(UserSetTargetStrengthArray, TargetIndex, 0.0f);
 	if (TargetIndex >= 0)
 	{
-		UserSetTargetStrengthArray[TargetIndex] = NewTargetStrength;
-		if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, TargetIndex))
+		const float TargetStrength = std::max(0.0f, NewTargetStrength);
+		UserSetTargetStrengthArray[TargetIndex] = TargetStrength;
+
+		auto ApplyToPayload = [this, TargetStrength](int32 ActiveIndex)
 		{
-			BeamData->TargetStrength = NewTargetStrength;
+			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			{
+				BeamData->TargetStrength = TargetStrength;
+			}
+		};
+
+		if (TargetIndex == 0)
+		{
+			for (int32 ActiveIndex = 0; ActiveIndex < ActiveParticles; ++ActiveIndex)
+			{
+				ApplyToPayload(ActiveIndex);
+			}
+		}
+		else
+		{
+			ApplyToPayload(TargetIndex);
 		}
 	}
 }
@@ -3241,6 +3498,8 @@ bool FParticleBeam2EmitterInstance::FillReplayData(FDynamicEmitterReplayDataBase
 		return false;
 	}
 
+	EnforceMaxBeamCount();
+
 	if (!IsReplayType(OutData, EDynamicEmitterType::Beam)) return false;
 	if (!FParticleEmitterInstance::FillReplayData(OutData)) return false;
 
@@ -3250,7 +3509,7 @@ bool FParticleBeam2EmitterInstance::FillReplayData(FDynamicEmitterReplayDataBase
 	BeamData.Material = GetCurrentMaterial();
 	BeamData.VertexCount = VertexCount;
 	BeamData.TrianglesPerSheet = BeamTrianglesPerSheet;
-	BeamData.Sheets = BeamTypeData ? std::max(1, BeamTypeData->Sheets) : 1;
+	BeamData.Sheets = GetBeamSheetCount();
 	BeamData.InterpolationPoints = BeamTypeData ? BeamTypeData->InterpolationPoints : 0;
 	BeamData.TextureTile = BeamTypeData ? BeamTypeData->TextureTile : 1;
 	BeamData.TextureTileDistance = BeamTypeData ? BeamTypeData->TextureTileDistance : 0.0f;

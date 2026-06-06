@@ -27,13 +27,49 @@ float GetHitRimNoiseFactor(float2 uv)
     return lerp(0.65f, 1.55f, lightningMask) * flicker;
 }
 
+float3 SafeNormalizeHitRim(float3 value, float3 fallback)
+{
+    float lengthSq = dot(value, value);
+    return lengthSq > 1.0e-6f ? value * rsqrt(lengthSq) : fallback;
+}
+
+float3 GetHitRimObjectCenter()
+{
+    return float3(Model._41, Model._42, Model._43);
+}
+
+float GetHitRimWorldLightningFactor(float3 worldPos, float3 fakeNormal)
+{
+    float3 normalWeight = abs(fakeNormal);
+    normalWeight /= max(normalWeight.x + normalWeight.y + normalWeight.z, 0.001f);
+
+    float3 noisePos = worldPos * 0.055f;
+    float2 scrollA = float2(Time * 0.32f, Time * 1.10f);
+    float2 scrollB = float2(-Time * 1.15f, Time * 0.46f);
+
+    float broadX = HitRimNoiseTexture.Sample(LinearWrapSampler, noisePos.yz + scrollA).r;
+    float broadY = HitRimNoiseTexture.Sample(LinearWrapSampler, noisePos.xz + scrollA * 0.83f).r;
+    float broadZ = HitRimNoiseTexture.Sample(LinearWrapSampler, noisePos.xy + scrollA * 1.17f).r;
+    float broad = dot(float3(broadX, broadY, broadZ), normalWeight);
+
+    float detailX = HitRimNoiseTexture.Sample(LinearWrapSampler, noisePos.yz * 3.5f + scrollB).r;
+    float detailY = HitRimNoiseTexture.Sample(LinearWrapSampler, noisePos.xz * 3.5f + scrollB * 1.21f).r;
+    float detailZ = HitRimNoiseTexture.Sample(LinearWrapSampler, noisePos.xy * 3.5f + scrollB * 0.74f).r;
+    float detail = dot(float3(detailX, detailY, detailZ), normalWeight);
+
+    float lightningMask = saturate(smoothstep(0.60f, 0.88f, broad) + smoothstep(0.72f, 0.97f, detail) * 0.85f);
+    float flicker = 0.82f + 0.18f * sin(Time * 58.0f + detail * 6.283185f);
+
+    return lerp(0.12f, 1.75f, lightningMask) * flicker;
+}
+
 float GetHalfLambert(float3 normal, float3 direction)
 {
     float halfLambert = saturate(dot(normalize(normal), normalize(direction)) * 0.5f + 0.5f);
     return halfLambert * halfLambert;
 }
 
-float3 ComputeHitRim(float3 normal, float3 viewDir, float2 uv, float4 colorAndIntensity, float power)
+float3 ComputeHitRim(float3 normal, float3 viewDir, float3 worldPos, float2 uv, float4 colorAndIntensity, float power)
 {
     float intensity = max(colorAndIntensity.a, 0.0f);
     if (intensity <= 0.0001f)
@@ -42,9 +78,16 @@ float3 ComputeHitRim(float3 normal, float3 viewDir, float2 uv, float4 colorAndIn
     }
 
     float rimPower = max(power, 0.1f);
-    float facing = GetHalfLambert(normal, viewDir);
-    float rim = pow(saturate(1.0f - facing), rimPower);
-    return colorAndIntensity.rgb * rim * intensity * GetHitRimNoiseFactor(uv);
+    float3 safeViewDir = SafeNormalizeHitRim(viewDir, float3(0.0f, 0.0f, 1.0f));
+    float3 safeNormal = SafeNormalizeHitRim(normal, safeViewDir);
+    float3 fakeNormal = SafeNormalizeHitRim(worldPos - GetHitRimObjectCenter(), safeNormal);
+
+    float surfaceFacing = GetHalfLambert(safeNormal, safeViewDir);
+    float surfaceRim = pow(saturate(1.0f - surfaceFacing), rimPower);
+    float fakeRim = pow(saturate(1.0f - saturate(dot(fakeNormal, safeViewDir))), rimPower);
+    float rim = saturate(max(surfaceRim * 0.72f, fakeRim));
+
+    return colorAndIntensity.rgb * rim * intensity * GetHitRimWorldLightningFactor(worldPos, fakeNormal);
 }
 
 float GetHitImpactNoiseFactor(float2 uv, float distanceFromCenter)

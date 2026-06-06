@@ -239,6 +239,13 @@ void UParticleSystemComponent::PostDuplicate()
     }
 }
 
+void UParticleSystemComponent::RefreshDynamicData()
+{
+    BuildDynamicData();
+    MarkWorldBoundsDirty();
+    MarkProxyDirty(EDirtyFlag::Mesh);
+}
+
 void UParticleSystemComponent::TickComponent(
     float                        DeltaTime,
     ELevelTick                   TickType,

@@ -114,6 +114,7 @@ public:
 
     const TArray<FParticleEmitterInstance*>& GetEmitterInstances() const { return EmitterInstances; }
     const TArray<FDynamicEmitterDataBase*>&  GetEmitterRenderData() const { return EmitterRenderData; }
+    void RefreshDynamicData();
 
 	void SetCachedDistanceToCamera(float InDist) { CachedDistanceToCamera = InDist; }
 	float GetWorldTimeSeconds() const { return CachedWorldTimeSeconds; }

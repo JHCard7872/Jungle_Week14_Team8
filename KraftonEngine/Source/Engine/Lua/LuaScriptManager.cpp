@@ -161,6 +161,11 @@ namespace
 			bApplied = true;
 		}
 
+		if (bApplied)
+		{
+			ParticleComponent->RefreshDynamicData();
+		}
+
 		return bApplied;
 	}
 
@@ -320,6 +325,58 @@ void FLuaScriptManager::UnregisterComponent(ULuaScriptComponent* Component)
 				return Existing.Get() == Component || !Existing.IsValid();
 			}),
 		RegisteredComponents.end());
+}
+
+void FLuaScriptManager::TickPrePhysics(float DeltaTime)
+{
+	if (!IsInitialized()) return;
+
+	TArray<TWeakObjectPtr<ULuaScriptComponent>> Components;
+	{
+		std::lock_guard<std::mutex> Lock(ComponentMutex);
+		RegisteredComponents.erase(
+			std::remove_if(
+				RegisteredComponents.begin(),
+				RegisteredComponents.end(),
+				[](const TWeakObjectPtr<ULuaScriptComponent>& Component) { return !Component.IsValid(); }),
+			RegisteredComponents.end());
+		Components = RegisteredComponents;
+	}
+
+	for (const TWeakObjectPtr<ULuaScriptComponent>& ComponentPtr : Components)
+	{
+		ULuaScriptComponent* Component = ComponentPtr.Get();
+		if (IsValid(Component))
+		{
+			Component->TickPrePhysics(DeltaTime);
+		}
+	}
+}
+
+void FLuaScriptManager::TickPostCamera(float DeltaTime)
+{
+	if (!IsInitialized()) return;
+
+	TArray<TWeakObjectPtr<ULuaScriptComponent>> Components;
+	{
+		std::lock_guard<std::mutex> Lock(ComponentMutex);
+		RegisteredComponents.erase(
+			std::remove_if(
+				RegisteredComponents.begin(),
+				RegisteredComponents.end(),
+				[](const TWeakObjectPtr<ULuaScriptComponent>& Component) { return !Component.IsValid(); }),
+			RegisteredComponents.end());
+		Components = RegisteredComponents;
+	}
+
+	for (const TWeakObjectPtr<ULuaScriptComponent>& ComponentPtr : Components)
+	{
+		ULuaScriptComponent* Component = ComponentPtr.Get();
+		if (IsValid(Component))
+		{
+			Component->TickPostCamera(DeltaTime);
+		}
+	}
 }
 
 void FLuaScriptManager::RegisterAnimInstance(ULuaAnimInstance* Instance)
@@ -2927,12 +2984,89 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 				BeamInstance.SetBeamSourcePoint(SourcePoint, ResolvedIndex);
 			});
 		},
+		"SetBeamPoints", [](UPrimitiveComponent& Component, const FVector& SourcePoint, const FVector& TargetPoint, sol::optional<int32> BeamIndex, sol::optional<int32> SheetCount)
+		{
+			const int32 ResolvedIndex = BeamIndex.value_or(0);
+			const bool bHasSheetCount = SheetCount.has_value();
+			const int32 ResolvedSheetCount = SheetCount.value_or(1);
+			return ApplyToBeamEmitters(Component, [&SourcePoint, &TargetPoint, ResolvedIndex, bHasSheetCount, ResolvedSheetCount](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				if (bHasSheetCount)
+				{
+					BeamInstance.SetBeamSheetCount(ResolvedSheetCount);
+				}
+				BeamInstance.SetBeamSourceAndTargetPoints(SourcePoint, TargetPoint, ResolvedIndex);
+			});
+		},
+		"SetBeamPointsWithTangents", [](UPrimitiveComponent& Component, const FVector& SourcePoint, const FVector& TargetPoint,
+			const FVector& SourceTangent, const FVector& TargetTangent,
+			int32 SheetCount, int32 BeamIndex,
+			float SourceStrengthScale, float TargetStrengthScale)
+		{
+			const int32 ResolvedSheetCount = SheetCount > 0 ? SheetCount : 1;
+			const int32 ResolvedIndex = BeamIndex > 0 ? BeamIndex : 0;
+			const float BeamDistance = (TargetPoint - SourcePoint).Length();
+			const float ResolvedSourceStrength = BeamDistance * (SourceStrengthScale > 0.0f ? SourceStrengthScale : 0.0f);
+			const float ResolvedTargetStrength = BeamDistance * (TargetStrengthScale > 0.0f ? TargetStrengthScale : 0.0f);
+			return ApplyToBeamEmitters(Component, [&SourcePoint, &TargetPoint, &SourceTangent, &TargetTangent,
+				ResolvedSheetCount, ResolvedIndex, ResolvedSourceStrength, ResolvedTargetStrength](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamSheetCount(ResolvedSheetCount);
+				BeamInstance.SetBeamSourceAndTargetPointsWithTangents(
+					SourcePoint,
+					TargetPoint,
+					SourceTangent,
+					TargetTangent,
+					ResolvedSourceStrength,
+					ResolvedTargetStrength,
+					ResolvedIndex);
+			});
+		},
+		"SetBeamSheetCount", [](UPrimitiveComponent& Component, int32 SheetCount)
+		{
+			return ApplyToBeamEmitters(Component, [SheetCount](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamSheetCount(SheetCount);
+			});
+		},
+		"SetBeamSourceTangent", [](UPrimitiveComponent& Component, const FVector& SourceTangent, sol::optional<int32> SourceIndex)
+		{
+			const int32 ResolvedIndex = SourceIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [&SourceTangent, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamSourceTangent(SourceTangent, ResolvedIndex);
+			});
+		},
+		"SetBeamSourceStrength", [](UPrimitiveComponent& Component, float SourceStrength, sol::optional<int32> SourceIndex)
+		{
+			const int32 ResolvedIndex = SourceIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [SourceStrength, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamSourceStrength(SourceStrength, ResolvedIndex);
+			});
+		},
 		"SetBeamTargetPoint", [](UPrimitiveComponent& Component, const FVector& TargetPoint, sol::optional<int32> TargetIndex)
 		{
 			const int32 ResolvedIndex = TargetIndex.value_or(0);
 			return ApplyToBeamEmitters(Component, [&TargetPoint, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
 			{
 				BeamInstance.SetBeamTargetPoint(TargetPoint, ResolvedIndex);
+			});
+		},
+		"SetBeamTargetTangent", [](UPrimitiveComponent& Component, const FVector& TargetTangent, sol::optional<int32> TargetIndex)
+		{
+			const int32 ResolvedIndex = TargetIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [&TargetTangent, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamTargetTangent(TargetTangent, ResolvedIndex);
+			});
+		},
+		"SetBeamTargetStrength", [](UPrimitiveComponent& Component, float TargetStrength, sol::optional<int32> TargetIndex)
+		{
+			const int32 ResolvedIndex = TargetIndex.value_or(0);
+			return ApplyToBeamEmitters(Component, [TargetStrength, ResolvedIndex](FParticleBeam2EmitterInstance& BeamInstance)
+			{
+				BeamInstance.SetBeamTargetStrength(TargetStrength, ResolvedIndex);
 			});
 		});
 

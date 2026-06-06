@@ -33,6 +33,8 @@ public:
 	const FString& GetScriptFile() const { return ScriptFile; }
 	void SetScriptFile(const FString& InScriptFile) { ScriptFile = InScriptFile; }
 	void DispatchOverlap(class AActor* OtherActor);
+	void TickPrePhysics(float DeltaTime);
+	void TickPostCamera(float DeltaTime);
 
 	// Lua script 의 환경(env)에서 인자 없는 전역 함수 하나를 호출. 함수가 없거나
 	// nil 이면 조용히 false 반환 — 호출자는 lua 쪽 함수 정의 여부에 신경 쓸 필요 없음.
@@ -48,6 +50,7 @@ private:
 	void ClearCollisionBindings();
 	void ClearLuaRuntime();
 	void InvokeLuaEndPlay();
+	void InvokeLuaTickFunction(sol::protected_function& Function, float DeltaTime, const char* DebugName);
 	void HandleDeferredLuaCleanup();
 	void HandleBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent,
@@ -77,7 +80,9 @@ private:
 	
 	sol::environment Env;
 	sol::protected_function LuaBeginPlay;
+	sol::protected_function LuaPrePhysicsTick;
 	sol::protected_function LuaTick;
+	sol::protected_function LuaPostCameraTick;
 	sol::protected_function LuaEndPlay;
 	sol::protected_function LuaOnOverlap;
 	sol::protected_function LuaOnEndOverlap;
