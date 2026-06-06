@@ -1950,6 +1950,14 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	{
 		return GetLuaInputSnapshot().MouseDeltaY;
 	});
+	Input.set_function("GetMouseWheelDelta", []()
+	{
+		return GetLuaInputSnapshot().ScrollDelta;
+	});
+	Input.set_function("GetMouseWheelNotches", []()
+	{
+		return static_cast<float>(GetLuaInputSnapshot().ScrollDelta) / static_cast<float>(WHEEL_DELTA);
+	});
 
 	// Engine — 게임 일시정지 / 종료.
 	sol::table Engine = Lua.create_named_table("Engine");

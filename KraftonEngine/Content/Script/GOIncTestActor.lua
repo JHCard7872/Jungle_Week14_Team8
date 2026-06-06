@@ -40,7 +40,11 @@ local GRAB_REFERENCE_MASS = 1.0
 local GRAB_MASS_POWER = 0.35
 local GRAB_MIN_MASS_SCALE = 0.45
 local GRAB_MAX_MASS_SCALE = 1.15
-local GRAB_MIN_AIM_DISTANCE = 0.5
+local GRAB_MIN_AIM_DISTANCE = 0.35
+local GRAB_MAX_AIM_DISTANCE = MAX_TRACE_DISTANCE
+local GRAB_MOUSE_WHEEL_DISTANCE_STEP = 1.25
+local GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 1400.0
+local GRAB_MIN_DISTANCE_GUARD_DAMPING = 120.0
 local THROW_IMPULSE_SCALE = 0.35
 local THROW_MAX_IMPULSE_PER_MASS = 120.0
 local THROW_MIN_SPEED = 0.5
@@ -56,6 +60,7 @@ local WEAPON_PITCH_INWARD_OFFSET = 0.00 -- 극단 Pitch에서 총을 화면 안�
 local WEAPON_PITCH_UP_OFFSET = 0.04 -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
 local WEAPON_SWAP_DURATION = 0.28
 local WEAPON_SWAP_ROTATION_DEGREES = 180.0
+local WEAPON_SWAP_DIRECTION = -1.0
 
 local GUN_ROTATION_ROLL = -18.087906  -- GunMesh 기본 Roll. 씬에 GunMesh가 없을 때 fallback
 local GUN_ROTATION_PITCH = -2.707027  -- GunMesh 기본 Pitch. 씬에 GunMesh가 없을 때 fallback
@@ -220,8 +225,8 @@ local function ease_in_out(t)
     return clamped * clamped * (3.0 - 2.0 * clamped)
 end
 
-local function get_weapon_swap_angle(index)
-    return (index - 1) * WEAPON_SWAP_ROTATION_DEGREES
+local function get_next_weapon_swap_angle()
+    return weapon_swap_state.current_angle + WEAPON_SWAP_DIRECTION * WEAPON_SWAP_ROTATION_DEGREES
 end
 
 local function cache_component_transform(component, fallback_location, fallback_rotation)
@@ -849,6 +854,37 @@ local function compute_grab_target(start, direction)
     return start + direction * grabbed_aim_distance
 end
 
+local function get_mouse_wheel_notches()
+    if Input.GetMouseWheelNotches ~= nil then
+        return Input.GetMouseWheelNotches()
+    end
+
+    if Input.GetMouseWheelDelta ~= nil then
+        return Input.GetMouseWheelDelta() / 120.0
+    end
+
+    return 0.0
+end
+
+local function update_grab_distance_from_mouse_wheel()
+    if grabbed_aim_distance == nil then
+        return
+    end
+
+    local wheel_notches = get_mouse_wheel_notches()
+    if math.abs(wheel_notches) <= 0.0001 then
+        return
+    end
+
+    grabbed_aim_distance = clamp(
+        grabbed_aim_distance + wheel_notches * GRAB_MOUSE_WHEEL_DISTANCE_STEP,
+        GRAB_MIN_AIM_DISTANCE,
+        GRAB_MAX_AIM_DISTANCE
+    )
+    grabbed_last_target_world = nil
+    grabbed_target_velocity = Vector.Zero()
+end
+
 local function clear_grab_state()
     grabbed_body = nil
     grabbed_hit_component = nil
@@ -874,7 +910,7 @@ local function compute_grab_aim_distance(start, direction, grab_point, hit, fall
     if (distance == nil or distance <= GRAB_MIN_AIM_DISTANCE) and fallback_end ~= nil then
         distance = (fallback_end - start):Length()
     end
-    return math.max(distance or GRAB_MIN_AIM_DISTANCE, GRAB_MIN_AIM_DISTANCE)
+    return clamp(distance or GRAB_MIN_AIM_DISTANCE, GRAB_MIN_AIM_DISTANCE, GRAB_MAX_AIM_DISTANCE)
 end
 
 local function get_hit_physics_body(hit)
@@ -1023,6 +1059,24 @@ local function apply_grab_force(delta_time, start, direction)
     local current_body_center = grabbed_body:GetLocation()
     local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
     local error = clamp_vector_length(desired - current_grab_world, GRAB_MAX_ERROR)
+    local linear_velocity = grabbed_body:GetLinearVelocity()
+
+    local grab_distance_along_ray = (current_grab_world - start):Dot(direction)
+    local body_distance_along_ray = (current_body_center - start):Dot(direction)
+    local body_radius_proxy = (current_grab_world - current_body_center):Length()
+    local body_surface_distance_along_ray = body_distance_along_ray - body_radius_proxy
+    local current_min_distance = math.min(grab_distance_along_ray, body_surface_distance_along_ray)
+    local min_distance_penetration = 0.0
+    local blocked_inward_speed = 0.0
+    if current_min_distance < GRAB_MIN_AIM_DISTANCE then
+        min_distance_penetration = GRAB_MIN_AIM_DISTANCE - current_min_distance
+        local velocity_along_ray = linear_velocity:Dot(direction)
+        blocked_inward_speed = math.max(-velocity_along_ray, 0.0)
+        if velocity_along_ray < 0.0 then
+            linear_velocity = linear_velocity - direction * velocity_along_ray
+            grabbed_body:SetLinearVelocity(linear_velocity)
+        end
+    end
 
     local mass = math.max(grabbed_body:GetMass(), 0.001)
     local mass_scale = clamp(
@@ -1032,7 +1086,16 @@ local function apply_grab_force(delta_time, start, direction)
     )
 
     local acceleration = error * (GRAB_SPRING_ACCELERATION * mass_scale)
-        - grabbed_body:GetLinearVelocity() * (GRAB_DAMPING_ACCELERATION * mass_scale)
+        - linear_velocity * (GRAB_DAMPING_ACCELERATION * mass_scale)
+
+    if min_distance_penetration > 0.0 then
+        local guard_acceleration = direction * (
+            min_distance_penetration * GRAB_MIN_DISTANCE_GUARD_ACCELERATION
+            + blocked_inward_speed * GRAB_MIN_DISTANCE_GUARD_DAMPING
+        )
+        acceleration = acceleration + guard_acceleration
+    end
+
     acceleration = clamp_vector_length(acceleration, GRAB_MAX_ACCELERATION * mass_scale)
 
     local force = acceleration * mass
@@ -1088,6 +1151,7 @@ local function update_active_grab(delta_time)
     end
 
     local start, direction = get_camera_aim_ray()
+    update_grab_distance_from_mouse_wheel()
     apply_grab_force(delta_time, start, direction)
     return true
 end
@@ -1180,7 +1244,7 @@ local function begin_weapon_swap()
     weapon_swap_state.is_active = true
     weapon_swap_state.elapsed = 0.0
     weapon_swap_state.start_angle = weapon_swap_state.current_angle
-    weapon_swap_state.target_angle = get_weapon_swap_angle(weapon_swap_state.pending_index)
+    weapon_swap_state.target_angle = get_next_weapon_swap_angle()
     beam_visible_remaining = 0.0
     clear_grab_state()
     set_beam_visible(false)

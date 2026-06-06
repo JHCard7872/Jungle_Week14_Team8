@@ -6,6 +6,13 @@
 
 Texture2D HitRimNoiseTexture : register(t26);
 
+static const float HitRimHdrBoost = 2.0;
+static const float HitRimFlickerMin = 0.06f;
+static const float HitRimFlickerMax = 1.95f;
+static const float HitRimFlickerHz = 7.0f;
+static const float HitRimFlickerDuty = 1.2f;
+static const float HitRimFlickerSoftness = 0.045f;
+
 float GetAbsSinPulse(float phase)
 {
     return abs(sin(Time + phase));
@@ -63,6 +70,20 @@ float GetHitRimWorldLightningFactor(float3 worldPos, float3 fakeNormal)
     return lerp(0.12f, 1.75f, lightningMask) * flicker;
 }
 
+float GetHitRimFlickerFactor(float3 fakeNormal)
+{
+    float objectPhase = frac(dot(GetHitRimObjectCenter(), float3(0.031f, 0.047f, 0.059f)));
+    float phase = frac(Time * HitRimFlickerHz + objectPhase);
+    float softness = max(HitRimFlickerSoftness, 0.001f);
+    float duty = clamp(HitRimFlickerDuty, softness * 2.0f, 0.95f);
+    float onRamp = smoothstep(0.0f, softness, phase);
+    float offRamp = 1.0f - smoothstep(duty - softness, duty, phase);
+    float strobeGate = onRamp * offRamp;
+
+    float faceBias = 0.92f + 0.08f * saturate(dot(abs(fakeNormal), float3(0.37f, 0.29f, 0.34f)));
+    return lerp(HitRimFlickerMin, HitRimFlickerMax, strobeGate) * faceBias;
+}
+
 float GetHalfLambert(float3 normal, float3 direction)
 {
     float halfLambert = saturate(dot(normalize(normal), normalize(direction)) * 0.5f + 0.5f);
@@ -87,7 +108,9 @@ float3 ComputeHitRim(float3 normal, float3 viewDir, float3 worldPos, float2 uv, 
     float fakeRim = pow(saturate(1.0f - saturate(dot(fakeNormal, safeViewDir))), rimPower);
     float rim = saturate(max(surfaceRim * 0.72f, fakeRim));
 
-    return colorAndIntensity.rgb * rim * intensity * GetHitRimWorldLightningFactor(worldPos, fakeNormal);
+    float lightning = GetHitRimWorldLightningFactor(worldPos, fakeNormal);
+    float flicker = GetHitRimFlickerFactor(fakeNormal);
+    return colorAndIntensity.rgb * rim * intensity * lightning * flicker * HitRimHdrBoost;
 }
 
 float GetHitImpactNoiseFactor(float2 uv, float distanceFromCenter)
