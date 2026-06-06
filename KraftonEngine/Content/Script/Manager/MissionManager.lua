@@ -5,11 +5,17 @@
 -- [사용법] PlayScene.BeginPlay에서 Start().
 --          수거 시 TruckBehavior가 NotifyRecovered(actor) 호출.
 --          HUD: local m = MissionManager.GetCurrent() → m.text, m.got, m.need
+--          (HUD 연결은 아직 미구현 — 현재 GetCurrent 소비처는 Test 스크립트뿐이라
+--           미션은 화면에 안 보이고, 달성 시 점수 증가로만 관측된다)
 -- [특이사항] 발급 규칙(달성 불가능한 미션 방지):
 --            1순위 — 살아있는 수 >= minCount인 타입 중 랜덤, 목표 = minCount
 --            2순위 — 충족 타입이 없으면 최다 보유 타입, 목표 = 그 보유 수
 --            한 마리도 없으면 발급 보류(nil) — 다음 수거 때 재시도.
---            달성 시 ScoreManager.AddBonus 후 즉시 재발급.
+--            즉 판 시작 직후 스폰 전이면 미션 없이 시작하고, 첫 수거에서 발급된다.
+--            달성 시 보상 = 목표 수 × MissionData.rewardPerBody — AddBonus로 지급되어
+--            결과 화면의 "긴급 요청 처리 실적"(result.urgentScore)으로 집계. 즉시 재발급.
+--            집계(countAlive)와 진행 판정 모두 타입 태그 기반 —
+--            태그는 스폰 시 GOIncRagdollSpawnManager가 단다 (없으면 미션이 영영 보류됨).
 -- =============================================================================
 
 local Ragdolls = require("Data/RagdollData")
@@ -19,7 +25,7 @@ local ScoreMgr = require("Manager/ScoreManager")
 local M = {}
 local current = nil   -- { target, need, got, text } / 발급 보류면 nil
 
--- 살아있는 래그돌을 타입별로 집계
+-- 살아있는 래그돌을 타입별로 집계 (스폰 매니저가 단 타입 태그 기준)
 local function countAlive()
     local counts = {}
     local list = World.FindActorsByTag("Ragdoll")
@@ -75,7 +81,7 @@ end
 
 function M.NotifyRecovered(actor)
     if not current then
-        M.IssueNext()   -- 보류 상태였다면 재시도
+        M.IssueNext()   -- 보류 상태였다면 재시도 — 이번 수거는 새 미션에 세지 않는다
         return
     end
 
@@ -84,7 +90,7 @@ function M.NotifyRecovered(actor)
 
     current.got = current.got + 1
     if current.got >= current.need then
-        ScoreMgr.AddBonus(Mission.rewardScore)
+        ScoreMgr.AddBonus(current.need * Mission.rewardPerBody)
         -- TODO: 미션 달성 사운드 키가 AudioData에 추가되면 여기서 재생
         M.IssueNext()
     end

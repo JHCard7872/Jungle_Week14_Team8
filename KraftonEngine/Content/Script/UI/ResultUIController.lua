@@ -422,7 +422,8 @@ local function build_result_payload()
     local base_score = tonumber(result.baseScore)
     local urgent_score = tonumber(result.urgentScore)
 
-    if base_score == nil or urgent_score == nil then
+    -- 라이브 데이터가 없으면(0점 종료 포함) total과 마찬가지로 폴백을 쓴다 — total은 폴백인데 base/urgent만 실제 0이 표시되는 모순 방지
+    if base_score == nil or urgent_score == nil or not has_live_result then
         base_score = has_live_result and math.floor(total_score * 0.78) or FALLBACK_BASE_SCORE
         urgent_score = has_live_result and math.max(0, total_score - base_score) or FALLBACK_URGENT_SCORE
     else
