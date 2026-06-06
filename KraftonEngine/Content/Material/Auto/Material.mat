@@ -3,15 +3,16 @@
   "DepthStencilState" : "",
   "Origin" : "FbxImport",
   "Parameters" : {
+    "AlphaCutoff" : 0.000000,
     "HasNormalMap" : 0.000000,
     "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
-    "_pad" : [0.000000, 0.000000, 0.000000]
+    "_pad" : null
   },
   "PathFileName" : "Content/Material/Auto/Material.mat",
   "RasterizerState" : "",
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "G:/Drives compartilhados/Nobre Lobo - Interno/THARLIS/UV mapping Coin.png"
+    "DiffuseTexture" : "Content/Texture/Auto/Injured Run/base.png"
   }
 }
