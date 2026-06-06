@@ -604,6 +604,7 @@ void AGOIncRagdollPawn::EnterDeadRagdollState()
 
 	if (Mesh)
 	{
+		Mesh->SetSimulatePhysics(true);
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		Mesh->SetRagdollGravityEnabled(true);
 
@@ -634,6 +635,7 @@ void AGOIncRagdollPawn::EnterRevivingState()
 		Mesh->SetRagdollGravityEnabled(false);
 		Mesh->SetRagdollEnabled(false);
 		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Mesh->SetSimulatePhysics(false);
 	}
 }
 
