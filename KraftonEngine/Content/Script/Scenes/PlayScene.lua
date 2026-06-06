@@ -44,7 +44,7 @@ function BeginPlay()
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("bgm_gameplay_0", 0.6)
+    AudioManager.PlayBGM("bgm_gameplay_0", 0.1)
 
     HUD.Create()
     HUD.UpdateFromSession()
