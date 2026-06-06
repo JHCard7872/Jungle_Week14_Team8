@@ -10,6 +10,7 @@
 -- spawnWeight <= 0 means the entry will not spawn.
 -- canSpawn must be true to spawn.
 -- pawnClass must be non-empty to spawn.
+-- MAX_SPAWN_COUNT limits ALIVE pawns, not total spawns — collected (destroyed) pawns free their slot.
 
 local SpawnCfg = require("Data.GameConfig").spawn
 
@@ -159,6 +160,24 @@ local function can_spawn_more()
     return spawnedCount < MAX_SPAWN_COUNT
 end
 
+-- 수거(Destroy)된 폰을 목록에서 걷어내 spawnedCount를 "살아있는 수"로 유지한다.
+-- 자리가 비면 다시 스폰 가능 — 안 하면 누적 10마리 이후 스폰이 영구 정지한다.
+local function prune_dead_pawns()
+    for i = #spawnedPawns, 1, -1 do
+        local pawn = spawnedPawns[i]
+        if pawn == nil or (pawn.IsValid ~= nil and not pawn:IsValid()) then
+            table.remove(spawnedPawns, i)
+        end
+    end
+
+    spawnedCount = #spawnedPawns
+
+    -- 자리가 다시 비었으면 "max reached" 안내도 다음 만석 때 다시 찍히게 리셋
+    if MAX_SPAWN_COUNT > 0 and spawnedCount < MAX_SPAWN_COUNT then
+        bPrintedMaxSpawnReached = false
+    end
+end
+
 local function print_max_spawn_reached_once()
     if bPrintedMaxSpawnReached then
         return
@@ -191,8 +210,16 @@ local function spawn_one()
         return nil
     end
 
-    spawnedCount = spawnedCount + 1
-    spawnedPawns[spawnedCount] = pawn
+    table.insert(spawnedPawns, pawn)
+    spawnedCount = #spawnedPawns
+
+    -- 점수/미션 식별용 타입 태그 — ScoreManager.FindType이 RagdollData 키와 일치하는
+    -- 태그를 찾는다. C++ 생성자는 "Ragdoll" 태그만 달아주므로 타입 태그는 여기서 단다.
+    if pawn.AddTag ~= nil then
+        pawn:AddTag(characterId)
+    else
+        print("[GOIncRagdollSpawnManager] Missing AddTag binding — score/mission type tag disabled")
+    end
 
     print(string.format(
         "[GOIncRagdollSpawnManager] Spawned %s (%s, %s) at (%.2f, %.2f, %.2f) [%d / %d]",
@@ -231,6 +258,8 @@ function BeginPlay()
 end
 
 function Tick(deltaTime)
+    prune_dead_pawns()
+
     if not can_spawn_more() then
         print_max_spawn_reached_once()
         return
