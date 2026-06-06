@@ -74,6 +74,10 @@ void FEditorPlayToolbarWidget::Render(float Width)
 		FRequestPlaySessionParams Params;
 		Editor->RequestPlaySession(Params);
 	}
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+	{
+		ImGui::SetTooltip("Play In Viewport");
+	}
 
 	ImGui::SameLine(0.0f, ButtonSpacing);
 
@@ -83,12 +87,20 @@ void FEditorPlayToolbarWidget::Render(float Width)
 		Params.bStartInFullscreen = true;
 		Editor->RequestPlaySession(Params);
 	}
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+	{
+		ImGui::SetTooltip("Play In Fullscreen");
+	}
 
 	ImGui::SameLine(0.0f, ButtonSpacing);
 
 	if (DrawIconButton("##PIE_Stop", StopIcon, "Stop", /*bDisabled=*/!bPlaying))
 	{
 		Editor->RequestEndPlayMap();
+	}
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+	{
+		ImGui::SetTooltip("Stop");
 	}
 
 	// 다음 콘텐츠는 툴바 아래로 이어지도록 커서 복원
