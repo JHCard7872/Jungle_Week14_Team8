@@ -61,7 +61,7 @@ function BeginPlay()
 
     -- 사운드 일괄 등록 (각 씬 BeginPlay의 공통 규약 — AudioData.lua 참고)
     for key, path in pairs(require("Data/AudioData")) do
-        AudioManager.Load(key, path, key:find("^Bgm") ~= nil)
+        AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
 
     -- 점수/미션 가동 (FakeRagdoll 1마리뿐 → fallback 미션 "빨간 배관공 1체 수거" 발급)

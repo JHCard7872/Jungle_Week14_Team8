@@ -13,7 +13,7 @@ return {
     arriveDistance = 2.0,   -- 웨이포인트 도착 판정 반경(XY 평면)
     waitTime       = 5,    -- 순회 사이 대기 시간(초)        -- 임시 밸런스
 
-    engineVolume   = 0.5,   -- BgmTruck 루프 볼륨
+    engineVolume   = 0.5,   -- bgm_collector_truck 루프 볼륨
 
     waypoints = {           -- 순서대로 순회, 마지막 → 처음으로 순환 (후진 없음)
         { -15, -15, 0 },

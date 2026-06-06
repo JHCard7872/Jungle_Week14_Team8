@@ -67,7 +67,7 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
 
     ScoreMgr.AddForRagdoll(other_actor)
     MissionMgr.NotifyRecovered(other_actor)   -- 태그를 읽으므로 Destroy 전에 호출
-    AudioManager.Play("SfxCollect", 1.0)
+    AudioManager.Play("sfx_collect", 1.0)
     other_actor:Destroy()                     -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)
 end
 
@@ -78,7 +78,7 @@ function Tick(dt)
     -- 끝난 뒤임을 보장하기 위함 (액터 BeginPlay 순서에 기대지 않는다)
     if not engineStarted then
         engineStarted = true
-        AudioManager.PlayLoop("BgmTruck", "TruckLoop", D.engineVolume)
+        AudioManager.PlayLoop("bgm_collector_truck", "TruckLoop", D.engineVolume)
     end
 
     -- 대기: waitTime 지나면 가장 가까운 웨이포인트의 다음 지점부터 한 바퀴 시작
