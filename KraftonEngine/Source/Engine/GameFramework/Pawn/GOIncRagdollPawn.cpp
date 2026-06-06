@@ -14,6 +14,8 @@
 #include "PhysicsEngine/PhysicsAssetManager.h"
 #include "Runtime/Engine.h"
 
+#include <cstring>
+
 namespace
 {
 	const FString DefaultGOIncRagdollSkeletalMeshFileName = "Content/Data/Sonic/sc_dash_loop_anm_hkx_SkeletalMesh.uasset";
@@ -41,9 +43,12 @@ void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileNam
 	EnsureDefaultComponents();
 
 	FGOIncRagdollCharacterConfig Config = MakeCharacterConfig();
-	Config.SkeletalMeshPath = SkeletalMeshFileName.empty()
-		? Config.SkeletalMeshPath
-		: SkeletalMeshFileName;
+
+	if (!SkeletalMeshFileName.empty())
+	{
+		Config.SkeletalMeshPath.SetPath(SkeletalMeshFileName);
+	}
+
 	Config.LuaScriptFile = ScriptFile;
 
 	ApplyCharacterConfig(Config);
@@ -159,7 +164,63 @@ void AGOIncRagdollPawn::ApplyCharacterConfig(const FGOIncRagdollCharacterConfig&
 void AGOIncRagdollPawn::RefreshCharacterConfig()
 {
 	EnsureDefaultComponents();
+	ApplyCharacterConfig(bUseEditableCharacterConfig ? CharacterConfig : MakeCharacterConfig());
+}
+
+void AGOIncRagdollPawn::ApplyEditableCharacterConfig()
+{
+	bUseEditableCharacterConfig = true;
+	EnsureDefaultComponents();
+	ApplyCharacterConfig(CharacterConfig);
+}
+
+void AGOIncRagdollPawn::ResetCharacterConfigToClassDefaults()
+{
+	bUseEditableCharacterConfig = false;
+	EnsureDefaultComponents();
 	ApplyCharacterConfig(MakeCharacterConfig());
+}
+
+void AGOIncRagdollPawn::SetUseEditableCharacterConfig(bool bEnabled)
+{
+	bUseEditableCharacterConfig = bEnabled;
+	RefreshCharacterConfig();
+}
+
+bool AGOIncRagdollPawn::IsCharacterConfigPropertyName(const char* PropertyName) const
+{
+	if (!PropertyName || PropertyName[0] == '\0')
+	{
+		return false;
+	}
+
+	return std::strcmp(PropertyName, "CharacterConfig") == 0
+		|| std::strcmp(PropertyName, "RagdollId") == 0
+		|| std::strcmp(PropertyName, "DisplayName") == 0
+		|| std::strcmp(PropertyName, "SkeletalMeshPath") == 0
+		|| std::strcmp(PropertyName, "PhysicsAssetPath") == 0
+		|| std::strcmp(PropertyName, "FleeAnimationPath") == 0
+		|| std::strcmp(PropertyName, "LuaScriptFile") == 0
+		|| std::strcmp(PropertyName, "MeshRelativeLocation") == 0
+		|| std::strcmp(PropertyName, "MeshRelativeScale") == 0
+		|| std::strcmp(PropertyName, "AliveCapsuleRadius") == 0
+		|| std::strcmp(PropertyName, "AliveCapsuleHalfHeight") == 0
+		|| std::strcmp(PropertyName, "ReviveTriggerCapsuleRadius") == 0
+		|| std::strcmp(PropertyName, "ReviveTriggerCapsuleHalfHeight") == 0
+		|| std::strcmp(PropertyName, "bCanRevive") == 0
+		|| std::strcmp(PropertyName, "ReviveBlendDuration") == 0
+		|| std::strcmp(PropertyName, "FleeSpeed") == 0
+		|| std::strcmp(PropertyName, "FleeAcceleration") == 0
+		|| std::strcmp(PropertyName, "FleeBrakingDeceleration") == 0
+		|| std::strcmp(PropertyName, "FleeEndDistance") == 0
+		|| std::strcmp(PropertyName, "FleeStopDuration") == 0
+		|| std::strcmp(PropertyName, "FleeStopMinBrakingDeceleration") == 0
+		|| std::strcmp(PropertyName, "FleeRotationYawOffsetDegrees") == 0
+		|| std::strcmp(PropertyName, "FleeAnimationBaseSpeed") == 0
+		|| std::strcmp(PropertyName, "FleeAnimationMinPlayRate") == 0
+		|| std::strcmp(PropertyName, "FleeAnimationMaxPlayRate") == 0
+		|| std::strcmp(PropertyName, "FleeStopStartPlayRate") == 0
+		|| std::strcmp(PropertyName, "FleeStopEndPlayRate") == 0;
 }
 
 void AGOIncRagdollPawn::ConfigureAliveCollisionCapsuleDefaults()
@@ -644,6 +705,7 @@ void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 void AGOIncRagdollPawn::SetRagdollId(const FString& InRagdollId)
 {
 	RagdollId = InRagdollId.empty() ? FString("blue-speedster") : InRagdollId;
+	CharacterConfig.RagdollId = RagdollId;
 }
 
 void AGOIncRagdollPawn::RequestDeadRagdoll(const FString& Reason)
@@ -665,6 +727,7 @@ void AGOIncRagdollPawn::RequestDeadRagdoll(const FString& Reason)
 void AGOIncRagdollPawn::SetSkeletalMeshPath(const FString& InSkeletalMeshPath)
 {
 	SkeletalMeshPath = InSkeletalMeshPath;
+	CharacterConfig.SkeletalMeshPath = SkeletalMeshPath;
 	if (!Mesh || SkeletalMeshPath.empty() || !GEngine)
 	{
 		return;
@@ -697,6 +760,7 @@ void AGOIncRagdollPawn::SetSkeletalMeshPath(const FString& InSkeletalMeshPath)
 void AGOIncRagdollPawn::SetPhysicsAssetPath(const FString& InPhysicsAssetPath)
 {
 	PhysicsAssetPath = InPhysicsAssetPath;
+	CharacterConfig.PhysicsAssetPath = PhysicsAssetPath;
 	if (!Mesh || !Mesh->GetSkeletalMesh() || PhysicsAssetPath.empty() || PhysicsAssetPath == "None")
 	{
 		return;
@@ -717,10 +781,12 @@ void AGOIncRagdollPawn::SetPhysicsAssetPath(const FString& InPhysicsAssetPath)
 void AGOIncRagdollPawn::SetFleeAnimationPath(const FString& InFleeAnimationPath)
 {
 	FleeAnimationPath = InFleeAnimationPath;
+	CharacterConfig.FleeAnimationPath = FleeAnimationPath;
 }
 
 void AGOIncRagdollPawn::SetMeshRelativeLocation(const FVector& InRelativeLocation)
 {
+	CharacterConfig.MeshRelativeLocation = InRelativeLocation;
 	if (Mesh)
 	{
 		Mesh->SetRelativeLocation(InRelativeLocation);
@@ -729,6 +795,7 @@ void AGOIncRagdollPawn::SetMeshRelativeLocation(const FVector& InRelativeLocatio
 
 void AGOIncRagdollPawn::SetMeshRelativeScale(const FVector& InRelativeScale)
 {
+	CharacterConfig.MeshRelativeScale = InRelativeScale;
 	if (Mesh)
 	{
 		Mesh->SetRelativeScale(InRelativeScale);
@@ -737,6 +804,8 @@ void AGOIncRagdollPawn::SetMeshRelativeScale(const FVector& InRelativeScale)
 
 void AGOIncRagdollPawn::SetAliveCapsuleSize(float Radius, float HalfHeight)
 {
+	CharacterConfig.AliveCapsuleRadius = Radius;
+	CharacterConfig.AliveCapsuleHalfHeight = HalfHeight;
 	if (CapsuleComponent)
 	{
 		CapsuleComponent->SetCapsuleSize(Radius, HalfHeight);
@@ -746,6 +815,8 @@ void AGOIncRagdollPawn::SetAliveCapsuleSize(float Radius, float HalfHeight)
 
 void AGOIncRagdollPawn::SetReviveTriggerCapsuleSize(float Radius, float HalfHeight)
 {
+	CharacterConfig.ReviveTriggerCapsuleRadius = Radius;
+	CharacterConfig.ReviveTriggerCapsuleHalfHeight = HalfHeight;
 	EnsureReviveTriggerCapsuleComponent();
 	if (ReviveTriggerCapsuleComponent)
 	{
@@ -756,11 +827,8 @@ void AGOIncRagdollPawn::SetReviveTriggerCapsuleSize(float Radius, float HalfHeig
 void AGOIncRagdollPawn::BeginPlay()
 {
 	EnsureDefaultComponents();
-	if (Mesh && !Mesh->GetSkeletalMesh())
-	{
-		RefreshCharacterConfig();
-		ApplyInitialRagdollState();
-	}
+	RefreshCharacterConfig();
+	ApplyInitialRagdollState();
 	RefreshGOIncRagdollPawnComponents();
 	Super::BeginPlay();
 }
@@ -769,7 +837,29 @@ void AGOIncRagdollPawn::PostDuplicate()
 {
 	Super::PostDuplicate();
 	EnsureDefaultComponents();
+	RefreshCharacterConfig();
 	RefreshGOIncRagdollPawnComponents();
+}
+
+void AGOIncRagdollPawn::PostEditProperty(const char* PropertyName)
+{
+	Super::PostEditProperty(PropertyName);
+	if (!PropertyName)
+	{
+		return;
+	}
+
+	if (IsCharacterConfigPropertyName(PropertyName))
+	{
+		ApplyEditableCharacterConfig();
+		return;
+	}
+
+	if (std::strcmp(PropertyName, "bUseEditableCharacterConfig") == 0
+		|| std::strcmp(PropertyName, "Use Editable Character Config") == 0)
+	{
+		RefreshCharacterConfig();
+	}
 }
 
 void AGOIncRagdollPawn::PlayFleeAnimation()

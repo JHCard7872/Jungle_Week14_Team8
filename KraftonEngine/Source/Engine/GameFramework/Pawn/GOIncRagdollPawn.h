@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include "GameFramework/Pawn/Pawn.h"
+#include "Object/Ptr/SoftObjectPtr.h"
+#include "Object/Reflection/UStruct.h"
 
 class UCapsuleComponent;
 class USceneComponent;
@@ -13,39 +15,68 @@ class ULuaScriptComponent;
 // 게임 상태 전환/AI는 C++이 아니라 Lua에서 처리한다.
 #include "Source/Engine/GameFramework/Pawn/GOIncRagdollPawn.generated.h"
 
+USTRUCT()
 struct FGOIncRagdollCharacterConfig
 {
+	GENERATED_BODY()
+
+	UPROPERTY(Edit, Save, Category = "GOInc|Identity", DisplayName = "Ragdoll Id")
 	FString RagdollId = "blue-speedster";
+	UPROPERTY(Edit, Save, Category = "GOInc|Identity", DisplayName = "Display Name")
 	FString DisplayName = "파란 고슴도치";
 
-	FString SkeletalMeshPath = "Content/Data/Sonic/sc_dash_loop_anm_hkx_SkeletalMesh.uasset";
+	UPROPERTY(Edit, Save, Category = "GOInc|Assets", DisplayName = "Skeletal Mesh", AssetType = "SkeletalMesh")
+	FSoftObjectPtr SkeletalMeshPath = "Content/Data/Sonic/sc_dash_loop_anm_hkx_SkeletalMesh.uasset";
+	UPROPERTY(Edit, Save, Category = "GOInc|Assets", DisplayName = "Physics Asset")
 	FString PhysicsAssetPath = "Content/Data/Sonic/sc_dash_loop_anm_hkx_PhysicsAsset.uasset";
-	FString FleeAnimationPath = "Content/Data/Sonic/sc_dash_loop_anm_hkx_sc_dash_loop.uasset";
+	UPROPERTY(Edit, Save, Category = "GOInc|Assets", DisplayName = "Flee Animation", AssetType = "UAnimSequence")
+	FSoftObjectPtr FleeAnimationPath = "Content/Data/Sonic/sc_dash_loop_anm_hkx_sc_dash_loop.uasset";
+	UPROPERTY(Edit, Save, Category = "GOInc|Assets", DisplayName = "Lua Script", AssetType = "Script")
 	FString LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
+	UPROPERTY(Edit, Save, Category = "GOInc|Mesh", DisplayName = "Mesh Relative Location")
 	FVector MeshRelativeLocation = FVector(0.0f, 0.0f, 0.0f);
+	UPROPERTY(Edit, Save, Category = "GOInc|Mesh", DisplayName = "Mesh Relative Scale")
 	FVector MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
+	UPROPERTY(Edit, Save, Category = "GOInc|Capsule", DisplayName = "Alive Capsule Radius", Min = 0.01f, Speed = 0.1f)
 	float AliveCapsuleRadius = 1.8f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Capsule", DisplayName = "Alive Capsule Half Height", Min = 0.01f, Speed = 0.1f)
 	float AliveCapsuleHalfHeight = 3.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Capsule", DisplayName = "Revive Trigger Radius", Min = 0.01f, Speed = 0.1f)
 	float ReviveTriggerCapsuleRadius = 2.4f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Capsule", DisplayName = "Revive Trigger Half Height", Min = 0.01f, Speed = 0.1f)
 	float ReviveTriggerCapsuleHalfHeight = 3.4f;
 
+	UPROPERTY(Edit, Save, Category = "GOInc|Revive", DisplayName = "Can Revive")
 	bool bCanRevive = true;
+	UPROPERTY(Edit, Save, Category = "GOInc|Revive", DisplayName = "Revive Blend Duration", Min = 0.0f, Speed = 0.01f)
 	float ReviveBlendDuration = 0.8f;
 
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee Speed", Min = 0.0f, Speed = 0.1f)
 	float FleeSpeed = 4.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee Acceleration", Min = 0.0f, Speed = 0.1f)
 	float FleeAcceleration = 15.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee Braking Deceleration", Min = 0.0f, Speed = 0.1f)
 	float FleeBrakingDeceleration = 10.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee End Distance", Min = 0.0f, Speed = 0.1f)
 	float FleeEndDistance = 10.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee Stop Duration", Min = 0.0f, Speed = 0.01f)
 	float FleeStopDuration = 1.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee Stop Min Braking", Min = 0.0f, Speed = 0.01f)
 	float FleeStopMinBrakingDeceleration = 0.1f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Flee", DisplayName = "Flee Rotation Yaw Offset", Speed = 0.5f)
 	float FleeRotationYawOffsetDegrees = 0.0f;
 
+	UPROPERTY(Edit, Save, Category = "GOInc|Animation", DisplayName = "Animation Base Speed", Min = 0.0f, Speed = 0.1f)
 	float FleeAnimationBaseSpeed = 4.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Animation", DisplayName = "Animation Min Play Rate", Min = 0.0f, Speed = 0.01f)
 	float FleeAnimationMinPlayRate = 0.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Animation", DisplayName = "Animation Max Play Rate", Min = 0.0f, Speed = 0.01f)
 	float FleeAnimationMaxPlayRate = 1.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Animation", DisplayName = "Flee Stop Start Play Rate", Min = 0.0f, Speed = 0.01f)
 	float FleeStopStartPlayRate = 1.0f;
+	UPROPERTY(Edit, Save, Category = "GOInc|Animation", DisplayName = "Flee Stop End Play Rate", Min = 0.0f, Speed = 0.01f)
 	float FleeStopEndPlayRate = 0.0f;
 };
 
@@ -71,8 +102,22 @@ public:
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void RefreshCharacterConfig();
 
+	// 에디터에서 노출된 CharacterConfig 값을 현재 Pawn에 즉시 적용한다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void ApplyEditableCharacterConfig();
+
+	// 하위 클래스가 제공하는 기본 config로 되돌린다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void ResetCharacterConfigToClassDefaults();
+
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
+	void SetUseEditableCharacterConfig(bool bEnabled);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	bool GetUseEditableCharacterConfig() const { return bUseEditableCharacterConfig; }
+
 	void BeginPlay() override;
 	void PostDuplicate() override;
+	void PostEditProperty(const char* PropertyName) override;
 
 	// Alive 상태에서 이동/중력/바닥 충돌을 담당하는 Capsule.
 	// 기존 API 호환을 위해 이름은 CapsuleComponent를 유지하지만, 의미는 AliveCapsule이다.
@@ -187,6 +232,7 @@ protected:
 	void OnOwnedComponentRemoved(UActorComponent* Component) override;
 	virtual FGOIncRagdollCharacterConfig MakeCharacterConfig() const;
 	void ApplyCharacterConfig(const FGOIncRagdollCharacterConfig& InCharacterConfig);
+	bool IsCharacterConfigPropertyName(const char* PropertyName) const;
 	void RefreshGOIncRagdollPawnComponents();
 	void EnsureGOIncRootComponent();
 	void EnsureReviveTriggerCapsuleComponent();
@@ -209,6 +255,12 @@ protected:
 	UGOIncRagdollMovementComponent* RagdollMovementComponent = nullptr;
 	ULuaScriptComponent* LuaScriptComponent = nullptr;
 
+	// false면 MakeCharacterConfig()가 제공하는 class 기본값을 사용한다.
+	// true면 아래 CharacterConfig를 에디터/씬 저장값으로 보고 그대로 적용한다.
+	UPROPERTY(Edit, Save, Category = "GOInc|Config", DisplayName = "Use Editable Character Config")
+	bool bUseEditableCharacterConfig = false;
+
+	UPROPERTY(Edit, Save, Category = "GOInc|Config", DisplayName = "Character Config")
 	FGOIncRagdollCharacterConfig CharacterConfig;
 	FString RagdollId = "blue-speedster";
 	FString SkeletalMeshPath;
