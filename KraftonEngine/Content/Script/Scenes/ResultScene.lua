@@ -18,9 +18,9 @@ function BeginPlay()
     Session.inputEnabled = true
 
     for key, path in pairs(require("Data/AudioData")) do
-        AudioManager.Load(key, path, key:find("^Bgm") ~= nil)
+        AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("BgmResult", 0.6)
+    AudioManager.PlayBGM("bgm_main_0", 0.6)
 
     -- TODO(UI): ResultUIController.Create() — Session.score / Session.result 직독
     -- UI가 붙기 전까지 결과를 콘솔로 확인 (UI 합류 후 이 print 제거)

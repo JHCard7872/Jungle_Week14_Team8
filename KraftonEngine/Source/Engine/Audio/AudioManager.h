@@ -17,6 +17,7 @@ public:
 	void PlayAudio(const FString& Key, float Volume = 1.0f);
 	void PlayBGM(const FString& Key, float Volume = 1.0f);
 	void StopBGM();
+	void StopAllPlayback();
 	void PlayLoop(const FString& Key, const FString& LoopName, float Volume = 1.0f, float Pitch = 1.0f);
 	void StopLoop(const FString& LoopName);
 	void StopAllLoops();

@@ -36,13 +36,8 @@ void FAudioManager::Shutdown()
 		return;
 	}
 
-	StopBGM();
-	StopAllLoops();
-	if (MasterGroup)
-	{
-		MasterGroup->stop();
-		MasterGroup = nullptr;
-	}
+	StopAllPlayback();
+	MasterGroup = nullptr;
 	System->update();
 
 	for (auto& Pair : Audios)
@@ -133,6 +128,29 @@ void FAudioManager::StopBGM()
 		BGMChannel->stop();
 		BGMChannel = nullptr;
 	}
+}
+
+void FAudioManager::StopAllPlayback()
+{
+	if (!System)
+	{
+		BGMChannel = nullptr;
+		LoopChannels.clear();
+		return;
+	}
+
+	StopBGM();
+	StopAllLoops();
+
+	// Master group stop catches fire-and-forget one-shot channels that are not
+	// individually tracked by the audio manager. This keeps PIE end / scene
+	// teardown from leaking sound across world boundaries.
+	if (MasterGroup)
+	{
+		MasterGroup->stop();
+	}
+
+	System->update();
 }
 
 void FAudioManager::PlayLoop(const FString& Key, const FString& LoopName, float Volume, float Pitch)
@@ -251,4 +269,24 @@ void FAudioManager::LoadDefaultAudios()
 	LoadAudio("MeteorBoom", "meteor_boom.mp3");
 	LoadAudio("MeteorFall", "meteor_fall.mp3");
 	LoadAudio("Whoosh", "whoosh.mp3");
+
+	LoadAudio("bgm_title_0", "BgmTitle_0.mp3", true);
+	LoadAudio("bgm_title_1", "BgmTitle_1.mp3", true);
+	LoadAudio("bgm_gameplay_0", "BgmGameplay_0.mp3", true);
+	LoadAudio("bgm_gameplay_1", "BgmGameplay_1.mp3", true);
+	LoadAudio("bgm_main_0", "BgmMain_0.mp3", true);
+	LoadAudio("bgm_cutscene", "BgmCutScene.mp3", true);
+	LoadAudio("bgm_collector_truck", "BgmCollectorTruck.mp3", true);
+	LoadAudio("sfx_foot", "SfxFoot.mp3");
+	LoadAudio("sfx_result_high", "SfxResultHigh.mp3");
+	LoadAudio("sfx_result_medium", "SfxResultMedium.mp3");
+	LoadAudio("sfx_result_low", "SfxResultLow.mp3");
+	LoadAudio("sfx_gun_shoot", "SfxGunShoot.mp3");
+	LoadAudio("sfx_beam_grab", "SfxBeamGrab.mp3");
+	LoadAudio("sfx_collect", "SfxCollect.mp3");
+	LoadAudio("sfx_hit", "SfxHit.mp3");
+	LoadAudio("sfx_ui_click", "SfxUiClick.mp3");
+	LoadAudio("sfx_ui_hover", "SfxUiHover.mp3");
+	LoadAudio("sfx_game_over", "SfxGameOver.mp3");
+	LoadAudio("sfx_revive", "SfxRevive.mp3");
 }

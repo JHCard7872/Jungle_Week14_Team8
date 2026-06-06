@@ -259,7 +259,20 @@ void UEngine::DestroyWorldContext(const FName& Handle)
 	{
 		if (it->ContextHandle == Handle)
 		{
+			const bool bShouldStopRuntimeAudio =
+				it->WorldType == EWorldType::Game || it->WorldType == EWorldType::PIE;
+
 			it->World->RouteWorldDestroyed();
+
+			// AudioManager is engine-global rather than world-owned, so world
+			// teardown must explicitly scrub any active playback. Without this,
+			// PIE stop or scene transitions can leave FMOD channels alive after
+			// the runtime world has been destroyed.
+			if (bShouldStopRuntimeAudio)
+			{
+				FAudioManager::Get().StopAllPlayback();
+			}
+
 			UObjectManager::Get().DestroyObject(it->World);
 			WorldList.erase(it);
 			return;

@@ -12,9 +12,9 @@ function BeginPlay()
     Session.inputEnabled = true
 
     for key, path in pairs(require("Data/AudioData")) do
-        AudioManager.Load(key, path, key:find("^Bgm") ~= nil)
+        AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("BgmTitle", 0.6)
+    AudioManager.PlayBGM("bgm_title_0", 0.6)
 
     Engine.SetOnEscape(function()
         Engine.Exit()

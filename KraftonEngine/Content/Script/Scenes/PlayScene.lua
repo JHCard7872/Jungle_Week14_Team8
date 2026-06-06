@@ -18,7 +18,6 @@ local ScoreMgr   = require("Manager/ScoreManager")
 local LoadMgr    = require("Manager/ServerLoadManager")
 local MissionMgr = require("Manager/MissionManager")
 local SpawnMgr   = require("Manager/SpawnManager")
-
 local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프레임 잔여 Tick 가드)
 
 -- ESC: 일시정지 토글. 메뉴 입력(ESC)은 pause 중에도 발화한다 (엔진 특성)
@@ -42,9 +41,9 @@ function BeginPlay()
     Session.Reset(Config.timeLimit)   -- 이전 판 값 청소 (inputEnabled=true 포함)
 
     for key, path in pairs(require("Data/AudioData")) do
-        AudioManager.Load(key, path, key:find("^Bgm") ~= nil)
+        AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("BgmGameplay", 0.6)
+    AudioManager.PlayBGM("bgm_gameplay_0", 0.6)
 
     -- TODO(UI): HUDController.Create()
 
@@ -70,7 +69,7 @@ function Tick(dt)
         ended = true
         Session.result.gameOverReason =
             Session.timeRemaining <= 0 and "시간 초과" or "서버 과부하"
-        AudioManager.Play("SfxGameOver", 1.0)
+        AudioManager.Play("sfx_game_over", 1.0)
         Engine.LoadScene("Result")   -- 이번 프레임 끝(Tick·Render 이후)에 안전 교체
     end
 end
