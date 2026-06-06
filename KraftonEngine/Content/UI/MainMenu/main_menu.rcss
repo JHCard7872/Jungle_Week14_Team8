@@ -3,7 +3,7 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    font-family: NanumGothic;
+    font-family: NanumGothicBold;
 }
 
 #menu_root {
@@ -24,19 +24,11 @@ body {
 }
 
 #screen_dim {
-    position: absolute;
-    left: 0px;
-    top: 0px;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 10;
-    pointer-events: none;
 }
 
 .menu_button {
     position: absolute;
-    width: 20%;
+    width: 19%;
     margin: 0px;
     padding: 0px;
     background-color: transparent;
@@ -71,30 +63,30 @@ body {
 }
 
 #menu_help {
-    left: 10%;
-    top: 7%;
+    left: 16%;
+    top: 10%;
 }
 
 #menu_option {
-    right: 10%;
-    top: 7%;
+    right: 16%;
+    top: 10%;
 
 }
 
 #menu_play {
     left: 50%;
-    top: 30%;
-    margin-left: -10.5%;
+    top: 35%;
+    margin-left: -9.5%;
 }
 
 #menu_scoreboard {
-    left: 10%;
-    bottom: 7%;
+    left: 16%;
+    bottom: 10%;
 }
 
 #menu_credits {
-    right: 10%;
-    bottom: 7%;
+    right: 16%;
+    bottom: 10%;
 }
 
 .menu_label {
@@ -103,15 +95,16 @@ body {
     left: 50%;
     bottom: 6%;
     width: 34%;
-    height: 72px;
     margin-left: -17%;
-    background-color: #1f86e5;
-    border: 3px solid #88c7ff;
+    height: 72px;
+    background-color: #ff9900;
+    border-width: 3px;
+    border-color: #ffffff;
     border-radius: 18px;
     color: #ffffff;
     font-family: NanumGothic;
     font-weight: bold;
-    font-size: 34px;
+    font-size: 50px;
     text-align: center;
     line-height: 72px;
     z-index: 40;
@@ -137,6 +130,10 @@ body {
     display: block;
 }
 
+#menu_back_to_title:hover + #label_back_to_title {
+    display: block;
+}
+
 #menu_back_to_title {
     position: absolute;
     right: 3%;
@@ -151,7 +148,7 @@ body {
 }
 
 #menu_back_to_title:hover {
-    transform: scale(1.08);
+    transform: scale(1.4);
 }
 
 .back_button_image {

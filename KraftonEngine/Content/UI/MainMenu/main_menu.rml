@@ -38,11 +38,11 @@
         </button>
         <div id="label_credits" class="menu_label">크레딧</div>
 
-        <div id="screen_dim"></div>
 
         <button id="menu_back_to_title">
             <img class="back_button_image" src="../../Sprite/main_menu_backtotitle.png" />
         </button>
+        <div id="label_back_to_title" class="menu_label">타이틀로</div>
 
         <img id="cursor_normal" class="cursor_image" src="../../Sprite/cursor.png" />
         <img id="cursor_click" class="cursor_image" src="../../Sprite/cursor_click.png" />
