@@ -54,12 +54,9 @@ function BeginPlay()
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
-    -- 스폰은 Play.Scene의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가
-    -- 자체 Tick으로 담당 — pause 시 액터 Tick이 멈추므로 스폰도 같이 멈춘다
-
-    -- TODO(트럭): Play.Scene에 수거 트럭 액터 배치 — 구성은 TruckTest.Scene 참고
-    --   (TruckBehavior + 자식 UBoxComponent, GenerateOverlapEvents 필수)
-    -- TODO(빔): 플레이어 폰의 LuaScriptComponent가 비어 있음 — 빔 캐릭터 스크립트 배선 필요
+    -- 스폰은 Play.Scene의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가,
+    -- 수거는 AGOIncTruck 액터(TruckBehavior.lua)가 자체 Tick으로 담당 —
+    -- pause 시 액터 Tick이 멈추므로 스폰/주행도 같이 멈춘다
 end
 
 function Tick(dt)

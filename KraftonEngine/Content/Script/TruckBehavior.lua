@@ -2,8 +2,7 @@
 -- TruckBehavior — 수거 트럭 (트럭 액터의 LuaScriptComponent에 부착)
 -- [역할] waitTime 대기 ↔ 트랙 1회 순회를 반복하며, 주행 중에만 엔진음을 재생한다.
 --        순회는 달리면서 조향 — 항상 전진 + yaw 회전만, 후진 없음.
---        트리거 박스에 "Ragdoll" 태그 액터가 닿으면 수거 —
---        점수/미션 통보 후 Destroy (매니저 주석의 CollectionZoneBehavior가 이것).
+--        트리거 박스에 "Ragdoll" 태그 액터가 닿으면 수거 — 점수/미션 통보 후 Destroy.
 -- [사용법] 씬의 트럭 액터에 LuaScriptComponent → ScriptFile에 "TruckBehavior.lua"
 --          + 자식 UBoxComponent(QueryOnly·Kinematic·GenerateOverlapEvents) 필요
 -- [특이사항] TruckData는 매 Tick require — 핫리로드가 캐시를 비우면 저장 즉시

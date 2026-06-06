@@ -29,10 +29,10 @@ return {
     sfx_result_low = "SfxResultLow.mp3",
     sfx_gun_shoot = "SfxGunShoot.mp3",
     sfx_beam_grab = "SfxBeamGrab.mp3",
-    sfx_collect = "SfxUiClick.mp3",          -- TODO: 임시 매핑 — SfxCollect.mp3 입수 시 교체
+    sfx_collect = "SfxUiClick.mp3",            -- TODO: 임시 매핑 — SfxCollect.mp3 입수 시 교체
     sfx_hit = "SfxHit.mp3",
     sfx_ui_click = "SfxUiClick.mp3",
     sfx_ui_hover = "SfxUiHover.mp3",
-    sfx_game_over = "SfxTitleGameOver.mp3",  -- TODO: 임시 매핑 — SfxGameOver.mp3 입수 시 교체
+    sfx_game_over = "SfxTitleGameOver.mp3",    -- TODO: 임시 매핑 — SfxGameOver.mp3 입수 시 교체
     sfx_revive = "SfxRevive.mp3",
 }

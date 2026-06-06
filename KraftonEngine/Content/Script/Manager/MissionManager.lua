@@ -3,7 +3,7 @@
 -- [역할] 임계치 방식 미션의 전부. 미션 상태(current)는 이 모듈이 소유한다 —
 --        HUD는 GetCurrent()로 읽기만 (Session에 미션 필드 없음).
 -- [사용법] PlayScene.BeginPlay에서 Start().
---          수거 시 CollectionZoneBehavior가 NotifyRecovered(actor) 호출.
+--          수거 시 TruckBehavior가 NotifyRecovered(actor) 호출.
 --          HUD: local m = MissionManager.GetCurrent() → m.text, m.got, m.need
 -- [특이사항] 발급 규칙(달성 불가능한 미션 방지):
 --            1순위 — 살아있는 수 >= minCount인 타입 중 랜덤, 목표 = minCount
