@@ -274,6 +274,13 @@ local function cache_runtime_config_from_pawn()
     bRuntimeConfigCached = true
 end
 
+local function capture_initial_mesh_offsets()
+    if capsule ~= nil and mesh ~= nil then
+        initialMeshRelativeLocation = mesh.RelativeLocation
+        initialMeshWorldOffsetFromActor = mesh.Location - obj.Location
+    end
+end
+
 local function cache_player()
     player = World.FindFirstActorByTag(PLAYER_TAG)
 
