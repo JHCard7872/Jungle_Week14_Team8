@@ -13,7 +13,7 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/TEX_Ceiling_GroupLow_Diff.png",
-    "NormalTexture" : "Content/Texture/Auto/Server/TEX_Ceiling_GroupLow_NRM.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_ServerRoom/TEX_Ceiling_GroupLow_Diff.png",
+    "NormalTexture" : "Content/Texture/Auto/GOInc_ServerRoom/TEX_Ceiling_GroupLow_NRM.png"
   }
 }

@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/t_en_MetalSupport_01_03_bc.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_ServerRoom/t_en_MetalSupport_01_03_bc.png"
   }
 }

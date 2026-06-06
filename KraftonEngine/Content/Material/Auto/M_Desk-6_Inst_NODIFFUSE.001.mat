@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/T_desk-6_BC.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_Desk/T_desk-6_BC.png"
   }
 }

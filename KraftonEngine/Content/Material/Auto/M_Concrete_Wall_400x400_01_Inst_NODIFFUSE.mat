@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/T_Concrete_Wall_400x400_01_D.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_ServerRoom/T_Concrete_Wall_400x400_01_D.png"
   }
 }

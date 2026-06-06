@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Server.fbm/TX_Drain_Opacity.tga"
+    "DiffuseTexture" : "GOInc_ServerRoom.fbm/TX_Drain_Opacity.tga"
   }
 }

@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Server.fbm/T_FloorStripes_D.tga"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_ServerRoom/T_FloorStripes_D.tga"
   }
 }

@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/T_ceiling_edge_BaseColor.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_ServerRoom/T_ceiling_edge_BaseColor.png"
   }
 }

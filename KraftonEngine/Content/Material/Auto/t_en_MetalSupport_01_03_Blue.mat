@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Server/ub4jadtlw_4K_Albedo.png"
+    "DiffuseTexture" : "Content/Texture/Auto/GOInc_ServerRoom/ub4jadtlw_4K_Albedo.png"
   }
 }
