@@ -129,48 +129,64 @@ body {
 }
 
 .menu_label {
-    display: none;
+    display: block;
     position: absolute;
     left: 50%;
-    bottom: 6%;
-    width: 34%;
-    margin-left: -17%;
-    height: 72px;
-    background-color: #ff9900;
-    border-width: 3px;
-    border-color: #ffffff;
-    border-radius: 18px;
+    bottom: 5%;
+    width: 360px;
+    height: 78px;
+    margin-left: -180px;
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.menu_label_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.menu_label_text {
+    position: absolute;
+    left: 0px;
+    top: 18px;
+    width: 100%;
+    height: 42px;
     color: #ffffff;
     font-family: NanumGothic;
     font-weight: bold;
-    font-size: 50px;
+    font-size: 30px;
     text-align: center;
-    line-height: 72px;
-    z-index: 40;
+    line-height: 42px;
+    pointer-events: none;
 }
 
 #menu_help:hover + #label_help {
-    display: block;
+    opacity: 1;
 }
 
 #menu_option:hover + #label_option {
-    display: block;
+    opacity: 1;
 }
 
 #menu_play:hover + #label_play {
-    display: block;
+    opacity: 1;
 }
 
 #menu_scoreboard:hover + #label_scoreboard {
-    display: block;
+    opacity: 1;
 }
 
 #menu_credits:hover + #label_credits {
-    display: block;
+    opacity: 1;
 }
 
 #menu_back_to_title:hover + #label_back_to_title {
-    display: block;
+    opacity: 1;
 }
 
 #menu_back_to_title {

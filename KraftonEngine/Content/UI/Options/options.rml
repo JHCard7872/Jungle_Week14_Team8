@@ -1,0 +1,80 @@
+<rml>
+<head>
+    <title>Options</title>
+    <link type="text/rcss" href="options.rcss" />
+</head>
+
+<body>
+    <div id="options_root">
+        <!-- 화면 전체를 30% 어둡게 덮는 레이어 -->
+        <div id="options_dim"></div>
+
+        <div id="options_panel">
+            <div id="options_title">Options</div>
+
+            <!-- 우측 상단 뒤로가기: "Back" 텍스트 + 화살표 아이콘 -->
+            <button id="options_back_button">
+                <span id="options_back_label">Back</span>
+                <img id="options_back_icon" src="../../Sprite/ui_back_arrow.png" />
+            </button>
+
+            <div id="options_body">
+                <!-- Sound Volume -->
+                <div class="option_group">
+                    <div class="option_group_label">
+                        <img class="option_group_label_bg" src="../../Sprite/settings_label.png" />
+                        <span class="option_group_label_text">Sound Volume</span>
+                    </div>
+
+                    <div class="option_group_rows">
+                        <div class="option_row">
+                            <span class="option_row_name">Sound Effect</span>
+                            <div class="option_value">
+                                <button id="sfx_volume_down" class="value_step_button">-</button>
+                                <span id="sfx_volume_value" class="option_value_text">8</span>
+                                <button id="sfx_volume_up" class="value_step_button">+</button>
+                            </div>
+                        </div>
+
+                        <div class="option_row">
+                            <span class="option_row_name">BGM</span>
+                            <div class="option_value">
+                                <button id="bgm_volume_down" class="value_step_button">-</button>
+                                <span id="bgm_volume_value" class="option_value_text">8</span>
+                                <button id="bgm_volume_up" class="value_step_button">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Mode -->
+                <div class="option_group">
+                    <div class="option_group_label">
+                        <img class="option_group_label_bg" src="../../Sprite/settings_label.png" />
+                        <span class="option_group_label_text">Input Mode</span>
+                    </div>
+
+                    <div class="option_group_rows">
+                        <button id="input_mode_mouse_key" class="input_mode_row selected">
+                            <img class="input_mode_icon" src="../../Sprite/settings_input_mousekeyboard.png" />
+                            <span class="input_mode_text">Mouse &amp; Key</span>
+                        </button>
+
+                        <button id="input_mode_gamepad" class="input_mode_row">
+                            <img class="input_mode_icon" src="../../Sprite/settings_input_gamepad.png" />
+                            <span class="input_mode_text">GamePad</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 중앙 하단 Confirm -->
+            <button id="options_confirm_button" class="horiz_button">
+                <img class="horiz_button_image horiz_button_default" src="../../Sprite/ui_horiz_button.png" />
+                <img class="horiz_button_image horiz_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
+                <span class="horiz_button_label">Confirm</span>
+            </button>
+        </div>
+    </div>
+</body>
+</rml>

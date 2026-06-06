@@ -1,3 +1,7 @@
+*.mat
+KraftonEngine/Settings/Editor.ini
+KraftonEngine/Settings/imgui.ini
+
 # Claude Code
 CLAUDE.md
 DEVLOG.md

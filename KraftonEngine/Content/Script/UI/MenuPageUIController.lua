@@ -1,0 +1,356 @@
+-- =============================================================================
+-- MenuPageUIController — 메인 메뉴 하위 페이지 공통 UI 컨트롤러
+-- [역할] 메인 메뉴 배경 위에 30% 어두운 오버레이, 좌상단 제목,
+--        우상단 Back 버튼, 중앙 하단 Confirm 버튼을 공통으로 띄운다.
+-- [페이지] Options / Controls / Scoreboard / Credits
+-- [주의] 화면을 열 때만 Create/AddToViewport 하고, 닫을 때 Destroy 해서
+--        숨겨진 문서가 메인 메뉴 hover/click을 막지 않게 한다.
+-- =============================================================================
+
+local UI_DOCUMENT_PATH = "Content/UI/MenuPage/menu_page.rml"
+-- Pause(220)보다 위에 뜨도록
+local PAGE_Z_ORDER = 230
+
+local UI_CLICK_KEY = "sfx_ui_click"
+local UI_HOVER_KEY = "sfx_ui_hover"
+
+local MIN_VOLUME = 0
+local MAX_VOLUME = 10
+local DEFAULT_SFX_VOLUME = 8
+local DEFAULT_BGM_VOLUME = 8
+local DEFAULT_INPUT_MODE = "mouse_key"
+
+local PAGE_BODY_IDS = {
+    options = "page_body_options",
+    controls = "page_body_controls",
+    scoreboard = "page_body_scoreboard",
+    credits = "page_body_credits",
+}
+
+local INPUT_MODE_ROW_IDS = {
+    mouse_key = "input_mode_mouse_key",
+    gamepad = "input_mode_gamepad",
+}
+
+local M = {}
+
+local widget = nil
+local bindings_initialized = false
+local visible = false
+local current_page_type = "options"
+
+-- Confirm/Back 버튼 클릭 시 호출할 콜백
+local on_confirm = nil
+local on_back = nil
+
+-- 현재 화면에 표시 중인 옵션 설정값
+local settings = {
+    sfxVolume = DEFAULT_SFX_VOLUME,
+    bgmVolume = DEFAULT_BGM_VOLUME,
+    inputMode = DEFAULT_INPUT_MODE,
+}
+
+local function clamp(value, min_value, max_value)
+    value = tonumber(value) or min_value
+
+    if value < min_value then
+        return min_value
+    end
+
+    if value > max_value then
+        return max_value
+    end
+
+    return value
+end
+
+local function get_sfx_volume_scalar()
+    return clamp(settings.sfxVolume, MIN_VOLUME, MAX_VOLUME) / 10.0
+end
+
+local function set_display(element_id, is_visible)
+    if widget == nil then
+        return
+    end
+
+    widget:SetProperty(element_id, "display", is_visible and "block" or "none")
+end
+
+local function set_text(element_id, value)
+    if widget == nil then
+        return
+    end
+
+    widget:SetText(element_id, tostring(value))
+end
+
+-- "selected" 여부에 따라 class 속성 전체를 다시 써서 .selected RCSS를 토글한다
+-- (UserWidget에는 SetClass가 없고 SetAttribute만 있다)
+local function set_input_mode_row_selected(element_id, is_selected)
+    if widget == nil then
+        return
+    end
+
+    local class_value = is_selected and "input_mode_row selected" or "input_mode_row"
+    widget:SetAttribute(element_id, "class", class_value)
+end
+
+local function play_ui_click()
+    AudioManager.Play(UI_CLICK_KEY, get_sfx_volume_scalar())
+end
+
+local function play_ui_hover()
+    AudioManager.Play(UI_HOVER_KEY, get_sfx_volume_scalar())
+end
+
+local function on_button_click(callback)
+    return function()
+        play_ui_click()
+        callback()
+    end
+end
+
+local function bind_hover_sound(element_id)
+    if widget == nil or widget.bind_hover == nil then
+        return
+    end
+
+    widget:bind_hover(element_id, function()
+        play_ui_hover()
+    end)
+end
+
+-- 화면에 표시되는 볼륨 숫자/입력 모드 선택 표시를 settings 값에 맞춰 갱신한다
+local function apply_settings_to_view()
+    if widget == nil then
+        return
+    end
+
+    set_text("sfx_volume_value", settings.sfxVolume)
+    set_text("bgm_volume_value", settings.bgmVolume)
+
+    for mode, element_id in pairs(INPUT_MODE_ROW_IDS) do
+        set_input_mode_row_selected(element_id, mode == settings.inputMode)
+    end
+end
+
+local function set_sfx_volume(value)
+    settings.sfxVolume = clamp(value, MIN_VOLUME, MAX_VOLUME)
+    apply_settings_to_view()
+end
+
+local function set_bgm_volume(value)
+    settings.bgmVolume = clamp(value, MIN_VOLUME, MAX_VOLUME)
+    apply_settings_to_view()
+end
+
+local function set_input_mode(mode)
+    if INPUT_MODE_ROW_IDS[mode] == nil then
+        return
+    end
+
+    settings.inputMode = mode
+    apply_settings_to_view()
+end
+
+local function set_current_page(page_type, title)
+    if widget == nil then
+        return
+    end
+
+    current_page_type = PAGE_BODY_IDS[page_type] ~= nil and page_type or "options"
+    set_text("page_title", title or "Options")
+
+    for key, body_id in pairs(PAGE_BODY_IDS) do
+        set_display(body_id, key == current_page_type)
+    end
+
+    -- Confirm은 Options에서 설정 적용용으로 쓰고, 나머지 페이지에서는 닫기 버튼으로 사용한다.
+    set_text("page_confirm_label", current_page_type == "options" and "Confirm" or "Close")
+
+    apply_settings_to_view()
+end
+
+local function bind_actions()
+    if widget == nil or bindings_initialized or widget.bind_click == nil then
+        return
+    end
+
+    widget:bind_click("page_back_button", on_button_click(function()
+        if on_back ~= nil then
+            on_back(current_page_type)
+        end
+    end))
+
+    widget:bind_click("page_confirm_button", on_button_click(function()
+        if on_confirm ~= nil then
+            on_confirm(M.GetSettings(), current_page_type)
+        elseif on_back ~= nil then
+            on_back(current_page_type)
+        end
+    end))
+
+    widget:bind_click("sfx_volume_down", on_button_click(function()
+        set_sfx_volume(settings.sfxVolume - 1)
+    end))
+
+    widget:bind_click("sfx_volume_up", on_button_click(function()
+        set_sfx_volume(settings.sfxVolume + 1)
+    end))
+
+    widget:bind_click("bgm_volume_down", on_button_click(function()
+        set_bgm_volume(settings.bgmVolume - 1)
+    end))
+
+    widget:bind_click("bgm_volume_up", on_button_click(function()
+        set_bgm_volume(settings.bgmVolume + 1)
+    end))
+
+    widget:bind_click("input_mode_mouse_key", on_button_click(function()
+        set_input_mode("mouse_key")
+    end))
+
+    widget:bind_click("input_mode_gamepad", on_button_click(function()
+        set_input_mode("gamepad")
+    end))
+
+    bind_hover_sound("page_back_button")
+    bind_hover_sound("page_confirm_button")
+    bind_hover_sound("sfx_volume_down")
+    bind_hover_sound("sfx_volume_up")
+    bind_hover_sound("bgm_volume_down")
+    bind_hover_sound("bgm_volume_up")
+    bind_hover_sound("input_mode_mouse_key")
+    bind_hover_sound("input_mode_gamepad")
+
+    bindings_initialized = true
+end
+
+local function ensure_widget()
+    if UI == nil or UI.CreateWidget == nil then
+        return nil
+    end
+
+    if widget == nil then
+        widget = UI.CreateWidget(UI_DOCUMENT_PATH)
+    end
+
+    if widget == nil then
+        return nil
+    end
+
+    widget:SetWantsMouse(visible)
+
+    if widget.IsInViewport == nil or not widget:IsInViewport() then
+        widget:AddToViewportZ(PAGE_Z_ORDER)
+    end
+
+    bind_actions()
+    set_display("page_root", visible)
+    apply_settings_to_view()
+
+    return widget
+end
+
+-- 하위 페이지 UI 생성 진입점
+-- options.pageType = "options" | "controls" | "scoreboard" | "credits"
+-- options.title = 화면 좌상단 제목
+-- options.initialSettings = { sfxVolume, bgmVolume, inputMode } (선택)
+-- options.onConfirm = function(settings, pageType) end
+-- options.onBack = function(pageType) end
+function M.Create(options)
+    options = options or {}
+    on_confirm = options.onConfirm
+    on_back = options.onBack
+
+    local initial = options.initialSettings
+    if initial ~= nil then
+        settings.sfxVolume = clamp(initial.sfxVolume or DEFAULT_SFX_VOLUME, MIN_VOLUME, MAX_VOLUME)
+        settings.bgmVolume = clamp(initial.bgmVolume or DEFAULT_BGM_VOLUME, MIN_VOLUME, MAX_VOLUME)
+        settings.inputMode = INPUT_MODE_ROW_IDS[initial.inputMode] ~= nil and initial.inputMode or DEFAULT_INPUT_MODE
+    end
+
+    if ensure_widget() == nil then
+        return nil
+    end
+
+    set_current_page(options.pageType or "options", options.title or "Options")
+    return widget
+end
+
+-- 하위 페이지 화면을 띄운다 (어둡게 덮기 + 공통 헤더/버튼 + 페이지 내용)
+function M.Show()
+    visible = true
+
+    if ensure_widget() == nil then
+        return
+    end
+
+    widget:SetWantsMouse(true)
+    set_display("page_root", true)
+end
+
+-- 하위 페이지 화면을 닫는다
+function M.Hide()
+    visible = false
+
+    if widget == nil then
+        return
+    end
+
+    widget:SetWantsMouse(false)
+    set_display("page_root", false)
+end
+
+function M.IsVisible()
+    return visible
+end
+
+-- 현재 화면에 표시 중인 옵션 설정값을 반환한다 ({ sfxVolume, bgmVolume, inputMode })
+function M.GetSettings()
+    return {
+        sfxVolume = settings.sfxVolume,
+        bgmVolume = settings.bgmVolume,
+        inputMode = settings.inputMode,
+    }
+end
+
+-- 외부 설정값을 화면에 반영한다 (예: 저장된 값 불러오기)
+function M.ApplySettings(new_settings)
+    if new_settings == nil then
+        return
+    end
+
+    if new_settings.sfxVolume ~= nil then
+        settings.sfxVolume = clamp(new_settings.sfxVolume, MIN_VOLUME, MAX_VOLUME)
+    end
+
+    if new_settings.bgmVolume ~= nil then
+        settings.bgmVolume = clamp(new_settings.bgmVolume, MIN_VOLUME, MAX_VOLUME)
+    end
+
+    if new_settings.inputMode ~= nil and INPUT_MODE_ROW_IDS[new_settings.inputMode] ~= nil then
+        settings.inputMode = new_settings.inputMode
+    end
+
+    apply_settings_to_view()
+end
+
+-- 하위 페이지 UI 제거 및 내부 상태 초기화
+function M.Destroy()
+    if widget ~= nil then
+        widget:RemoveFromParent()
+    end
+
+    widget = nil
+    bindings_initialized = false
+    visible = false
+    current_page_type = "options"
+    on_confirm = nil
+    on_back = nil
+    settings.sfxVolume = DEFAULT_SFX_VOLUME
+    settings.bgmVolume = DEFAULT_BGM_VOLUME
+    settings.inputMode = DEFAULT_INPUT_MODE
+end
+
+return M

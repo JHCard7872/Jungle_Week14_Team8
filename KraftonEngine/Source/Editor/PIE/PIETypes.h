@@ -26,6 +26,7 @@ struct FRequestPlaySessionParams
 {
 	EPIESessionDestination SessionDestination = EPIESessionDestination::InProcess;
 	EPIEPlayMode PlayMode = EPIEPlayMode::PlayInViewport;
+	bool bStartInFullscreen = false;
 };
 
 struct FPIEViewportCameraSnapshot

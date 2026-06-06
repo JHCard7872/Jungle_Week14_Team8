@@ -695,7 +695,9 @@ local function enter_phase(phase_name)
     current_phase = phase_name
     phase_elapsed = 0.0
 
-    if phase_name == "sliding" then
+    if phase_name == "printing" then
+        AudioManager.Play(PRINTER_SFX, 1.0)
+    elseif phase_name == "sliding" then
         AudioManager.Play(SLIDE_SFX, 0.95)
     elseif phase_name == "stamp_reveal" then
         AudioManager.Play(STAMP_IMPACT_SFX, 1.0)
@@ -1092,7 +1094,7 @@ function M.Update(dt)
         if t < 1.0 then
             state.hintOpacity = t
         else
-            state.hintOpacity = 0.3 + blink * 0.7
+            state.hintOpacity = blink
         end
     end
 

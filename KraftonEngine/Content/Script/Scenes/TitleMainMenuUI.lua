@@ -1,3 +1,5 @@
+local MenuPageUI = require("UI/MenuPageUIController")
+
 local UI_ROOT_PATH = "Content/UI/"
 local MAIN_MENU_RELATIVE_PATH = "MainMenu/main_menu.rml"
 local MAIN_MENU_Z_ORDER = 100
@@ -18,9 +20,56 @@ local bindings_initialized = false
 local title_screen_active = true
 local menu_fade_elapsed = 0.0
 local press_blink_elapsed = 0.0
+-- 옵션 화면이 떠 있는 동안에는 메인 메뉴 입력/커스텀 커서를 멈춰둔다
+local options_open = false
+
+-- 옵션 페이지에서 조정한 값. 0~10 UI 값을 실제 0.0~1.0 볼륨으로 변환해서 사용한다.
+local menu_settings = {
+    sfxVolume = 8,
+    bgmVolume = 8,
+    inputMode = "mouse_key",
+}
 
 local function build_ui_path(relative_path)
     return UI_ROOT_PATH .. relative_path
+end
+
+local function volume_to_scalar(value)
+    local number_value = tonumber(value) or 0
+    number_value = math.max(0.0, math.min(10.0, number_value))
+    return number_value / 10.0
+end
+
+local function get_sfx_volume_scalar()
+    return volume_to_scalar(menu_settings.sfxVolume)
+end
+
+local function get_bgm_volume_scalar()
+    return volume_to_scalar(menu_settings.bgmVolume)
+end
+
+local function apply_menu_settings(settings)
+    if settings == nil then
+        return
+    end
+
+    if settings.sfxVolume ~= nil then
+        menu_settings.sfxVolume = math.max(0, math.min(10, tonumber(settings.sfxVolume) or menu_settings.sfxVolume))
+    end
+
+    if settings.bgmVolume ~= nil then
+        menu_settings.bgmVolume = math.max(0, math.min(10, tonumber(settings.bgmVolume) or menu_settings.bgmVolume))
+    end
+
+    if settings.inputMode == "mouse_key" or settings.inputMode == "gamepad" then
+        menu_settings.inputMode = settings.inputMode
+    end
+
+    -- 엔진 쪽에 입력 모드 setter가 있으면 실제 게임 입력 모드도 같이 반영한다.
+    -- 프로젝트마다 함수명이 다를 수 있어서 존재 여부를 확인한 뒤 호출한다.
+    if Engine ~= nil and Engine.SetInputMode ~= nil then
+        Engine.SetInputMode(menu_settings.inputMode)
+    end
 end
 
 local function set_element_display(element_id, is_visible)
@@ -100,11 +149,93 @@ local function ensure_widget()
 end
 
 local function play_ui_click()
-    AudioManager.Play(UI_CLICK_KEY, SFX_VOLUME)
+    AudioManager.Play(UI_CLICK_KEY, get_sfx_volume_scalar())
 end
 
 local function play_ui_hover()
-    AudioManager.Play(UI_HOVER_KEY, SFX_VOLUME)
+    AudioManager.Play(UI_HOVER_KEY, get_sfx_volume_scalar())
+end
+
+-- 옵션 화면을 띄운다: 메인 메뉴 입력/커스텀 커서를 끄고 OS 커서로 전환한다
+-- 조작법/스코어보드/크레딧도 같은 공통 페이지 UI를 사용한다
+local function set_main_menu_controls_visible(is_visible)
+    set_element_display("menu_help", is_visible)
+    set_element_display("menu_option", is_visible)
+    set_element_display("menu_play", is_visible)
+    set_element_display("menu_scoreboard", is_visible)
+    set_element_display("menu_credits", is_visible)
+    set_element_display("menu_back_to_title", is_visible)
+
+    -- 라벨은 RCSS :hover에서만 제어한다.
+    -- 여기서 SetProperty("display", "none")을 걸면 inline style이 남아서
+    -- 하위 페이지를 닫은 뒤에도 :hover 규칙이 다시 적용되지 않는다.
+
+    if not is_visible then
+        set_cursor_hidden()
+    end
+end
+
+-- 옵션 화면을 닫고 메인 메뉴 입력/커스텀 커서를 복구한다
+local function close_menu_page()
+    if not options_open then
+        return
+    end
+
+    options_open = false
+    MenuPageUI.Destroy()
+    Engine.SetCursorVisible(false)
+
+    if main_menu_widget ~= nil then
+        set_main_menu_controls_visible(true)
+        main_menu_widget:SetWantsMouse(true)
+    end
+end
+
+local function open_menu_page(page_type, title)
+    if main_menu_widget == nil or options_open then
+        return
+    end
+
+    options_open = true
+    main_menu_widget:SetWantsMouse(false)
+    set_main_menu_controls_visible(false)
+    set_cursor_hidden()
+    Engine.SetCursorVisible(true)
+
+    MenuPageUI.Create({
+        pageType = page_type,
+        title = title,
+        initialSettings = menu_settings,
+        onBack = function()
+            close_menu_page()
+        end,
+        onConfirm = function(settings, confirmed_page_type)
+            if confirmed_page_type == "options" then
+                apply_menu_settings(settings)
+                AudioManager.PlayBGM(MAIN_BGM_KEY, get_bgm_volume_scalar())
+            end
+
+            close_menu_page()
+        end,
+    })
+
+    MenuPageUI.Show()
+end
+
+local function open_options()
+    open_menu_page("options", "Options")
+end
+
+local function open_controls()
+    open_menu_page("controls", "Controls")
+end
+
+local function open_scoreboard()
+    open_menu_page("scoreboard", "Scoreboard")
+end
+
+local function open_credits()
+    open_menu_page("credits", "Credits")
 end
 
 local function on_menu_button_click(callback)
@@ -126,11 +257,11 @@ local function bind_menu_actions(widget)
     end
 
     widget:bind_click("menu_help", on_menu_button_click(function()
-        print("[TitleMainMenuUI] menu_help clicked")
+        open_controls()
     end))
 
     widget:bind_click("menu_option", on_menu_button_click(function()
-        print("[TitleMainMenuUI] menu_option clicked")
+        open_options()
     end))
 
     widget:bind_click("menu_play", on_menu_button_click(function()
@@ -138,15 +269,17 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_scoreboard", on_menu_button_click(function()
-        print("[TitleMainMenuUI] menu_scoreboard clicked")
+        open_scoreboard()
     end))
 
     widget:bind_click("menu_credits", on_menu_button_click(function()
-        print("[TitleMainMenuUI] menu_credits clicked")
+        open_credits()
     end))
 
     widget:bind_click("menu_back_to_title", on_menu_button_click(function()
-        Engine.LoadScene("Title")
+        close_menu_page()
+        AudioManager.PlayBGM("bgm_title_0", get_bgm_volume_scalar())
+        set_title_screen_state()
     end))
 
     bind_hover_sound(widget, "menu_help")
@@ -184,7 +317,7 @@ local function activate_main_menu()
     title_screen_active = false
     menu_fade_elapsed = 0.0
     play_ui_click()
-    AudioManager.PlayBGM(MAIN_BGM_KEY, MENU_BGM_VOLUME)
+    AudioManager.PlayBGM(MAIN_BGM_KEY, get_bgm_volume_scalar())
     set_element_display("menu_content", true)
     set_element_display("title_overlay", true)
 end
@@ -237,8 +370,10 @@ function BeginPlay()
     local widget = ensure_widget()
     bind_menu_actions(widget)
 
+
     Engine.SetCursorVisible(false)
     press_blink_elapsed = 0.0
+    options_open = false
     set_title_screen_state()
 end
 
@@ -259,11 +394,20 @@ function Tick(dt)
         return
     end
 
+    -- 옵션 화면이 떠 있는 동안에는 메인 메뉴의 커스텀 커서 갱신을 멈춘다 (OS 커서 사용)
+    -- 조작법/스코어보드/크레딧 하위 페이지도 동일하게 처리한다
+    if options_open then
+        set_cursor_hidden()
+        return
+    end
+
     update_cursor_position()
     set_cursor_state(Input.GetKey(VK_LBUTTON))
 end
 
 function EndPlay()
+    MenuPageUI.Destroy()
+
     if main_menu_widget ~= nil then
         main_menu_widget:RemoveFromParent()
     end
@@ -271,6 +415,7 @@ function EndPlay()
     Engine.SetCursorVisible(true)
     main_menu_widget = nil
     bindings_initialized = false
+    options_open = false
     title_screen_active = true
     menu_fade_elapsed = 0.0
     press_blink_elapsed = 0.0

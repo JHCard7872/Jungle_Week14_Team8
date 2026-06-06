@@ -27,6 +27,7 @@ public:
 private:
 	UEditorEngine* Editor = nullptr;
 	ID3D11ShaderResourceView* PlayIcon = nullptr;
+	ID3D11ShaderResourceView* FullscreenPlayIcon = nullptr;
 	ID3D11ShaderResourceView* StopIcon = nullptr;
 
 	float ToolbarHeight = 28.0f;

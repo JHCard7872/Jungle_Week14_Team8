@@ -118,6 +118,10 @@ public:
 
 	void RequestEndPlayMap();
 	bool IsPlayingInEditor() const { return PlayInEditorSessionInfo.has_value(); }
+	bool IsPlayingInEditorFullscreen() const
+	{
+		return PlayInEditorSessionInfo.has_value() && PlayInEditorSessionInfo->OriginalRequestParams.bStartInFullscreen;
+	}
 	enum class EPIEControlMode : uint8
 	{
 		Possessed,

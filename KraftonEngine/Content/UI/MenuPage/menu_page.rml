@@ -1,0 +1,100 @@
+<rml>
+<head>
+    <title>Menu Page</title>
+    <link type="text/rcss" href="menu_page.rcss" />
+</head>
+
+<body>
+    <div id="page_root">
+        <!-- 화면 전체를 30% 어둡게 덮는 공통 레이어 -->
+        <div id="page_dim"></div>
+
+        <!-- 좌상단 제목 -->
+        <div id="page_title">Options</div>
+
+        <!-- 우측 상단 뒤로가기: "Back" 텍스트 + 화살표 아이콘 -->
+        <button id="page_back_button">
+            <div id="page_back_label">Back</div>
+            <img id="page_back_icon" src="../../Sprite/ui_back_arrow.png" />
+        </button>
+
+        <div id="page_body">
+            <!-- Options -->
+            <div id="page_body_options" class="page_body_section">
+                <!-- Sound Volume -->
+                <div id="sound_volume_label" class="option_group_label">
+                    <div class="option_group_label_text">Sound Volume</div>
+                </div>
+
+                <div id="sfx_volume_row" class="option_row">
+                    <div class="option_row_name">Sound Effect</div>
+                    <button id="sfx_volume_down" class="value_step_button value_down">-</button>
+                    <div id="sfx_volume_value" class="option_value_text">8</div>
+                    <button id="sfx_volume_up" class="value_step_button value_up">+</button>
+                </div>
+
+                <div id="bgm_volume_row" class="option_row">
+                    <div class="option_row_name">BGM</div>
+                    <button id="bgm_volume_down" class="value_step_button value_down">-</button>
+                    <div id="bgm_volume_value" class="option_value_text">8</div>
+                    <button id="bgm_volume_up" class="value_step_button value_up">+</button>
+                </div>
+
+                <!-- Input Mode -->
+                <div id="input_mode_label" class="option_group_label">
+                    <div class="option_group_label_text">Input Mode</div>
+                </div>
+
+                <button id="input_mode_mouse_key" class="input_mode_row selected">
+                    <img class="input_mode_icon" src="../../Sprite/settings_input_mousekeyboard.png" />
+                    <div class="input_mode_text">Mouse &amp; Key</div>
+                </button>
+
+                <button id="input_mode_gamepad" class="input_mode_row">
+                    <img class="input_mode_icon" src="../../Sprite/settings_input_gamepad.png" />
+                    <div class="input_mode_text">GamePad</div>
+                </button>
+            </div>
+
+            <!-- Controls -->
+            <div id="page_body_controls" class="page_body_section simple_page_body">
+                <div class="simple_card">
+                    <div id="controls_title" class="simple_card_title">Controls Sample</div>
+                    <div id="controls_line_1" class="simple_line">Move : WASD</div>
+                    <div id="controls_line_2" class="simple_line">Aim : Mouse</div>
+                    <div id="controls_line_3" class="simple_line">Shoot / Recover : Left Click</div>
+                    <div id="controls_line_4" class="simple_line">Pause : ESC</div>
+                </div>
+            </div>
+
+            <!-- Scoreboard -->
+            <div id="page_body_scoreboard" class="page_body_section simple_page_body">
+                <div class="simple_card scoreboard_card">
+                    <div id="scoreboard_title" class="simple_card_title">Scoreboard Sample</div>
+                    <div id="score_row_1" class="score_row"><div class="score_rank">1</div><div class="score_name">Employee A</div><div class="score_value">12450</div></div>
+                    <div id="score_row_2" class="score_row"><div class="score_rank">2</div><div class="score_name">Employee B</div><div class="score_value">9800</div></div>
+                    <div id="score_row_3" class="score_row"><div class="score_rank">3</div><div class="score_name">Employee C</div><div class="score_value">7310</div></div>
+                </div>
+            </div>
+
+            <!-- Credits -->
+            <div id="page_body_credits" class="page_body_section simple_page_body">
+                <div class="simple_card credits_card">
+                    <div id="credits_title" class="simple_card_title">Credits Sample</div>
+                    <div id="credits_line_1" class="simple_line">Concept / World : GO Inc. Team</div>
+                    <div id="credits_line_2" class="simple_line">UI / Sound : Sample Credit</div>
+                    <div id="credits_line_3" class="simple_line">Programming : Sample Credit</div>
+                    <div id="credits_line_4" class="simple_line">Special Thanks : Ragdoll Recovery Crew</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 중앙 하단 Confirm -->
+        <button id="page_confirm_button" class="horiz_button">
+            <img class="horiz_button_image horiz_button_default" src="../../Sprite/ui_horiz_button.png" />
+            <img class="horiz_button_image horiz_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
+            <div id="page_confirm_label" class="horiz_button_label">Confirm</div>
+        </button>
+    </div>
+</body>
+</rml>
