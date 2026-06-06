@@ -1469,7 +1469,13 @@
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncDonkeyKongRagdollPawn.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncKirbyRagdollPawn.cpp">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncPikachuRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncSonicRagdollPawn.cpp">
@@ -2820,7 +2826,13 @@
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncRagdollPawn.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncDonkeyKongRagdollPawn.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncKirbyRagdollPawn.h">
+      <Filter>Source\Engine\GameFramework\Pawn</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncPikachuRagdollPawn.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncSonicRagdollPawn.h">

@@ -1,4 +1,4 @@
-#include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
 
 FGOIncRagdollCharacterConfig AGOIncSonicRagdollPawn::MakeCharacterConfig() const
 {
@@ -12,11 +12,11 @@ FGOIncRagdollCharacterConfig AGOIncSonicRagdollPawn::MakeCharacterConfig() const
 	Config.FleeAnimationPath = "Content/Data/Sonic/sc_dash_loop_anm_hkx_sc_dash_loop.uasset";
 	Config.LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
-	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -1.0f);
+	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.6f);
 	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
-	Config.AliveCapsuleRadius = 1.0f;
-	Config.AliveCapsuleHalfHeight = 1.0f;
+	Config.AliveCapsuleRadius = 0.5f;
+	Config.AliveCapsuleHalfHeight = 0.6f;
 	Config.ReviveTriggerCapsuleRadius = 5.0f;
 	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;
 

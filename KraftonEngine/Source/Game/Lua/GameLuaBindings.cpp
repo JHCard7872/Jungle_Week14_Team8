@@ -13,7 +13,9 @@
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncDonkeyKongRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
 #include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
@@ -216,6 +218,34 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			{
 				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncKirbyRagdollPawn>(
 					[&](AGOIncKirbyRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else if (CharacterId == "brown-gorilla")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncDonkeyKongRagdollPawn>(
+					[&](AGOIncDonkeyKongRagdollPawn* Pawn)
+					{
+						if (!Pawn)
+						{
+							return;
+						}
+
+						Pawn->InitDefaultComponents();
+						Pawn->SetActorLocation(Location);
+					});
+			}
+			else if (CharacterId == "yellow-mouse")
+			{
+				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncPikachuRagdollPawn>(
+					[&](AGOIncPikachuRagdollPawn* Pawn)
 					{
 						if (!Pawn)
 						{

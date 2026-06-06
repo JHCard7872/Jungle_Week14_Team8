@@ -34,6 +34,18 @@ local SpawnTable = {
         weight = 8.0,
         canSpawn = true,
     },
+    {
+        id = "brown-gorilla",
+        displayName = "갈색 고릴라",
+        weight = 3.0,
+        canSpawn = true,
+    },
+    {
+        id = "yellow-mouse",
+        displayName = "노란 전기쥐",
+        weight = 7.0,
+        canSpawn = true,
+    },
 }
 
 local spawnTimer = 0.0

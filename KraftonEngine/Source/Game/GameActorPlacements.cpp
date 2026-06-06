@@ -6,7 +6,9 @@
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
 #include "GameFramework/Actor/RagdollActor.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncDonkeyKongRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
 #include "GameFramework/World.h"
 
@@ -76,6 +78,32 @@ void RegisterGameActorPlacements()
 		[](UWorld* World, const FVector& Location) -> AActor*
 		{
 			AGOIncKirbyRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncKirbyRagdollPawn>() : nullptr;
+			if (Pawn)
+			{
+				Pawn->InitDefaultComponents();
+				Pawn->SetActorLocation(Location);
+			}
+			return Pawn;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc Donkey Kong Ragdoll Pawn",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncDonkeyKongRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncDonkeyKongRagdollPawn>() : nullptr;
+			if (Pawn)
+			{
+				Pawn->InitDefaultComponents();
+				Pawn->SetActorLocation(Location);
+			}
+			return Pawn;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc Pikachu Ragdoll Pawn",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncPikachuRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncPikachuRagdollPawn>() : nullptr;
 			if (Pawn)
 			{
 				Pawn->InitDefaultComponents();

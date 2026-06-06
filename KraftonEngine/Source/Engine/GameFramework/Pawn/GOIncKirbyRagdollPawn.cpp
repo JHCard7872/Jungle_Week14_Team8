@@ -1,4 +1,4 @@
-#include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
 
 FGOIncRagdollCharacterConfig AGOIncKirbyRagdollPawn::MakeCharacterConfig() const
 {
@@ -12,11 +12,11 @@ FGOIncRagdollCharacterConfig AGOIncKirbyRagdollPawn::MakeCharacterConfig() const
 	Config.FleeAnimationPath = "Content/Data/Kirby/kirby_Animated2_Kirb_Skeleton_Run_Animation.uasset";
 	Config.LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
-	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.5f);
-	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
+	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, 0.0f);
+	Config.MeshRelativeScale = FVector(0.5f, 0.5f, 0.5f);
 
-	Config.AliveCapsuleRadius = 0.9f;
-	Config.AliveCapsuleHalfHeight = 0.9f;
+	Config.AliveCapsuleRadius = 0.5f;
+	Config.AliveCapsuleHalfHeight = 0.5f;
 	Config.ReviveTriggerCapsuleRadius = 3.5f;
 	Config.ReviveTriggerCapsuleHalfHeight = 3.5f;
 
