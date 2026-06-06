@@ -12,6 +12,7 @@
 
 local ScoreMgr   = require("Manager/ScoreManager")
 local MissionMgr = require("Manager/MissionManager")
+local UserSettings = require("Data/UserSettings")
 
 local state = "wait"        -- "wait" 대기 / "drive" 순회 중
 local waitTimer = 0
@@ -64,7 +65,7 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
 
     ScoreMgr.AddForRagdoll(other_actor)
     MissionMgr.NotifyRecovered(other_actor)   -- 태그를 읽으므로 Destroy 전에 호출
-    AudioManager.Play("sfx_collect", 1.0)
+    AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
     other_actor:Destroy()                     -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)
 end
 
@@ -74,7 +75,7 @@ function Tick(dt)
     -- 엔진음은 주행 중에만. 매 Tick 호출해도 싸다 — PlayLoop는 이미 돌고 있으면
     -- 볼륨만 갱신(TruckData 핫리로드 즉시 반영), StopLoop는 없으면 no-op
     if state == "drive" then
-        AudioManager.PlayLoop("bgm_collector_truck", "TruckLoop", D.engineVolume)
+        AudioManager.PlayLoop("bgm_collector_truck", "TruckLoop", D.engineVolume * UserSettings.GetBgmVolumeScalar())
     else
         AudioManager.StopLoop("TruckLoop")
     end
