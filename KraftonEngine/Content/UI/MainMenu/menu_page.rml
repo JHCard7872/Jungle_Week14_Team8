@@ -70,10 +70,17 @@
             <!-- Scoreboard -->
             <div id="page_body_scoreboard" class="page_body_section simple_page_body">
                 <div class="simple_card scoreboard_card">
-                    <div id="scoreboard_title" class="simple_card_title">Scoreboard Sample</div>
-                    <div id="score_row_1" class="score_row"><div class="score_rank">1</div><div class="score_name">Employee A</div><div class="score_value">12450</div></div>
-                    <div id="score_row_2" class="score_row"><div class="score_rank">2</div><div class="score_name">Employee B</div><div class="score_value">9800</div></div>
-                    <div id="score_row_3" class="score_row"><div class="score_rank">3</div><div class="score_name">Employee C</div><div class="score_value">7310</div></div>
+                    <div id="scoreboard_title" class="simple_card_title">Scoreboard</div>
+                    <div id="score_header_rank" class="score_header score_header_rank">#</div>
+                    <div id="score_header_name" class="score_header score_header_name">Nickname</div>
+                    <div id="score_header_count" class="score_header score_header_count">Recovered</div>
+                    <div id="score_header_score" class="score_header score_header_score">Score</div>
+                    <div id="score_row_1" class="score_row"><div id="score_rank_1" class="score_rank">1</div><div id="score_name_1" class="score_name">SAMPLE1</div><div id="score_count_1" class="score_count">0</div><div id="score_value_1" class="score_value">0</div></div>
+                    <div id="score_row_2" class="score_row"><div id="score_rank_2" class="score_rank">2</div><div id="score_name_2" class="score_name">SAMPLE2</div><div id="score_count_2" class="score_count">0</div><div id="score_value_2" class="score_value">0</div></div>
+                    <div id="score_row_3" class="score_row"><div id="score_rank_3" class="score_rank">3</div><div id="score_name_3" class="score_name">SAMPLE3</div><div id="score_count_3" class="score_count">0</div><div id="score_value_3" class="score_value">0</div></div>
+                    <div id="score_row_4" class="score_row"><div id="score_rank_4" class="score_rank">4</div><div id="score_name_4" class="score_name">SAMPLE4</div><div id="score_count_4" class="score_count">0</div><div id="score_value_4" class="score_value">0</div></div>
+                    <div id="score_row_5" class="score_row"><div id="score_rank_5" class="score_rank">5</div><div id="score_name_5" class="score_name">SAMPLE5</div><div id="score_count_5" class="score_count">0</div><div id="score_value_5" class="score_value">0</div></div>
+                    <div id="score_empty_text">No saved score yet.</div>
                 </div>
             </div>
 

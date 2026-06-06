@@ -1,4 +1,6 @@
 local MenuPageUI = require("UI/MenuPageUIController")
+local UserSettings = require("Data/UserSettings")
+local ScoreStorage = require("Data/ScoreStorage")
 
 local UI_ROOT_PATH = "Content/UI/"
 local MAIN_MENU_RELATIVE_PATH = "MainMenu/main_menu.rml"
@@ -23,53 +25,31 @@ local press_blink_elapsed = 0.0
 -- 옵션 화면이 떠 있는 동안에는 메인 메뉴 입력/커스텀 커서를 멈춰둔다
 local options_open = false
 
--- 옵션 페이지에서 조정한 값. 0~10 UI 값을 실제 0.0~1.0 볼륨으로 변환해서 사용한다.
-local menu_settings = {
-    sfxVolume = 8,
-    bgmVolume = 8,
-    inputMode = "mouse_key",
-}
+-- 옵션 페이지에서 조정한 값은 UserSettings 모듈에 저장해서 씬을 넘어 유지한다.
+local menu_settings = UserSettings.GetSettings()
 
 local function build_ui_path(relative_path)
     return UI_ROOT_PATH .. relative_path
 end
 
-local function volume_to_scalar(value)
-    local number_value = tonumber(value) or 0
-    number_value = math.max(0.0, math.min(10.0, number_value))
-    return number_value / 10.0
+local function refresh_menu_settings()
+    menu_settings = UserSettings.GetSettings()
 end
 
 local function get_sfx_volume_scalar()
-    return volume_to_scalar(menu_settings.sfxVolume)
+    return UserSettings.GetSfxVolumeScalar()
 end
 
 local function get_bgm_volume_scalar()
-    return volume_to_scalar(menu_settings.bgmVolume)
+    return UserSettings.GetBgmVolumeScalar()
 end
 
 local function apply_menu_settings(settings)
-    if settings == nil then
-        return
-    end
+    menu_settings = UserSettings.Apply(settings)
+end
 
-    if settings.sfxVolume ~= nil then
-        menu_settings.sfxVolume = math.max(0, math.min(10, tonumber(settings.sfxVolume) or menu_settings.sfxVolume))
-    end
-
-    if settings.bgmVolume ~= nil then
-        menu_settings.bgmVolume = math.max(0, math.min(10, tonumber(settings.bgmVolume) or menu_settings.bgmVolume))
-    end
-
-    if settings.inputMode == "mouse_key" or settings.inputMode == "gamepad" then
-        menu_settings.inputMode = settings.inputMode
-    end
-
-    -- 엔진 쪽에 입력 모드 setter가 있으면 실제 게임 입력 모드도 같이 반영한다.
-    -- 프로젝트마다 함수명이 다를 수 있어서 존재 여부를 확인한 뒤 호출한다.
-    if Engine ~= nil and Engine.SetInputMode ~= nil then
-        Engine.SetInputMode(menu_settings.inputMode)
-    end
+local function apply_current_menu_bgm_volume()
+    UserSettings.ApplyCurrentBgmVolume(title_screen_active and "bgm_title_0" or MAIN_BGM_KEY)
 end
 
 local function set_element_display(element_id, is_visible)
@@ -202,17 +182,26 @@ local function open_menu_page(page_type, title)
     set_cursor_hidden()
     Engine.SetCursorVisible(true)
 
+    refresh_menu_settings()
+
     MenuPageUI.Create({
         pageType = page_type,
         title = title,
         initialSettings = menu_settings,
+        scoreboardEntries = page_type == "scoreboard" and ScoreStorage.ReadTop(5) or nil,
+        onSettingsChanged = function(settings, changed_page_type)
+            if changed_page_type == "options" then
+                apply_menu_settings(settings)
+                apply_current_menu_bgm_volume()
+            end
+        end,
         onBack = function()
             close_menu_page()
         end,
         onConfirm = function(settings, confirmed_page_type)
             if confirmed_page_type == "options" then
                 apply_menu_settings(settings)
-                AudioManager.PlayBGM(MAIN_BGM_KEY, get_bgm_volume_scalar())
+                apply_current_menu_bgm_volume()
             end
 
             close_menu_page()
@@ -251,6 +240,8 @@ local function bind_hover_sound(widget, element_id)
     end)
 end
 
+local set_title_screen_state = nil
+
 local function bind_menu_actions(widget)
     if bindings_initialized or widget == nil then
         return
@@ -279,7 +270,9 @@ local function bind_menu_actions(widget)
     widget:bind_click("menu_back_to_title", on_menu_button_click(function()
         close_menu_page()
         AudioManager.PlayBGM("bgm_title_0", get_bgm_volume_scalar())
-        set_title_screen_state()
+        if set_title_screen_state ~= nil then
+            set_title_screen_state()
+        end
     end))
 
     bind_hover_sound(widget, "menu_help")
@@ -292,7 +285,7 @@ local function bind_menu_actions(widget)
     bindings_initialized = true
 end
 
-local function set_title_screen_state()
+set_title_screen_state = function()
     if main_menu_widget == nil then
         return
     end

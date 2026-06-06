@@ -8,6 +8,7 @@
 -- =============================================================================
 
 local UI_DOCUMENT_PATH = "Content/UI/MenuPage/menu_page.rml"
+local UserSettings = require("Data/UserSettings")
 -- Pause(220)보다 위에 뜨도록
 local PAGE_Z_ORDER = 230
 
@@ -38,17 +39,15 @@ local widget = nil
 local bindings_initialized = false
 local visible = false
 local current_page_type = "options"
+local on_settings_changed = nil
+local scoreboard_entries = nil
 
 -- Confirm/Back 버튼 클릭 시 호출할 콜백
 local on_confirm = nil
 local on_back = nil
 
 -- 현재 화면에 표시 중인 옵션 설정값
-local settings = {
-    sfxVolume = DEFAULT_SFX_VOLUME,
-    bgmVolume = DEFAULT_BGM_VOLUME,
-    inputMode = DEFAULT_INPUT_MODE,
-}
+local settings = UserSettings.GetSettings()
 
 local function clamp(value, min_value, max_value)
     value = tonumber(value) or min_value
@@ -65,7 +64,7 @@ local function clamp(value, min_value, max_value)
 end
 
 local function get_sfx_volume_scalar()
-    return clamp(settings.sfxVolume, MIN_VOLUME, MAX_VOLUME) / 10.0
+    return UserSettings.VolumeToScalar(settings.sfxVolume)
 end
 
 local function set_display(element_id, is_visible)
@@ -134,14 +133,46 @@ local function apply_settings_to_view()
     end
 end
 
+local function commit_option_settings()
+    UserSettings.Apply(settings)
+
+    if on_settings_changed ~= nil then
+        on_settings_changed(M.GetSettings(), current_page_type)
+    end
+end
+
+local function apply_scoreboard_to_view()
+    if widget == nil then
+        return
+    end
+
+    local entries = scoreboard_entries or {}
+    for i = 1, 5 do
+        local row_id = "score_row_" .. tostring(i)
+        local entry = entries[i]
+        set_display(row_id, entry ~= nil)
+
+        if entry ~= nil then
+            set_text("score_rank_" .. tostring(i), tostring(i))
+            set_text("score_name_" .. tostring(i), tostring(entry.nickname or "SAMPLE"))
+            set_text("score_count_" .. tostring(i), tostring(entry.collectedCount or 0))
+            set_text("score_value_" .. tostring(i), tostring(entry.totalScore or 0))
+        end
+    end
+
+    set_display("score_empty_text", #entries == 0)
+end
+
 local function set_sfx_volume(value)
     settings.sfxVolume = clamp(value, MIN_VOLUME, MAX_VOLUME)
     apply_settings_to_view()
+    commit_option_settings()
 end
 
 local function set_bgm_volume(value)
     settings.bgmVolume = clamp(value, MIN_VOLUME, MAX_VOLUME)
     apply_settings_to_view()
+    commit_option_settings()
 end
 
 local function set_input_mode(mode)
@@ -151,6 +182,7 @@ local function set_input_mode(mode)
 
     settings.inputMode = mode
     apply_settings_to_view()
+    commit_option_settings()
 end
 
 local function set_current_page(page_type, title)
@@ -169,6 +201,7 @@ local function set_current_page(page_type, title)
     set_text("page_confirm_label", current_page_type == "options" and "Confirm" or "Close")
 
     apply_settings_to_view()
+    apply_scoreboard_to_view()
 end
 
 local function bind_actions()
@@ -262,12 +295,14 @@ function M.Create(options)
     options = options or {}
     on_confirm = options.onConfirm
     on_back = options.onBack
+    on_settings_changed = options.onSettingsChanged
+    scoreboard_entries = options.scoreboardEntries
 
-    local initial = options.initialSettings
+    local initial = options.initialSettings or UserSettings.GetSettings()
     if initial ~= nil then
-        settings.sfxVolume = clamp(initial.sfxVolume or DEFAULT_SFX_VOLUME, MIN_VOLUME, MAX_VOLUME)
-        settings.bgmVolume = clamp(initial.bgmVolume or DEFAULT_BGM_VOLUME, MIN_VOLUME, MAX_VOLUME)
-        settings.inputMode = INPUT_MODE_ROW_IDS[initial.inputMode] ~= nil and initial.inputMode or DEFAULT_INPUT_MODE
+        settings.sfxVolume = clamp(initial.sfxVolume or UserSettings.sfxVolume or DEFAULT_SFX_VOLUME, MIN_VOLUME, MAX_VOLUME)
+        settings.bgmVolume = clamp(initial.bgmVolume or UserSettings.bgmVolume or DEFAULT_BGM_VOLUME, MIN_VOLUME, MAX_VOLUME)
+        settings.inputMode = INPUT_MODE_ROW_IDS[initial.inputMode] ~= nil and initial.inputMode or UserSettings.inputMode or DEFAULT_INPUT_MODE
     end
 
     if ensure_widget() == nil then
@@ -348,9 +383,9 @@ function M.Destroy()
     current_page_type = "options"
     on_confirm = nil
     on_back = nil
-    settings.sfxVolume = DEFAULT_SFX_VOLUME
-    settings.bgmVolume = DEFAULT_BGM_VOLUME
-    settings.inputMode = DEFAULT_INPUT_MODE
+    on_settings_changed = nil
+    scoreboard_entries = nil
+    settings = UserSettings.GetSettings()
 end
 
 return M

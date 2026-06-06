@@ -317,26 +317,66 @@ body {
     top: 286px;
 }
 
+/* 스코어보드: scoreboard.json에서 읽은 값을 Lua가 각 row에 채운다 */
+.score_header {
+    position: absolute;
+    top: 94px;
+    height: 42px;
+    color: #d6f28eff;
+    font-size: 24px;
+    line-height: 42px;
+}
+
+.score_header_rank {
+    left: 36px;
+    width: 80px;
+}
+
+.score_header_name {
+    left: 146px;
+    width: 520px;
+}
+
+.score_header_count {
+    right: 290px;
+    width: 180px;
+    text-align: right;
+}
+
+.score_header_score {
+    right: 36px;
+    width: 220px;
+    text-align: right;
+}
+
 .score_row {
     position: absolute;
     left: 36px;
     width: 92%;
     height: 58px;
     color: #ffffff;
-    font-size: 34px;
+    font-size: 32px;
     line-height: 58px;
 }
 
 #score_row_1 {
-    top: 112px;
+    top: 144px;
 }
 
 #score_row_2 {
-    top: 182px;
+    top: 208px;
 }
 
 #score_row_3 {
-    top: 252px;
+    top: 272px;
+}
+
+#score_row_4 {
+    top: 336px;
+}
+
+#score_row_5 {
+    top: 400px;
 }
 
 .score_rank {
@@ -350,15 +390,35 @@ body {
     position: absolute;
     left: 110px;
     top: 0px;
-    width: 560px;
+    width: 520px;
+}
+
+.score_count {
+    position: absolute;
+    right: 254px;
+    top: 0px;
+    width: 180px;
+    text-align: right;
 }
 
 .score_value {
     position: absolute;
     right: 0px;
     top: 0px;
-    width: 240px;
+    width: 220px;
     text-align: right;
+}
+
+#score_empty_text {
+    position: absolute;
+    left: 36px;
+    top: 160px;
+    width: 900px;
+    height: 52px;
+    color: #ffffffcc;
+    font-size: 32px;
+    line-height: 52px;
+    display: none;
 }
 
 /* 중앙 하단 Confirm 버튼: ui_horiz_button(_hover) 사용 */
