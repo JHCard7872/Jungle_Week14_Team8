@@ -36,10 +36,11 @@ body {
     top: 0px;
     width: 220px;
     height: 24px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 22px;
     letter-spacing: 1px;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_server_load_gauge {
@@ -73,11 +74,12 @@ body {
     top: 152px;
     width: 220px;
     height: 28px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 28px;
     text-align: center;
     color: #79ff86;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_time_container {
@@ -102,10 +104,11 @@ body {
     top: 26px;
     width: 150px;
     height: 42px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 34px;
     text-align: center;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_score_container {
@@ -130,10 +133,11 @@ body {
     top: 24px;
     width: 156px;
     height: 40px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 30px;
     text-align: center;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_crosshair_container {
@@ -189,9 +193,10 @@ body {
     top: 38px;
     width: 138px;
     height: 24px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 20px;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_target_weight,
@@ -201,7 +206,7 @@ body {
     width: 136px;
     height: 24px;
     font-size: 19px;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_target_weight {
@@ -211,7 +216,8 @@ body {
 #hud_target_score {
     top: 118px;
     color: #8cff79;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 21px;
 }
 
@@ -233,7 +239,7 @@ body {
     letter-spacing: 2px;
     text-align: left;
     color: #d8efe5;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_gun_mode_text {
@@ -242,10 +248,11 @@ body {
     bottom: 160px;
     width: 220px;
     height: 28px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 24px;
     text-align: left;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_gun_energy_text {
@@ -257,7 +264,7 @@ body {
     font-size: 18px;
     text-align: left;
     color: #b7f6c6;
-    text-shadow: 2px 2px 0px #000000aa;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_gun_collect_icon,
@@ -291,7 +298,8 @@ body {
     width: 100%;
     height: 40px;
     margin-bottom: 12px;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 30px;
     color: #efffff;
 }
@@ -341,7 +349,8 @@ body {
     border-color: #9fe7f4;
     border-radius: 10px;
     color: #ffffff;
-    font-family: NanumGothicBold;
+    font-family: NanumGothic;
+    font-weight: bold;
     font-size: 18px;
     text-align: center;
 }

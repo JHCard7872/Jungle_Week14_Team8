@@ -3387,6 +3387,8 @@ void FLuaScriptManager::RegisterUIBindings(sol::state& Lua)
 		"set_text", &UUserWidget::SetText,
 		"SetProperty", &UUserWidget::SetProperty,
 		"set_property", &UUserWidget::SetProperty,
+		"SetAttribute", &UUserWidget::SetAttribute,
+		"set_attribute", &UUserWidget::SetAttribute,
 		"GetValue", &UUserWidget::GetValue,
 		"get_value", &UUserWidget::GetValue,
 		"SetValue", &UUserWidget::SetValue,

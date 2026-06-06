@@ -162,6 +162,26 @@ bool UUserWidget::SetProperty(const FString& ElementId, const FString& PropertyN
 	return Element->SetProperty(PropertyName.c_str(), Value.c_str());
 }
 
+bool UUserWidget::SetAttribute(const FString& ElementId, const FString& AttributeName, const FString& Value)
+{
+	if (!Document)
+	{
+		return false;
+	}
+
+	Rml::Element* Element = Document->GetElementById(ElementId);
+	if (!Element)
+	{
+		UE_LOG("[RmlUi] Attribute target not found: %s", ElementId.c_str());
+		return false;
+	}
+
+	// img의 src처럼 스타일 프로퍼티가 아닌 요소 속성용 — SetProperty로 넣으면
+	// RmlUi가 인라인 스타일 파싱 오류를 낸다
+	Element->SetAttribute(AttributeName.c_str(), Rml::String(Value.c_str()));
+	return true;
+}
+
 FString UUserWidget::GetValue(const FString& ElementId) const
 {
 	if (!Document)
