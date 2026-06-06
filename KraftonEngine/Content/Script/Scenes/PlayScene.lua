@@ -18,6 +18,8 @@ local ScoreMgr   = require("Manager/ScoreManager")
 local LoadMgr    = require("Manager/ServerLoadManager")
 local MissionMgr = require("Manager/MissionManager")
 local SpawnMgr   = require("Manager/SpawnManager")
+local HUD        = require("UI/HUDController")
+
 local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프레임 잔여 Tick 가드)
 
 -- ESC: 일시정지 토글. 메뉴 입력(ESC)은 pause 중에도 발화한다 (엔진 특성)
@@ -46,6 +48,8 @@ function BeginPlay()
     AudioManager.PlayBGM("bgm_gameplay_0", 0.6)
 
     -- TODO(UI): HUDController.Create()
+    HUD.Create()
+    HUD.UpdateFromSession()
 
     Engine.SetOnEscape(togglePause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)
 
@@ -63,6 +67,7 @@ function Tick(dt)
     LoadMgr.Update(dt)
 
     -- TODO(UI): HUDController.Update()
+    HUD.UpdateFromSession()
 
     -- 종료 판정: 시간 초과 또는 서버 과부하
     if Session.timeRemaining <= 0 or Session.load >= Config.maxServerLoad then
@@ -77,4 +82,5 @@ end
 function EndPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
+    HUD.Destroy()
 end

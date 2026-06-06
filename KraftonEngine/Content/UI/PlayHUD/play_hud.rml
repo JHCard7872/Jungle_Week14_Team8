@@ -1,0 +1,114 @@
+<rml>
+<head>
+    <title>Play HUD</title>
+    <link type="text/rcss" href="play_hud.rcss" />
+</head>
+
+<body>
+    <div id="hud_root">
+        <div id="hud_server_load_container">
+            <div id="hud_server_load_label">SERVER LOAD</div>
+            <div id="hud_server_load_gauge">
+                <img id="hud_server_load_graph" src="../../Sprite/play_hud_server_load_graph.png" />
+                <img id="hud_server_load_arrow" src="../../Sprite/play_hud_server_load_arrow.png" />
+            </div>
+            <div id="hud_server_load_value">0%</div>
+        </div>
+
+        <div id="hud_time_container">
+            <img id="hud_time_bg" src="../../Sprite/play_hud_status_time.png" />
+            <div id="hud_time_text">01:30</div>
+        </div>
+
+        <div id="hud_score_container">
+            <img id="hud_score_bg" src="../../Sprite/play_hud_status_collect_point.png" />
+            <div id="hud_score_text">0</div>
+        </div>
+
+        <div id="hud_crosshair_container">
+            <img id="hud_crosshair_collect" src="../../Sprite/aim_collect_normal.png" />
+            <img id="hud_crosshair_attack" src="../../Sprite/aim_attack_normal.png" />
+        </div>
+
+        <div id="hud_target_info_container">
+            <img id="hud_target_info_bg" src="../../Sprite/play_aim_ragdoll_popup.png" />
+            <img id="hud_target_pose_image" src="../../Sprite/id_card_sample.png" />
+            <div id="hud_target_name">Red Plumber</div>
+            <div id="hud_target_weight">12.5kg</div>
+            <div id="hud_target_score">+100</div>
+        </div>
+
+        <div id="hud_gun_status_container">
+            <div id="hud_gun_mode_label">MODE</div>
+            <div id="hud_gun_mode_text">COLLECT</div>
+            <div id="hud_gun_energy_text">ENERGY 100%</div>
+            <img id="hud_gun_collect_icon" src="../../Sprite/play_gun_collect.png" />
+            <img id="hud_gun_attack_icon" src="../../Sprite/play_gun_attack.png" />
+        </div>
+
+        <div id="hud_debug_panel">
+            <div id="hud_debug_title">HUD TEST PANEL</div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Time</div>
+                <input id="debug_time_input" class="hud_debug_input" type="text" value="01:30" />
+                <button id="debug_time_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Score</div>
+                <input id="debug_score_input" class="hud_debug_input" type="text" value="0" />
+                <button id="debug_score_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Load</div>
+                <input id="debug_load_input" class="hud_debug_input" type="text" value="0" />
+                <button id="debug_load_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Mode</div>
+                <input id="debug_mode_input" class="hud_debug_input" type="text" value="collect" />
+                <button id="debug_mode_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Energy</div>
+                <input id="debug_energy_input" class="hud_debug_input" type="text" value="100" />
+                <button id="debug_energy_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Target</div>
+                <input id="debug_target_visible_input" class="hud_debug_input" type="text" value="show" />
+                <button id="debug_target_visible_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Name</div>
+                <input id="debug_target_name_input" class="hud_debug_input" type="text" value="Red Plumber" />
+                <button id="debug_target_name_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Weight</div>
+                <input id="debug_target_weight_input" class="hud_debug_input" type="text" value="12.5" />
+                <button id="debug_target_weight_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Gain</div>
+                <input id="debug_target_score_input" class="hud_debug_input" type="text" value="100" />
+                <button id="debug_target_score_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Pose</div>
+                <input id="debug_target_image_input" class="hud_debug_input" type="text" value="../../Sprite/id_card_sample.png" />
+                <button id="debug_target_image_apply" class="hud_debug_button">Apply</button>
+            </div>
+        </div>
+    </div>
+</body>
+</rml>
