@@ -91,6 +91,7 @@ public:
 	void TriggerHitRim(float Duration = 0.18f, float Intensity = 3.5f, float Power = 3.0f, float SustainIntensity = 0.0f);
 	void RefreshHitRim(float SustainIntensity = 1.0f, float Power = 3.0f);
 	void SetHitImpactGlow(const FVector& WorldLocation, float Radius = 0.32f, float CoreRadius = 0.055f, float Intensity = 2.6f);
+	void SetHitRimColor(const FVector4& Color);
 	void TriggerHitRimAt(const FVector& WorldLocation, float Duration = 0.18f, float Intensity = 3.5f, float Power = 3.0f, float SustainIntensity = 0.0f, float ImpactRadius = 0.32f, float ImpactCoreRadius = 0.055f, float ImpactIntensity = 2.6f);
 	void RefreshHitRimAt(const FVector& WorldLocation, float SustainIntensity = 1.0f, float Power = 3.0f, float ImpactRadius = 0.32f, float ImpactCoreRadius = 0.055f, float ImpactIntensity = 2.6f);
 	void ClearHitRim();

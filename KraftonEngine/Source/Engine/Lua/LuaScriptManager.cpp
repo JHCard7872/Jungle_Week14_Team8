@@ -2870,6 +2870,10 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		{
 			Component.RefreshHitRim(SustainIntensity.value_or(1.0f), Power.value_or(3.0f));
 		},
+		"SetHitRimColor", [](UPrimitiveComponent& Component, sol::optional<float> R, sol::optional<float> G, sol::optional<float> B, sol::optional<float> A)
+		{
+			Component.SetHitRimColor(FVector4(R.value_or(0.05f), G.value_or(0.85f), B.value_or(1.0f), A.value_or(1.0f)));
+		},
 		"SetHitImpactGlow", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> Radius, sol::optional<float> CoreRadius, sol::optional<float> Intensity)
 		{
 			Component.SetHitImpactGlow(WorldLocation, Radius.value_or(0.32f), CoreRadius.value_or(0.055f), Intensity.value_or(2.6f));

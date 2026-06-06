@@ -4,6 +4,7 @@ local KEY_S = 0x53       -- 후진 입력 키: S
 local KEY_D = 0x44       -- 우측 이동 입력 키: D
 local KEY_SPACE = 0x20   -- 점프 입력 키: Space
 local KEY_LBUTTON = 0x01 -- 발사 입력 키: 마우스 왼쪽 버튼
+local KEY_Q = 0x51       -- 무기 교체 입력 키: Q
 
 local CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml"
 local CROSSHAIR_Z_ORDER = 1000
@@ -53,6 +54,8 @@ local WEAPON_PITCH_NORMALIZE = 80.0 -- Pitch 보정 곡선을 만들 때 정규�
 local WEAPON_PITCH_PULLBACK = 0.05  -- 극단 Pitch에서 총을 카메라 쪽으로 살짝 당기는 Forward 보정량
 local WEAPON_PITCH_INWARD_OFFSET = 0.00 -- 극단 Pitch에서 총을 화면 안쪽으로 넣는 Right 보정량
 local WEAPON_PITCH_UP_OFFSET = 0.04 -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
+local WEAPON_SWAP_DURATION = 0.28
+local WEAPON_SWAP_ROTATION_DEGREES = 180.0
 
 local GUN_ROTATION_ROLL = -18.087906  -- GunMesh 기본 Roll. 씬에 GunMesh가 없을 때 fallback
 local GUN_ROTATION_PITCH = -2.707027  -- GunMesh 기본 Pitch. 씬에 GunMesh가 없을 때 fallback
@@ -87,6 +90,17 @@ local gun = nil                  -- 1인칭 총 메시
 local muzzle_point = nil         -- Beam 시작점으로 쓰는 총구 위치
 local beam_actor = nil
 local beam_particle = nil        -- 총구에서 조준점까지 그리는 Beam 파티클
+local weapon_components = {}
+local weapon_base = {}
+local weapon_swap_state = {
+    active_index = 1,
+    pending_index = 1,
+    elapsed = 0.0,
+    start_angle = 0.0,
+    target_angle = 0.0,
+    current_angle = 0.0,
+    is_active = false
+}
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
 local base_weapon_offset_location = nil    -- 씬에서 읽은 VisualPivot 위치. 화면 고정 offset 기준값
@@ -187,6 +201,33 @@ local function clamp(value, min_value, max_value)
         return max_value
     end
     return value
+end
+
+local function ease_in_out(t)
+    local clamped = clamp(t, 0.0, 1.0)
+    return clamped * clamped * (3.0 - 2.0 * clamped)
+end
+
+local function get_weapon_swap_angle(index)
+    return (index - 1) * WEAPON_SWAP_ROTATION_DEGREES
+end
+
+local function cache_component_transform(component, fallback_location, fallback_rotation)
+    local location = fallback_location or Vector.Zero()
+    local rotation = fallback_rotation or Vector.Zero()
+
+    if component ~= nil then
+        location = component.RelativeLocation
+        rotation = component.Rotation
+    end
+
+    return copy_vec(location), copy_vec(rotation)
+end
+
+local function set_weapon_mesh_visible(component, is_visible)
+    if component ~= nil and component.SetVisibility ~= nil then
+        component:SetVisibility(is_visible)
+    end
 end
 
 local function update_viewport_center()
@@ -308,10 +349,78 @@ local function bind_components()
 
     view_weapon_root = obj:GetComponentByName("GOIncViewWeaponRoot")
     weapon_visual_pivot = obj:GetComponentByName("GOIncWeaponVisualPivot")
-    weapon_pitch_pivot = obj:GetComponentByName("GOIncWeaponPitchPivot")
-    gun = obj:GetComponentByName("GOIncFirstPersonGunMesh")
-    muzzle_point = obj:GetComponentByName("GOIncMuzzlePoint")
-    beam_particle = find_beam_particle()
+    weapon_components.swap_pivot = obj:GetComponentByName("GOIncWeaponSwapPivot")
+    weapon_components.slot_a = obj:GetComponentByName("GOIncWeaponSlotA")
+    weapon_components.slot_b = obj:GetComponentByName("GOIncWeaponSlotB")
+    weapon_components.pitch_pivot_a = obj:GetComponentByName("GOIncWeaponPitchPivotA")
+    if weapon_components.pitch_pivot_a == nil then
+        weapon_components.pitch_pivot_a = obj:GetComponentByName("GOIncWeaponPitchPivot")
+    end
+    weapon_components.pitch_pivot_b = obj:GetComponentByName("GOIncWeaponPitchPivotB")
+    weapon_components.gun_a = obj:GetPrimitiveComponentByName("GOIncFirstPersonGunA")
+    if weapon_components.gun_a == nil then
+        weapon_components.gun_a = obj:GetPrimitiveComponentByName("GOIncFirstPersonGunMesh")
+    end
+    weapon_components.gun_b = obj:GetPrimitiveComponentByName("GOIncFirstPersonGunB")
+    weapon_components.muzzle_point_a = obj:GetComponentByName("GOIncMuzzlePointA")
+    if weapon_components.muzzle_point_a == nil then
+        weapon_components.muzzle_point_a = obj:GetComponentByName("GOIncMuzzlePoint")
+    end
+    weapon_components.muzzle_point_b = obj:GetComponentByName("GOIncMuzzlePointB")
+    weapon_pitch_pivot = weapon_components.pitch_pivot_a
+    gun = weapon_components.gun_a
+    muzzle_point = weapon_components.muzzle_point_a
+    weapon_components.beam_particle_a = find_beam_particle()
+    weapon_components.beam_particle_b = obj:GetPrimitiveComponentByName("GOIncRedBeamParticle")
+    beam_particle = weapon_components.beam_particle_a
+end
+
+local function set_active_weapon(index)
+    if index == 2 and weapon_components.gun_b ~= nil then
+        weapon_swap_state.active_index = 2
+        weapon_pitch_pivot = weapon_components.pitch_pivot_b
+        gun = weapon_components.gun_b
+        muzzle_point = weapon_components.muzzle_point_b
+        base_weapon_pitch_location = weapon_base.pitch_b_location
+        base_weapon_pitch_rotation = weapon_base.pitch_b_rotation
+        base_gun_location = weapon_base.gun_b_location
+        base_gun_rotation = weapon_base.gun_b_rotation
+        base_muzzle_location = weapon_base.muzzle_b_location
+        base_muzzle_rotation = weapon_base.muzzle_b_rotation
+        base_beam_location = weapon_base.beam_b_location or copy_vec(base_muzzle_location)
+        base_beam_rotation = weapon_base.beam_b_rotation or copy_vec(base_muzzle_rotation)
+        set_weapon_mesh_visible(weapon_components.gun_a, false)
+        set_weapon_mesh_visible(weapon_components.gun_b, true)
+        return
+    end
+
+    weapon_swap_state.active_index = 1
+    weapon_pitch_pivot = weapon_components.pitch_pivot_a
+    gun = weapon_components.gun_a
+    muzzle_point = weapon_components.muzzle_point_a
+    base_weapon_pitch_location = weapon_base.pitch_a_location
+    base_weapon_pitch_rotation = weapon_base.pitch_a_rotation
+    base_gun_location = weapon_base.gun_a_location
+    base_gun_rotation = weapon_base.gun_a_rotation
+    base_muzzle_location = weapon_base.muzzle_a_location
+    base_muzzle_rotation = weapon_base.muzzle_a_rotation
+    base_beam_location = weapon_base.beam_a_location or copy_vec(base_muzzle_location)
+    base_beam_rotation = weapon_base.beam_a_rotation or copy_vec(base_muzzle_rotation)
+    set_weapon_mesh_visible(weapon_components.gun_a, true)
+    set_weapon_mesh_visible(weapon_components.gun_b, false)
+end
+
+local function select_active_beam_particle()
+    if weapon_swap_state.active_index == 2 then
+        beam_particle = weapon_components.beam_particle_b
+        base_beam_location = weapon_base.beam_b_location or copy_vec(weapon_base.muzzle_b_location)
+        base_beam_rotation = weapon_base.beam_b_rotation or copy_vec(weapon_base.muzzle_b_rotation)
+        return
+    end
+
+    beam_particle = weapon_components.beam_particle_a
+    base_beam_location = weapon_base.beam_a_location or copy_vec(weapon_base.muzzle_a_location)
+    base_beam_rotation = weapon_base.beam_a_rotation or copy_vec(weapon_base.muzzle_a_rotation)
 end
 
 local function cache_view_weapon_base_transforms()
@@ -329,37 +438,45 @@ local function cache_view_weapon_base_transforms()
         base_weapon_visual_rotation = Vector.Zero()
     end
 
-    if weapon_pitch_pivot ~= nil then
-        base_weapon_pitch_location = copy_vec(weapon_pitch_pivot.RelativeLocation)
-        base_weapon_pitch_rotation = copy_vec(weapon_pitch_pivot.Rotation)
+    weapon_base.swap_pivot_location, weapon_base.swap_pivot_rotation =
+        cache_component_transform(weapon_components.swap_pivot, Vector.Zero(), Vector.Zero())
+    weapon_base.slot_a_location, weapon_base.slot_a_rotation =
+        cache_component_transform(weapon_components.slot_a, Vector.Zero(), Vector.Zero())
+    weapon_base.slot_b_location, weapon_base.slot_b_rotation =
+        cache_component_transform(weapon_components.slot_b, Vector.Zero(), Vector.Zero())
+
+    weapon_base.pitch_a_location, weapon_base.pitch_a_rotation =
+        cache_component_transform(weapon_components.pitch_pivot_a, Vector.Zero(), Vector.Zero())
+    weapon_base.pitch_b_location, weapon_base.pitch_b_rotation =
+        cache_component_transform(weapon_components.pitch_pivot_b, weapon_base.pitch_a_location, weapon_base.pitch_a_rotation)
+
+    weapon_base.gun_a_location, weapon_base.gun_a_rotation =
+        cache_component_transform(weapon_components.gun_a, Vector.Zero(), vec(GUN_ROTATION_ROLL, GUN_ROTATION_PITCH, GUN_ROTATION_YAW))
+    weapon_base.gun_b_location, weapon_base.gun_b_rotation =
+        cache_component_transform(weapon_components.gun_b, weapon_base.gun_a_location, weapon_base.gun_a_rotation)
+
+    weapon_base.muzzle_a_location, weapon_base.muzzle_a_rotation =
+        cache_component_transform(weapon_components.muzzle_point_a, vec(MUZZLE_FORWARD_OFFSET, MUZZLE_RIGHT_OFFSET, MUZZLE_UP_OFFSET), Vector.Zero())
+    weapon_base.muzzle_b_location, weapon_base.muzzle_b_rotation =
+        cache_component_transform(weapon_components.muzzle_point_b, weapon_base.muzzle_a_location, weapon_base.muzzle_a_rotation)
+
+    if weapon_components.beam_particle_a ~= nil then
+        weapon_base.beam_a_location = copy_vec(weapon_components.beam_particle_a.RelativeLocation)
+        weapon_base.beam_a_rotation = copy_vec(weapon_components.beam_particle_a.Rotation)
     else
-        base_weapon_pitch_location = Vector.Zero()
-        base_weapon_pitch_rotation = Vector.Zero()
+        weapon_base.beam_a_location = copy_vec(weapon_base.muzzle_a_location)
+        weapon_base.beam_a_rotation = copy_vec(weapon_base.muzzle_a_rotation)
     end
 
-    if gun ~= nil then
-        base_gun_location = copy_vec(gun.RelativeLocation)
-        base_gun_rotation = copy_vec(gun.Rotation)
+    if weapon_components.beam_particle_b ~= nil then
+        weapon_base.beam_b_location = copy_vec(weapon_components.beam_particle_b.RelativeLocation)
+        weapon_base.beam_b_rotation = copy_vec(weapon_components.beam_particle_b.Rotation)
     else
-        base_gun_location = Vector.Zero()
-        base_gun_rotation = vec(GUN_ROTATION_ROLL, GUN_ROTATION_PITCH, GUN_ROTATION_YAW)
+        weapon_base.beam_b_location = copy_vec(weapon_base.muzzle_b_location)
+        weapon_base.beam_b_rotation = copy_vec(weapon_base.muzzle_b_rotation)
     end
 
-    if muzzle_point ~= nil then
-        base_muzzle_location = copy_vec(muzzle_point.RelativeLocation)
-        base_muzzle_rotation = copy_vec(muzzle_point.Rotation)
-    else
-        base_muzzle_location = vec(MUZZLE_FORWARD_OFFSET, MUZZLE_RIGHT_OFFSET, MUZZLE_UP_OFFSET)
-        base_muzzle_rotation = Vector.Zero()
-    end
-
-    if beam_particle ~= nil then
-        base_beam_location = copy_vec(beam_particle.RelativeLocation)
-        base_beam_rotation = copy_vec(beam_particle.Rotation)
-    else
-        base_beam_location = copy_vec(base_muzzle_location)
-        base_beam_rotation = copy_vec(base_muzzle_rotation)
-    end
+    set_active_weapon(weapon_swap_state.active_index)
 end
 
 local function update_camera_view()
@@ -479,6 +596,33 @@ local function get_beam_source_point()
     return obj.Location + obj.Forward * (WEAPON_FORWARD_OFFSET + MUZZLE_FORWARD_OFFSET + BEAM_SOURCE_FORWARD_BIAS)
 end
 
+local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_location, base_pitch_rotation,
+    gun_component, base_gun_location_value, base_gun_rotation_value,
+    muzzle_component, base_muzzle_location_value, base_muzzle_rotation_value,
+    visual_pitch)
+    local pitch_location = base_pitch_location or Vector.Zero()
+    local pitch_rotation = base_pitch_rotation or Vector.Zero()
+
+    if pitch_pivot_component ~= nil then
+        pitch_pivot_component.RelativeLocation = copy_vec(pitch_location)
+        pitch_pivot_component.Rotation = vec(
+            pitch_rotation.X,
+            pitch_rotation.Y + visual_pitch,
+            pitch_rotation.Z
+        )
+    end
+
+    if gun_component ~= nil then
+        gun_component.RelativeLocation = sub_vec(base_gun_location_value or Vector.Zero(), pitch_location)
+        gun_component.Rotation = copy_vec(base_gun_rotation_value or Vector.Zero())
+    end
+
+    if muzzle_component ~= nil then
+        muzzle_component.RelativeLocation = sub_vec(base_muzzle_location_value or Vector.Zero(), pitch_location)
+        muzzle_component.Rotation = copy_vec(base_muzzle_rotation_value or Vector.Zero())
+    end
+end
+
 local function update_view_weapon()
     local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
 
@@ -500,24 +644,37 @@ local function update_view_weapon()
         weapon_visual_pivot.Rotation = copy_vec(base_weapon_visual_rotation)
     end
 
-    if weapon_pitch_pivot ~= nil then
-        weapon_pitch_pivot.RelativeLocation = copy_vec(base_weapon_pitch_location)
-        weapon_pitch_pivot.Rotation = vec(
-            base_weapon_pitch_rotation.X,
-            base_weapon_pitch_rotation.Y + visual_pitch,
-            base_weapon_pitch_rotation.Z
+    if weapon_components.swap_pivot ~= nil then
+        weapon_components.swap_pivot.RelativeLocation = copy_vec(weapon_base.swap_pivot_location)
+        weapon_components.swap_pivot.Rotation = vec(
+            weapon_base.swap_pivot_rotation.X,
+            weapon_base.swap_pivot_rotation.Y + weapon_swap_state.current_angle,
+            weapon_base.swap_pivot_rotation.Z
         )
     end
 
-    if gun ~= nil then
-        gun.RelativeLocation = sub_vec(base_gun_location, base_weapon_pitch_location)
-        gun.Rotation = copy_vec(base_gun_rotation)
+    if weapon_components.slot_a ~= nil then
+        weapon_components.slot_a.RelativeLocation = copy_vec(weapon_base.slot_a_location)
+        weapon_components.slot_a.Rotation = copy_vec(weapon_base.slot_a_rotation)
     end
 
-    if muzzle_point ~= nil then
-        muzzle_point.RelativeLocation = sub_vec(base_muzzle_location, base_weapon_pitch_location)
-        muzzle_point.Rotation = copy_vec(base_muzzle_rotation)
+    if weapon_components.slot_b ~= nil then
+        weapon_components.slot_b.RelativeLocation = copy_vec(weapon_base.slot_b_location)
+        weapon_components.slot_b.Rotation = copy_vec(weapon_base.slot_b_rotation)
     end
+
+    update_weapon_slot_transform(
+        weapon_components.pitch_pivot_a, weapon_base.pitch_a_location, weapon_base.pitch_a_rotation,
+        weapon_components.gun_a, weapon_base.gun_a_location, weapon_base.gun_a_rotation,
+        weapon_components.muzzle_point_a, weapon_base.muzzle_a_location, weapon_base.muzzle_a_rotation,
+        visual_pitch
+    )
+    update_weapon_slot_transform(
+        weapon_components.pitch_pivot_b, weapon_base.pitch_b_location, weapon_base.pitch_b_rotation,
+        weapon_components.gun_b, weapon_base.gun_b_location, weapon_base.gun_b_rotation,
+        weapon_components.muzzle_point_b, weapon_base.muzzle_b_location, weapon_base.muzzle_b_rotation,
+        visual_pitch
+    )
 
     if beam_particle ~= nil then
         beam_particle.RelativeLocation = copy_vec(base_beam_location)
@@ -703,6 +860,14 @@ local function trigger_hit_rim_on_component(hit_component, should_flash, hit_loc
         return
     end
 
+    if hit_component.SetHitRimColor ~= nil then
+        if weapon_swap_state.active_index == 2 then
+            hit_component:SetHitRimColor(1.0, 0.08, 0.04, 1.0)
+        else
+            hit_component:SetHitRimColor(0.05, 0.85, 1.0, 1.0)
+        end
+    end
+
     if hit_location ~= nil then
         if should_flash and hit_component.TriggerHitRimAt ~= nil then
             hit_component:TriggerHitRimAt(hit_location, HIT_RIM_DURATION, HIT_RIM_FLASH_INTENSITY, HIT_RIM_POWER, HIT_RIM_SUSTAIN_INTENSITY, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
@@ -877,8 +1042,12 @@ set_beam_visible = function(is_visible)
         return
     end
 
-    beam_particle:SetVisibility(is_visible)
-    beam_particle:SetActive(is_visible)
+    if beam_particle.SetVisibility ~= nil then
+        beam_particle:SetVisibility(is_visible)
+    end
+    if beam_particle.SetActive ~= nil then
+        beam_particle:SetActive(is_visible)
+    end
 end
 
 set_beam_points = function(source_point, target_point)
@@ -907,6 +1076,52 @@ update_beam_points = function(aim_point)
     set_beam_points(source_point, aim_point)
 end
 
+local function can_swap_weapon()
+    return weapon_components.swap_pivot ~= nil
+        and weapon_components.gun_b ~= nil
+        and weapon_components.muzzle_point_b ~= nil
+end
+
+local function begin_weapon_swap()
+    if not can_swap_weapon() or weapon_swap_state.is_active then
+        return
+    end
+
+    weapon_swap_state.pending_index = 1
+    if weapon_swap_state.active_index == 1 then
+        weapon_swap_state.pending_index = 2
+    end
+
+    weapon_swap_state.is_active = true
+    weapon_swap_state.elapsed = 0.0
+    weapon_swap_state.start_angle = weapon_swap_state.current_angle
+    weapon_swap_state.target_angle = get_weapon_swap_angle(weapon_swap_state.pending_index)
+    beam_visible_remaining = 0.0
+    clear_grab_state()
+    set_beam_visible(false)
+end
+
+local function update_weapon_swap(delta_time)
+    if Input.GetKeyDown(KEY_Q) then
+        begin_weapon_swap()
+    end
+
+    if not weapon_swap_state.is_active then
+        return
+    end
+
+    weapon_swap_state.elapsed = weapon_swap_state.elapsed + math.max(delta_time or 0.0, 0.0)
+    local alpha = ease_in_out(weapon_swap_state.elapsed / WEAPON_SWAP_DURATION)
+    weapon_swap_state.current_angle = weapon_swap_state.start_angle
+        + (weapon_swap_state.target_angle - weapon_swap_state.start_angle) * alpha
+
+    if weapon_swap_state.elapsed >= WEAPON_SWAP_DURATION then
+        weapon_swap_state.current_angle = weapon_swap_state.target_angle
+        weapon_swap_state.is_active = false
+        set_active_weapon(weapon_swap_state.pending_index)
+    end
+end
+
 local function apply_first_person_view()
     local mouse_x = Input.GetMouseDeltaX()
     local mouse_y = Input.GetMouseDeltaY()
@@ -914,6 +1129,8 @@ local function apply_first_person_view()
     yaw = yaw + mouse_x * LOOK_SENSITIVITY
     pitch = clamp(pitch + mouse_y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
 
+    obj.Rotation = vec(0.0, 0.0, yaw)
+    select_active_beam_particle()
     update_camera_view()
     update_view_weapon()
 end
@@ -966,6 +1183,14 @@ local function apply_physics_movement()
 end
 
 local function apply_fire(delta_time)
+    if weapon_swap_state.is_active then
+        beam_visible_remaining = 0.0
+        set_beam_visible(false)
+        return
+    end
+
+    select_active_beam_particle()
+
     if update_active_grab(delta_time) then
         return
     end
@@ -1024,6 +1249,7 @@ function BeginPlay()
 end
 
 function Tick(delta_time)
+    update_weapon_swap(delta_time)
     apply_first_person_view()
     apply_physics_movement()
     apply_fire(delta_time)

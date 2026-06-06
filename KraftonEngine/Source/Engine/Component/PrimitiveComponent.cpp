@@ -282,6 +282,12 @@ void UPrimitiveComponent::SetHitImpactGlow(const FVector& WorldLocation, float R
 	MarkHitRimRenderDirty();
 }
 
+void UPrimitiveComponent::SetHitRimColor(const FVector4& Color)
+{
+	HitRimColor = Color;
+	MarkHitRimRenderDirty();
+}
+
 void UPrimitiveComponent::TriggerHitRimAt(const FVector& WorldLocation, float Duration, float Intensity, float Power, float SustainIntensity, float ImpactRadius, float ImpactCoreRadius, float ImpactIntensity)
 {
 	TriggerHitRim(Duration, Intensity, Power, SustainIntensity);
