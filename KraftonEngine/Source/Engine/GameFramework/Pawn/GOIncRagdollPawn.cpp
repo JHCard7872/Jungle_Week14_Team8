@@ -165,6 +165,126 @@ void AGOIncRagdollPawn::ApplyInitialRagdollState()
 	Mesh->WakeAllRagdollBodies();
 }
 
+
+void AGOIncRagdollPawn::SetAliveCollisionCapsuleEnabled(bool bEnabled)
+{
+	if (!CapsuleComponent)
+	{
+		return;
+	}
+
+	CapsuleComponent->SetSimulatePhysics(false);
+	CapsuleComponent->SetKinematicPhysics(true);
+	CapsuleComponent->SetGenerateOverlapEvents(false);
+
+	if (bEnabled)
+	{
+		// 새 collision split 구조에서는 Alive capsule이 바닥/환경 충돌 기준이다.
+		// 기존 Scene처럼 revive trigger와 alive capsule이 같은 경우에는 QueryOnly fallback을 유지한다.
+		const bool bHasSeparateReviveTrigger = ReviveTriggerCapsuleComponent && ReviveTriggerCapsuleComponent != CapsuleComponent;
+		CapsuleComponent->SetCollisionEnabled(bHasSeparateReviveTrigger
+			? ECollisionEnabled::QueryAndPhysics
+			: ECollisionEnabled::QueryOnly);
+	}
+	else
+	{
+		CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AGOIncRagdollPawn::SetReviveTriggerCapsuleEnabled(bool bEnabled)
+{
+	EnsureReviveTriggerCapsuleComponent();
+	if (!ReviveTriggerCapsuleComponent)
+	{
+		return;
+	}
+
+	ReviveTriggerCapsuleComponent->SetSimulatePhysics(false);
+	ReviveTriggerCapsuleComponent->SetKinematicPhysics(true);
+	ReviveTriggerCapsuleComponent->SetGenerateOverlapEvents(bEnabled);
+
+	if (bEnabled)
+	{
+		ReviveTriggerCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	}
+	else
+	{
+		ReviveTriggerCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AGOIncRagdollPawn::SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorAndGravity)
+{
+	if (!RagdollMovementComponent)
+	{
+		return;
+	}
+
+	RagdollMovementComponent->StopMovementImmediately();
+	RagdollMovementComponent->SetMovementEnabled(bEnabled);
+	RagdollMovementComponent->SetFloorRaycastEnabled(bEnabled && bUseFloorAndGravity);
+	RagdollMovementComponent->SetGravityEnabled(bEnabled && bUseFloorAndGravity);
+}
+
+void AGOIncRagdollPawn::EnterDeadRagdollState()
+{
+	RefreshGOIncRagdollPawnComponents();
+
+	SetMovementRuntimeEnabled(false, false);
+	SetAliveCollisionCapsuleEnabled(false);
+	SetReviveTriggerCapsuleEnabled(true);
+
+	if (Mesh)
+	{
+		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		Mesh->SetRagdollGravityEnabled(true);
+
+		// Alive/Flee 중 마지막 animation pose 기준으로 ragdoll body가 시작되게 ragdoll을 먼저 켠다.
+		Mesh->SetRagdollEnabled(true);
+		Mesh->SetAllBodiesSimulatePhysics(true);
+		Mesh->SetAllBodiesPhysicsBlendWeight(1.0f);
+		Mesh->WakeAllRagdollBodies();
+	}
+
+	StopFleeAnimation();
+}
+
+void AGOIncRagdollPawn::EnterRevivingState()
+{
+	RefreshGOIncRagdollPawnComponents();
+
+	SetMovementRuntimeEnabled(false, false);
+	SetReviveTriggerCapsuleEnabled(false);
+	SetAliveCollisionCapsuleEnabled(false);
+
+	// 목표 animation pose가 있어야 recovery가 ragdoll pose -> animation pose로 보간된다.
+	PlayFleeAnimation();
+
+	if (Mesh)
+	{
+		// SetRagdollEnabled(false) 내부 recovery가 현재 ragdoll pose를 잡도록 둔다.
+		Mesh->SetRagdollGravityEnabled(false);
+		Mesh->SetRagdollEnabled(false);
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void AGOIncRagdollPawn::EnterAliveFleeState()
+{
+	RefreshGOIncRagdollPawnComponents();
+
+	if (Mesh)
+	{
+		// Recovery 완료 후 Mesh는 animation only 표현 담당으로 둔다.
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+
+	SetReviveTriggerCapsuleEnabled(false);
+	SetAliveCollisionCapsuleEnabled(true);
+	SetMovementRuntimeEnabled(true, true);
+}
+
 void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 {
 	CapsuleComponent = Cast<UCapsuleComponent>(GetRootComponent());

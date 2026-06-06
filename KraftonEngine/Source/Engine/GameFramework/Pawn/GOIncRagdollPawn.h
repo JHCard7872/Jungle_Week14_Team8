@@ -27,20 +27,27 @@ public:
 	void BeginPlay() override;
 	void PostDuplicate() override;
 
-	// Alive 상태에서 이동/중력/바닥 충돌을 담당하는 Root Capsule.
+	// Alive 상태에서 이동/중력/바닥 충돌을 담당하는 Capsule.
+	// 현재 1차 패치에서는 기존 Scene 호환을 위해 Root Capsule을 그대로 AliveCapsule로 사용한다.
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
-	UCapsuleComponent* GetCapsuleComponent() const { return CapsuleComponent; }
+	UCapsuleComponent* GetAliveCapsuleComponent() const { return CapsuleComponent; }
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
-	UCapsuleComponent* GetAliveCollisionCapsuleComponent() const { return CapsuleComponent; }
+	UCapsuleComponent* GetCapsuleComponent() const { return GetAliveCapsuleComponent(); }
+	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
+	UCapsuleComponent* GetAliveCollisionCapsuleComponent() const { return GetAliveCapsuleComponent(); }
 
 	// DeadRagdoll 상태에서 Player overlap revive 감지만 담당하는 Trigger Capsule.
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
 	UCapsuleComponent* GetReviveTriggerCapsuleComponent() const { return ReviveTriggerCapsuleComponent; }
 
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
-	USkeletalMeshComponent* GetMesh() const { return Mesh; }
+	USkeletalMeshComponent* GetRagdollMeshComponent() const { return Mesh; }
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
-	UGOIncRagdollMovementComponent* GetRagdollMovementComponent() const { return RagdollMovementComponent; }
+	USkeletalMeshComponent* GetMesh() const { return GetRagdollMeshComponent(); }
+	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
+	UGOIncRagdollMovementComponent* GetGOIncMovementComponent() const { return RagdollMovementComponent; }
+	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
+	UGOIncRagdollMovementComponent* GetRagdollMovementComponent() const { return GetGOIncMovementComponent(); }
 	UFUNCTION(Pure, Category="GOIncRagdollPawn|Components")
 	ULuaScriptComponent* GetLuaScriptComponent() const { return LuaScriptComponent; }
 
@@ -68,6 +75,14 @@ public:
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetReviveTriggerCapsuleSize(float Radius, float HalfHeight);
 
+	// 상태 판단은 Lua가 담당하지만, 상태별 컴포넌트 on/off 조합은 Actor helper로 모아둔다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
+	void EnterDeadRagdollState();
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
+	void EnterRevivingState();
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
+	void EnterAliveFleeState();
+
 	// 외부 시스템(Player beam, trap 등)은 Lua 상태값을 직접 만지지 않고 이 API만 호출한다.
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
 	void RequestDeadRagdoll(const FString& Reason);
@@ -85,6 +100,9 @@ protected:
 	void ConfigureAliveCollisionCapsuleDefaults();
 	void ConfigureReviveTriggerCapsuleDefaults();
 	void ApplyInitialRagdollState();
+	void SetAliveCollisionCapsuleEnabled(bool bEnabled);
+	void SetReviveTriggerCapsuleEnabled(bool bEnabled);
+	void SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorAndGravity);
 
 	UCapsuleComponent* CapsuleComponent = nullptr;
 	UCapsuleComponent* ReviveTriggerCapsuleComponent = nullptr;

@@ -89,7 +89,9 @@ local function cache_components()
         return false
     end
 
-    if pawn.GetAliveCollisionCapsuleComponent ~= nil then
+    if pawn.GetAliveCapsuleComponent ~= nil then
+        capsule = pawn:GetAliveCapsuleComponent()
+    elseif pawn.GetAliveCollisionCapsuleComponent ~= nil then
         capsule = pawn:GetAliveCollisionCapsuleComponent()
     else
         capsule = pawn:GetCapsuleComponent()
@@ -101,8 +103,17 @@ local function cache_components()
         reviveTrigger = capsule
     end
 
-    mesh = pawn:GetMesh()
-    movement = pawn:GetRagdollMovementComponent()
+    if pawn.GetRagdollMeshComponent ~= nil then
+        mesh = pawn:GetRagdollMeshComponent()
+    else
+        mesh = pawn:GetMesh()
+    end
+
+    if pawn.GetGOIncMovementComponent ~= nil then
+        movement = pawn:GetGOIncMovementComponent()
+    else
+        movement = pawn:GetRagdollMovementComponent()
+    end
 
     if capsule == nil then
         print("[GOIncRagdollPawn_Test] Missing Alive CapsuleComponent")
