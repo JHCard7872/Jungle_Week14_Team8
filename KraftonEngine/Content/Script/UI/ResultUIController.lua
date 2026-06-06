@@ -135,6 +135,8 @@ local LAYOUT = {
         shakeDuration = 0.28,
         shakeOffsetX = 12.0,
         shakeRotation = 1.2,
+        -- 애니메이션 phase 전환보다 이 시간만큼 먼저 사운드를 재생한다
+        soundLeadTime = 0.50,
     },
 }
 
@@ -177,6 +179,10 @@ local debug_panel_enabled = false
 local base_mouse_enabled = false
 -- 실제 위젯에 적용할 마우스 입력 사용 여부
 local mouse_enabled = false
+-- 각 사운드가 이미 재생됐는지 여부 (soundLeadTime 적용으로 phase 전환 전에 트리거)
+local sfx_slide_triggered = false
+local sfx_stamp_triggered = false
+local sfx_result_triggered = false
 
 -- 테이블을 재귀적으로 복사한다. ResetLayoutConfig에서 기본값 복구용으로 사용.
 local function deep_copy(value)
@@ -691,23 +697,18 @@ local function reset_sequence_state()
     state.gradeLetterOpacity = 1.0
     state.gradeStampOpacity = 0.0
     state.hintOpacity = 0.0
+    sfx_slide_triggered = false
+    sfx_stamp_triggered = false
+    sfx_result_triggered = false
 end
 
--- 연출 phase를 변경하고, phase 진입 시 필요한 사운드/상태를 처리한다.
+-- 연출 phase를 변경하고, phase 진입 시 필요한 상태를 처리한다.
+-- 사운드는 Update에서 soundLeadTime만큼 앞당겨 재생한다.
 local function enter_phase(phase_name)
     current_phase = phase_name
     phase_elapsed = 0.0
 
-    if phase_name == "printing" then
-        AudioManager.Play(PRINTER_SFX, UserSettings.GetSfxVolumeScalar())
-    elseif phase_name == "sliding" then
-        AudioManager.Play(SLIDE_SFX, UserSettings.GetSfxVolumeScalar() * 0.95)
-    elseif phase_name == "stamp_reveal" then
-        AudioManager.Play(STAMP_IMPACT_SFX, UserSettings.GetSfxVolumeScalar())
-    elseif phase_name == "done" then
-        if current_payload ~= nil then
-            AudioManager.Play(current_payload.resultSfx, UserSettings.GetSfxVolumeScalar())
-        end
+    if phase_name == "done" then
         sequence_finished = true
     end
 end
@@ -982,6 +983,49 @@ function M.DumpLayoutConfig()
     print(build_layout_dump())
 end
 
+-- 액션 버튼 (Retry / Title) 클릭 콜백
+local on_retry_cb = nil
+local on_title_cb = nil
+-- 버튼 click 바인딩이 이미 완료됐는지 여부
+local action_buttons_bound = false
+
+-- 액션 버튼 클릭 이벤트를 최초 한 번만 등록한다.
+local function bind_action_buttons()
+    if widget == nil or action_buttons_bound or widget.bind_click == nil then
+        return
+    end
+
+    widget:bind_click("result_btn_retry", function()
+        if on_retry_cb ~= nil then
+            on_retry_cb()
+        end
+    end)
+
+    widget:bind_click("result_btn_title", function()
+        if on_title_cb ~= nil then
+            on_title_cb()
+        end
+    end)
+
+    action_buttons_bound = true
+end
+
+-- 화면에 Retry / 타이틀로 돌아가기 버튼을 표시하고 콜백을 등록한다.
+function M.ShowActionButtons(retry_cb, title_cb)
+    on_retry_cb = retry_cb
+    on_title_cb = title_cb
+    base_mouse_enabled = true
+    mouse_enabled = true
+
+    if widget ~= nil then
+        widget:SetWantsMouse(true)
+    end
+
+    set_display("result_action_buttons", true)
+    set_display("result_input_hint", false)
+    bind_action_buttons()
+end
+
 -- 디버그 패널을 켜거나 끈다.
 function M.SetDebugPanelEnabled(enabled)
     debug_panel_enabled = enabled == true
@@ -1003,10 +1047,17 @@ function M.Update(dt)
     local delta = math.max(0.0, tonumber(dt) or 0.0)
     phase_elapsed = phase_elapsed + delta
 
+    local lead = LAYOUT.animation.soundLeadTime
+
     if current_phase == "printing" then
         state.clipboardY = LAYOUT.clipboard.startY
         state.clipboardOffsetX = 0.0
         state.clipboardRotation = 0.0
+
+        if not sfx_slide_triggered and phase_elapsed >= LAYOUT.animation.printDuration - lead then
+            AudioManager.Play(SLIDE_SFX, UserSettings.GetSfxVolumeScalar() * 0.95)
+            sfx_slide_triggered = true
+        end
 
         if phase_elapsed >= LAYOUT.animation.printDuration then
             enter_phase("sliding")
@@ -1055,6 +1106,11 @@ function M.Update(dt)
             ease_in_cubic(t)
         )
 
+        if not sfx_stamp_triggered and phase_elapsed >= LAYOUT.animation.stampDropDuration - lead then
+            AudioManager.Play(STAMP_IMPACT_SFX, UserSettings.GetSfxVolumeScalar())
+            sfx_stamp_triggered = true
+        end
+
         if t >= 1.0 then
             enter_phase("stamp_reveal")
         end
@@ -1076,6 +1132,13 @@ function M.Update(dt)
         )
         state.gradeLetterOpacity = 1.0
         state.gradeStampOpacity = t
+
+        if not sfx_result_triggered and phase_elapsed >= LAYOUT.animation.stampSettleDuration - lead then
+            if current_payload ~= nil then
+                AudioManager.Play(current_payload.resultSfx, UserSettings.GetSfxVolumeScalar())
+            end
+            sfx_result_triggered = true
+        end
 
         if t >= 1.0 then
             enter_phase("done")
@@ -1144,6 +1207,9 @@ function M.Destroy()
     phase_elapsed = 0.0
     sequence_finished = false
     bindings_initialized = false
+    action_buttons_bound = false
+    on_retry_cb = nil
+    on_title_cb = nil
     debug_panel_enabled = false
     base_mouse_enabled = false
     mouse_enabled = false

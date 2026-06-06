@@ -27,26 +27,16 @@ local function build_sample_nickname()
 end
 
 local function show_action_prompt()
+    Modal.Destroy()
     save_prompt_open = false
     action_prompt_open = true
     waiting_for_next = false
-    ResultUI.SetWantsMouse(false)
     Engine.SetCursorVisible(true)
 
-    Modal.Create({
-        zOrder = 270,
-        title = "Next",
-        message = "다음 행동을 선택하세요.",
-        leftText = "Retry",
-        rightText = "타이틀로 돌아가기",
-        onLeft = function()
-            Engine.LoadScene("Play")
-        end,
-        onRight = function()
-            Engine.LoadScene("Title")
-        end,
-    })
-    Modal.Show()
+    ResultUI.ShowActionButtons(
+        function() Engine.LoadScene("Play") end,
+        function() Engine.LoadScene("Title") end
+    )
 end
 
 local function save_current_score()
@@ -83,7 +73,17 @@ local function show_save_prompt()
         rightText = "NO",
         onLeft = function()
             save_current_score()
-            show_action_prompt()
+            local msg = score_saved and "저장되었습니다." or "저장에 실패했습니다."
+            Modal.Create({
+                zOrder = 270,
+                title = "Score Save",
+                message = msg,
+                leftText = "OK",
+                onLeft = function()
+                    show_action_prompt()
+                end,
+            })
+            Modal.Show()
         end,
         onRight = function()
             show_action_prompt()
