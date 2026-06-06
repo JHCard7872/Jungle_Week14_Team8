@@ -67,6 +67,9 @@ local beamed_ragdoll_actor = nil
 
 local RAGDOLL_TAG = "Ragdoll"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
+local RED_BEAM_HIT_FUNCTION = "OnRedBeamHit"
+local RED_BEAM_HIT_REASON = "Slot2RedBeam"
+local RED_BEAM_RIM_DURATION = 1.0
 
 local function vec(x, y, z)
     local v = Vector.Zero()
@@ -933,6 +936,37 @@ local function get_hit_actor(hit)
     return nil
 end
 
+local function notify_red_beam_hit_ragdoll(hit)
+    local actor = get_hit_actor(hit)
+    if not is_ragdoll_actor(actor) then
+        return false
+    end
+
+    local ragdollPawn = nil
+    if actor.AsGOIncRagdollPawn ~= nil then
+        ragdollPawn = actor:AsGOIncRagdollPawn()
+    end
+
+    if ragdollPawn == nil then
+        print("[GOIncTestActor] Red beam hit tagged Ragdoll, but actor is not AGOIncRagdollPawn: " .. tostring(actor:GetName()))
+        return false
+    end
+
+    local script = nil
+    if ragdollPawn.GetLuaScriptComponent ~= nil then
+        script = ragdollPawn:GetLuaScriptComponent()
+    end
+
+    if script ~= nil and script.CallFunctionString ~= nil then
+        if script:CallFunctionString(RED_BEAM_HIT_FUNCTION, RED_BEAM_HIT_REASON) then
+            return true
+        end
+    end
+
+    print("[GOIncTestActor] Red beam hit Ragdoll, but OnRedBeamHit was not handled: " .. tostring(actor:GetName()))
+    return false
+end
+
 local function get_hit_location(hit)
     if hit == nil then
         return nil
@@ -991,6 +1025,44 @@ local function trigger_hit_rim(hit, should_flash)
     end
 
     trigger_hit_rim_on_component(get_hit_component(hit), should_flash, get_hit_location(hit))
+end
+
+local function trigger_red_beam_rim_on_ragdoll_mesh(hit)
+    if hit == nil or not hit.bHit then
+        return
+    end
+
+    local actor = get_hit_actor(hit)
+    if not is_ragdoll_actor(actor) then
+        return
+    end
+
+    local ragdollPawn = nil
+    if actor.AsGOIncRagdollPawn ~= nil then
+        ragdollPawn = actor:AsGOIncRagdollPawn()
+    end
+    if ragdollPawn == nil or ragdollPawn.GetRagdollMeshComponent == nil then
+        return
+    end
+
+    local mesh = ragdollPawn:GetRagdollMeshComponent()
+    if mesh == nil then
+        return
+    end
+
+    if mesh.SetHitRimColor ~= nil then
+        mesh:SetHitRimColor(1.0, 0.08, 0.04, 1.0)
+    end
+
+    local hit_location = get_hit_location(hit)
+    if hit_location ~= nil and mesh.TriggerHitRimAt ~= nil then
+        mesh:TriggerHitRimAt(hit_location, RED_BEAM_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
+        return
+    end
+
+    if mesh.TriggerHitRim ~= nil then
+        mesh:TriggerHitRim(RED_BEAM_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY)
+    end
 end
 
 local function begin_beam_grab(hit, start, direction, fallback_end)
@@ -1261,6 +1333,8 @@ local function apply_slot2_fire(delta_time)
 
     local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
+    trigger_red_beam_rim_on_ragdoll_mesh(hit)
+    notify_red_beam_hit_ragdoll(hit)
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
 
     if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then

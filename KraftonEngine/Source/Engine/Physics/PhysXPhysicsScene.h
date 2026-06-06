@@ -2,7 +2,9 @@
 
 #include "Physics/IPhysicsScene.h"
 #include "Core/Types/CoreTypes.h"
+#include "Object/Ptr/WeakObjectPtr.h"
 #include <vector>
+#include <unordered_map>
 
 class AActor;
 
@@ -90,6 +92,11 @@ private:
 
 	std::vector<FBodyInstance*> RegisteredBodies;
 
+	// QueryOnly 트리거끼리의 오버랩 상태 (컴포넌트 → 직전 물리 스텝에 겹쳐 있던 상대들).
+	// PhysX는 trigger-trigger 쌍을 통지하지 않으므로 UpdateQueryTriggerOverlaps가
+	// 수동 쿼리로 보완한다. 키 정리는 UnregisterComponent / Shutdown.
+	std::unordered_map<UPrimitiveComponent*, std::vector<TWeakObjectPtr<UPrimitiveComponent>>> QueryTriggerOverlaps;
+
 	bool bSharedPhysXAcquired = false;
 	bool bShutdownComplete = true;
 
@@ -105,5 +112,6 @@ private:
 	void SyncEngineToPhysicsBeforeSim();
 	void SimulatePhysics(float DeltaTime);
 	void SyncPhysicsToEngineAfterSim();
+	void UpdateQueryTriggerOverlaps();
 	void DispatchPhysicsEvents();
 };

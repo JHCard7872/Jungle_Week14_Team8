@@ -1,4 +1,4 @@
-#include "PhysicsAssetDebugComponent.h"
+﻿#include "PhysicsAssetDebugComponent.h"
 
 #include "Collision/Ray/RayUtils.h"
 #include "Component/Primitive/SkeletalMeshComponent.h"
@@ -674,4 +674,45 @@ void UPhysicsAssetDebugComponent::AddReferencedObjects(FReferenceCollector& Coll
 	UPrimitiveComponent::AddReferencedObjects(Collector);
 	Collector.AddReferencedObject(TargetSkeletalMeshComponent.Get(), "UPhysicsAssetDebugComponent.TargetSkeletalMeshComponent");
 	Collector.AddReferencedObject(PhysicsAsset.Get(), "UPhysicsAssetDebugComponent.PhysicsAsset");
+}
+
+bool UPhysicsAssetDebugComponent::RecalculateConstraintFrameFromChildBone(
+	FConstraintInstanceInitDesc& ConstraintDesc)
+{
+	FTransform ParentBoneWorldTM;
+	FTransform ChildBoneWorldTM;
+
+	if (!GetPhysicsAssetBoneWorldTransform(ConstraintDesc.ChildBoneName, ChildBoneWorldTM))
+	{
+		return false;
+	}
+
+	if (ConstraintDesc.ParentBoneName == FName::None ||
+		!GetPhysicsAssetBoneWorldTransform(ConstraintDesc.ParentBoneName, ParentBoneWorldTM))
+	{
+		ParentBoneWorldTM = ChildBoneWorldTM;
+	}
+
+	// 중요:
+	// 이 엔진은 WorldFrame = LocalFrame * BoneWorld 방식임.
+	// 따라서 LocalFrame = WorldFrame * Inverse(BoneWorld) 가 맞음.
+	//
+	// Child bone origin/rotation을 joint 기준 world frame으로 사용한다.
+	const FMatrix ChildJointWorldMatrix = ChildBoneWorldTM.ToMatrix();
+
+	ConstraintDesc.ParentFrame = FTransform::FromMatrixWithScale(
+		ChildJointWorldMatrix *
+		ParentBoneWorldTM.ToMatrix().GetAffineInverse());
+
+	// Child 쪽은 자기 bone origin을 joint frame으로 쓴다.
+	ConstraintDesc.ChildFrame = FTransform();
+
+	ConstraintDesc.ParentFrame.Scale = FVector::OneVector;
+	ConstraintDesc.ChildFrame.Scale = FVector::OneVector;
+
+	ConstraintDesc.ParentFrame.Rotation.Normalize();
+	ConstraintDesc.ChildFrame.Rotation.Normalize();
+
+	MarkPhysicsAssetDebugDirty();
+	return true;
 }
