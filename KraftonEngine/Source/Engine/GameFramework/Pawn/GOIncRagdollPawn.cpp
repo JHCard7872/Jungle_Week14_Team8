@@ -10,6 +10,8 @@
 #include "Core/Types/CollisionTypes.h"
 #include "GameFramework/World.h"
 #include "Mesh/MeshManager.h"
+#include "Mesh/Skeletal/SkeletalMesh.h"
+#include "PhysicsEngine/PhysicsAssetManager.h"
 #include "Runtime/Engine.h"
 
 namespace
@@ -29,56 +31,136 @@ namespace
 
 void AGOIncRagdollPawn::InitDefaultComponents()
 {
-	InitDefaultComponents(DefaultGOIncRagdollSkeletalMeshFileName, DefaultGOIncRagdollLuaScriptFileName);
+	EnsureDefaultComponents();
+	RefreshCharacterConfig();
+	ApplyInitialRagdollState();
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents(const FString& SkeletalMeshFileName, const FString& ScriptFile)
+{
+	EnsureDefaultComponents();
+
+	FGOIncRagdollCharacterConfig Config = MakeCharacterConfig();
+	Config.SkeletalMeshPath = SkeletalMeshFileName.empty()
+		? Config.SkeletalMeshPath
+		: SkeletalMeshFileName;
+	Config.LuaScriptFile = ScriptFile;
+
+	ApplyCharacterConfig(Config);
+	ApplyInitialRagdollState();
+}
+
+void AGOIncRagdollPawn::EnsureDefaultComponents()
 {
 	AddTag(FName("Ragdoll"));
 	// NPC Pawn이므로 PlayerController 자동 possess 대상이 되지 않게 둔다.
 	SetAutoPossessPlayer(false);
 
-	// 1) GOIncRoot — collision/physics가 없는 실제 Actor root.
-	GOIncRootComponent = AddComponent<USceneComponent>();
-	SetRootComponent(GOIncRootComponent);
+	RefreshGOIncRagdollPawnComponents();
+	EnsureGOIncRootComponent();
 
-	// 2) AliveCapsule — Alive 상태에서 이동/바닥/벽 충돌을 담당한다.
-	CapsuleComponent = AddComponent<UCapsuleComponent>();
-	CapsuleComponent->AttachToComponent(GOIncRootComponent);
-	CapsuleComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
-	ConfigureAliveCollisionCapsuleDefaults();
-
-	// 3) ReviveTriggerCapsule — DeadRagdoll 상태에서 Player overlap revive 감지만 담당한다.
-	ReviveTriggerCapsuleComponent = AddComponent<UCapsuleComponent>();
-	ReviveTriggerCapsuleComponent->AttachToComponent(GOIncRootComponent);
-	ReviveTriggerCapsuleComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
-	ConfigureReviveTriggerCapsuleDefaults();
-
-	// 4) SkeletalMesh — Animation/ragdoll 표현 담당.
-	Mesh = AddComponent<USkeletalMeshComponent>();
-	Mesh->AttachToComponent(GOIncRootComponent);
-
-	SkeletalMeshPath = SkeletalMeshFileName.empty()
-		? DefaultGOIncRagdollSkeletalMeshFileName
-		: SkeletalMeshFileName;
-	FleeAnimationPath = DefaultGOIncRagdollRunAnimationFileName;
-
-	SetSkeletalMeshPath(SkeletalMeshPath);
-
-	ApplyInitialRagdollState();
-
-	// 5) GOIncRagdollMovement — non-scene. Root를 이동시키되, sweep shape는 AliveCapsule 값으로 사용한다.
-	RagdollMovementComponent = AddComponent<UGOIncRagdollMovementComponent>();
-	ConfigureMovementUpdatedComponent();
-
-	// 6) LuaScript — 상태 판단/컴포넌트 API 조합은 Lua에서 처리한다.
-	LuaScriptComponent = AddComponent<ULuaScriptComponent>();
-	if (!ScriptFile.empty())
+	const bool bCreatedAliveCapsule = CapsuleComponent == nullptr;
+	if (bCreatedAliveCapsule)
 	{
-		LuaScriptComponent->SetScriptFile(ScriptFile);
+		CapsuleComponent = AddComponent<UCapsuleComponent>();
+		CapsuleComponent->AttachToComponent(GOIncRootComponent);
+		CapsuleComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+		ConfigureAliveCollisionCapsuleDefaults();
+	}
+
+	const bool bCreatedReviveTriggerCapsule = ReviveTriggerCapsuleComponent == nullptr;
+	if (bCreatedReviveTriggerCapsule)
+	{
+		ReviveTriggerCapsuleComponent = AddComponent<UCapsuleComponent>();
+		ReviveTriggerCapsuleComponent->AttachToComponent(GOIncRootComponent);
+		ReviveTriggerCapsuleComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
+		ConfigureReviveTriggerCapsuleDefaults();
+	}
+
+	if (!Mesh)
+	{
+		Mesh = AddComponent<USkeletalMeshComponent>();
+		Mesh->AttachToComponent(GOIncRootComponent);
+	}
+
+	if (!RagdollMovementComponent)
+	{
+		// GOIncRagdollMovement — non-scene. Root를 이동시키되, sweep shape는 AliveCapsule 값으로 사용한다.
+		RagdollMovementComponent = AddComponent<UGOIncRagdollMovementComponent>();
+	}
+
+	if (!LuaScriptComponent)
+	{
+		// LuaScript — 상태 판단/컴포넌트 API 조합은 Lua에서 처리한다.
+		LuaScriptComponent = AddComponent<ULuaScriptComponent>();
+	}
+
+	AttachGOIncSceneComponentsToRoot();
+	ConfigureMovementUpdatedComponent();
+}
+
+FGOIncRagdollCharacterConfig AGOIncRagdollPawn::MakeCharacterConfig() const
+{
+	FGOIncRagdollCharacterConfig Config;
+
+	// 기존 SpawnRagdollPawn 경로는 SetRagdollId()를 InitDefaultComponents()보다 먼저 호출한다.
+	// 1차 리팩토링에서는 그 값을 Sonic 기본 id로 덮어쓰지 않도록 보존한다.
+	if (!RagdollId.empty())
+	{
+		Config.RagdollId = RagdollId;
+		if (RagdollId != "blue-speedster")
+		{
+			Config.DisplayName = RagdollId;
+		}
+	}
+
+	if (!SkeletalMeshPath.empty())
+	{
+		Config.SkeletalMeshPath = SkeletalMeshPath;
+	}
+	if (!PhysicsAssetPath.empty())
+	{
+		Config.PhysicsAssetPath = PhysicsAssetPath;
+	}
+	if (!FleeAnimationPath.empty())
+	{
+		Config.FleeAnimationPath = FleeAnimationPath;
+	}
+
+	return Config;
+}
+
+void AGOIncRagdollPawn::ApplyCharacterConfig(const FGOIncRagdollCharacterConfig& InCharacterConfig)
+{
+	CharacterConfig = InCharacterConfig;
+
+	SetRagdollId(CharacterConfig.RagdollId);
+	SetPhysicsAssetPath(CharacterConfig.PhysicsAssetPath);
+	SetSkeletalMeshPath(CharacterConfig.SkeletalMeshPath);
+	SetFleeAnimationPath(CharacterConfig.FleeAnimationPath);
+	SetMeshRelativeLocation(CharacterConfig.MeshRelativeLocation);
+	SetMeshRelativeScale(CharacterConfig.MeshRelativeScale);
+	SetAliveCapsuleSize(CharacterConfig.AliveCapsuleRadius, CharacterConfig.AliveCapsuleHalfHeight);
+	SetReviveTriggerCapsuleSize(CharacterConfig.ReviveTriggerCapsuleRadius, CharacterConfig.ReviveTriggerCapsuleHalfHeight);
+
+	if (RagdollMovementComponent)
+	{
+		RagdollMovementComponent->SetMaxSpeed(CharacterConfig.FleeSpeed);
+		RagdollMovementComponent->SetAcceleration(CharacterConfig.FleeAcceleration);
+		RagdollMovementComponent->SetBrakingDeceleration(CharacterConfig.FleeBrakingDeceleration);
+	}
+
+	if (LuaScriptComponent && !CharacterConfig.LuaScriptFile.empty())
+	{
+		LuaScriptComponent->SetScriptFile(CharacterConfig.LuaScriptFile);
 	}
 }
 
+void AGOIncRagdollPawn::RefreshCharacterConfig()
+{
+	EnsureDefaultComponents();
+	ApplyCharacterConfig(MakeCharacterConfig());
+}
 
 void AGOIncRagdollPawn::ConfigureAliveCollisionCapsuleDefaults()
 {
@@ -596,7 +678,40 @@ void AGOIncRagdollPawn::SetSkeletalMeshPath(const FString& InSkeletalMeshPath)
 		return;
 	}
 
+	if (!PhysicsAssetPath.empty() && PhysicsAssetPath != "None")
+	{
+		if (UPhysicsAsset* PhysicsAsset = FPhysicsAssetManager::Get().Load(PhysicsAssetPath, Asset))
+		{
+			Asset->SetPhysicsAsset(PhysicsAsset);
+		}
+		else
+		{
+			Asset->SetPhysicsAssetPath(PhysicsAssetPath);
+			UE_LOG("[GOIncRagdollPawn] Failed to load physics asset: %s", PhysicsAssetPath.c_str());
+		}
+	}
+
 	Mesh->SetSkeletalMesh(Asset);
+}
+
+void AGOIncRagdollPawn::SetPhysicsAssetPath(const FString& InPhysicsAssetPath)
+{
+	PhysicsAssetPath = InPhysicsAssetPath;
+	if (!Mesh || !Mesh->GetSkeletalMesh() || PhysicsAssetPath.empty() || PhysicsAssetPath == "None")
+	{
+		return;
+	}
+
+	USkeletalMesh* CurrentMesh = Mesh->GetSkeletalMesh();
+	if (UPhysicsAsset* PhysicsAsset = FPhysicsAssetManager::Get().Load(PhysicsAssetPath, CurrentMesh))
+	{
+		CurrentMesh->SetPhysicsAsset(PhysicsAsset);
+	}
+	else
+	{
+		CurrentMesh->SetPhysicsAssetPath(PhysicsAssetPath);
+		UE_LOG("[GOIncRagdollPawn] Failed to load physics asset: %s", PhysicsAssetPath.c_str());
+	}
 }
 
 void AGOIncRagdollPawn::SetFleeAnimationPath(const FString& InFleeAnimationPath)
@@ -640,6 +755,12 @@ void AGOIncRagdollPawn::SetReviveTriggerCapsuleSize(float Radius, float HalfHeig
 
 void AGOIncRagdollPawn::BeginPlay()
 {
+	EnsureDefaultComponents();
+	if (Mesh && !Mesh->GetSkeletalMesh())
+	{
+		RefreshCharacterConfig();
+		ApplyInitialRagdollState();
+	}
 	RefreshGOIncRagdollPawnComponents();
 	Super::BeginPlay();
 }
@@ -647,6 +768,7 @@ void AGOIncRagdollPawn::BeginPlay()
 void AGOIncRagdollPawn::PostDuplicate()
 {
 	Super::PostDuplicate();
+	EnsureDefaultComponents();
 	RefreshGOIncRagdollPawnComponents();
 }
 

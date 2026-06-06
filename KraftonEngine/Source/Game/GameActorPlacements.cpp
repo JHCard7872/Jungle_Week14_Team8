@@ -6,6 +6,7 @@
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
 #include "GameFramework/Actor/RagdollActor.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
+#include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
 #include "GameFramework/World.h"
 
 // ============================================================
@@ -48,6 +49,19 @@ void RegisterGameActorPlacements()
 		[](UWorld* World, const FVector& Location) -> AActor*
 		{
 			AGOIncRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncRagdollPawn>() : nullptr;
+			if (Pawn)
+			{
+				Pawn->InitDefaultComponents();
+				Pawn->SetActorLocation(Location);
+			}
+			return Pawn;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc Sonic Ragdoll Pawn",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncSonicRagdollPawn* Pawn = World ? World->SpawnActor<AGOIncSonicRagdollPawn>() : nullptr;
 			if (Pawn)
 			{
 				Pawn->InitDefaultComponents();
