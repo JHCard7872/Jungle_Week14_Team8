@@ -1,4 +1,5 @@
 local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 튜닝 상수. 값 수정은 해당 파일에서
+local Session = require("GameSession")
 
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
@@ -1180,6 +1181,14 @@ local function update_beam_fade(delta_time)
     end
 end
 
+local function update_session_gun_state()
+    if Session == nil or Session.gun == nil then
+        return
+    end
+
+    Session.gun.mode = weapon_swap_state.active_index == 2 and "shock" or "collect"
+end
+
 local function get_slot2_beam_visible_time(hit)
     if hit ~= nil and hit.bHit then
         return C.SLOT2_BEAM_HIT_VISIBLE_TIME
@@ -1683,6 +1692,7 @@ end
 
 function Tick(delta_time)
     update_weapon_swap(delta_time)
+    update_session_gun_state()
     obj.Rotation = vec(0.0, 0.0, yaw)
     select_active_beam_particle()
     update_camera_view()
