@@ -4,6 +4,7 @@
 #include "Serialization/Archive.h"
 #include "Render/Scene/FScene.h"
 #include "Math/Quat.h"
+#include "Math/Transform.h"
 
 #include <cstring>
 #include <cmath>
@@ -33,7 +34,8 @@ void UBoxComponent::ContributeSelectedVisuals(FScene& Scene) const
 	const FColor Color = GetShapeColor();
 	// World rotation을 local 코너 오프셋에 적용 — 그러지 않으면 박스가 항상
 	// 월드 축 정렬로 그려져 컴포넌트가 회전된 경우 자식들과 시각상 어긋난다.
-	const FQuat WorldRot = GetWorldMatrix().ToQuat();
+	// 스케일 제거 후 회전 추출 — 비균등 스케일에서 ToQuat 직접 호출은 회전을 왜곡한다.
+	const FQuat WorldRot = FTransform::FromMatrixWithScale(GetWorldMatrix()).Rotation;
 
 	// 8 corners (회전 반영)
 	FVector Corners[8];

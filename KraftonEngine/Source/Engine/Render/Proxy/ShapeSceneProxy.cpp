@@ -50,7 +50,10 @@ void FShapeSceneProxy::RebuildLines()
 		return;
 	}
 
-	const FQuat WorldRot = OwnerComp->GetWorldMatrix().ToQuat();
+	// 비균등 스케일이 포함된 월드 행렬에서 ToQuat을 바로 부르면 회전이 왜곡된다
+	// (행 길이가 달라 정규화 안 된 회전 추출). 물리 바디 동기화(BodyInstance)와
+	// 동일하게 스케일을 제거한 뒤 회전을 뽑는다.
+	const FQuat WorldRot = FTransform::FromMatrixWithScale(OwnerComp->GetWorldMatrix()).Rotation;
 
 	if (const UBoxComponent* Box = Cast<UBoxComponent>(OwnerComp))
 	{
