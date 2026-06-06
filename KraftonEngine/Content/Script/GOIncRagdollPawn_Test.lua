@@ -21,6 +21,10 @@ local BEAM_SHOCK_IMPULSE_STRENGTH = 0.00
 local RED_BEAM_SHOCK_DURATION = 1.0
 local RED_BEAM_SHOCK_INTERVAL = 0.05
 local RED_BEAM_SHOCK_IMPULSE_STRENGTH = 0.08
+local RED_BEAM_JITTER_LINEAR_STRENGTH = 0.015
+local RED_BEAM_JITTER_TORQUE_STRENGTH = 0.55
+local RED_BEAM_JITTER_ROOT_SCALE = 0.08
+local RED_BEAM_JITTER_MAX_LINEAR_SPEED = 0.30
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -188,6 +192,40 @@ local function apply_red_beam_shock_impulse()
     apply_random_ragdoll_impulse(RED_BEAM_SHOCK_IMPULSE_STRENGTH, "Red beam shock")
 end
 
+local function set_red_beam_jitter_anchor_enabled(enabled)
+    if mesh == nil then
+        return
+    end
+
+    if enabled then
+        if mesh.BeginRagdollJitterAnchor ~= nil then
+            mesh:BeginRagdollJitterAnchor()
+        end
+    else
+        if mesh.EndRagdollJitterAnchor ~= nil then
+            mesh:EndRagdollJitterAnchor()
+        end
+    end
+end
+
+local function apply_red_beam_jitter_impulse()
+    if mesh == nil then
+        return
+    end
+
+    if mesh.AddJitterImpulseToAllRagdollBodies ~= nil then
+        mesh:AddJitterImpulseToAllRagdollBodies(
+            RED_BEAM_JITTER_LINEAR_STRENGTH,
+            RED_BEAM_JITTER_TORQUE_STRENGTH,
+            RED_BEAM_JITTER_ROOT_SCALE,
+            RED_BEAM_JITTER_MAX_LINEAR_SPEED
+        )
+        return
+    end
+
+    apply_random_ragdoll_impulse(0.01, "Red beam jitter fallback")
+end
+
 local function tick_beam_shock(dt)
     if not is_revive_blocked_by_beam() then
         reset_beam_shock_timer()
@@ -210,11 +248,14 @@ end
 local function start_red_beam_shock()
     redBeamShockRemaining = RED_BEAM_SHOCK_DURATION
     redBeamShockElapsed = RED_BEAM_SHOCK_INTERVAL
+
+    set_red_beam_jitter_anchor_enabled(true)
 end
 
 local function tick_red_beam_shock(dt)
     if redBeamShockRemaining <= 0.0 then
-        return
+        set_red_beam_jitter_anchor_enabled(false)
+        return false
     end
 
     if type(dt) ~= "number" then
@@ -224,11 +265,18 @@ local function tick_red_beam_shock(dt)
     redBeamShockRemaining = math.max(0.0, redBeamShockRemaining - dt)
     redBeamShockElapsed = redBeamShockElapsed + dt
     if redBeamShockElapsed < RED_BEAM_SHOCK_INTERVAL then
-        return
+        return true
     end
 
     redBeamShockElapsed = 0.0
-    apply_red_beam_shock_impulse()
+    apply_red_beam_jitter_impulse()
+
+    if redBeamShockRemaining <= 0.0 then
+        set_red_beam_jitter_anchor_enabled(false)
+        return false
+    end
+
+    return true
 end
 
 local function cache_components()
@@ -787,7 +835,7 @@ function OnRedBeamHit(reason)
     set_revive_trigger_enabled(false)
 
     start_red_beam_shock()
-    apply_red_beam_shock_impulse()
+    apply_red_beam_jitter_impulse()
 end
 
 function EnterReviving()
@@ -890,36 +938,39 @@ function EnterAliveFlee()
     fleeStopStartSpeed = 0.0
     reviveElapsed = 0.0
 
-    if mesh ~= nil then
-        -- Recovery 완료 후에는 mesh는 animation only 상태로 둔다.
-        -- 여기서 다시 SetRagdollEnabled(false), SetAllBodiesSimulatePhysics(false)를 호출하지 않는다.
-        mesh:SetCollisionEnabled("NoCollision")
+    if pawn ~= nil and pawn.EnterAliveFleeState ~= nil then
+        pawn:EnterAliveFleeState()
+    else
+        if mesh ~= nil then
+            mesh:SetCollisionEnabled("NoCollision")
+            mesh:SetRagdollGravityEnabled(false)
+            mesh:SetAllBodiesPhysicsBlendWeight(0.0)
+            mesh:SetAllBodiesSimulatePhysics(false)
+            mesh:SetRagdollEnabled(false)
+        end
 
-        restore_initial_mesh_relative_location()
+        set_revive_trigger_enabled(false)
+        set_alive_capsule_enabled(true)
+
+        if movement ~= nil then
+            movement:StopMovementImmediately()
+            movement:SetMovementEnabled(true)
+
+            if movement.SetFloorRaycastEnabled ~= nil then
+                movement:SetFloorRaycastEnabled(true)
+            end
+            if movement.SetGravityEnabled ~= nil then
+                movement:SetGravityEnabled(true)
+            end
+        end
+
+        if pawn ~= nil then
+            pawn:PlayFleeAnimation()
+        end
     end
 
-    --if pawn ~= nil then
-    --    pawn:PlayFleeAnimation()
-    --end
+    restore_initial_mesh_relative_location()
     set_flee_animation_play_rate(1.0)
-
-    set_revive_trigger_enabled(false)
-    set_alive_capsule_enabled(true)
-
-    if movement ~= nil then
-        movement:StopMovementImmediately()
-        movement:SetMovementEnabled(true)
-
-        if movement.SetFloorRaycastEnabled ~= nil then
-            movement:SetFloorRaycastEnabled(true)
-        end
-        if movement.SetGravityEnabled ~= nil then
-            movement:SetGravityEnabled(true)
-        end
-        --if movement.SnapUpdatedComponentToFloor ~= nil then
-        --    movement:SnapUpdatedComponentToFloor()
-        --end
-    end
 
     -- Reviving yaw blend의 마지막 값을 확정해 첫 AliveFlee Tick에서 회전이 튀지 않게 한다.
     obj.Rotation = Vector.new(0.0, 0.0, reviveTargetYaw)
@@ -1061,8 +1112,12 @@ function Tick(dt)
 
     if state == STATE_DEAD then
         tick_beam_shock(dt)
-        tick_red_beam_shock(dt)
-        sync_dead_root_to_ragdoll_safe()
+        local bRedBeamShocking = tick_red_beam_shock(dt)
+
+        if not bRedBeamShocking then
+            sync_dead_root_to_ragdoll_safe()
+        end
+
         set_revive_trigger_enabled(true)
         return
     end

@@ -123,6 +123,23 @@ public:
     void AddRandomImpulseToAllRagdollBodies(float Strength);
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")
+    void BeginRagdollJitterAnchor();
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    void EndRagdollJitterAnchor();
+
+    UFUNCTION(Pure, Category="Physics|Ragdoll")
+    bool IsRagdollJitterAnchorEnabled() const { return bRagdollJitterAnchorEnabled; }
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
+    void AddJitterImpulseToAllRagdollBodies(
+        float LinearStrength,
+        float TorqueStrength,
+        float RootScale,
+        float MaxLinearSpeed
+    );
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
     bool GetRagdollBodyWorldTransform(FName BoneName, FTransform& OutTransform) const;
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")
@@ -250,6 +267,7 @@ protected:
     void ClearRagdollComponentMoveState();
     void ApplyExternalComponentMoveToRagdollBodies();
     void MoveAllRagdollBodiesByComponentDelta(const FVector& Delta);
+    void StabilizeRagdollJitterAnchor();
     void TickRagdollPhysicsMode(float DeltaTime);
     void StartRagdollRecovery();
     bool TickRagdollRecovery(float DeltaTime);
@@ -336,6 +354,12 @@ protected:
     bool bHasRagdollComponentSyncOffset = false;
     FMatrix LastRagdollComponentWorldMatrix = FMatrix::Identity;
     bool bHasLastRagdollComponentWorldMatrix = false;
+    bool bRagdollJitterAnchorEnabled = false;
+    FVector RagdollJitterAnchorSyncBodyLocation = FVector::ZeroVector;
+    FVector RagdollJitterAnchorComponentLocation = FVector::ZeroVector;
+    float RagdollJitterMaxAnchorCorrectionPerTick = 0.20f;
+    float RagdollJitterSyncBodyLinearVelocityDamping = 0.10f;
+    float RagdollJitterSyncBodyAngularVelocityDamping = 0.25f;
     bool bRagdollRecovering = false;
     float RagdollRecoveryElapsed = 0.0f;
     TArray<FTransform> RagdollRecoveryStartLocalPose;

@@ -19,13 +19,11 @@ local SPAWN_MIN_Y = SpawnCfg.areaMinY
 local SPAWN_MAX_Y = SpawnCfg.areaMaxY
 local SPAWN_Z = SpawnCfg.z
 
-local SPAWN_INTERVAL = 10
+local SPAWN_INTERVAL = SpawnCfg.interval
 local MAX_SPAWN_COUNT = SpawnCfg.maxCount
 local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = SpawnCfg.immediateFirst
 
 local DEFAULT_CHARACTER_ID = SpawnCfg.defaultRagdollId or "blue-speedster"
-local RAGDOLL_TAG = "Ragdoll"
-local SPAWNED_RAGDOLL_TAG = "SpawnedRagdoll"
 local RagdollData = nil
 
 local spawnTimer = 0.0
@@ -172,23 +170,6 @@ local function print_max_spawn_reached_once()
         spawnedCount, MAX_SPAWN_COUNT))
 end
 
-local function add_tag_if_missing(actor, tag)
-    if actor == nil or actor.AddTag == nil then
-        return
-    end
-
-    if actor.HasTag ~= nil and actor:HasTag(tag) then
-        return
-    end
-
-    actor:AddTag(tag)
-end
-
-local function tag_spawned_ragdoll(pawn)
-    add_tag_if_missing(pawn, RAGDOLL_TAG)
-    add_tag_if_missing(pawn, SPAWNED_RAGDOLL_TAG)
-end
-
 local function spawn_one()
     if not can_spawn_more() then
         print_max_spawn_reached_once()
@@ -212,7 +193,6 @@ local function spawn_one()
 
     spawnedCount = spawnedCount + 1
     spawnedPawns[spawnedCount] = pawn
-    tag_spawned_ragdoll(pawn)
 
     print(string.format(
         "[GOIncRagdollSpawnManager] Spawned %s (%s, %s) at (%.2f, %.2f, %.2f) [%d / %d]",

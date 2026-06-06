@@ -575,8 +575,17 @@ void USkeletalMeshComponent::MoveAllRagdollBodiesByComponentDelta(const FVector&
 
 void USkeletalMeshComponent::TickRagdollPhysicsMode(float DeltaTime)
 {
-    ApplyExternalComponentMoveToRagdollBodies();
-    SyncComponentToRagdollBody();
+    if (bRagdollJitterAnchorEnabled)
+    {
+        SetWorldLocation(RagdollJitterAnchorComponentLocation);
+        CacheRagdollComponentWorldMatrix();
+        StabilizeRagdollJitterAnchor();
+    }
+    else
+    {
+        ApplyExternalComponentMoveToRagdollBodies();
+        SyncComponentToRagdollBody();
+    }
 
     if (!UpdateRagdollActivePose(DeltaTime))
     {
@@ -761,6 +770,179 @@ void USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies(float Strength)
         const float PerBodyScale = 0.75f + FMath::FRand() * 0.5f;
         Body->WakeUp();
         Body->AddImpulse(Direction * (Strength * PerBodyScale));
+    }
+}
+
+void USkeletalMeshComponent::BeginRagdollJitterAnchor()
+{
+    if (bRagdollJitterAnchorEnabled)
+    {
+        return;
+    }
+
+    FBodyInstance* SyncBody = FindRagdollComponentSyncBody();
+    if (!SyncBody || !SyncBody->IsValidBodyInstance())
+    {
+        return;
+    }
+
+    bRagdollJitterAnchorEnabled = true;
+    RagdollJitterAnchorSyncBodyLocation = SyncBody->GetBodyTransform().Location;
+    RagdollJitterAnchorComponentLocation = GetWorldMatrix().GetLocation();
+
+    CacheRagdollComponentWorldMatrix();
+
+    SyncBody->SetLinearVelocity(SyncBody->GetLinearVelocity() * RagdollJitterSyncBodyLinearVelocityDamping);
+    SyncBody->SetAngularVelocity(SyncBody->GetAngularVelocity() * RagdollJitterSyncBodyAngularVelocityDamping);
+}
+
+void USkeletalMeshComponent::EndRagdollJitterAnchor()
+{
+    if (!bRagdollJitterAnchorEnabled)
+    {
+        return;
+    }
+
+    StabilizeRagdollJitterAnchor();
+    bRagdollJitterAnchorEnabled = false;
+    CacheRagdollComponentWorldMatrix();
+}
+
+void USkeletalMeshComponent::StabilizeRagdollJitterAnchor()
+{
+    if (!bRagdollJitterAnchorEnabled)
+    {
+        return;
+    }
+
+    FBodyInstance* SyncBody = FindRagdollComponentSyncBody();
+    if (!SyncBody || !SyncBody->IsValidBodyInstance())
+    {
+        return;
+    }
+
+    const FVector CurrentSyncLocation = SyncBody->GetBodyTransform().Location;
+    FVector Correction = RagdollJitterAnchorSyncBodyLocation - CurrentSyncLocation;
+
+    const float CorrectionLength = Correction.Length();
+    if (CorrectionLength <= 0.001f)
+    {
+        SyncBody->SetLinearVelocity(SyncBody->GetLinearVelocity() * RagdollJitterSyncBodyLinearVelocityDamping);
+        SyncBody->SetAngularVelocity(SyncBody->GetAngularVelocity() * RagdollJitterSyncBodyAngularVelocityDamping);
+        return;
+    }
+
+    if (RagdollJitterMaxAnchorCorrectionPerTick > 0.0f &&
+        CorrectionLength > RagdollJitterMaxAnchorCorrectionPerTick)
+    {
+        Correction = Correction.Normalized() * RagdollJitterMaxAnchorCorrectionPerTick;
+    }
+
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (!Body || !Body->IsValidBodyInstance())
+        {
+            continue;
+        }
+
+        FTransform BodyTransform = Body->GetBodyTransform();
+        BodyTransform.Location = BodyTransform.Location + Correction;
+        Body->SetBodyTransform(BodyTransform);
+        Body->WakeUp();
+    }
+
+    SyncBody->SetLinearVelocity(SyncBody->GetLinearVelocity() * RagdollJitterSyncBodyLinearVelocityDamping);
+    SyncBody->SetAngularVelocity(SyncBody->GetAngularVelocity() * RagdollJitterSyncBodyAngularVelocityDamping);
+
+    CacheRagdollComponentWorldMatrix();
+}
+
+void USkeletalMeshComponent::AddJitterImpulseToAllRagdollBodies(
+    float LinearStrength,
+    float TorqueStrength,
+    float RootScale,
+    float MaxLinearSpeed
+)
+{
+    if (Bodies.empty())
+    {
+        return;
+    }
+
+    FBodyInstance* SyncBody = FindRagdollComponentSyncBody();
+    const float ClampedRootScale = std::clamp(RootScale, 0.0f, 1.0f);
+
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (!Body || !Body->IsValidBodyInstance() || !Body->bSimulatePhysics || Body->bKinematic)
+        {
+            continue;
+        }
+
+        float BodyScale = 1.0f;
+        if (Body == SyncBody ||
+            Body->BoneName == FName("Pelvis") ||
+            Body->BoneName == FName("Hips") ||
+            Body->BoneName == FName("Root") ||
+            Body->BoneName == FName("root"))
+        {
+            BodyScale = ClampedRootScale;
+        }
+
+        const float RandomScale = 0.75f + FMath::FRand() * 0.5f;
+        const float FinalScale = BodyScale * RandomScale;
+
+        FVector LinearDir(
+            FMath::FRand() * 2.0f - 1.0f,
+            FMath::FRand() * 2.0f - 1.0f,
+            FMath::FRand() * 2.0f - 1.0f
+        );
+
+        if (LinearDir.IsNearlyZero(0.001f))
+        {
+            LinearDir = FVector::UpVector;
+        }
+        LinearDir.Normalize();
+
+        FVector TorqueDir(
+            FMath::FRand() * 2.0f - 1.0f,
+            FMath::FRand() * 2.0f - 1.0f,
+            FMath::FRand() * 2.0f - 1.0f
+        );
+
+        if (TorqueDir.IsNearlyZero(0.001f))
+        {
+            TorqueDir = FVector::ForwardVector;
+        }
+        TorqueDir.Normalize();
+
+        Body->WakeUp();
+
+        if (LinearStrength > 0.0f && FinalScale > 0.0f)
+        {
+            Body->AddImpulse(LinearDir * (LinearStrength * FinalScale));
+        }
+
+        if (TorqueStrength > 0.0f && FinalScale > 0.0f)
+        {
+            Body->AddTorque(TorqueDir * (TorqueStrength * FinalScale));
+        }
+
+        if (MaxLinearSpeed > 0.0f)
+        {
+            FVector Velocity = Body->GetLinearVelocity();
+            const float Speed = Velocity.Length();
+            if (Speed > MaxLinearSpeed)
+            {
+                Velocity = Velocity.Normalized() * MaxLinearSpeed;
+                Body->SetLinearVelocity(Velocity);
+            }
+        }
+    }
+
+    if (bRagdollJitterAnchorEnabled)
+    {
+        StabilizeRagdollJitterAnchor();
     }
 }
 
