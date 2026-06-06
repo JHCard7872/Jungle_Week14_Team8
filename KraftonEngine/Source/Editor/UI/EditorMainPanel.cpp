@@ -131,9 +131,15 @@ void FEditorMainPanel::Render(float DeltaTime)
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	RenderMainMenuBar();
+	const bool bHideChromeForFullscreenPIE = EditorEngine && EditorEngine->IsPlayingInEditorFullscreen();
+	if (!bHideChromeForFullscreenPIE)
+	{
+		RenderMainMenuBar();
+	}
 
-	const float FooterHeight = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
+	const float FooterHeight = bHideChromeForFullscreenPIE
+		? 0.0f
+		: ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
 	RenderMainDockSpace(FooterHeight);
 
 	// 뷰포트 렌더링은 EditorEngine이 담당 (SSplitter 레이아웃 + ImGui::Image)
@@ -213,18 +219,27 @@ void FEditorMainPanel::Render(float DeltaTime)
 		AnimationDebugWidget.Render(PanelContext);
 	}
 
-	ProjectSettingsWidget.Render(PanelContext);
-	WorldSettingsWidget.Render(PanelContext);
+	if (!bHideChromeForFullscreenPIE)
+	{
+		ProjectSettingsWidget.Render(PanelContext);
+		WorldSettingsWidget.Render(PanelContext);
+	}
 
-	if (!bHideEditorWindows)
+	if (!bHideEditorWindows && !bHideChromeForFullscreenPIE)
 	{
 		RenderEditorDebugPanel();
 	}
 
 	RenderShortcutOverlay();
-	RenderFooterOverlay(DeltaTime);
+	if (!bHideChromeForFullscreenPIE)
+	{
+		RenderFooterOverlay(DeltaTime);
+	}
 
-	AssetEditorManager.Render(PanelContext);
+	if (!bHideChromeForFullscreenPIE)
+	{
+		AssetEditorManager.Render(PanelContext);
+	}
 
 	// 토스트 알림 (항상 최상위에 표시)
 	FNotificationToast::Render();
