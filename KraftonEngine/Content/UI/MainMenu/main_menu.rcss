@@ -129,7 +129,7 @@ body {
 }
 
 .menu_label {
-    display: none;
+    display: block;
     position: absolute;
     left: 50%;
     bottom: 5%;
@@ -137,6 +137,7 @@ body {
     height: 78px;
     margin-left: -180px;
     z-index: 40;
+    opacity: 0;
     pointer-events: none;
 }
 
@@ -165,27 +166,27 @@ body {
 }
 
 #menu_help:hover + #label_help {
-    display: block;
+    opacity: 1;
 }
 
 #menu_option:hover + #label_option {
-    display: block;
+    opacity: 1;
 }
 
 #menu_play:hover + #label_play {
-    display: block;
+    opacity: 1;
 }
 
 #menu_scoreboard:hover + #label_scoreboard {
-    display: block;
+    opacity: 1;
 }
 
 #menu_credits:hover + #label_credits {
-    display: block;
+    opacity: 1;
 }
 
 #menu_back_to_title:hover + #label_back_to_title {
-    display: block;
+    opacity: 1;
 }
 
 #menu_back_to_title {
