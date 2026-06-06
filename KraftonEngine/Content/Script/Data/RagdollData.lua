@@ -19,6 +19,13 @@ return {
         canRevive      = true,   -- 살아날 수 있는 타입
         reviveSpeed    = 2.5,    -- 살아났을 때 도망 속도 (canRevive=true일 때만 의미)
         attackPower    = 15,     -- placeholder — 적용 규칙 미정
+
+        -- 아직 GOIncMarioRagdollPawn은 구현하지 않았으므로 스폰에서는 제외
+        characterId    = "red-plumber",
+        pawnClass      = "",
+        canSpawn       = false,
+        spawnWeight    = 0,
+        uiOrder        = 90,
     },
 
     ["green-slime"] = {
@@ -30,5 +37,80 @@ return {
         canRevive      = false,
         reviveSpeed    = 0,
         attackPower    = 0,      -- placeholder
+
+        -- 아직 전용 Pawn이 없으므로 스폰에서는 제외
+        characterId    = "green-slime",
+        pawnClass      = "",
+        canSpawn       = false,
+        spawnWeight    = 0,
+        uiOrder        = 100,
+    },
+
+    ["blue-speedster"] = {
+        displayName    = "파란 고슴도치",
+        referenceImage = "Content/UI/Images/blue_speedster.png",
+        mass           = 8.0,    -- 임시 밸런스
+        baseScore      = 100,    -- 임시 밸런스
+        scale          = 1.0,
+        canRevive      = true,
+        reviveSpeed    = 4.0,
+        attackPower    = 10,     -- placeholder
+
+        characterId    = "blue-speedster",
+        pawnClass      = "AGOIncSonicRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 10,
+        uiOrder        = 10,
+    },
+
+    ["pink-round"] = {
+        displayName    = "분홍 동글이",
+        referenceImage = "Content/UI/Images/pink_round.png",
+        mass           = 6.5,    -- 임시 밸런스
+        baseScore      = 120,    -- 임시 밸런스
+        scale          = 1.0,
+        canRevive      = true,
+        reviveSpeed    = 3.5,
+        attackPower    = 8,      -- placeholder
+
+        characterId    = "pink-round",
+        pawnClass      = "AGOIncKirbyRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 8,
+        uiOrder        = 20,
+    },
+
+    ["brown-gorilla"] = {
+        displayName    = "갈색 고릴라",
+        referenceImage = "Content/UI/Images/brown_gorilla.png",
+        mass           = 20.0,   -- 임시 밸런스
+        baseScore      = 180,    -- 임시 밸런스
+        scale          = 1.0,
+        canRevive      = true,
+        reviveSpeed    = 2.0,
+        attackPower    = 25,     -- placeholder
+
+        characterId    = "brown-gorilla",
+        pawnClass      = "AGOIncDonkeyKongRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 3,
+        uiOrder        = 30,
+    },
+
+    ["yellow-mouse"] = {
+        displayName    = "노란 전기쥐",
+        referenceImage = "Content/UI/Images/yellow_mouse.png",
+        mass           = 5.5,    -- 임시 밸런스
+        baseScore      = 140,    -- 임시 밸런스
+        scale          = 1.0,
+        canRevive      = true,
+        reviveSpeed    = 4.5,
+        attackPower    = 18,     -- placeholder
+
+        characterId    = "yellow-mouse",
+        pawnClass      = "AGOIncPikachuRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 7,
+        uiOrder        = 40,
     },
 }
