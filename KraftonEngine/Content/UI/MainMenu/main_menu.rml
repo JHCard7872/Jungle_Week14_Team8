@@ -6,6 +6,7 @@
 
 <body>
     <div id="menu_root">
+        <div id="scene_bg"></div>
         <div id="menu_content">
             <img id="menu_background" src="../../Sprite/main_menu_background.png" />
 

@@ -16,12 +16,17 @@ local MENU_BGM_VOLUME = 0.6
 local SFX_VOLUME = 1.0
 local MENU_FADE_DURATION = 0.45
 local PRESS_BLINK_SPEED = 3.2
+local SUB_PAGE_FADE_DURATION = 0.3
 
 local main_menu_widget = nil
 local bindings_initialized = false
 local title_screen_active = true
+local fading_to_title = false
 local menu_fade_elapsed = 0.0
 local press_blink_elapsed = 0.0
+local sub_page_fading_in = false
+local sub_page_fading_out = false
+local sub_page_fade_elapsed = 0.0
 -- 옵션 화면이 떠 있는 동안에는 메인 메뉴 입력/커스텀 커서를 멈춰둔다
 local options_open = false
 
@@ -155,13 +160,11 @@ local function set_main_menu_controls_visible(is_visible)
     end
 end
 
--- 옵션 화면을 닫고 메인 메뉴 입력/커스텀 커서를 복구한다
-local function close_menu_page()
-    if not options_open then
-        return
-    end
-
+-- 서브페이지 fade-out 완료 후 실제 정리
+local function do_close_menu_page()
     options_open = false
+    sub_page_fading_in = false
+    sub_page_fading_out = false
     MenuPageUI.Destroy()
     Engine.SetCursorVisible(false)
 
@@ -169,6 +172,17 @@ local function close_menu_page()
         set_main_menu_controls_visible(true)
         main_menu_widget:SetWantsMouse(true)
     end
+end
+
+-- 서브페이지 fade-out 시작 (닫기 버튼/Confirm 콜백에서 호출)
+local function close_menu_page()
+    if not options_open or sub_page_fading_out then
+        return
+    end
+
+    sub_page_fading_in = false
+    sub_page_fading_out = true
+    sub_page_fade_elapsed = 0.0
 end
 
 local function open_menu_page(page_type, title)
@@ -201,7 +215,6 @@ local function open_menu_page(page_type, title)
         onConfirm = function(settings, confirmed_page_type)
             if confirmed_page_type == "options" then
                 apply_menu_settings(settings)
-                apply_current_menu_bgm_volume()
             end
 
             close_menu_page()
@@ -209,6 +222,8 @@ local function open_menu_page(page_type, title)
     })
 
     MenuPageUI.Show()
+    sub_page_fading_in = true
+    sub_page_fade_elapsed = 0.0
 end
 
 local function open_options()
@@ -241,6 +256,7 @@ local function bind_hover_sound(widget, element_id)
 end
 
 local set_title_screen_state = nil
+local start_title_return_fade = nil
 
 local function bind_menu_actions(widget)
     if bindings_initialized or widget == nil then
@@ -270,9 +286,7 @@ local function bind_menu_actions(widget)
     widget:bind_click("menu_back_to_title", on_menu_button_click(function()
         close_menu_page()
         AudioManager.PlayBGM("bgm_title_0", get_bgm_volume_scalar())
-        if set_title_screen_state ~= nil then
-            set_title_screen_state()
-        end
+        start_title_return_fade()
     end))
 
     bind_hover_sound(widget, "menu_help")
@@ -359,6 +373,41 @@ local function update_menu_fade(dt)
     return false
 end
 
+-- 메인 메뉴 → 타이틀 페이드 아웃/인
+start_title_return_fade = function()
+    if main_menu_widget == nil or fading_to_title then
+        return
+    end
+
+    fading_to_title = true
+    menu_fade_elapsed = 0.0
+    main_menu_widget:SetWantsMouse(false)
+    set_element_display("menu_content", true)
+    set_element_display("title_overlay", true)
+    set_element_opacity("menu_content", 1.0)
+    set_element_opacity("title_overlay", 0.0)
+    set_cursor_hidden()
+end
+
+local function update_title_return_fade(dt)
+    if main_menu_widget == nil then
+        return
+    end
+
+    menu_fade_elapsed = math.min(menu_fade_elapsed + dt, MENU_FADE_DURATION)
+    local alpha = menu_fade_elapsed / MENU_FADE_DURATION
+
+    set_element_opacity("menu_content", 1.0 - alpha)
+    set_element_opacity("title_overlay", alpha)
+
+    if alpha >= 1.0 then
+        fading_to_title = false
+        title_screen_active = true
+        press_blink_elapsed = 0.0
+        set_element_display("press_any_button", true)
+    end
+end
+
 function BeginPlay()
     local widget = ensure_widget()
     bind_menu_actions(widget)
@@ -372,6 +421,11 @@ end
 
 function Tick(dt)
     if main_menu_widget == nil then
+        return
+    end
+
+    if fading_to_title then
+        update_title_return_fade(dt)
         return
     end
 
@@ -391,6 +445,19 @@ function Tick(dt)
     -- 조작법/스코어보드/크레딧 하위 페이지도 동일하게 처리한다
     if options_open then
         set_cursor_hidden()
+        sub_page_fade_elapsed = math.min(sub_page_fade_elapsed + dt, SUB_PAGE_FADE_DURATION)
+        local t = sub_page_fade_elapsed / SUB_PAGE_FADE_DURATION
+        if sub_page_fading_in then
+            MenuPageUI.SetOpacity(t)
+            if t >= 1.0 then
+                sub_page_fading_in = false
+            end
+        elseif sub_page_fading_out then
+            MenuPageUI.SetOpacity(1.0 - t)
+            if t >= 1.0 then
+                do_close_menu_page()
+            end
+        end
         return
     end
 
@@ -409,7 +476,11 @@ function EndPlay()
     main_menu_widget = nil
     bindings_initialized = false
     options_open = false
+    sub_page_fading_in = false
+    sub_page_fading_out = false
+    sub_page_fade_elapsed = 0.0
     title_screen_active = true
+    fading_to_title = false
     menu_fade_elapsed = 0.0
     press_blink_elapsed = 0.0
 end

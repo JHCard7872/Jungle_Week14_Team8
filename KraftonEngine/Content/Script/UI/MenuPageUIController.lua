@@ -323,6 +323,20 @@ function M.Show()
 
     widget:SetWantsMouse(true)
     set_display("page_root", true)
+    widget:SetProperty("page_root", "opacity", "0.000")
+    -- page_root가 visible 된 후 다시 적용: display:none 상태에서 SetProperty가
+    -- RmlUi에 의해 무시되거나 초기화될 수 있으므로 여기서 재적용한다.
+    apply_settings_to_view()
+    apply_scoreboard_to_view()
+end
+
+-- 서브 페이지 전체 opacity 설정 (페이드 인/아웃용)
+function M.SetOpacity(alpha)
+    if widget == nil then
+        return
+    end
+    local clamped = math.max(0.0, math.min(1.0, alpha))
+    widget:SetProperty("page_root", "opacity", string.format("%.3f", clamped))
 end
 
 -- 하위 페이지 화면을 닫는다
