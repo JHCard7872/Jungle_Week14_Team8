@@ -8,11 +8,11 @@
     "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
     "_pad" : null
   },
-  "PathFileName" : "Content/Material/Auto/Material.mat",
+  "PathFileName" : "Content/Material/Auto/metal_koopa_001_col.001.mat",
   "RasterizerState" : "",
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Injured Run/base.png"
+    "DiffuseTexture" : "Content/Texture/Auto/Bowser/metal_koopa_001_col.png"
   }
 }
