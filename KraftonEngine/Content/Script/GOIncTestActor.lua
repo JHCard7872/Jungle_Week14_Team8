@@ -1,89 +1,4 @@
-local KEY_W = 0x57       -- 전진 입력 키: W
-local KEY_A = 0x41       -- 좌측 이동 입력 키: A
-local KEY_S = 0x53       -- 후진 입력 키: S
-local KEY_D = 0x44       -- 우측 이동 입력 키: D
-local KEY_SPACE = 0x20   -- 점프 입력 키: Space
-local KEY_LBUTTON = 0x01 -- 발사 입력 키: 마우스 왼쪽 버튼
-local KEY_Q = 0x51       -- 무기 교체 입력 키: Q
-
-local CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml"
-local CROSSHAIR_Z_ORDER = 1000
-local CROSSHAIR_EASE_SPEED = 20.0 -- 조준선이 Hit 지점과 MaxDistance 지점 사이를 따라가는 속도
-local CROSSHAIR_SCREEN_PADDING = 0.0
-
-local MOVE_SPEED = 6.0                   -- WASD 수평 이동 속도
-local JUMP_VELOCITY = 6.5                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
-local GRAVITY_ACCELERATION = 9.8         -- PhysX 시뮬레이션 대신 엔진 쪽 이동에서 직접 적용할 중력 가속도
-local PLAYER_CAPSULE_HALF_HEIGHT = 1.0   -- GOIncRoot 캡슐의 실제 월드 반높이. Scene의 HalfHeight 2.0 * ScaleZ 0.5
-local PLAYER_CAPSULE_RADIUS = 0.5        -- GOIncRoot 캡슐의 실제 월드 반지름. Scene의 Radius 1.0 * ScaleXY 0.5
-local GROUND_PROBE_DISTANCE = 0.18       -- 캡슐 바닥 아래로 더 확인할 여유 거리. 너무 크면 낮은 단차에 과하게 붙는다
-local GROUND_WALKABLE_NORMAL_Z = 0.55    -- 이 값보다 위를 향한 표면만 바닥으로 취급해 벽/측면 hit를 배제
-local CAPSULE_SWEEP_SKIN = 0.04          -- CapsuleSweep 결과에서 벽에 딱 붙지 않게 남기는 최소 여유
-local CAPSULE_SWEEP_MIN_MOVE = 0.0001    -- 너무 작은 이동량은 sweep을 생략해 떨림을 줄인다
-local GROUNDED_Z_VELOCITY_EPSILON = 0.05 -- Raycast가 없을 때 접지 판정에 쓰는 Z 속도 허용값
-
-local LOOK_SENSITIVITY = 0.12  -- 마우스 이동량을 Yaw/Pitch 각도로 바꾸는 감도
-local MIN_PITCH = -30.0        -- 1인칭 카메라가 위를 볼 수 있는 최소 Pitch. 이 엔진은 음수 Pitch가 위쪽
-local MAX_PITCH = 20.0         -- 1인칭 카메라가 아래를 볼 수 있는 최대 Pitch
-local CAMERA_HEIGHT = 1.2      -- Root 기준 카메라 피벗 높이
-local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
-local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
-local SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
-local SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16 -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
-local HIT_RIM_DURATION = 0.50
-local HIT_RIM_FLASH_INTENSITY = 3.5
-local HIT_RIM_SUSTAIN_INTENSITY = 1.6
-local HIT_RIM_POWER = 2.8
-local HIT_IMPACT_RADIUS = 0.16
-local HIT_IMPACT_CORE_RADIUS = 0.055
-local HIT_IMPACT_INTENSITY = 2.6
-local GRAB_SPRING_ACCELERATION = 220.0
-local GRAB_DAMPING_ACCELERATION = 36.0
-local GRAB_MAX_ERROR = 80.0
-local GRAB_MAX_ACCELERATION = 20000.0
-local GRAB_TORQUE_SCALE = 0.65
-local GRAB_ANGULAR_DAMPING = 10.0
-local GRAB_MAX_TORQUE = 100000.0
-local GRAB_REFERENCE_MASS = 1.0
-local GRAB_MASS_POWER = 0.35
-local GRAB_MIN_MASS_SCALE = 0.45
-local GRAB_MAX_MASS_SCALE = 1.15
-local GRAB_MIN_AIM_DISTANCE = 0.35
-local GRAB_MAX_AIM_DISTANCE = MAX_TRACE_DISTANCE
-local GRAB_MOUSE_WHEEL_DISTANCE_STEP = 1.25
-local GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 1400.0
-local GRAB_MIN_DISTANCE_GUARD_DAMPING = 120.0
-local THROW_IMPULSE_SCALE = 0.35
-local THROW_MAX_IMPULSE_PER_MASS = 120.0
-local THROW_MIN_SPEED = 0.5
-
-local WEAPON_FORWARD_OFFSET = 0.85 -- 카메라 로컬 Forward 기준 총 화면 위치
-local WEAPON_RIGHT_OFFSET = 0.40   -- 카메라 로컬 Right 기준 총 화면 위치
-local WEAPON_UP_OFFSET = -0.20     -- 카메라 로컬 Up 기준 총 화면 위치. 음수면 화면 아래
-local WEAPON_PITCH_SCALE = 0.01    -- 카메라 Pitch가 총 시각 PitchPivot에 전달되는 비율
-local WEAPON_MAX_VISUAL_PITCH = 1.0 -- 총 시각 PitchPivot이 추가로 회전할 수 있는 최대 각도
-local WEAPON_PITCH_NORMALIZE = 80.0 -- Pitch 보정 곡선을 만들 때 정규화 기준으로 쓰는 카메라 Pitch
-local WEAPON_PITCH_PULLBACK = 0.05  -- 극단 Pitch에서 총을 카메라 쪽으로 살짝 당기는 Forward 보정량
-local WEAPON_PITCH_INWARD_OFFSET = 0.00 -- 극단 Pitch에서 총을 화면 안쪽으로 넣는 Right 보정량
-local WEAPON_PITCH_UP_OFFSET = 0.04 -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
-local WEAPON_SWAP_DURATION = 0.28
-local WEAPON_SWAP_ROTATION_DEGREES = 180.0
-local WEAPON_SWAP_DIRECTION = -1.0
-
-local GUN_ROTATION_ROLL = -18.087906  -- GunMesh 기본 Roll. 씬에 GunMesh가 없을 때 fallback
-local GUN_ROTATION_PITCH = -2.707027  -- GunMesh 기본 Pitch. 씬에 GunMesh가 없을 때 fallback
-local GUN_ROTATION_YAW = -3.752036    -- GunMesh 기본 Yaw. 씬에 GunMesh가 없을 때 fallback
-local MUZZLE_FORWARD_OFFSET = 0.95    -- MuzzlePoint 기본 Forward 위치. 씬에 MuzzlePoint가 없을 때 fallback
-local MUZZLE_RIGHT_OFFSET = 0.0       -- MuzzlePoint 기본 Right 위치. 씬에 MuzzlePoint가 없을 때 fallback
-local MUZZLE_UP_OFFSET = 0.05         -- MuzzlePoint 기본 Up 위치. 씬에 MuzzlePoint가 없을 때 fallback
-local BEAM_SOURCE_FORWARD_BIAS = 0.0 -- Beam 시작점을 총구 기준 앞/뒤로 미세 보정. 음수면 카메라 쪽
-local BEAM_SOURCE_RIGHT_BIAS = -0.1     -- Beam 시작점 좌우 미세 보정
-local BEAM_SOURCE_UP_BIAS = 0.0        -- Beam 시작점 상하 미세 보정
-local BEAM_SOURCE_PITCH_INFLUENCE = 0.9 -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
-local BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45 -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
-local BEAM_RENDER_SHEETS = 1 -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
-local BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18 -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
-local BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08 -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
+local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 튜닝 상수. 값 수정은 해당 파일에서
 
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
@@ -236,7 +151,7 @@ local function ease_in_out(t)
 end
 
 local function get_next_weapon_swap_angle()
-    return weapon_swap_state.current_angle + WEAPON_SWAP_DIRECTION * WEAPON_SWAP_ROTATION_DEGREES
+    return weapon_swap_state.current_angle + C.WEAPON_SWAP_DIRECTION * C.WEAPON_SWAP_ROTATION_DEGREES
 end
 
 local function cache_component_transform(component, fallback_location, fallback_rotation)
@@ -271,7 +186,7 @@ local function setup_crosshair_ui()
             return
         end
 
-        crosshair_widget = UI.CreateWidget(CROSSHAIR_WIDGET_PATH)
+        crosshair_widget = UI.CreateWidget(C.CROSSHAIR_WIDGET_PATH)
         if crosshair_widget == nil then
             return
         end
@@ -279,7 +194,7 @@ local function setup_crosshair_ui()
 
     crosshair_widget:SetWantsMouse(false)
     if crosshair_widget.IsInViewport == nil or not crosshair_widget:IsInViewport() then
-        crosshair_widget:AddToViewportZ(CROSSHAIR_Z_ORDER)
+        crosshair_widget:AddToViewportZ(C.CROSSHAIR_Z_ORDER)
         crosshair_is_hold = nil
     end
 end
@@ -289,7 +204,7 @@ local function update_crosshair_ui()
         return
     end
 
-    local is_hold = Input.GetKey(KEY_LBUTTON)
+    local is_hold = Input.GetKey(C.KEY_LBUTTON)
     if crosshair_is_hold == is_hold then
         return
     end
@@ -340,8 +255,8 @@ local function project_crosshair_world_position(world_point)
     local width = projected.Width or (viewport_center_x * 2.0)
     local height = projected.Height or (viewport_center_y * 2.0)
     if width > 0.0 and height > 0.0 then
-        screen_x = clamp(screen_x, CROSSHAIR_SCREEN_PADDING, width - CROSSHAIR_SCREEN_PADDING)
-        screen_y = clamp(screen_y, CROSSHAIR_SCREEN_PADDING, height - CROSSHAIR_SCREEN_PADDING)
+        screen_x = clamp(screen_x, C.CROSSHAIR_SCREEN_PADDING, width - C.CROSSHAIR_SCREEN_PADDING)
+        screen_y = clamp(screen_y, C.CROSSHAIR_SCREEN_PADDING, height - C.CROSSHAIR_SCREEN_PADDING)
     end
 
     return screen_x, screen_y
@@ -361,7 +276,7 @@ local function move_crosshair_toward(target_x, target_y, delta_time)
 
     local alpha = 1.0
     if delta_time ~= nil and delta_time > 0.0 then
-        alpha = ease_out_cubic(delta_time * CROSSHAIR_EASE_SPEED)
+        alpha = ease_out_cubic(delta_time * C.CROSSHAIR_EASE_SPEED)
     end
 
     crosshair_screen_x = crosshair_screen_x + (target_x - crosshair_screen_x) * alpha
@@ -461,7 +376,7 @@ local function cache_view_weapon_base_transforms()
         base_weapon_offset_location = copy_vec(weapon_visual_pivot.RelativeLocation)
         base_weapon_visual_rotation = copy_vec(weapon_visual_pivot.Rotation)
     else
-        base_weapon_offset_location = vec(WEAPON_FORWARD_OFFSET, WEAPON_RIGHT_OFFSET, WEAPON_UP_OFFSET)
+        base_weapon_offset_location = vec(C.WEAPON_FORWARD_OFFSET, C.WEAPON_RIGHT_OFFSET, C.WEAPON_UP_OFFSET)
         base_weapon_visual_rotation = Vector.Zero()
     end
 
@@ -478,12 +393,12 @@ local function cache_view_weapon_base_transforms()
         cache_component_transform(weapon_components.pitch_pivot_b, weapon_base.pitch_a_location, weapon_base.pitch_a_rotation)
 
     weapon_base.gun_a_location, weapon_base.gun_a_rotation =
-        cache_component_transform(weapon_components.gun_a, Vector.Zero(), vec(GUN_ROTATION_ROLL, GUN_ROTATION_PITCH, GUN_ROTATION_YAW))
+        cache_component_transform(weapon_components.gun_a, Vector.Zero(), vec(C.GUN_ROTATION_ROLL, C.GUN_ROTATION_PITCH, C.GUN_ROTATION_YAW))
     weapon_base.gun_b_location, weapon_base.gun_b_rotation =
         cache_component_transform(weapon_components.gun_b, weapon_base.gun_a_location, weapon_base.gun_a_rotation)
 
     weapon_base.muzzle_a_location, weapon_base.muzzle_a_rotation =
-        cache_component_transform(weapon_components.muzzle_point_a, vec(MUZZLE_FORWARD_OFFSET, MUZZLE_RIGHT_OFFSET, MUZZLE_UP_OFFSET), Vector.Zero())
+        cache_component_transform(weapon_components.muzzle_point_a, vec(C.MUZZLE_FORWARD_OFFSET, C.MUZZLE_RIGHT_OFFSET, C.MUZZLE_UP_OFFSET), Vector.Zero())
     weapon_base.muzzle_b_location, weapon_base.muzzle_b_rotation =
         cache_component_transform(weapon_components.muzzle_point_b, weapon_base.muzzle_a_location, weapon_base.muzzle_a_rotation)
 
@@ -510,7 +425,7 @@ local function update_camera_view()
     obj.Rotation = vec(0.0, 0.0, yaw)
 
     if camera_pivot ~= nil then
-        camera_pivot.RelativeLocation = vec(0.0, 0.0, CAMERA_HEIGHT)
+        camera_pivot.RelativeLocation = vec(0.0, 0.0, C.CAMERA_HEIGHT)
         camera_pivot.Rotation = vec(0.0, pitch, 0.0)
     end
 
@@ -525,7 +440,7 @@ local function get_weapon_offset_for_pitch()
         cache_view_weapon_base_transforms()
     end
 
-    local pitch_alpha = clamp(pitch / WEAPON_PITCH_NORMALIZE, -1.0, 1.0)
+    local pitch_alpha = clamp(pitch / C.WEAPON_PITCH_NORMALIZE, -1.0, 1.0)
     local pitch_abs = math.abs(pitch_alpha)
     local pitch_curve = pitch_abs * pitch_abs
     local pitch_signed_curve = pitch_curve
@@ -534,11 +449,11 @@ local function get_weapon_offset_for_pitch()
     end
     local look_up_curve = -pitch_signed_curve
 
-    local visual_pitch = clamp(pitch * WEAPON_PITCH_SCALE, -WEAPON_MAX_VISUAL_PITCH, WEAPON_MAX_VISUAL_PITCH)
+    local visual_pitch = clamp(pitch * C.WEAPON_PITCH_SCALE, -C.WEAPON_MAX_VISUAL_PITCH, C.WEAPON_MAX_VISUAL_PITCH)
     local weapon_offset = vec(
-        base_weapon_offset_location.X - pitch_curve * WEAPON_PITCH_PULLBACK,
-        base_weapon_offset_location.Y - pitch_curve * WEAPON_PITCH_INWARD_OFFSET,
-        base_weapon_offset_location.Z + look_up_curve * WEAPON_PITCH_UP_OFFSET
+        base_weapon_offset_location.X - pitch_curve * C.WEAPON_PITCH_PULLBACK,
+        base_weapon_offset_location.Y - pitch_curve * C.WEAPON_PITCH_INWARD_OFFSET,
+        base_weapon_offset_location.Z + look_up_curve * C.WEAPON_PITCH_UP_OFFSET
     )
 
     return weapon_offset, visual_pitch
@@ -546,10 +461,10 @@ end
 
 local function get_beam_source_pitch_influence()
     if pitch > 0.0 then
-        return BEAM_SOURCE_DOWN_PITCH_INFLUENCE
+        return C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE
     end
 
-    return BEAM_SOURCE_PITCH_INFLUENCE
+    return C.BEAM_SOURCE_PITCH_INFLUENCE
 end
 
 local function get_beam_source_offset_for_pitch()
@@ -573,7 +488,7 @@ local function get_beam_source_point()
 
     if camera ~= nil then
         local weapon_offset = get_beam_source_offset_for_pitch()
-        local muzzle_offset = base_muzzle_location or vec(MUZZLE_FORWARD_OFFSET, MUZZLE_RIGHT_OFFSET, MUZZLE_UP_OFFSET)
+        local muzzle_offset = base_muzzle_location or vec(C.MUZZLE_FORWARD_OFFSET, C.MUZZLE_RIGHT_OFFSET, C.MUZZLE_UP_OFFSET)
         local pitch_influence = get_beam_source_pitch_influence()
         local camera_forward = camera.Forward
         local camera_right = camera.Right
@@ -611,16 +526,16 @@ local function get_beam_source_point()
         end
 
         return camera.Location
-            + forward * (weapon_offset.X + muzzle_offset.X + BEAM_SOURCE_FORWARD_BIAS)
-            + right * (weapon_offset.Y + muzzle_offset.Y + BEAM_SOURCE_RIGHT_BIAS)
-            + up * (weapon_offset.Z + muzzle_offset.Z + BEAM_SOURCE_UP_BIAS)
+            + forward * (weapon_offset.X + muzzle_offset.X + C.BEAM_SOURCE_FORWARD_BIAS)
+            + right * (weapon_offset.Y + muzzle_offset.Y + C.BEAM_SOURCE_RIGHT_BIAS)
+            + up * (weapon_offset.Z + muzzle_offset.Z + C.BEAM_SOURCE_UP_BIAS)
     end
 
     if muzzle_point ~= nil then
         return muzzle_point.Location
     end
 
-    return obj.Location + obj.Forward * (WEAPON_FORWARD_OFFSET + MUZZLE_FORWARD_OFFSET + BEAM_SOURCE_FORWARD_BIAS)
+    return obj.Location + obj.Forward * (C.WEAPON_FORWARD_OFFSET + C.MUZZLE_FORWARD_OFFSET + C.BEAM_SOURCE_FORWARD_BIAS)
 end
 
 local function get_beam_source_forward()
@@ -699,7 +614,7 @@ local function update_view_weapon()
         if camera ~= nil then
             view_weapon_root.Location = camera.Location
         else
-            view_weapon_root.RelativeLocation = vec(0.0, 0.0, CAMERA_HEIGHT)
+            view_weapon_root.RelativeLocation = vec(0.0, 0.0, C.CAMERA_HEIGHT)
         end
         view_weapon_root.Rotation = vec(
             base_view_weapon_root_rotation.X,
@@ -786,7 +701,7 @@ local function get_camera_aim_ray()
 end
 
 local function center_physics_raycast(max_distance)
-    local distance = max_distance or MAX_TRACE_DISTANCE
+    local distance = max_distance or C.MAX_TRACE_DISTANCE
     if aim_trace_cache.resolved_serial == aim_trace_cache.serial
         and aim_trace_cache.max_distance == distance then
         return aim_trace_cache.hit,
@@ -834,13 +749,13 @@ local function get_hit_point_or_end(hit, fallback_end)
 end
 
 local function get_camera_aim_point()
-    local hit, fallback_end = center_physics_raycast(MAX_TRACE_DISTANCE)
+    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     return get_hit_point_or_end(hit, fallback_end)
 end
 
 local function get_crosshair_target_world()
-    local hit, fallback_end = center_physics_raycast(MAX_TRACE_DISTANCE)
-    if Input.GetKey(KEY_LBUTTON) and hit ~= nil and hit.bHit then
+    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
+    if Input.GetKey(C.KEY_LBUTTON) and hit ~= nil and hit.bHit then
         return get_hit_point_or_end(hit, fallback_end)
     end
     return fallback_end
@@ -887,9 +802,9 @@ local function update_grab_distance_from_mouse_wheel()
     end
 
     grabbed_aim_distance = clamp(
-        grabbed_aim_distance + wheel_notches * GRAB_MOUSE_WHEEL_DISTANCE_STEP,
-        GRAB_MIN_AIM_DISTANCE,
-        GRAB_MAX_AIM_DISTANCE
+        grabbed_aim_distance + wheel_notches * C.GRAB_MOUSE_WHEEL_DISTANCE_STEP,
+        C.GRAB_MIN_AIM_DISTANCE,
+        C.GRAB_MAX_AIM_DISTANCE
     )
     grabbed_last_target_world = nil
     grabbed_target_velocity = Vector.Zero()
@@ -911,17 +826,17 @@ local function compute_grab_aim_distance(start, direction, grab_point, hit, fall
     if grab_point ~= nil then
         distance = (grab_point - start):Dot(direction)
     end
-    if (distance == nil or distance <= GRAB_MIN_AIM_DISTANCE) and hit ~= nil then
-        if hit.Distance ~= nil and hit.Distance > GRAB_MIN_AIM_DISTANCE then
+    if (distance == nil or distance <= C.GRAB_MIN_AIM_DISTANCE) and hit ~= nil then
+        if hit.Distance ~= nil and hit.Distance > C.GRAB_MIN_AIM_DISTANCE then
             distance = hit.Distance
-        elseif hit.Hit ~= nil and hit.Hit.Distance ~= nil and hit.Hit.Distance > GRAB_MIN_AIM_DISTANCE then
+        elseif hit.Hit ~= nil and hit.Hit.Distance ~= nil and hit.Hit.Distance > C.GRAB_MIN_AIM_DISTANCE then
             distance = hit.Hit.Distance
         end
     end
-    if (distance == nil or distance <= GRAB_MIN_AIM_DISTANCE) and fallback_end ~= nil then
+    if (distance == nil or distance <= C.GRAB_MIN_AIM_DISTANCE) and fallback_end ~= nil then
         distance = (fallback_end - start):Length()
     end
-    return clamp(distance or GRAB_MIN_AIM_DISTANCE, GRAB_MIN_AIM_DISTANCE, GRAB_MAX_AIM_DISTANCE)
+    return clamp(distance or C.GRAB_MIN_AIM_DISTANCE, C.GRAB_MIN_AIM_DISTANCE, C.GRAB_MAX_AIM_DISTANCE)
 end
 
 local function get_hit_physics_body(hit)
@@ -984,21 +899,21 @@ local function trigger_hit_rim_on_component(hit_component, should_flash, hit_loc
 
     if hit_location ~= nil then
         if should_flash and hit_component.TriggerHitRimAt ~= nil then
-            hit_component:TriggerHitRimAt(hit_location, HIT_RIM_DURATION, HIT_RIM_FLASH_INTENSITY, HIT_RIM_POWER, HIT_RIM_SUSTAIN_INTENSITY, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
+            hit_component:TriggerHitRimAt(hit_location, C.HIT_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
             return
         elseif hit_component.RefreshHitRimAt ~= nil then
-            hit_component:RefreshHitRimAt(hit_location, HIT_RIM_SUSTAIN_INTENSITY, HIT_RIM_POWER, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
+            hit_component:RefreshHitRimAt(hit_location, C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_RIM_POWER, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
             return
         end
     end
 
     if should_flash and hit_component.TriggerHitRim ~= nil then
-        hit_component:TriggerHitRim(HIT_RIM_DURATION, HIT_RIM_FLASH_INTENSITY, HIT_RIM_POWER, HIT_RIM_SUSTAIN_INTENSITY)
+        hit_component:TriggerHitRim(C.HIT_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY)
         if hit_location ~= nil and hit_component.SetHitImpactGlow ~= nil then
-            hit_component:SetHitImpactGlow(hit_location, HIT_IMPACT_RADIUS, HIT_IMPACT_CORE_RADIUS, HIT_IMPACT_INTENSITY)
+            hit_component:SetHitImpactGlow(hit_location, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
         end
     elseif hit_component.RefreshHitRim ~= nil then
-        hit_component:RefreshHitRim(HIT_RIM_SUSTAIN_INTENSITY, HIT_RIM_POWER)
+        hit_component:RefreshHitRim(C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_RIM_POWER)
     end
 end
 
@@ -1085,7 +1000,7 @@ local function apply_grab_force(delta_time, start, direction)
 
     local current_body_center = grabbed_body:GetLocation()
     local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
-    local error = clamp_vector_length(desired - current_grab_world, GRAB_MAX_ERROR)
+    local error = clamp_vector_length(desired - current_grab_world, C.GRAB_MAX_ERROR)
     local linear_velocity = grabbed_body:GetLinearVelocity()
 
     local grab_distance_along_ray = (current_grab_world - start):Dot(direction)
@@ -1095,8 +1010,8 @@ local function apply_grab_force(delta_time, start, direction)
     local current_min_distance = math.min(grab_distance_along_ray, body_surface_distance_along_ray)
     local min_distance_penetration = 0.0
     local blocked_inward_speed = 0.0
-    if current_min_distance < GRAB_MIN_AIM_DISTANCE then
-        min_distance_penetration = GRAB_MIN_AIM_DISTANCE - current_min_distance
+    if current_min_distance < C.GRAB_MIN_AIM_DISTANCE then
+        min_distance_penetration = C.GRAB_MIN_AIM_DISTANCE - current_min_distance
         local velocity_along_ray = linear_velocity:Dot(direction)
         blocked_inward_speed = math.max(-velocity_along_ray, 0.0)
         if velocity_along_ray < 0.0 then
@@ -1107,32 +1022,32 @@ local function apply_grab_force(delta_time, start, direction)
 
     local mass = math.max(grabbed_body:GetMass(), 0.001)
     local mass_scale = clamp(
-        math.pow(GRAB_REFERENCE_MASS / mass, GRAB_MASS_POWER),
-        GRAB_MIN_MASS_SCALE,
-        GRAB_MAX_MASS_SCALE
+        math.pow(C.GRAB_REFERENCE_MASS / mass, C.GRAB_MASS_POWER),
+        C.GRAB_MIN_MASS_SCALE,
+        C.GRAB_MAX_MASS_SCALE
     )
 
-    local acceleration = error * (GRAB_SPRING_ACCELERATION * mass_scale)
-        - linear_velocity * (GRAB_DAMPING_ACCELERATION * mass_scale)
+    local acceleration = error * (C.GRAB_SPRING_ACCELERATION * mass_scale)
+        - linear_velocity * (C.GRAB_DAMPING_ACCELERATION * mass_scale)
 
     if min_distance_penetration > 0.0 then
         local guard_acceleration = direction * (
-            min_distance_penetration * GRAB_MIN_DISTANCE_GUARD_ACCELERATION
-            + blocked_inward_speed * GRAB_MIN_DISTANCE_GUARD_DAMPING
+            min_distance_penetration * C.GRAB_MIN_DISTANCE_GUARD_ACCELERATION
+            + blocked_inward_speed * C.GRAB_MIN_DISTANCE_GUARD_DAMPING
         )
         acceleration = acceleration + guard_acceleration
     end
 
-    acceleration = clamp_vector_length(acceleration, GRAB_MAX_ACCELERATION * mass_scale)
+    acceleration = clamp_vector_length(acceleration, C.GRAB_MAX_ACCELERATION * mass_scale)
 
     local force = acceleration * mass
     grabbed_body:AddForce(force)
 
     local grab_offset = current_grab_world - current_body_center
     if grab_offset:Length() > 1.0 then
-        local torque = grab_offset:Cross(force) * (GRAB_TORQUE_SCALE * mass_scale)
-            - grabbed_body:GetAngularVelocity() * (GRAB_ANGULAR_DAMPING * mass * mass_scale)
-        torque = clamp_vector_length(torque, GRAB_MAX_TORQUE * mass * mass_scale)
+        local torque = grab_offset:Cross(force) * (C.GRAB_TORQUE_SCALE * mass_scale)
+            - grabbed_body:GetAngularVelocity() * (C.GRAB_ANGULAR_DAMPING * mass * mass_scale)
+        torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE * mass * mass_scale)
         grabbed_body:AddTorque(torque)
     end
 
@@ -1154,11 +1069,11 @@ local function end_beam_grab(should_throw)
     local owner_alive = grabbed_owner_actor ~= nil and grabbed_owner_actor:IsValid()
     if should_throw and owner_alive and grabbed_body ~= nil and grabbed_body.IsValid ~= nil and grabbed_body:IsValid() and grabbed_target_velocity ~= nil then
         local speed = grabbed_target_velocity:Length()
-        if speed > THROW_MIN_SPEED then
+        if speed > C.THROW_MIN_SPEED then
             local mass = math.max(grabbed_body:GetMass(), 0.001)
             local impulse = clamp_vector_length(
-                grabbed_target_velocity * (mass * THROW_IMPULSE_SCALE),
-                THROW_MAX_IMPULSE_PER_MASS * mass
+                grabbed_target_velocity * (mass * C.THROW_IMPULSE_SCALE),
+                C.THROW_MAX_IMPULSE_PER_MASS * mass
             )
             grabbed_body:AddImpulse(impulse)
             grabbed_body:WakeUp()
@@ -1166,7 +1081,7 @@ local function end_beam_grab(should_throw)
     end
 
     clear_grab_state()
-    beam_visible_remaining = BEAM_VISIBLE_TIME
+    beam_visible_remaining = C.BEAM_VISIBLE_TIME
 end
 
 local function update_active_grab(delta_time)
@@ -1174,7 +1089,7 @@ local function update_active_grab(delta_time)
         return false
     end
 
-    if not Input.GetKey(KEY_LBUTTON) then
+    if not Input.GetKey(C.KEY_LBUTTON) then
         end_beam_grab(true)
         return true
     end
@@ -1199,9 +1114,9 @@ end
 
 local function get_slot2_beam_visible_time(hit)
     if hit ~= nil and hit.bHit then
-        return SLOT2_BEAM_HIT_VISIBLE_TIME
+        return C.SLOT2_BEAM_HIT_VISIBLE_TIME
     end
-    return SLOT2_BEAM_MISS_VISIBLE_TIME
+    return C.SLOT2_BEAM_MISS_VISIBLE_TIME
 end
 
 set_beam_visible = function(is_visible)
@@ -1230,15 +1145,15 @@ set_beam_points = function(source_point, target_point)
             target_point,
             source_forward,
             target_direction,
-            BEAM_RENDER_SHEETS,
+            C.BEAM_RENDER_SHEETS,
             0,
-            BEAM_SOURCE_TANGENT_STRENGTH_SCALE,
-            BEAM_TARGET_TANGENT_STRENGTH_SCALE)
+            C.BEAM_SOURCE_TANGENT_STRENGTH_SCALE,
+            C.BEAM_TARGET_TANGENT_STRENGTH_SCALE)
         return
     end
 
     if beam_particle.SetBeamPoints ~= nil then
-        beam_particle:SetBeamPoints(source_point, target_point, 0, BEAM_RENDER_SHEETS)
+        beam_particle:SetBeamPoints(source_point, target_point, 0, C.BEAM_RENDER_SHEETS)
         return
     end
 
@@ -1262,12 +1177,12 @@ update_beam_points = function(aim_point)
 end
 
 local function apply_slot2_fire(delta_time)
-    if not Input.GetKeyDown(KEY_LBUTTON) then
+    if not Input.GetKeyDown(C.KEY_LBUTTON) then
         update_beam_fade(delta_time)
         return
     end
 
-    local hit, fallback_end = center_physics_raycast(MAX_TRACE_DISTANCE)
+    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
 
@@ -1305,7 +1220,7 @@ local function begin_weapon_swap()
 end
 
 local function update_weapon_swap(delta_time)
-    if Input.GetKeyDown(KEY_Q) then
+    if Input.GetKeyDown(C.KEY_Q) then
         begin_weapon_swap()
     end
 
@@ -1314,11 +1229,11 @@ local function update_weapon_swap(delta_time)
     end
 
     weapon_swap_state.elapsed = weapon_swap_state.elapsed + math.max(delta_time or 0.0, 0.0)
-    local alpha = ease_in_out(weapon_swap_state.elapsed / WEAPON_SWAP_DURATION)
+    local alpha = ease_in_out(weapon_swap_state.elapsed / C.WEAPON_SWAP_DURATION)
     weapon_swap_state.current_angle = weapon_swap_state.start_angle
         + (weapon_swap_state.target_angle - weapon_swap_state.start_angle) * alpha
 
-    if weapon_swap_state.elapsed >= WEAPON_SWAP_DURATION then
+    if weapon_swap_state.elapsed >= C.WEAPON_SWAP_DURATION then
         weapon_swap_state.current_angle = weapon_swap_state.target_angle
         weapon_swap_state.is_active = false
         set_active_weapon(weapon_swap_state.pending_index)
@@ -1329,8 +1244,8 @@ local function apply_look_input()
     local mouse_x = Input.GetMouseDeltaX()
     local mouse_y = Input.GetMouseDeltaY()
 
-    yaw = yaw + mouse_x * LOOK_SENSITIVITY
-    pitch = clamp(pitch + mouse_y * LOOK_SENSITIVITY, MIN_PITCH, MAX_PITCH)
+    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY
+    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY, C.MIN_PITCH, C.MAX_PITCH)
 
     obj.Rotation = vec(0.0, 0.0, yaw)
 end
@@ -1347,18 +1262,18 @@ local function get_hit_normal(hit)
         return nil
     end
 
-    if hit.WorldNormal ~= nil and hit.WorldNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+    if hit.WorldNormal ~= nil and hit.WorldNormal:Length() > C.CAPSULE_SWEEP_MIN_MOVE then
         return hit.WorldNormal
     end
-    if hit.ImpactNormal ~= nil and hit.ImpactNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+    if hit.ImpactNormal ~= nil and hit.ImpactNormal:Length() > C.CAPSULE_SWEEP_MIN_MOVE then
         return hit.ImpactNormal
     end
 
     if hit.Hit ~= nil then
-        if hit.Hit.WorldNormal ~= nil and hit.Hit.WorldNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+        if hit.Hit.WorldNormal ~= nil and hit.Hit.WorldNormal:Length() > C.CAPSULE_SWEEP_MIN_MOVE then
             return hit.Hit.WorldNormal
         end
-        if hit.Hit.ImpactNormal ~= nil and hit.Hit.ImpactNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+        if hit.Hit.ImpactNormal ~= nil and hit.Hit.ImpactNormal:Length() > C.CAPSULE_SWEEP_MIN_MOVE then
             return hit.Hit.ImpactNormal
         end
     end
@@ -1381,14 +1296,14 @@ end
 
 local function get_floor_hit(extra_distance)
     if World ~= nil and World.PhysicsRaycast ~= nil then
-        local probe_distance = PLAYER_CAPSULE_HALF_HEIGHT + GROUND_PROBE_DISTANCE + math.max(extra_distance or 0.0, 0.0)
+        local probe_distance = C.PLAYER_CAPSULE_HALF_HEIGHT + C.GROUND_PROBE_DISTANCE + math.max(extra_distance or 0.0, 0.0)
         local hit = World.PhysicsRaycast(obj.Location, Vector.Down(), probe_distance, obj)
         if hit == nil or not hit.bHit then
             return nil
         end
 
         local normal = get_hit_normal(hit)
-        if normal ~= nil and normal.Z < GROUND_WALKABLE_NORMAL_Z then
+        if normal ~= nil and normal.Z < C.GROUND_WALKABLE_NORMAL_Z then
             return nil
         end
 
@@ -1421,7 +1336,7 @@ local function snap_actor_to_floor(hit)
     end
 
     local location = obj.Location
-    location.Z = floor_location.Z + PLAYER_CAPSULE_HALF_HEIGHT
+    location.Z = floor_location.Z + C.PLAYER_CAPSULE_HALF_HEIGHT
     obj.Location = location
 end
 
@@ -1435,7 +1350,7 @@ local function is_grounded(velocity, extra_distance)
         return false, nil
     end
 
-    return math.abs(velocity.Z) <= GROUNDED_Z_VELOCITY_EPSILON
+    return math.abs(velocity.Z) <= C.GROUNDED_Z_VELOCITY_EPSILON
 end
 
 local function is_capsule_blocking_hit(hit)
@@ -1453,13 +1368,13 @@ local function is_capsule_blocking_hit(hit)
         return false
     end
 
-    if normal.Z >= GROUND_WALKABLE_NORMAL_Z then
+    if normal.Z >= C.GROUND_WALKABLE_NORMAL_Z then
         return false
     end
 
     local lateral_normal = vec(normal.X, normal.Y, 0.0)
     local lateral_length = lateral_normal:Length()
-    if lateral_length <= CAPSULE_SWEEP_MIN_MOVE then
+    if lateral_length <= C.CAPSULE_SWEEP_MIN_MOVE then
         return false
     end
 
@@ -1468,7 +1383,7 @@ end
 
 local function sweep_capsule_delta(start, delta)
     local distance = delta:Length()
-    if distance <= CAPSULE_SWEEP_MIN_MOVE then
+    if distance <= C.CAPSULE_SWEEP_MIN_MOVE then
         return delta, nil
     end
 
@@ -1477,9 +1392,9 @@ local function sweep_capsule_delta(start, delta)
     end
 
     local direction = delta:Normalized()
-    local sweep_shrink = math.min(CAPSULE_SWEEP_SKIN, PLAYER_CAPSULE_RADIUS * 0.45)
-    local sweep_radius = math.max(PLAYER_CAPSULE_RADIUS - sweep_shrink, 0.001)
-    local sweep_half_height = math.max(PLAYER_CAPSULE_HALF_HEIGHT - sweep_shrink, sweep_radius + 0.001)
+    local sweep_shrink = math.min(C.CAPSULE_SWEEP_SKIN, C.PLAYER_CAPSULE_RADIUS * 0.45)
+    local sweep_radius = math.max(C.PLAYER_CAPSULE_RADIUS - sweep_shrink, 0.001)
+    local sweep_half_height = math.max(C.PLAYER_CAPSULE_HALF_HEIGHT - sweep_shrink, sweep_radius + 0.001)
     local hit = World.CapsuleSweep(
         start,
         direction,
@@ -1496,7 +1411,7 @@ local function sweep_capsule_delta(start, delta)
         return Vector.Zero(), hit
     end
 
-    local allowed_distance = math.max(hit_distance - CAPSULE_SWEEP_SKIN, 0.0)
+    local allowed_distance = math.max(hit_distance - C.CAPSULE_SWEEP_SKIN, 0.0)
     allowed_distance = math.min(allowed_distance, distance)
     return direction * allowed_distance, hit
 end
@@ -1508,7 +1423,7 @@ local function project_delta_along_surface(delta, normal)
 
     local wall_normal = vec(normal.X, normal.Y, 0.0)
     local normal_length = wall_normal:Length()
-    if normal_length <= CAPSULE_SWEEP_MIN_MOVE then
+    if normal_length <= C.CAPSULE_SWEEP_MIN_MOVE then
         return Vector.Zero()
     end
 
@@ -1522,7 +1437,7 @@ local function project_delta_along_surface(delta, normal)
 end
 
 local function resolve_horizontal_collision(horizontal_delta)
-    if horizontal_delta:Length() <= CAPSULE_SWEEP_MIN_MOVE then
+    if horizontal_delta:Length() <= C.CAPSULE_SWEEP_MIN_MOVE then
         return horizontal_delta
     end
 
@@ -1536,7 +1451,7 @@ local function resolve_horizontal_collision(horizontal_delta)
 
     local slide_delta = project_delta_along_surface(remaining_delta, get_hit_normal(hit))
     slide_delta.Z = 0.0
-    if slide_delta:Length() <= CAPSULE_SWEEP_MIN_MOVE then
+    if slide_delta:Length() <= C.CAPSULE_SWEEP_MIN_MOVE then
         return first_delta
     end
 
@@ -1552,16 +1467,16 @@ local function apply_kinematic_movement(delta_time)
     local right = flat_normalized(obj.Right)
     local move_dir = Vector.Zero()
 
-    if Input.GetKey(KEY_W) then
+    if Input.GetKey(C.KEY_W) then
         move_dir = move_dir + forward
     end
-    if Input.GetKey(KEY_S) then
+    if Input.GetKey(C.KEY_S) then
         move_dir = move_dir - forward
     end
-    if Input.GetKey(KEY_D) then
+    if Input.GetKey(C.KEY_D) then
         move_dir = move_dir + right
     end
-    if Input.GetKey(KEY_A) then
+    if Input.GetKey(C.KEY_A) then
         move_dir = move_dir - right
     end
 
@@ -1569,7 +1484,7 @@ local function apply_kinematic_movement(delta_time)
     local horizontal_velocity = Vector.Zero()
 
     if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized() * MOVE_SPEED
+        horizontal_velocity = move_dir:Normalized() * C.MOVE_SPEED
     end
 
     velocity.X = horizontal_velocity.X
@@ -1582,13 +1497,13 @@ local function apply_kinematic_movement(delta_time)
     end
 
     local did_jump = false
-    if Input.GetKeyDown(KEY_SPACE) and grounded then
-        velocity.Z = JUMP_VELOCITY
+    if Input.GetKeyDown(C.KEY_SPACE) and grounded then
+        velocity.Z = C.JUMP_VELOCITY
         did_jump = true
     end
 
     if did_jump or not grounded or velocity.Z > 0.0 then
-        velocity.Z = velocity.Z - GRAVITY_ACCELERATION * delta_time
+        velocity.Z = velocity.Z - C.GRAVITY_ACCELERATION * delta_time
     end
 
     local horizontal_delta = vec(velocity.X, velocity.Y, 0.0) * delta_time
@@ -1628,14 +1543,14 @@ local function apply_fire(delta_time)
         return
     end
 
-    local is_fire_pressed = Input.GetKeyDown(KEY_LBUTTON)
-    local is_fire_held = Input.GetKey(KEY_LBUTTON)
+    local is_fire_pressed = Input.GetKeyDown(C.KEY_LBUTTON)
+    local is_fire_held = Input.GetKey(C.KEY_LBUTTON)
     if not is_fire_held then
         update_beam_fade(delta_time)
         return
     end
 
-    local hit, fallback_end, start, direction = center_physics_raycast(MAX_TRACE_DISTANCE)
+    local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
     if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
         return
@@ -1648,7 +1563,7 @@ local function apply_fire(delta_time)
     end
     update_beam_points(last_aim_point)
     set_beam_visible(true)
-    beam_visible_remaining = BEAM_VISIBLE_TIME
+    beam_visible_remaining = C.BEAM_VISIBLE_TIME
 end
 
 function BeginPlay()

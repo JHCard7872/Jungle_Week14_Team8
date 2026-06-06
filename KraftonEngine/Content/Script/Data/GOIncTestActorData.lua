@@ -1,0 +1,101 @@
+-- ==========================================================================
+-- GOIncTestActorData — GOIncTestActor(1인칭 플레이어) 튜닝 상수 (require 모듈, 읽기 전용)
+-- [역할] 이동/점프 물리, 시점, 크로스헤어, 빔/히트 연출, 그랩/던지기, 무기 ViewModel 튜닝값.
+-- [사용법] local C = require("Data/GOIncTestActorData")
+-- [특이사항] GOIncTestActor.lua 전용. top-level local 200개 리밋을 피하려고 상수만 분리.
+--            이 파일 저장 시 모듈 캐시는 비워지지만 액터가 이미 든 참조는 다음 씬 로드부터
+--            반영된다. 즉시 반영하려면 GOIncTestActor.lua를 재저장(touch)해 액터를 리로드.
+-- ==========================================================================
+
+-- 파생 상수의 기준값. 테이블 생성자 안에서는 자기 필드 참조가 불가해 local로 선행 정의한다
+local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
+local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
+
+return {
+    KEY_W = 0x57,       -- 전진 입력 키: W
+    KEY_A = 0x41,       -- 좌측 이동 입력 키: A
+    KEY_S = 0x53,       -- 후진 입력 키: S
+    KEY_D = 0x44,       -- 우측 이동 입력 키: D
+    KEY_SPACE = 0x20,   -- 점프 입력 키: Space
+    KEY_LBUTTON = 0x01, -- 발사 입력 키: 마우스 왼쪽 버튼
+    KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
+
+    CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml",
+    CROSSHAIR_Z_ORDER = 1000,
+    CROSSHAIR_EASE_SPEED = 20.0, -- 조준선이 Hit 지점과 MaxDistance 지점 사이를 따라가는 속도
+    CROSSHAIR_SCREEN_PADDING = 0.0,
+
+    MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
+    JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
+    GRAVITY_ACCELERATION = 9.8,         -- PhysX 시뮬레이션 대신 엔진 쪽 이동에서 직접 적용할 중력 가속도
+    PLAYER_CAPSULE_HALF_HEIGHT = 1.0,   -- GOIncRoot 캡슐의 실제 월드 반높이. Scene의 HalfHeight 2.0 * ScaleZ 0.5
+    PLAYER_CAPSULE_RADIUS = 0.5,        -- GOIncRoot 캡슐의 실제 월드 반지름. Scene의 Radius 1.0 * ScaleXY 0.5
+    GROUND_PROBE_DISTANCE = 0.18,       -- 캡슐 바닥 아래로 더 확인할 여유 거리. 너무 크면 낮은 단차에 과하게 붙는다
+    GROUND_WALKABLE_NORMAL_Z = 0.55,    -- 이 값보다 위를 향한 표면만 바닥으로 취급해 벽/측면 hit를 배제
+    CAPSULE_SWEEP_SKIN = 0.04,          -- CapsuleSweep 결과에서 벽에 딱 붙지 않게 남기는 최소 여유
+    CAPSULE_SWEEP_MIN_MOVE = 0.0001,    -- 너무 작은 이동량은 sweep을 생략해 떨림을 줄인다
+    GROUNDED_Z_VELOCITY_EPSILON = 0.05, -- Raycast가 없을 때 접지 판정에 쓰는 Z 속도 허용값
+
+    LOOK_SENSITIVITY = 0.12,  -- 마우스 이동량을 Yaw/Pitch 각도로 바꾸는 감도
+    MIN_PITCH = -30.0,        -- 1인칭 카메라가 위를 볼 수 있는 최소 Pitch. 이 엔진은 음수 Pitch가 위쪽
+    MAX_PITCH = 20.0,         -- 1인칭 카메라가 아래를 볼 수 있는 최대 Pitch
+    CAMERA_HEIGHT = 1.2,      -- Root 기준 카메라 피벗 높이
+    MAX_TRACE_DISTANCE = MAX_TRACE_DISTANCE,
+    BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
+    SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
+    SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16, -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
+    HIT_RIM_DURATION = 0.50,
+    HIT_RIM_FLASH_INTENSITY = 3.5,
+    HIT_RIM_SUSTAIN_INTENSITY = 1.6,
+    HIT_RIM_POWER = 2.8,
+    HIT_IMPACT_RADIUS = 0.16,
+    HIT_IMPACT_CORE_RADIUS = 0.055,
+    HIT_IMPACT_INTENSITY = 2.6,
+    GRAB_SPRING_ACCELERATION = 220.0,
+    GRAB_DAMPING_ACCELERATION = 36.0,
+    GRAB_MAX_ERROR = 80.0,
+    GRAB_MAX_ACCELERATION = 20000.0,
+    GRAB_TORQUE_SCALE = 0.65,
+    GRAB_ANGULAR_DAMPING = 10.0,
+    GRAB_MAX_TORQUE = 100000.0,
+    GRAB_REFERENCE_MASS = 1.0,
+    GRAB_MASS_POWER = 0.35,
+    GRAB_MIN_MASS_SCALE = 0.45,
+    GRAB_MAX_MASS_SCALE = 1.15,
+    GRAB_MIN_AIM_DISTANCE = 0.35,
+    GRAB_MAX_AIM_DISTANCE = MAX_TRACE_DISTANCE,
+    GRAB_MOUSE_WHEEL_DISTANCE_STEP = 1.25,
+    GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 1400.0,
+    GRAB_MIN_DISTANCE_GUARD_DAMPING = 120.0,
+    THROW_IMPULSE_SCALE = 0.35,
+    THROW_MAX_IMPULSE_PER_MASS = 120.0,
+    THROW_MIN_SPEED = 0.5,
+
+    WEAPON_FORWARD_OFFSET = 0.85, -- 카메라 로컬 Forward 기준 총 화면 위치
+    WEAPON_RIGHT_OFFSET = 0.40,   -- 카메라 로컬 Right 기준 총 화면 위치
+    WEAPON_UP_OFFSET = -0.20,     -- 카메라 로컬 Up 기준 총 화면 위치. 음수면 화면 아래
+    WEAPON_PITCH_SCALE = 0.01,    -- 카메라 Pitch가 총 시각 PitchPivot에 전달되는 비율
+    WEAPON_MAX_VISUAL_PITCH = 1.0, -- 총 시각 PitchPivot이 추가로 회전할 수 있는 최대 각도
+    WEAPON_PITCH_NORMALIZE = 80.0, -- Pitch 보정 곡선을 만들 때 정규화 기준으로 쓰는 카메라 Pitch
+    WEAPON_PITCH_PULLBACK = 0.05,  -- 극단 Pitch에서 총을 카메라 쪽으로 살짝 당기는 Forward 보정량
+    WEAPON_PITCH_INWARD_OFFSET = 0.00, -- 극단 Pitch에서 총을 화면 안쪽으로 넣는 Right 보정량
+    WEAPON_PITCH_UP_OFFSET = 0.04, -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
+    WEAPON_SWAP_DURATION = 0.28,
+    WEAPON_SWAP_ROTATION_DEGREES = 180.0,
+    WEAPON_SWAP_DIRECTION = -1.0,
+
+    GUN_ROTATION_ROLL = -18.087906,  -- GunMesh 기본 Roll. 씬에 GunMesh가 없을 때 fallback
+    GUN_ROTATION_PITCH = -2.707027,  -- GunMesh 기본 Pitch. 씬에 GunMesh가 없을 때 fallback
+    GUN_ROTATION_YAW = -3.752036,    -- GunMesh 기본 Yaw. 씬에 GunMesh가 없을 때 fallback
+    MUZZLE_FORWARD_OFFSET = 0.95,    -- MuzzlePoint 기본 Forward 위치. 씬에 MuzzlePoint가 없을 때 fallback
+    MUZZLE_RIGHT_OFFSET = 0.0,       -- MuzzlePoint 기본 Right 위치. 씬에 MuzzlePoint가 없을 때 fallback
+    MUZZLE_UP_OFFSET = 0.05,         -- MuzzlePoint 기본 Up 위치. 씬에 MuzzlePoint가 없을 때 fallback
+    BEAM_SOURCE_FORWARD_BIAS = 0.0, -- Beam 시작점을 총구 기준 앞/뒤로 미세 보정. 음수면 카메라 쪽
+    BEAM_SOURCE_RIGHT_BIAS = -0.1,     -- Beam 시작점 좌우 미세 보정
+    BEAM_SOURCE_UP_BIAS = 0.0,        -- Beam 시작점 상하 미세 보정
+    BEAM_SOURCE_PITCH_INFLUENCE = 0.9, -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
+    BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45, -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
+    BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
+    BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
+    BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
+}
