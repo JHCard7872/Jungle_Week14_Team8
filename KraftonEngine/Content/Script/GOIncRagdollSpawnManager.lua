@@ -5,48 +5,24 @@
 --   GOInc.SpawnRagdollCharacter(characterId, location)
 --
 -- Character-specific mesh/physics/animation settings live in C++ Pawn subclasses.
--- This manager only owns spawn policy: id, displayName, weight, interval, count, location.
+-- This manager only owns spawn policy: id, displayName, spawnWeight, interval, count, location.
+-- spawnWeight <= 0 means the entry will not spawn.
+-- canSpawn = false also disables the entry if the field exists.
 
-local SPAWN_MIN_X = -10.0
-local SPAWN_MAX_X = 10.0
-local SPAWN_MIN_Y = -10.0
-local SPAWN_MAX_Y = 10.0
-local SPAWN_Z = 1.0
+local SpawnCfg = require("Data.GameConfig").spawn
 
-local SPAWN_INTERVAL = 2.0
-local MAX_SPAWN_COUNT = 10
-local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = true
+local SPAWN_MIN_X = SpawnCfg.areaMinX
+local SPAWN_MAX_X = SpawnCfg.areaMaxX
+local SPAWN_MIN_Y = SpawnCfg.areaMinY
+local SPAWN_MAX_Y = SpawnCfg.areaMaxY
+local SPAWN_Z = SpawnCfg.z
 
-local DEFAULT_CHARACTER_ID = "blue-speedster"
+local SPAWN_INTERVAL = SpawnCfg.interval
+local MAX_SPAWN_COUNT = SpawnCfg.maxCount
+local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = SpawnCfg.immediateFirst
 
--- 캐릭터별 mesh/physics/animation 데이터는 각 C++ Pawn subclass가 가진다.
--- SpawnManager는 어떤 characterId를 어떤 weight로 뽑을지만 관리한다.
-local SpawnTable = {
-    {
-        id = "blue-speedster",
-        displayName = "파란 고슴도치",
-        weight = 10.0,
-        canSpawn = true,
-    },
-    {
-        id = "pink-round",
-        displayName = "분홍 동글이",
-        weight = 8.0,
-        canSpawn = true,
-    },
-    {
-        id = "brown-gorilla",
-        displayName = "갈색 고릴라",
-        weight = 3.0,
-        canSpawn = true,
-    },
-    {
-        id = "yellow-mouse",
-        displayName = "노란 전기쥐",
-        weight = 7.0,
-        canSpawn = true,
-    },
-}
+local DEFAULT_CHARACTER_ID = SpawnCfg.defaultRagdollId or "blue-speedster"
+local RagdollData = nil
 
 local spawnTimer = 0.0
 local spawnedCount = 0
@@ -64,34 +40,59 @@ local function random_range(minValue, maxValue)
     return minValue + (maxValue - minValue) * math.random()
 end
 
-local function is_spawnable_entry(entry)
-    if type(entry) ~= "table" then
+local function load_ragdoll_data()
+    if RagdollData ~= nil then
+        return RagdollData
+    end
+
+    local moduleNames = {
+        "RagdollData",
+        "Data.RagdollData",
+        "Data/RagdollData",
+    }
+
+    for _, moduleName in ipairs(moduleNames) do
+        local ok, result = pcall(require, moduleName)
+        if ok and result ~= nil then
+            RagdollData = result
+            print("[GOIncRagdollSpawnManager] Loaded " .. moduleName)
+            return RagdollData
+        end
+    end
+
+    print("[GOIncRagdollSpawnManager] Failed to load RagdollData.lua")
+    return nil
+end
+
+local function is_spawnable_config(config)
+    if type(config) ~= "table" then
         return false
     end
 
-    if entry.canSpawn == false then
+    if config.canSpawn == false then
         return false
     end
 
-    if type(entry.id) ~= "string" or entry.id == "" then
-        return false
-    end
-
-    return number_or(entry.weight, 0.0) > 0.0
+    return number_or(config.spawnWeight, 0.0) > 0.0
 end
 
 local function build_spawn_candidates()
+    local data = load_ragdoll_data()
+    if data == nil then
+        return nil, 0.0
+    end
+
     local candidates = {}
     local totalWeight = 0.0
 
-    for _, entry in ipairs(SpawnTable) do
-        if is_spawnable_entry(entry) then
-            local weight = number_or(entry.weight, 0.0)
+    for id, config in pairs(data) do
+        if type(id) == "string" and id ~= "" and is_spawnable_config(config) then
+            local weight = number_or(config.spawnWeight, 0.0)
             totalWeight = totalWeight + weight
 
             table.insert(candidates, {
-                id = entry.id,
-                displayName = entry.displayName or entry.id,
+                id = id,
+                displayName = config.displayName or id,
                 weight = weight,
             })
         end

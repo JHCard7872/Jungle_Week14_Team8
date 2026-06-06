@@ -10,9 +10,8 @@
 -- ============================================================================
 
 local Session = require("GameSession")
+local Config  = require("Data/GameConfig")
 local Timer   = require("Manager/TimerManager")
-
-local LOAD_PER_RAGDOLL = 0.5   -- 방치 1마리가 1초당 올리는 부하(%)  -- 임시 밸런스
 
 local M = {}
 local abandonedCount = 0   -- 0.5초 주기 샘플링 캐시
@@ -32,7 +31,7 @@ end
 
 function M.Update(dt)
     if abandonedCount <= 0 then return end
-    Session.load = Session.load + abandonedCount * LOAD_PER_RAGDOLL * dt
+    Session.load = Session.load + abandonedCount * Config.loadPerRagdoll * dt
 end
 
 return M

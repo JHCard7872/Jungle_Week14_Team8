@@ -42,9 +42,9 @@ void FAudioManager::Shutdown()
 
 	for (auto& Pair : Audios)
 	{
-		if (Pair.second)
+		if (Pair.second.Sound)
 		{
-			Pair.second->release();
+			Pair.second.Sound->release();
 		}
 	}
 	Audios.clear();
@@ -70,6 +70,16 @@ bool FAudioManager::LoadAudio(const FString& Key, const FString& Path, bool bLoo
 		return false;
 	}
 
+	// 같은 키가 같은 파일/루프 모드로 이미 로드돼 있으면 그대로 재사용 —
+	// 씬 BeginPlay마다 AudioData 전체를 다시 Load해도 재디코드가 없어
+	// PIE 시작/씬 전환 렉을 막는다. 경로나 루프 모드가 바뀐 경우에만 재로드.
+	auto It = Audios.find(Key);
+	if (It != Audios.end() && It->second.Sound
+		&& It->second.Path == Path && It->second.bLoop == bLoop)
+	{
+		return true;
+	}
+
 	FString FullPath = FPaths::ToUtf8(FPaths::Combine(FPaths::AudioDir(), FPaths::ToWide(Path)));
 
 	FMOD::Sound* Sound = nullptr;
@@ -80,12 +90,12 @@ bool FAudioManager::LoadAudio(const FString& Key, const FString& Path, bool bLoo
 		return false;
 	}
 
-	if (Audios.contains(Key) && Audios[Key])
+	if (It != Audios.end() && It->second.Sound)
 	{
-		Audios[Key]->release();
+		It->second.Sound->release();
 	}
 
-	Audios[Key] = Sound;
+	Audios[Key] = { Sound, Path, bLoop };
 	return true;
 }
 
@@ -97,7 +107,7 @@ void FAudioManager::PlayAudio(const FString& Key, float Volume)
 	}
 
 	FMOD::Channel* Channel = nullptr;
-	System->playSound(Audios[Key], nullptr, false, &Channel);
+	System->playSound(Audios[Key].Sound, nullptr, false, &Channel);
 
 	if (Channel)
 	{
@@ -113,7 +123,7 @@ void FAudioManager::PlayBGM(const FString& Key, float Volume)
 	}
 
 	StopBGM();
-	System->playSound(Audios[Key], nullptr, false, &BGMChannel);
+	System->playSound(Audios[Key].Sound, nullptr, false, &BGMChannel);
 
 	if (BGMChannel)
 	{
@@ -168,7 +178,7 @@ void FAudioManager::PlayLoop(const FString& Key, const FString& LoopName, float 
 	}
 
 	FMOD::Channel* Channel = nullptr;
-	System->playSound(Audios[Key], nullptr, false, &Channel);
+	System->playSound(Audios[Key].Sound, nullptr, false, &Channel);
 
 	if (Channel)
 	{

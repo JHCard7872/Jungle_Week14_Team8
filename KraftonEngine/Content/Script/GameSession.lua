@@ -26,7 +26,6 @@ local S = {
     },
 
     result = {
-        
         collectedCount = 0,   -- 총 수거 수
         gameOverReason = "",  -- "시간 초과" / "서버 과부하"
         gradeText      = "",  -- 평가 문구 ("정규직 전환 실패" 등) — 3차 폴리시

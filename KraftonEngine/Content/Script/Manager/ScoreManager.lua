@@ -2,7 +2,7 @@
 -- ScoreManager — 점수 규칙 (require 모듈)
 -- [역할] 수거 점수 계산만: baseScore × 금/은 배수 → Session.score에 쓴다.
 --        수거 카운트(result.collectedCount)도 여기서만 올린다.
--- [사용법] 수거 시 CollectionZoneBehavior가 AddForRagdoll(actor) 호출,
+-- [사용법] 수거 시 TruckBehavior가 AddForRagdoll(actor) 호출,
 --          MissionManager가 달성 보너스로 AddBonus(n) 호출.
 -- [특이사항] Session에 공유 값을 저장하지 않는다 — GetScore() 같은 건 없고
 --            HUD는 Session.score를 직독한다. 타입 판별 헬퍼 FindType은

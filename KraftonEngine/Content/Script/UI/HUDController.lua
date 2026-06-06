@@ -202,7 +202,8 @@ local function apply_target_info()
     widget:SetText("hud_target_name", state.target.name)
     widget:SetText("hud_target_weight", state.target.weightText)
     widget:SetText("hud_target_score", state.target.scoreText)
-    widget:SetProperty("hud_target_pose_image", "src", state.target.imagePath)
+    -- src는 스타일이 아니라 요소 속성 — SetProperty로 넣으면 RmlUi 파싱 오류가 난다
+    widget:SetAttribute("hud_target_pose_image", "src", state.target.imagePath)
 end
 
 local function apply_debug_panel_state()

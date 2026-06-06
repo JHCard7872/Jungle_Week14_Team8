@@ -9,7 +9,6 @@ local Config   = require("Data/GameConfig")
 local ScoreMgr = require("Manager/ScoreManager")
 local LoadMgr  = require("Manager/ServerLoadManager")
 local MissionM = require("Manager/MissionManager")
-local SpawnMgr = require("Manager/SpawnManager")
 
 local elapsed = 0
 local loadReported = false
@@ -25,7 +24,7 @@ end
 function BeginPlay()
     print("[P2] ---- Phase 2 smoke start ----")
     Session.Reset(Config.timeLimit)
-    ScoreMgr.Start(); SpawnMgr.Start()
+    ScoreMgr.Start()
 
     -- 1) 임계치 미만 fallback: 슬라임 2마리뿐(min=3) → 최다 보유 타입을 보유 수만큼
     spawnFake("green-slime"); spawnFake("green-slime")

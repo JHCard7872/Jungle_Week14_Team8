@@ -35,7 +35,9 @@ local function reportFinal()
     if finalReported then return end
     finalReported = true
     local items = {
-        { "사운드",     results.sound },
+        { "대기무음",   results.soundWait },
+        { "주행엔진음", results.soundDrive },
+        { "재대기무음", results.soundStop },
         { "대기",       results.wait },
         { "출발",       results.depart },
         { "수거",       results.collect },
@@ -61,7 +63,7 @@ function BeginPlay()
 
     -- 사운드 일괄 등록 (각 씬 BeginPlay의 공통 규약 — AudioData.lua 참고)
     for key, path in pairs(require("Data/AudioData")) do
-        AudioManager.Load(key, path, key:find("^Bgm") ~= nil)
+        AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
 
     -- 점수/미션 가동 (FakeRagdoll 1마리뿐 → fallback 미션 "빨간 배관공 1체 수거" 발급)
@@ -105,12 +107,12 @@ function Tick(dt)
         if d < minDist[i] then minDist[i] = d end
     end
 
-    -- 1) 사운드: 대기 중에도 엔진음 루프는 재생
+    -- 1) 사운드: 대기 중에는 엔진음이 꺼져 있어야 한다
     if elapsed > 2 and not soundChecked then
         soundChecked = true
-        results.sound = AudioManager.IsLoopPlaying("TruckLoop")
-        print("[TRUCK] engine loop playing = " .. tostring(results.sound))
-        -- 기대: true (BgmCollectorTruck.mp3 로드 실패면 false — Load 실패 로그 확인)
+        results.soundWait = not AudioManager.IsLoopPlaying("TruckLoop")
+        print("[TRUCK] 대기 중 엔진음 정지 = " .. tostring(results.soundWait))
+        -- 기대: true
     end
 
     -- 2) 출발 전 대기: waitTime 절반 시점까지 이동량 0이어야 함
@@ -121,12 +123,15 @@ function Tick(dt)
         -- 기대: 이동량 0.00
     end
 
-    -- 3) 출발: waitTime 경과 직후 이동 시작
+    -- 3) 출발: waitTime 경과 직후 이동 시작 + 엔진음 재생 시작
     if movedDist > 0.5 and not departed then
         departed = true
         results.depart = true
-        print(string.format("[TRUCK] 출발 감지 (%.1fs)", elapsed))
-        -- 기대: waitTime(기본 60초) 직후
+        results.soundDrive = AudioManager.IsLoopPlaying("TruckLoop")
+        print(string.format("[TRUCK] 출발 감지 (%.1fs) 엔진음 = %s",
+            elapsed, tostring(results.soundDrive)))
+        -- 기대: waitTime 직후, 엔진음 = true
+        --       (BgmCollectorTruck.mp3 로드 실패면 false — Load 실패 로그 확인)
     end
 
     -- 4) 수거: 트럭이 FakeRagdoll 위를 지나면 Destroy + 점수/미션 보너스
@@ -166,8 +171,10 @@ function Tick(dt)
         if stillTime > 3 then
             cycleReported = true
             results.cycle = true
-            print(string.format("[TRUCK] 재대기 진입 OK (%.1fs)", elapsed))
-            -- 기대: 순회 종료 웨이포인트에서 정지한 채 출력
+            results.soundStop = not AudioManager.IsLoopPlaying("TruckLoop")
+            print(string.format("[TRUCK] 재대기 진입 OK (%.1fs) 엔진음 정지 = %s",
+                elapsed, tostring(results.soundStop)))
+            -- 기대: 순회 종료 웨이포인트에서 정지한 채 출력, 엔진음 정지 = true
 
             -- 7) 오감지 없음: 태그 없는 FakeProp은 살아있어야 한다
             local prop = World.FindActorByName("FakeProp")

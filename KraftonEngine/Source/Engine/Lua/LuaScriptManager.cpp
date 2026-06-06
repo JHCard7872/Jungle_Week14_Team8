@@ -3083,7 +3083,10 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"IsValid", [](AActor* Actor)
 	{
 		// Lua가 보유한 actor 핸들이 cpp 측에서 destroy됐는지 확인. nil/destroyed면 false.
-		return Actor != nullptr && IsAliveObject(Actor);
+		// IsAliveObject가 아니라 IsValid여야 한다 — DestroyActor는 MarkPendingKill만 하고
+		// 메모리는 GC까지 살아 있어서, PendingKill을 안 보면 destroy 직후 true가 나온다
+		// (빔이 잡은 래그돌을 트럭이 수거할 때 UAF 크래시의 원인이었음).
+		return Actor != nullptr && IsValid(Actor);
 	},
 
 		"HasTag", [](AActor& Actor, const FString& Tag)
@@ -3387,6 +3390,8 @@ void FLuaScriptManager::RegisterUIBindings(sol::state& Lua)
 		"set_text", &UUserWidget::SetText,
 		"SetProperty", &UUserWidget::SetProperty,
 		"set_property", &UUserWidget::SetProperty,
+		"SetAttribute", &UUserWidget::SetAttribute,
+		"set_attribute", &UUserWidget::SetAttribute,
 		"GetValue", &UUserWidget::GetValue,
 		"get_value", &UUserWidget::GetValue,
 		"SetValue", &UUserWidget::SetValue,
