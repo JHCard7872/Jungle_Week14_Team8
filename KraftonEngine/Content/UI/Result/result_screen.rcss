@@ -138,23 +138,27 @@ body {
     height: 100%;
 }
 
+/* =========================================================
+   Hint Text
+   단일 element에 글자 색과 outline을 같이 적용한다.
+   Lua에서는 이 element 하나의 opacity만 조정한다.
+   ========================================================= */
+
 #result_input_hint {
     position: absolute;
-    right: 54px;
+    right: 48px;
     bottom: 32px;
-    width: 170px;
-    height: 40px;
-    color: #ffffff;
-    font-family: Arial;
-    font-size: 30px;
-    font-weight: 900;
-    letter-spacing: 1px;
+    width: 240px;
+    height: 72px;
+    font-family: ROKAF Sans;
+    font-size: 80px;
+    font-weight: bold;
+    line-height: 56px;
+    letter-spacing: 1.5px;
     text-align: right;
-    text-shadow:
-        -2px -2px 0px #000000,
-         2px -2px 0px #000000,
-        -2px  2px 0px #000000,
-         2px  2px 0px #000000;
+    vertical-align: middle;
+    color: #ffffff;
+    font-effect: outline(5px #000000);
     opacity: 0;
     z-index: 1000;
 }
