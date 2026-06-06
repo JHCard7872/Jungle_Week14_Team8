@@ -1148,7 +1148,11 @@ bool USkeletalMeshComponent::BuildBodyInstanceInitDescFromBodySetup( const UBody
 
     OutDesc.CollisionEnabled = ECollisionEnabled::QueryAndPhysics;
     OutDesc.ObjectType = ECollisionChannel::WorldDynamic;
-    OutDesc.ResponseContainer.SetAllChannels(ECollisionResponse::Block);
+    // Ragdoll bodies are created as separate per-bone FBodyInstances, so they must copy
+    // the owning skeletal mesh component's response table at creation time.
+    // This lets GOInc dead ragdolls ignore Pawn-channel movement sweeps while still
+    // blocking WorldStatic/WorldDynamic and remaining queryable by beam raycasts.
+    OutDesc.ResponseContainer = GetCollisionResponseContainer();
     OutDesc.bIgnoreSameOwner = ShouldRagdollIgnoreSameOwner();
 
     const FBodySetupPhysicsInfo& PhysicsInfo = BodySetup->GetPhysicsInfo();

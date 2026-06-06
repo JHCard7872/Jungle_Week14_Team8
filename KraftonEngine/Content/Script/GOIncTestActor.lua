@@ -6,6 +6,9 @@ local KEY_SPACE = 0x20   -- 점프 입력 키: Space
 local KEY_LBUTTON = 0x01 -- 발사 입력 키: 마우스 왼쪽 버튼
 local KEY_Q = 0x51       -- 무기 교체 입력 키: Q
 
+local RAGDOLL_TAG = "Ragdoll"
+local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
+
 local CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml"
 local CROSSHAIR_Z_ORDER = 1000
 local CROSSHAIR_EASE_SPEED = 20.0 -- 조준선이 Hit 지점과 MaxDistance 지점 사이를 따라가는 속도
@@ -138,6 +141,7 @@ local grabbed_aim_distance = nil
 local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
+local beamed_ragdoll_actor = nil
 
 local function vec(x, y, z)
     local v = Vector.Zero()
@@ -886,7 +890,43 @@ local function update_grab_distance_from_mouse_wheel()
     grabbed_target_velocity = Vector.Zero()
 end
 
+local function is_actor_valid(actor)
+    return actor ~= nil and (actor.IsValid == nil or actor:IsValid())
+end
+
+local function is_ragdoll_actor(actor)
+    return is_actor_valid(actor) and actor.HasTag ~= nil and actor:HasTag(RAGDOLL_TAG)
+end
+
+local function clear_beamed_ragdoll_actor()
+    if is_actor_valid(beamed_ragdoll_actor) and beamed_ragdoll_actor.RemoveTag ~= nil then
+        beamed_ragdoll_actor:RemoveTag(BEAM_BLOCK_REVIVE_TAG)
+    end
+
+    beamed_ragdoll_actor = nil
+end
+
+local function set_beamed_ragdoll_actor(actor)
+    if not is_ragdoll_actor(actor) then
+        clear_beamed_ragdoll_actor()
+        return
+    end
+
+    if beamed_ragdoll_actor == actor then
+        return
+    end
+
+    clear_beamed_ragdoll_actor()
+    beamed_ragdoll_actor = actor
+
+    if actor.AddTag ~= nil then
+        actor:AddTag(BEAM_BLOCK_REVIVE_TAG)
+    end
+end
+
 local function clear_grab_state()
+    clear_beamed_ragdoll_actor()
+
     grabbed_body = nil
     grabbed_owner_actor = nil
     grabbed_hit_component = nil
@@ -938,6 +978,33 @@ local function get_hit_component(hit)
     if hit.Hit ~= nil and hit.Hit.HitComponent ~= nil then
         return hit.Hit.HitComponent
     end
+    return nil
+end
+
+local function get_hit_actor(hit)
+    if hit == nil then
+        return nil
+    end
+    if hit.HitActor ~= nil then
+        return hit.HitActor
+    end
+    if hit.Hit ~= nil and hit.Hit.HitActor ~= nil then
+        return hit.Hit.HitActor
+    end
+
+    local body = get_hit_physics_body(hit)
+    if body ~= nil and body.GetOwnerActor ~= nil then
+        local owner = body:GetOwnerActor()
+        if owner ~= nil then
+            return owner
+        end
+    end
+
+    local component = get_hit_component(hit)
+    if component ~= nil and component.GetOwner ~= nil then
+        return component:GetOwner()
+    end
+
     return nil
 end
 
@@ -1032,6 +1099,7 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     grabbed_target_world = target_point
     grabbed_last_target_world = target_point
     grabbed_target_velocity = Vector.Zero()
+    set_beamed_ragdoll_actor(owner)
 
     body:WakeUp()
 
@@ -1351,6 +1419,7 @@ end
 local function apply_fire(delta_time)
     if weapon_swap_state.is_active then
         beam_visible_remaining = 0.0
+        clear_beamed_ragdoll_actor()
         set_beam_visible(false)
         return
     end
@@ -1364,12 +1433,14 @@ local function apply_fire(delta_time)
     local is_fire_pressed = Input.GetKeyDown(KEY_LBUTTON)
     local is_fire_held = Input.GetKey(KEY_LBUTTON)
     if not is_fire_held then
+        clear_beamed_ragdoll_actor()
         update_beam_fade(delta_time)
         return
     end
 
     local hit, fallback_end, start, direction = center_physics_raycast(MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
+    set_beamed_ragdoll_actor(get_hit_actor(hit))
     if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
         return
     end

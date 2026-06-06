@@ -14,6 +14,7 @@ local STATE_FLEE_STOPPING = "FleeStopping"
 
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
+local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -80,6 +81,10 @@ end
 
 local function is_player_actor(actor)
     return is_valid(actor) and actor.HasTag ~= nil and actor:HasTag(PLAYER_TAG)
+end
+
+local function is_revive_blocked_by_beam()
+    return is_valid(obj) and obj.HasTag ~= nil and obj:HasTag(BEAM_BLOCK_REVIVE_TAG)
 end
 
 local function cache_components()
@@ -694,6 +699,11 @@ function EnterReviving()
         return
     end
 
+    if is_revive_blocked_by_beam() then
+        print("[GOIncRagdollPawn_Test] Revive blocked: ragdoll is being beamed.")
+        return
+    end
+
     if not bCanRevive then
         print("[GOIncRagdollPawn_Test] Revive blocked. canRevive=false for " .. tostring(RAGDOLL_ID))
         return
@@ -994,6 +1004,11 @@ function OnOverlap(other, overlappedComp, otherComp)
     end
 
     if not is_player_actor(other) then
+        return
+    end
+
+    if is_revive_blocked_by_beam() then
+        print("[GOIncRagdollPawn_Test] Revive blocked: ragdoll is being beamed.")
         return
     end
 
