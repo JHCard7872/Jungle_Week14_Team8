@@ -1,4 +1,4 @@
--- GOIncRagdollSpawnManager_MultiRandom.lua
+-- GOIncRagdollSpawnManager.lua
 --
 -- Interval/max-count based ragdoll spawner.
 -- Requires:
@@ -17,17 +17,20 @@
 --   스폰 직후 타입 키 태그 + Gold/Silver 추첨 태그 부여도 합류 필요
 --   (ScoreManager가 태그로 점수를 계산한다. 부여 패턴은 Test/Test.lua 참고).
 
-local SPAWN_MIN_X = -10.0
-local SPAWN_MAX_X = 10.0
-local SPAWN_MIN_Y = -10.0
-local SPAWN_MAX_Y = 10.0
-local SPAWN_Z = 1.0
+-- 스폰 수치는 전부 Data/GameConfig.lua의 spawn 테이블에서 — 스크립트에 밸런스 값을 두지 않는다
+local SpawnCfg = require("Data.GameConfig").spawn
 
-local SPAWN_INTERVAL = require("Data.GameConfig").spawnInterval
-local MAX_SPAWN_COUNT = 10
-local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = true
+local SPAWN_MIN_X = SpawnCfg.areaMinX
+local SPAWN_MAX_X = SpawnCfg.areaMaxX
+local SPAWN_MIN_Y = SpawnCfg.areaMinY
+local SPAWN_MAX_Y = SpawnCfg.areaMaxY
+local SPAWN_Z = SpawnCfg.z
 
-local DEFAULT_RAGDOLL_ID = "blue-speedster"
+local SPAWN_INTERVAL = SpawnCfg.interval
+local MAX_SPAWN_COUNT = SpawnCfg.maxCount
+local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = SpawnCfg.immediateFirst
+
+local DEFAULT_RAGDOLL_ID = SpawnCfg.defaultRagdollId
 
 local RagdollData = nil
 
