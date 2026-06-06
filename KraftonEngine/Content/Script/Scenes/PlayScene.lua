@@ -19,6 +19,7 @@ local LoadMgr    = require("Manager/ServerLoadManager")
 local MissionMgr = require("Manager/MissionManager")
 local HUD        = require("UI/HUDController")
 local PauseUI    = require("UI/PauseUIController")
+local UserSettings = require("Data/UserSettings")
 
 local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프레임 잔여 Tick 가드)
 
@@ -61,7 +62,7 @@ function BeginPlay()
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("bgm_gameplay_0", 0.1)
+    AudioManager.PlayBGM("bgm_gameplay_0", UserSettings.GetBgmVolumeScalar())
 
     HUD.Create()
     HUD.UpdateFromSession()
@@ -86,6 +87,10 @@ function Tick(dt)
         enterPause()
     end
 
+    if Engine.IsPaused ~= nil and Engine.IsPaused() then
+        return
+    end
+
     Session.timeRemaining = Session.timeRemaining - dt
     LoadMgr.Update(dt)
 
@@ -96,7 +101,7 @@ function Tick(dt)
         ended = true
         Session.result.gameOverReason =
             Session.timeRemaining <= 0 and "시간 초과" or "서버 과부하"
-        AudioManager.Play("sfx_game_over", 1.0)
+        AudioManager.Play("sfx_game_over", UserSettings.GetSfxVolumeScalar())
         Engine.LoadScene("Result")   -- 이번 프레임 끝(Tick·Render 이후)에 안전 교체
     end
 end
