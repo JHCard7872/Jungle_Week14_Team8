@@ -13,6 +13,6 @@
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/Mario2/TexMap.jpg"
+    "DiffuseTexture" : "Content/Texture/Auto/Mario_Injured_Run/TexMap.jpg"
   }
 }
