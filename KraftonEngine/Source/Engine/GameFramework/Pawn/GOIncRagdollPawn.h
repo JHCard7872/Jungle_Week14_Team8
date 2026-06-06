@@ -169,17 +169,35 @@ public:
 
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetMeshRelativeLocation(const FVector& InRelativeLocation);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	FVector GetMeshRelativeLocation() const { return CharacterConfig.MeshRelativeLocation; }
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetMeshRelativeScale(const FVector& InRelativeScale);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	FVector GetMeshRelativeScale() const { return CharacterConfig.MeshRelativeScale; }
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetAliveCapsuleSize(float Radius, float HalfHeight);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	float GetAliveCapsuleRadius() const { return CharacterConfig.AliveCapsuleRadius; }
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	float GetAliveCapsuleHalfHeight() const { return CharacterConfig.AliveCapsuleHalfHeight; }
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Config")
 	void SetReviveTriggerCapsuleSize(float Radius, float HalfHeight);
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	float GetReviveTriggerCapsuleRadius() const { return CharacterConfig.ReviveTriggerCapsuleRadius; }
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
+	float GetReviveTriggerCapsuleHalfHeight() const { return CharacterConfig.ReviveTriggerCapsuleHalfHeight; }
 
 	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
 	bool CanRevive() const { return CharacterConfig.bCanRevive; }
 	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Config")
 	float GetReviveBlendDuration() const { return CharacterConfig.ReviveBlendDuration; }
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Flee")
+	float GetFleeSpeed() const { return CharacterConfig.FleeSpeed; }
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Flee")
+	float GetFleeAcceleration() const { return CharacterConfig.FleeAcceleration; }
+	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Flee")
+	float GetFleeBrakingDeceleration() const { return CharacterConfig.FleeBrakingDeceleration; }
 	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Flee")
 	float GetFleeEndDistance() const { return CharacterConfig.FleeEndDistance; }
 	UFUNCTION(Pure, Category = "GOIncRagdollPawn|Flee")

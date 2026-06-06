@@ -4,10 +4,12 @@
 -- Requires:
 --   GOInc.SpawnRagdollCharacter(characterId, location)
 --
--- Character-specific mesh/physics/animation settings live in C++ Pawn subclasses.
--- This manager only owns spawn policy: id, displayName, spawnWeight, interval, count, location.
+-- Character-specific mesh/physics/animation/capsule/movement settings live in C++ Pawn subclasses.
+-- RagdollData.lua is used here only as a catalog for spawn policy:
+--   id, displayName, canSpawn, spawnWeight, pawnClass.
 -- spawnWeight <= 0 means the entry will not spawn.
--- canSpawn = false also disables the entry if the field exists.
+-- canSpawn must be true to spawn.
+-- pawnClass must be non-empty to spawn.
 
 local SpawnCfg = require("Data.GameConfig").spawn
 
@@ -36,6 +38,13 @@ local function number_or(value, fallback)
     return fallback
 end
 
+local function string_or(value, fallback)
+    if type(value) == "string" and value ~= "" then
+        return value
+    end
+    return fallback
+end
+
 local function random_range(minValue, maxValue)
     return minValue + (maxValue - minValue) * math.random()
 end
@@ -45,23 +54,24 @@ local function load_ragdoll_data()
         return RagdollData
     end
 
-    local moduleNames = {
-        "RagdollData",
-        "Data.RagdollData",
-        "Data/RagdollData",
-    }
-
-    for _, moduleName in ipairs(moduleNames) do
-        local ok, result = pcall(require, moduleName)
-        if ok and result ~= nil then
-            RagdollData = result
-            print("[GOIncRagdollSpawnManager] Loaded " .. moduleName)
-            return RagdollData
-        end
+    local ok, result = pcall(require, "Data.RagdollData")
+    if ok and result ~= nil then
+        RagdollData = result
+        print("[GOIncRagdollSpawnManager] Loaded Data.RagdollData")
+        return RagdollData
     end
 
-    print("[GOIncRagdollSpawnManager] Failed to load RagdollData.lua")
+    print("[GOIncRagdollSpawnManager] Failed to load Data.RagdollData")
     return nil
+end
+
+local function resolve_character_id(tableKey, config)
+    local configId = nil
+    if type(config) == "table" then
+        configId = string_or(config.id, nil)
+    end
+
+    return string_or(configId, tableKey)
 end
 
 local function is_spawnable_config(config)
@@ -69,7 +79,11 @@ local function is_spawnable_config(config)
         return false
     end
 
-    if config.canSpawn == false then
+    if config.canSpawn ~= true then
+        return false
+    end
+
+    if string_or(config.pawnClass, "") == "" then
         return false
     end
 
@@ -85,14 +99,16 @@ local function build_spawn_candidates()
     local candidates = {}
     local totalWeight = 0.0
 
-    for id, config in pairs(data) do
-        if type(id) == "string" and id ~= "" and is_spawnable_config(config) then
+    for tableKey, config in pairs(data) do
+        if type(tableKey) == "string" and tableKey ~= "" and is_spawnable_config(config) then
+            local characterId = resolve_character_id(tableKey, config)
             local weight = number_or(config.spawnWeight, 0.0)
             totalWeight = totalWeight + weight
 
             table.insert(candidates, {
-                id = id,
-                displayName = config.displayName or id,
+                id = characterId,
+                displayName = config.displayName or characterId,
+                pawnClass = config.pawnClass,
                 weight = weight,
             })
         end
@@ -109,6 +125,7 @@ local function pick_random_character_entry()
         return {
             id = DEFAULT_CHARACTER_ID,
             displayName = DEFAULT_CHARACTER_ID,
+            pawnClass = "",
             weight = 1.0,
         }
     end
@@ -178,9 +195,10 @@ local function spawn_one()
     spawnedPawns[spawnedCount] = pawn
 
     print(string.format(
-        "[GOIncRagdollSpawnManager] Spawned %s (%s) at (%.2f, %.2f, %.2f) [%d / %d]",
+        "[GOIncRagdollSpawnManager] Spawned %s (%s, %s) at (%.2f, %.2f, %.2f) [%d / %d]",
         tostring(characterId),
         tostring(entry.displayName),
+        tostring(entry.pawnClass),
         location.X, location.Y, location.Z,
         spawnedCount,
         MAX_SPAWN_COUNT))
