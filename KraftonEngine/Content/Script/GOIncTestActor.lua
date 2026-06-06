@@ -66,6 +66,8 @@ local beamed_ragdoll_actor = nil
 
 local RAGDOLL_TAG = "Ragdoll"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
+local RED_BEAM_HIT_FUNCTION = "OnRedBeamHit"
+local RED_BEAM_HIT_REASON = "Slot2RedBeam"
 
 local function vec(x, y, z)
     local v = Vector.Zero()
@@ -932,6 +934,37 @@ local function get_hit_actor(hit)
     return nil
 end
 
+local function notify_red_beam_hit_ragdoll(hit)
+    local actor = get_hit_actor(hit)
+    if not is_ragdoll_actor(actor) then
+        return false
+    end
+
+    local ragdollPawn = nil
+    if actor.AsGOIncRagdollPawn ~= nil then
+        ragdollPawn = actor:AsGOIncRagdollPawn()
+    end
+
+    if ragdollPawn == nil then
+        print("[GOIncTestActor] Red beam hit tagged Ragdoll, but actor is not AGOIncRagdollPawn: " .. tostring(actor:GetName()))
+        return false
+    end
+
+    local script = nil
+    if ragdollPawn.GetLuaScriptComponent ~= nil then
+        script = ragdollPawn:GetLuaScriptComponent()
+    end
+
+    if script ~= nil and script.CallFunctionString ~= nil then
+        if script:CallFunctionString(RED_BEAM_HIT_FUNCTION, RED_BEAM_HIT_REASON) then
+            return true
+        end
+    end
+
+    print("[GOIncTestActor] Red beam hit Ragdoll, but OnRedBeamHit was not handled: " .. tostring(actor:GetName()))
+    return false
+end
+
 local function get_hit_location(hit)
     if hit == nil then
         return nil
@@ -1252,6 +1285,7 @@ local function apply_slot2_fire(delta_time)
 
     local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
+    notify_red_beam_hit_ragdoll(hit)
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
 
     if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then

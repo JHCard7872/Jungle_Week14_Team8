@@ -15,8 +15,12 @@ local STATE_FLEE_STOPPING = "FleeStopping"
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
+local RED_BEAM_KILLED_TAG = "KilledByRedBeam"
 local BEAM_SHOCK_INTERVAL = 0.05
 local BEAM_SHOCK_IMPULSE_STRENGTH = 0.00
+local RED_BEAM_SHOCK_DURATION = 1.0
+local RED_BEAM_SHOCK_INTERVAL = 0.05
+local RED_BEAM_SHOCK_IMPULSE_STRENGTH = 0.08
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -62,6 +66,9 @@ local currentFleeAnimationPlayRate = 1.0
 local bWarnedMissingSetPlayRate = false
 local bWarnedMissingBeamShockImpulse = false
 local beamShockElapsed = BEAM_SHOCK_INTERVAL
+local redBeamShockRemaining = 0.0
+local redBeamShockElapsed = RED_BEAM_SHOCK_INTERVAL
+local bKilledByRedBeam = false
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
@@ -87,32 +94,98 @@ local function is_player_actor(actor)
     return is_valid(actor) and actor.HasTag ~= nil and actor:HasTag(PLAYER_TAG)
 end
 
+local function get_actor_debug_name(actor)
+    if not is_valid(actor) then
+        return "nil"
+    end
+
+    if actor.GetName ~= nil then
+        local ok, name = pcall(function()
+            return actor:GetName()
+        end)
+
+        if ok and name ~= nil then
+            return tostring(name)
+        end
+    end
+
+    return tostring(actor)
+end
+
 local function is_revive_blocked_by_beam()
     return is_valid(obj) and obj.HasTag ~= nil and obj:HasTag(BEAM_BLOCK_REVIVE_TAG)
+end
+
+local function is_revive_blocked()
+    if bKilledByRedBeam then
+        return true
+    end
+
+    if is_valid(obj) and obj.HasTag ~= nil then
+        if obj:HasTag(RED_BEAM_KILLED_TAG) then
+            return true
+        end
+
+        if obj:HasTag(BEAM_BLOCK_REVIVE_TAG) then
+            return true
+        end
+    end
+
+    return false
+end
+
+local function get_revive_block_reason()
+    if not bCanRevive then
+        return "canRevive=false for " .. tostring(RAGDOLL_ID)
+    end
+
+    if bKilledByRedBeam then
+        return "killed by red beam"
+    end
+
+    if is_valid(obj) and obj.HasTag ~= nil then
+        if obj:HasTag(RED_BEAM_KILLED_TAG) then
+            return "KilledByRedBeam tag"
+        end
+
+        if obj:HasTag(BEAM_BLOCK_REVIVE_TAG) then
+            return "temporarily blocked by beam"
+        end
+    end
+
+    return nil
 end
 
 local function reset_beam_shock_timer()
     beamShockElapsed = BEAM_SHOCK_INTERVAL
 end
 
-local function apply_beam_shock_impulse()
+local function apply_random_ragdoll_impulse(strength, context)
     if mesh == nil then
         return
     end
 
     if mesh.AddRandomImpulseToAllRagdollBodies ~= nil then
-        mesh:AddRandomImpulseToAllRagdollBodies(BEAM_SHOCK_IMPULSE_STRENGTH)
+        mesh:AddRandomImpulseToAllRagdollBodies(strength)
         return
     end
 
     if not bWarnedMissingBeamShockImpulse then
-        print("[GOIncRagdollPawn_Test] Missing AddRandomImpulseToAllRagdollBodies binding. Beam shock impulse disabled.")
+        print("[GOIncRagdollPawn_Test] Missing AddRandomImpulseToAllRagdollBodies binding. " .. tostring(context) .. " impulse disabled.")
         bWarnedMissingBeamShockImpulse = true
     end
 
     if mesh.WakeAllRagdollBodies ~= nil then
         mesh:WakeAllRagdollBodies()
     end
+end
+
+local function apply_beam_shock_impulse()
+    apply_random_ragdoll_impulse(BEAM_SHOCK_IMPULSE_STRENGTH, "Beam shock")
+end
+
+local function apply_red_beam_shock_impulse()
+    apply_random_ragdoll_impulse(RED_BEAM_SHOCK_IMPULSE_STRENGTH, "Red beam shock")
 end
 
 local function tick_beam_shock(dt)
@@ -132,6 +205,30 @@ local function tick_beam_shock(dt)
 
     beamShockElapsed = 0.0
     apply_beam_shock_impulse()
+end
+
+local function start_red_beam_shock()
+    redBeamShockRemaining = RED_BEAM_SHOCK_DURATION
+    redBeamShockElapsed = RED_BEAM_SHOCK_INTERVAL
+end
+
+local function tick_red_beam_shock(dt)
+    if redBeamShockRemaining <= 0.0 then
+        return
+    end
+
+    if type(dt) ~= "number" then
+        dt = 0.0
+    end
+
+    redBeamShockRemaining = math.max(0.0, redBeamShockRemaining - dt)
+    redBeamShockElapsed = redBeamShockElapsed + dt
+    if redBeamShockElapsed < RED_BEAM_SHOCK_INTERVAL then
+        return
+    end
+
+    redBeamShockElapsed = 0.0
+    apply_red_beam_shock_impulse()
 end
 
 local function cache_components()
@@ -272,6 +369,26 @@ local function cache_runtime_config_from_pawn()
     )
 
     bRuntimeConfigCached = true
+end
+
+local function capture_initial_mesh_offsets()
+    if mesh == nil then
+        return false
+    end
+
+    -- Cache the alive/animation mesh offset after the C++ CharacterConfig has already
+    -- applied mesh relative transform. Reviving moves the Actor/Capsule to the ragdoll
+    -- sync position, then restores this relative offset so the mesh returns under the
+    -- Alive capsule instead of staying at the dead ragdoll component position.
+    initialMeshRelativeLocation = mesh.RelativeLocation
+    initialMeshWorldOffsetFromActor = mesh.Location - obj.Location
+    return true
+end
+
+local function restore_initial_mesh_relative_location()
+    if mesh ~= nil and initialMeshRelativeLocation ~= nil then
+        mesh.RelativeLocation = initialMeshRelativeLocation
+    end
 end
 
 local function cache_player()
@@ -424,6 +541,14 @@ end
 local function set_revive_trigger_enabled(enabled)
     if reviveTrigger == nil then
         return
+    end
+
+    if enabled then
+        -- ReviveTrigger is only a sensor. Do not turn it off just because the
+        -- current ragdoll cannot revive or the last ground projection failed;
+        -- those are handled after OnOverlap so we can still observe why revive
+        -- was blocked. Red-beam/permanent blocks still disable the trigger.
+        enabled = state == STATE_DEAD and not is_revive_blocked()
     end
 
     reviveTrigger:SetSimulatePhysics(false)
@@ -641,18 +766,38 @@ function RequestDeadRagdoll(reason)
     RequestEnterDeadRagdoll(reason or "ExternalRequest")
 end
 
+function OnRedBeamHit(reason)
+    -- Slot2 red beam should permanently kill only pawns that are currently alive/reviving.
+    -- DeadRagdoll pawns are ignored here so already-dead, non-revivable actors are not newly polluted.
+    if state == STATE_DEAD then
+        return
+    end
+
+    if state ~= STATE_REVIVING and state ~= STATE_ALIVE and state ~= STATE_FLEE_STOPPING then
+        return
+    end
+
+    bKilledByRedBeam = true
+    if is_valid(obj) and obj.AddTag ~= nil then
+        obj:AddTag(RED_BEAM_KILLED_TAG)
+    end
+
+    print("[GOIncRagdollPawn_Test] Red beam killed ragdoll permanently. reason: " .. tostring(reason))
+    RequestEnterDeadRagdoll(reason or "Slot2RedBeam")
+    set_revive_trigger_enabled(false)
+
+    start_red_beam_shock()
+    apply_red_beam_shock_impulse()
+end
+
 function EnterReviving()
     if state ~= STATE_DEAD then
         return
     end
 
-    if is_revive_blocked_by_beam() then
-        print("[GOIncRagdollPawn_Test] Revive blocked: ragdoll is being beamed.")
-        return
-    end
-
-    if not bCanRevive then
-        print("[GOIncRagdollPawn_Test] Revive blocked. canRevive=false for " .. tostring(RAGDOLL_ID))
+    local reviveBlockReason = get_revive_block_reason()
+    if reviveBlockReason ~= nil then
+        print("[GOIncRagdollPawn_Test] Revive blocked: " .. tostring(reviveBlockReason))
         return
     end
 
@@ -677,6 +822,8 @@ function EnterReviving()
     if not bPrepared then
         print("[GOIncRagdollPawn_Test] EnterReviving failed: no valid ground.")
         state = STATE_DEAD
+        canReviveHere = false
+        set_revive_trigger_enabled(true)
         return
     end
 
@@ -691,9 +838,7 @@ function EnterReviving()
         end
         pawn:EnterRevivingState()
         set_flee_animation_play_rate(1.0)
-        if mesh ~= nil and initialMeshRelativeLocation ~= nil then
-            mesh.RelativeLocation = initialMeshRelativeLocation
-        end
+        restore_initial_mesh_relative_location()
         return
     end
 
@@ -734,9 +879,7 @@ function EnterReviving()
         mesh:SetRagdollEnabled(false)
         mesh:SetCollisionEnabled("NoCollision")
 
-        if initialMeshRelativeLocation ~= nil then
-            mesh.RelativeLocation = initialMeshRelativeLocation
-        end
+        restore_initial_mesh_relative_location()
     end
 end
 
@@ -752,9 +895,7 @@ function EnterAliveFlee()
         -- 여기서 다시 SetRagdollEnabled(false), SetAllBodiesSimulatePhysics(false)를 호출하지 않는다.
         mesh:SetCollisionEnabled("NoCollision")
 
-        if initialMeshRelativeLocation ~= nil then
-            mesh.RelativeLocation = initialMeshRelativeLocation
-        end
+        restore_initial_mesh_relative_location()
     end
 
     --if pawn ~= nil then
@@ -920,7 +1061,9 @@ function Tick(dt)
 
     if state == STATE_DEAD then
         tick_beam_shock(dt)
+        tick_red_beam_shock(dt)
         sync_dead_root_to_ragdoll_safe()
+        set_revive_trigger_enabled(true)
         return
     end
 
@@ -948,25 +1091,30 @@ function Tick(dt)
 end
 
 function OnOverlap(other, overlappedComp, otherComp)
+    print(
+        "[GOIncRagdollPawn_Test] OnOverlap entered. state=" .. tostring(state) ..
+        " / other=" .. get_actor_debug_name(other) ..
+        " / canRevive=" .. tostring(bCanRevive) ..
+        " / canReviveHere=" .. tostring(canReviveHere)
+    )
+
     if state ~= STATE_DEAD then
+        print("[GOIncRagdollPawn_Test] OnOverlap ignored: state is " .. tostring(state))
         return
     end
 
     if not is_player_actor(other) then
+        print("[GOIncRagdollPawn_Test] OnOverlap ignored: other is not Player")
         return
     end
 
-    if is_revive_blocked_by_beam() then
-        print("[GOIncRagdollPawn_Test] Revive blocked: ragdoll is being beamed.")
+    local reviveBlockReason = get_revive_block_reason()
+    if reviveBlockReason ~= nil then
+        print("[GOIncRagdollPawn_Test] Revive blocked: " .. tostring(reviveBlockReason))
         return
     end
 
     -- overlappedComp와 reviveTrigger는 같은 C++ 객체여도 Lua userdata 비교가 실패할 수 있으므로 직접 비교하지 않는다.
-    if not canReviveHere then
-        print("[GOIncRagdollPawn_Test] Revive blocked: no valid ground.")
-        return
-    end
-
     print("[GOIncRagdollPawn_Test] Player overlapped revive capsule -> Reviving")
     player = other
     EnterReviving()

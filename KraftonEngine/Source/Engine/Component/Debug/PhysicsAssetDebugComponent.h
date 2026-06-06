@@ -76,6 +76,8 @@ public:
 	bool SyncConstraintFrameLocation(
 		FConstraintInstanceInitDesc& ConstraintDesc,
 		EPhysicsAssetConstraintFrameSide SourceFrameSide);
+	bool RecalculateConstraintFrameFromChildBone(
+		FConstraintInstanceInitDesc& ConstraintDesc);
 
 	int32 GetSelectedBodyIndex() const { return SelectedBodyIndex; }
 	void SetSelectedBodyIndex(int32 InSelectedBodyIndex);
@@ -84,9 +86,6 @@ public:
 	void SetSelectedConstraintIndex(int32 InSelectedConstraintIndex);
 
 	void AddReferencedObjects(FReferenceCollector& Collector) override;
-
-	bool RecalculateConstraintFrameFromChildBone(
-		FConstraintInstanceInitDesc& ConstraintDesc);
 
 private:
 	TWeakObjectPtr<USkeletalMeshComponent> TargetSkeletalMeshComponent;

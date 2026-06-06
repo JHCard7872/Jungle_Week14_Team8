@@ -2049,6 +2049,26 @@ void FMeshEditorPhysicsAssetTab::RenderPhysicsAssetBodyList(USkeletalMesh* Skele
 		SyncReflectionDetailTarget(PhysicsAsset);
 	}
 
+	if (SelectedPhysicsConstraintIndex >= 0 &&
+		SelectedPhysicsConstraintIndex < static_cast<int32>(PhysicsAsset->GetConstraintInitDescs().size()))
+	{
+		const FConstraintInstanceInitDesc& ConstraintDesc =
+			PhysicsAsset->GetConstraintInitDescs()[SelectedPhysicsConstraintIndex];
+
+		ImGui::Separator();
+		ImGui::Text("Selected Constraint: %s -> %s",
+			ConstraintDesc.ParentBoneName.ToString().c_str(),
+			ConstraintDesc.ChildBoneName.ToString().c_str());
+
+		if (ImGui::Button("Recalculate Frame From Child Bone", ImVec2(-1.0f, 0.0f)))
+		{
+			RecalculateSelectedConstraintFrameFromChildBone(PhysicsAsset);
+		}
+
+		ImGui::TextWrapped("ParentFrame = ChildBoneWorld * Inverse(ParentBoneWorld), ChildFrame = Identity");
+		ImGui::Separator();
+	}
+
 	const FSkeletalMesh* Asset = SkeletalMesh ? SkeletalMesh->GetSkeletalMeshAsset() : nullptr;
 	if (!Asset)
 	{
@@ -2279,6 +2299,44 @@ bool FMeshEditorPhysicsAssetTab::CreateConstraintForBody(UPhysicsAsset* PhysicsA
 	SyncDebugComponent(PhysicsAsset);
 	SyncReflectionDetailTarget(PhysicsAsset);
 	RefreshReflectionDetailSnapshot(PhysicsAsset);
+	return true;
+}
+
+bool FMeshEditorPhysicsAssetTab::RecalculateSelectedConstraintFrameFromChildBone(UPhysicsAsset* PhysicsAsset)
+{
+	if (!PhysicsAsset ||
+		SelectedPhysicsConstraintIndex < 0 ||
+		SelectedPhysicsConstraintIndex >= static_cast<int32>(PhysicsAsset->GetConstraintInitDescs().size()))
+	{
+		return false;
+	}
+
+	UPhysicsAssetDebugComponent* DebugComponent = GetViewportClient().GetPhysicsAssetDebugComponent();
+	if (!DebugComponent)
+	{
+		return false;
+	}
+
+	if (RagdollPanel)
+	{
+		RagdollPanel->Stop(GetViewportClient().GetPreviewDebugMeshComponent());
+	}
+
+	TArray<FConstraintInstanceInitDesc>& ConstraintDescs = PhysicsAsset->GetConstraintInitDescsMutable();
+	FConstraintInstanceInitDesc& ConstraintDesc = ConstraintDescs[SelectedPhysicsConstraintIndex];
+
+	if (!DebugComponent->RecalculateConstraintFrameFromChildBone(ConstraintDesc))
+	{
+		return false;
+	}
+
+	SavePhysicsAssetChange("PhysicsAsset constraint frame recalculation warning");
+	MarkDirty();
+	SyncDebugComponent(PhysicsAsset);
+	DebugComponent->MarkPhysicsAssetDebugDirty();
+	SyncReflectionDetailTarget(PhysicsAsset);
+	RefreshReflectionDetailSnapshot(PhysicsAsset);
+
 	return true;
 }
 
