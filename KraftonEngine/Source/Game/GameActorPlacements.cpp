@@ -2,6 +2,7 @@
 
 #include "Engine/Runtime/ActorPlacementRegistry.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/Actors/GOIncTruck.h"
 #include "GameFramework/Actor/4WVehicleActor.h"
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
 #include "GameFramework/Actor/RagdollActor.h"
@@ -9,7 +10,7 @@
 #include "GameFramework/World.h"
 
 // ============================================================
-// 게임-특화 액터를 Editor 의 "Place Actor" 메뉴에 등록 — 현재는 비어 있음.
+// 게임-특화 액터를 Editor 의 "Place Actor" 메뉴에 등록.
 //
 // game-specific actor (전용 Pawn / NPC / spawner 등) 도입 시 여기에 RegisterEntry
 // 항목을 추가한다. Engine 측은 이 함수의 이름만 알고 호출 — 새 액터 클래스 헤더는
@@ -54,6 +55,19 @@ void RegisterGameActorPlacements()
 				Pawn->SetActorLocation(Location);
 			}
 			return Pawn;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc Truck",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncTruck* Truck = World ? World->SpawnActor<AGOIncTruck>() : nullptr;
+			if (Truck)
+			{
+				Truck->InitDefaultComponents();
+				Truck->SetActorLocation(Location);
+			}
+			return Truck;
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(

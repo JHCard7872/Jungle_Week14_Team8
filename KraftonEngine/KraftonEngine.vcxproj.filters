@@ -2065,6 +2065,9 @@
       <Filter>Intermediate\Generated</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.cpp" />
+    <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp">
+      <Filter>Source\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\GameMode\GOIncGameMode.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncGameState.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncPlayerController.cpp" />
@@ -5829,6 +5832,9 @@
     <ClInclude Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.h" />
     <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
+    <ClInclude Include="Source\Game\Actors\GOIncTruck.h">
+      <Filter>Source\Game</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\GameMode\GOIncGameMode.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncGameState.h" />
   </ItemGroup>
