@@ -2,6 +2,33 @@
 
 #include "Object/Reflection/ObjectFactory.h"
 #include "UI/UIManager.h"
+#include <RmlUi/Core/Element.h>
+#include <RmlUi/Core/Elements/ElementFormControl.h>
+
+namespace
+{
+	void RegisterWidgetEventListeners(
+		Rml::ElementDocument* Document,
+		const TArray<std::pair<FString, sol::protected_function>>& Bindings,
+		const FString& EventName,
+		const FString& LogLabel,
+		TArray<FWidgetEventListener*>& OutListeners)
+	{
+		for (const auto& Binding : Bindings)
+		{
+			Rml::Element* Element = Document->GetElementById(Binding.first);
+			if (!Element)
+			{
+				UE_LOG("[RmlUi] %s target not found: %s", LogLabel.c_str(), Binding.first.c_str());
+				continue;
+			}
+
+			auto* Listener = new FWidgetEventListener(Binding.first, EventName, LogLabel, Binding.second);
+			Element->AddEventListener(EventName.c_str(), Listener);
+			OutListeners.push_back(Listener);
+		}
+	}
+}
 
 void UUserWidget::BeginDestroy()
 {
@@ -13,6 +40,7 @@ void UUserWidget::BeginDestroy()
     RemoveFromParent();
     ClearEventListeners();
     PendingClickBindings.clear();
+    PendingHoverBindings.clear();
     ClearDocument();
 
     OwningPlayer.Reset();
@@ -53,6 +81,15 @@ void UUserWidget::BindClick(const FString& ElementId, sol::protected_function Ca
 	}
 }
 
+void UUserWidget::BindHover(const FString& ElementId, sol::protected_function Callback)
+{
+	PendingHoverBindings.push_back({ ElementId, Callback });
+	if (IsDocumentLoaded())
+	{
+		RegisterEventListeners();
+	}
+}
+
 void UUserWidget::RegisterEventListeners()
 {
 	if (!Document)
@@ -61,27 +98,15 @@ void UUserWidget::RegisterEventListeners()
 	}
 
 	ClearEventListeners();
-
-	for (const auto& Binding : PendingClickBindings)
-	{
-		Rml::Element* Element = Document->GetElementById(Binding.first);
-		if (!Element)
-		{
-			UE_LOG("[RmlUi] Click target not found: %s", Binding.first.c_str());
-			continue;
-		}
-
-		auto* Listener = new FWidgetClickEventListener(Binding.first, Binding.second);
-		Element->AddEventListener("click", Listener);
-		ClickListeners.push_back(Listener);
-	}
+	RegisterWidgetEventListeners(Document, PendingClickBindings, "click", "click", EventListeners);
+	RegisterWidgetEventListeners(Document, PendingHoverBindings, "mouseover", "hover", EventListeners);
 }
 
 void UUserWidget::ClearEventListeners()
 {
 	if (Document)
 	{
-		for (FWidgetClickEventListener* Listener : ClickListeners)
+		for (FWidgetEventListener* Listener : EventListeners)
 		{
 			if (!Listener)
 			{
@@ -91,16 +116,16 @@ void UUserWidget::ClearEventListeners()
 			Rml::Element* Element = Document->GetElementById(Listener->GetElementId());
 			if (Element)
 			{
-				Element->RemoveEventListener("click", Listener);
+				Element->RemoveEventListener(Listener->GetEventName().c_str(), Listener);
 			}
 		}
 	}
 
-	for (FWidgetClickEventListener* Listener : ClickListeners)
+	for (FWidgetEventListener* Listener : EventListeners)
 	{
 		delete Listener;
 	}
-	ClickListeners.clear();
+	EventListeners.clear();
 }
 
 void UUserWidget::SetText(const FString& ElementId, const FString& Text)
@@ -135,4 +160,53 @@ bool UUserWidget::SetProperty(const FString& ElementId, const FString& PropertyN
 	}
 
 	return Element->SetProperty(PropertyName.c_str(), Value.c_str());
+}
+
+FString UUserWidget::GetValue(const FString& ElementId) const
+{
+	if (!Document)
+	{
+		return "";
+	}
+
+	Rml::Element* Element = Document->GetElementById(ElementId);
+	if (!Element)
+	{
+		UE_LOG("[RmlUi] Value target not found: %s", ElementId.c_str());
+		return "";
+	}
+
+	Rml::ElementFormControl* FormControl = rmlui_dynamic_cast<Rml::ElementFormControl*>(Element);
+	if (!FormControl)
+	{
+		UE_LOG("[RmlUi] Value target is not a form control: %s", ElementId.c_str());
+		return "";
+	}
+
+	return FormControl->GetValue();
+}
+
+bool UUserWidget::SetValue(const FString& ElementId, const FString& Value)
+{
+	if (!Document)
+	{
+		return false;
+	}
+
+	Rml::Element* Element = Document->GetElementById(ElementId);
+	if (!Element)
+	{
+		UE_LOG("[RmlUi] Value target not found: %s", ElementId.c_str());
+		return false;
+	}
+
+	Rml::ElementFormControl* FormControl = rmlui_dynamic_cast<Rml::ElementFormControl*>(Element);
+	if (!FormControl)
+	{
+		UE_LOG("[RmlUi] Value target is not a form control: %s", ElementId.c_str());
+		return false;
+	}
+
+	FormControl->SetValue(Value.c_str());
+	return true;
 }

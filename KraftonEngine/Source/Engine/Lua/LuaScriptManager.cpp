@@ -3379,10 +3379,18 @@ void FLuaScriptManager::RegisterUIBindings(sol::state& Lua)
 	{
 		Widget.BindClick(ElementId, Callback);
 	},
+		"bind_hover", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
+	{
+		Widget.BindHover(ElementId, Callback);
+	},
 		"SetText", &UUserWidget::SetText,
 		"set_text", &UUserWidget::SetText,
 		"SetProperty", &UUserWidget::SetProperty,
 		"set_property", &UUserWidget::SetProperty,
+		"GetValue", &UUserWidget::GetValue,
+		"get_value", &UUserWidget::GetValue,
+		"SetValue", &UUserWidget::SetValue,
+		"set_value", &UUserWidget::SetValue,
 		"SetWantsMouse", &UUserWidget::SetWantsMouse,
 		"WantsMouse", &UUserWidget::WantsMouse);
 
