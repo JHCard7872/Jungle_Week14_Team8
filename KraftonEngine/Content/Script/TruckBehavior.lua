@@ -1,6 +1,6 @@
 -- ==========================================================================
 -- TruckBehavior — 수거 트럭 (트럭 액터의 LuaScriptComponent에 부착)
--- [역할] waitTime 대기 ↔ 트랙 1회 순회를 반복하며 엔진음 루프를 재생한다.
+-- [역할] waitTime 대기 ↔ 트랙 1회 순회를 반복하며, 주행 중에만 엔진음을 재생한다.
 --        순회는 달리면서 조향 — 항상 전진 + yaw 회전만, 후진 없음.
 --        트리거 박스에 "Ragdoll" 태그 액터가 닿으면 수거 —
 --        점수/미션 통보 후 Destroy (매니저 주석의 CollectionZoneBehavior가 이것).
@@ -18,7 +18,6 @@ local state = "wait"        -- "wait" 대기 / "drive" 순회 중
 local waitTimer = 0
 local wpIndex = 1
 local visitCount = 0        -- 이번 순회에서 도착한 웨이포인트 수
-local engineStarted = false
 
 -- 각도 차이를 -180~180으로 정규화 (코너에서 짧은 쪽으로 돌기 위함)
 local function normalizeAngle(deg)
@@ -43,7 +42,6 @@ function BeginPlay()
     waitTimer = 0
     wpIndex = 1
     visitCount = 0
-    engineStarted = false
 
     -- 트리거 박스 설정 검증 — GenerateOverlapEvents가 꺼져 있으면 OnOverlap이
     -- 바인딩되지 않아 수거가 조용히 죽는다. 씬 설정 실수를 조기에 드러냄
@@ -74,11 +72,12 @@ end
 function Tick(dt)
     local D = require("Data/TruckData")
 
-    -- 엔진음은 첫 Tick에 시작 — 씬 오케스트레이터 BeginPlay의 AudioData 로드가
-    -- 끝난 뒤임을 보장하기 위함 (액터 BeginPlay 순서에 기대지 않는다)
-    if not engineStarted then
-        engineStarted = true
+    -- 엔진음은 주행 중에만. 매 Tick 호출해도 싸다 — PlayLoop는 이미 돌고 있으면
+    -- 볼륨만 갱신(TruckData 핫리로드 즉시 반영), StopLoop는 없으면 no-op
+    if state == "drive" then
         AudioManager.PlayLoop("bgm_collector_truck", "TruckLoop", D.engineVolume)
+    else
+        AudioManager.StopLoop("TruckLoop")
     end
 
     -- 대기: waitTime 지나면 가장 가까운 웨이포인트의 다음 지점부터 한 바퀴 시작
