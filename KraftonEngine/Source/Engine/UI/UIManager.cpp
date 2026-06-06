@@ -12,7 +12,9 @@
 #include "Render/Resource/RenderResources.h"
 #include "Render/Shader/ShaderManager.h"
 #include "Render/Types/FrameContext.h"
+#include "Runtime/Engine.h"
 #include "UI/UserWidget.h"
+#include "Viewport/GameViewportClient.h"
 #include "WICTextureLoader.h"
 
 #ifdef GetNextSibling
@@ -29,6 +31,7 @@
 #include <chrono>
 #include <filesystem>
 #include <memory>
+#include <vector>
 
 namespace
 {
@@ -153,6 +156,191 @@ namespace
 			}
 		}
 		return false;
+	}
+
+	struct FFontVariantSuffix
+	{
+		const char* NormalizedSuffix;
+		uint16 Weight;
+		Rml::Style::FontStyle Style;
+	};
+
+	FString NormalizeFontStem(const FString& Value)
+	{
+		FString Result;
+		Result.reserve(Value.size());
+		for (char Ch : Value)
+		{
+			if (Ch == ' ' || Ch == '-' || Ch == '_')
+			{
+				continue;
+			}
+
+			Result.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(Ch))));
+		}
+		return Result;
+	}
+
+	FString StripNormalizedSuffixFromStem(const FString& OriginalStem, size_t NormalizedSuffixLength)
+	{
+		if (NormalizedSuffixLength == 0)
+		{
+			return OriginalStem;
+		}
+
+		size_t CharactersToRemove = NormalizedSuffixLength;
+		size_t CutIndex = OriginalStem.size();
+		while (CutIndex > 0 && CharactersToRemove > 0)
+		{
+			const char Ch = OriginalStem[CutIndex - 1];
+			--CutIndex;
+			if (Ch == ' ' || Ch == '-' || Ch == '_')
+			{
+				continue;
+			}
+
+			--CharactersToRemove;
+		}
+
+		while (CutIndex > 0)
+		{
+			const char Ch = OriginalStem[CutIndex - 1];
+			if (Ch != ' ' && Ch != '-' && Ch != '_')
+			{
+				break;
+			}
+			--CutIndex;
+		}
+
+		return OriginalStem.substr(0, CutIndex);
+	}
+
+	void InferFontFaceInfo(const std::filesystem::path& FontPath, FString& OutFamilyName, Rml::Style::FontWeight& OutWeight, Rml::Style::FontStyle& OutStyle)
+	{
+		static constexpr FFontVariantSuffix VariantSuffixes[] = {
+			{"extrabolditalic", 800, Rml::Style::FontStyle::Italic},
+			{"ultralightitalic", 200, Rml::Style::FontStyle::Italic},
+			{"extralightitalic", 200, Rml::Style::FontStyle::Italic},
+			{"semibolditalic", 600, Rml::Style::FontStyle::Italic},
+			{"demibolditalic", 600, Rml::Style::FontStyle::Italic},
+			{"mediumitalic", 500, Rml::Style::FontStyle::Italic},
+			{"lightitalic", 300, Rml::Style::FontStyle::Italic},
+			{"bolditalic", 700, Rml::Style::FontStyle::Italic},
+			{"blackitalic", 900, Rml::Style::FontStyle::Italic},
+			{"heavyitalic", 900, Rml::Style::FontStyle::Italic},
+			{"thinitalic", 100, Rml::Style::FontStyle::Italic},
+			{"regularitalic", 400, Rml::Style::FontStyle::Italic},
+			{"extrabold", 800, Rml::Style::FontStyle::Normal},
+			{"ultralight", 200, Rml::Style::FontStyle::Normal},
+			{"extralight", 200, Rml::Style::FontStyle::Normal},
+			{"semibold", 600, Rml::Style::FontStyle::Normal},
+			{"demibold", 600, Rml::Style::FontStyle::Normal},
+			{"medium", 500, Rml::Style::FontStyle::Normal},
+			{"regular", 400, Rml::Style::FontStyle::Normal},
+			{"normal", 400, Rml::Style::FontStyle::Normal},
+			{"italic", 400, Rml::Style::FontStyle::Italic},
+			{"light", 300, Rml::Style::FontStyle::Normal},
+			{"black", 900, Rml::Style::FontStyle::Normal},
+			{"heavy", 900, Rml::Style::FontStyle::Normal},
+			{"bold", 700, Rml::Style::FontStyle::Normal},
+			{"thin", 100, Rml::Style::FontStyle::Normal},
+		};
+
+		const FString Stem = FontPath.stem().string();
+		const FString NormalizedStem = NormalizeFontStem(Stem);
+
+		OutFamilyName = Stem;
+		OutWeight = Rml::Style::FontWeight::Normal;
+		OutStyle = Rml::Style::FontStyle::Normal;
+
+		for (const FFontVariantSuffix& Variant : VariantSuffixes)
+		{
+			const FString Suffix = Variant.NormalizedSuffix;
+			if (NormalizedStem.size() <= Suffix.size())
+			{
+				continue;
+			}
+
+			if (NormalizedStem.substr(NormalizedStem.size() - Suffix.size()) != Suffix)
+			{
+				continue;
+			}
+
+			const FString FamilyName = StripNormalizedSuffixFromStem(Stem, Suffix.size());
+			if (!FamilyName.empty())
+			{
+				OutFamilyName = FamilyName;
+			}
+			OutWeight = static_cast<Rml::Style::FontWeight>(Variant.Weight);
+			OutStyle = Variant.Style;
+			return;
+		}
+	}
+
+	void LoadProjectFonts()
+	{
+		const std::filesystem::path FontRoot = ToProjectPath("Content/Font");
+		if (!std::filesystem::exists(FontRoot))
+		{
+			return;
+		}
+
+		std::vector<std::filesystem::path> FontFiles;
+		for (const std::filesystem::directory_entry& Entry : std::filesystem::recursive_directory_iterator(FontRoot))
+		{
+			if (!Entry.is_regular_file())
+			{
+				continue;
+			}
+
+			const FString Extension = ToLowerCopy(FPaths::ToUtf8(Entry.path().extension().wstring()));
+			if (Extension == ".ttf" || Extension == ".otf")
+			{
+				FontFiles.push_back(Entry.path());
+			}
+		}
+
+		std::sort(FontFiles.begin(), FontFiles.end(),
+			[](const std::filesystem::path& A, const std::filesystem::path& B)
+			{
+				const auto ExtensionPriority = [](const std::filesystem::path& Path)
+				{
+					const std::string Extension = Path.extension().string();
+					return Extension == ".ttf" ? 0 : 1;
+				};
+
+				const int APriority = ExtensionPriority(A);
+				const int BPriority = ExtensionPriority(B);
+				if (APriority != BPriority)
+				{
+					return APriority < BPriority;
+				}
+
+				return A.generic_u8string() < B.generic_u8string();
+			});
+
+		TSet<FString> LoadedFaceKeys;
+		for (const std::filesystem::path& FontPath : FontFiles)
+		{
+			FString FamilyName;
+			Rml::Style::FontWeight Weight = Rml::Style::FontWeight::Normal;
+			Rml::Style::FontStyle Style = Rml::Style::FontStyle::Normal;
+			InferFontFaceInfo(FontPath, FamilyName, Weight, Style);
+
+			const FString FaceKey = FamilyName + "|" + std::to_string(static_cast<uint16>(Weight)) + "|" + std::to_string(static_cast<int>(Style));
+			if (LoadedFaceKeys.find(FaceKey) != LoadedFaceKeys.end())
+			{
+				continue;
+			}
+
+			if (!Rml::LoadFontFace(ToRmlPath(FontPath), FamilyName.c_str(), Style, Weight))
+			{
+				UE_LOG("[RmlUi] Failed to load font: %s", FPaths::ToUtf8(FontPath.generic_wstring()).c_str());
+				continue;
+			}
+
+			LoadedFaceKeys.insert(FaceKey);
+		}
 	}
 }
 
@@ -648,23 +836,7 @@ void UUIManager::Initialize(ID3D11Device* InDevice)
 		UE_LOG("[RmlUi] Failed to create GameViewport context.");
 	}
 
-	const std::filesystem::path FontPath = ToProjectPath("Content/Font/Maplestory Bold.ttf");
-	if (!Rml::LoadFontFace(ToRmlPath(FontPath), "Maplestory", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Bold))
-	{
-		UE_LOG("[RmlUi] Failed to load font: Content/Font/Maplestory Bold.ttf");
-	}
-
-	const std::filesystem::path NanumGothicPath = ToProjectPath("Content/Font/nanum-gothic/NanumGothic.ttf");
-	if (!Rml::LoadFontFace(ToRmlPath(NanumGothicPath), "NanumGothic", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Normal))
-	{
-		UE_LOG("[RmlUi] Failed to load font: Content/Font/nanum-gothic/NanumGothic.ttf");
-	}
-
-	const std::filesystem::path NanumGothicBoldPath = ToProjectPath("Content/Font/nanum-gothic/NanumGothicBold.ttf");
-	if (!Rml::LoadFontFace(ToRmlPath(NanumGothicBoldPath), "NanumGothic", Rml::Style::FontStyle::Normal, Rml::Style::FontWeight::Bold))
-	{
-		UE_LOG("[RmlUi] Failed to load font: Content/Font/nanum-gothic/NanumGothicBold.ttf");
-	}
+	LoadProjectFonts();
 
 	SetupHotReloadWatcher();
 }
@@ -939,9 +1111,36 @@ void UUIManager::ProcessInput(const FFrameContext& Frame)
 	}
 	else
 	{
-		const POINT MousePos = Input.GetMouseClientPos();
-		MouseX = MousePos.x;
-		MouseY = MousePos.y;
+		POINT MousePos = {};
+		if (GEngine)
+		{
+			if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+			{
+				if (GameViewportClient->GetMouseViewportPosition(MousePos))
+				{
+					MouseX = MousePos.x;
+					MouseY = MousePos.y;
+				}
+				else
+				{
+					MousePos = Input.GetMouseClientPos();
+					MouseX = MousePos.x;
+					MouseY = MousePos.y;
+				}
+			}
+			else
+			{
+				MousePos = Input.GetMouseClientPos();
+				MouseX = MousePos.x;
+				MouseY = MousePos.y;
+			}
+		}
+		else
+		{
+			MousePos = Input.GetMouseClientPos();
+			MouseX = MousePos.x;
+			MouseY = MousePos.y;
+		}
 	}
 
 	bDispatchingRmlEvents = true;

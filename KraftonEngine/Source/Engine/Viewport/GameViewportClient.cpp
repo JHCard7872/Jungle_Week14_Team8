@@ -1,4 +1,5 @@
 #include "Viewport/GameViewportClient.h"
+#include "Viewport/Viewport.h"
 
 #include "Component/Camera/CameraComponent.h"
 #include "Engine/Input/InputSystem.h"
@@ -154,6 +155,51 @@ void UGameViewportClient::SetCursorVisible(bool bVisible)
 	}
 }
 
+bool UGameViewportClient::GetMouseViewportPosition(POINT& OutMousePos) const
+{
+	FRect ViewportScreenRect{};
+	if (bHasCursorClipRect)
+	{
+		ViewportScreenRect.X = static_cast<float>(CursorClipClientRect.left);
+		ViewportScreenRect.Y = static_cast<float>(CursorClipClientRect.top);
+		ViewportScreenRect.Width = static_cast<float>(CursorClipClientRect.right - CursorClipClientRect.left);
+		ViewportScreenRect.Height = static_cast<float>(CursorClipClientRect.bottom - CursorClipClientRect.top);
+	}
+	else
+	{
+		if (!OwnerHWnd)
+		{
+			return false;
+		}
+
+		RECT ClientRect = {};
+		if (!::GetClientRect(OwnerHWnd, &ClientRect))
+		{
+			return false;
+		}
+
+		ViewportScreenRect.X = static_cast<float>(ClientRect.left);
+		ViewportScreenRect.Y = static_cast<float>(ClientRect.top);
+		ViewportScreenRect.Width = static_cast<float>(ClientRect.right - ClientRect.left);
+		ViewportScreenRect.Height = static_cast<float>(ClientRect.bottom - ClientRect.top);
+	}
+
+	const float ViewportWidth = Viewport ? static_cast<float>(Viewport->GetWidth()) : ViewportScreenRect.Width;
+	const float ViewportHeight = Viewport ? static_cast<float>(Viewport->GetHeight()) : ViewportScreenRect.Height;
+	if (ViewportScreenRect.Width <= 0.0f || ViewportScreenRect.Height <= 0.0f || ViewportWidth <= 0.0f || ViewportHeight <= 0.0f)
+	{
+		return false;
+	}
+
+	const POINT MouseClientPos = InputSystem::Get().GetMouseClientPos();
+	const float NormalizedX = (static_cast<float>(MouseClientPos.x) - ViewportScreenRect.X) / ViewportScreenRect.Width;
+	const float NormalizedY = (static_cast<float>(MouseClientPos.y) - ViewportScreenRect.Y) / ViewportScreenRect.Height;
+
+	OutMousePos.x = static_cast<LONG>(NormalizedX * ViewportWidth);
+	OutMousePos.y = static_cast<LONG>(NormalizedY * ViewportHeight);
+	return true;
+}
+
 void UGameViewportClient::ApplyCursorClip()
 {
 	if (!OwnerHWnd)
@@ -188,6 +234,11 @@ void UGameViewportClient::ApplyCursorClip()
 void UGameViewportClient::SetGameInputSnapshot(const FInputSystemSnapshot& Snapshot)
 {
 	GameInputSnapshot = Snapshot;
+	POINT MouseViewportPos = {};
+	if (GetMouseViewportPosition(MouseViewportPos))
+	{
+		GameInputSnapshot.MousePos = MouseViewportPos;
+	}
 	bHasGameInputSnapshot = true;
 }
 

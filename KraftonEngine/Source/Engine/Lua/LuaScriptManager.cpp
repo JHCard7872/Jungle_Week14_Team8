@@ -1906,10 +1906,34 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	});
 	Input.set_function("GetMouseX", []()
 	{
+		if (GEngine)
+		{
+			if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+			{
+				POINT MousePos = {};
+				if (GameViewportClient->GetMouseViewportPosition(MousePos))
+				{
+					return MousePos.x;
+				}
+			}
+		}
+
 		return InputSystem::Get().GetMouseClientPos().x;
 	});
 	Input.set_function("GetMouseY", []()
 	{
+		if (GEngine)
+		{
+			if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+			{
+				POINT MousePos = {};
+				if (GameViewportClient->GetMouseViewportPosition(MousePos))
+				{
+					return MousePos.y;
+				}
+			}
+		}
+
 		return InputSystem::Get().GetMouseClientPos().y;
 	});
 

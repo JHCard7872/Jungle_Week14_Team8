@@ -32,6 +32,7 @@ public:
 	void SetCursorClipRect(const FRect& InViewportScreenRect);
 	void SetCursorVisible(bool bVisible);
 	bool IsCursorVisible() const { return bCursorVisible; }
+	bool GetMouseViewportPosition(POINT& OutMousePos) const;
 
 	void SetInputPossessed(bool bPossessed);
 	bool IsPossessed() const { return bInputPossessed; }
