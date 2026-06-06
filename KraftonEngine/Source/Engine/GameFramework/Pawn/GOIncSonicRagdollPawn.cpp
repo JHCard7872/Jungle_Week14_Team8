@@ -15,7 +15,7 @@ FGOIncRagdollCharacterConfig AGOIncSonicRagdollPawn::MakeCharacterConfig() const
 	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.6f);
 	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
-	Config.AliveCapsuleRadius = 0.5f;
+	Config.AliveCapsuleRadius = 0.35f;
 	Config.AliveCapsuleHalfHeight = 0.6f;
 	Config.ReviveTriggerCapsuleRadius = 5.0f;
 	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;

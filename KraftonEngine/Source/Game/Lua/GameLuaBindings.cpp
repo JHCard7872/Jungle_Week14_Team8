@@ -370,6 +370,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		{
 			Component.AddImpulseToBone(FName(BoneName), Impulse);
 		},
+		"AddRandomImpulseToAllRagdollBodies", &USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies,
 		"SetAllBodiesPhysicsBlendWeight", &USkeletalMeshComponent::SetAllBodiesPhysicsBlendWeight,
 		"SetAllBodiesBelowPhysicsBlendWeight", [](USkeletalMeshComponent& Component, const FString& BoneName, float Weight, sol::optional<bool> bIncludeSelf)
 		{
@@ -432,11 +433,20 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"SetFleeAnimationPath", &AGOIncRagdollPawn::SetFleeAnimationPath,
 		"GetFleeAnimationPath", &AGOIncRagdollPawn::GetFleeAnimationPath,
 		"SetMeshRelativeLocation", &AGOIncRagdollPawn::SetMeshRelativeLocation,
+		"GetMeshRelativeLocation", &AGOIncRagdollPawn::GetMeshRelativeLocation,
 		"SetMeshRelativeScale", &AGOIncRagdollPawn::SetMeshRelativeScale,
+		"GetMeshRelativeScale", &AGOIncRagdollPawn::GetMeshRelativeScale,
 		"SetAliveCapsuleSize", &AGOIncRagdollPawn::SetAliveCapsuleSize,
+		"GetAliveCapsuleRadius", &AGOIncRagdollPawn::GetAliveCapsuleRadius,
+		"GetAliveCapsuleHalfHeight", &AGOIncRagdollPawn::GetAliveCapsuleHalfHeight,
 		"SetReviveTriggerCapsuleSize", &AGOIncRagdollPawn::SetReviveTriggerCapsuleSize,
+		"GetReviveTriggerCapsuleRadius", &AGOIncRagdollPawn::GetReviveTriggerCapsuleRadius,
+		"GetReviveTriggerCapsuleHalfHeight", &AGOIncRagdollPawn::GetReviveTriggerCapsuleHalfHeight,
 		"CanRevive", &AGOIncRagdollPawn::CanRevive,
 		"GetReviveBlendDuration", &AGOIncRagdollPawn::GetReviveBlendDuration,
+		"GetFleeSpeed", &AGOIncRagdollPawn::GetFleeSpeed,
+		"GetFleeAcceleration", &AGOIncRagdollPawn::GetFleeAcceleration,
+		"GetFleeBrakingDeceleration", &AGOIncRagdollPawn::GetFleeBrakingDeceleration,
 		"GetFleeEndDistance", &AGOIncRagdollPawn::GetFleeEndDistance,
 		"GetFleeStopDuration", &AGOIncRagdollPawn::GetFleeStopDuration,
 		"GetFleeStopMinBrakingDeceleration", &AGOIncRagdollPawn::GetFleeStopMinBrakingDeceleration,

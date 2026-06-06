@@ -14,6 +14,9 @@ local STATE_FLEE_STOPPING = "FleeStopping"
 
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
+local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
+local BEAM_SHOCK_INTERVAL = 0.05
+local BEAM_SHOCK_IMPULSE_STRENGTH = 0.00
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -57,15 +60,17 @@ local reviveStartYaw = 0.0
 local reviveTargetYaw = 0.0
 local currentFleeAnimationPlayRate = 1.0
 local bWarnedMissingSetPlayRate = false
+local bWarnedMissingBeamShockImpulse = false
+local beamShockElapsed = BEAM_SHOCK_INTERVAL
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
 -- SpawnManager가 RagdollId를 넣어주면 그 id를 쓰고,
--- 씬에 직접 배치된 테스트 Pawn처럼 id가 없으면 기본 Sonic 데이터로 fallback한다.
+-- 씬에 직접 배치된 테스트 Pawn처럼 id가 없으면 기본 Sonic id로 fallback한다.
+-- 런타임 에셋/캡슐/이동 값의 정본은 C++ CharacterConfig다.
 local DEFAULT_RAGDOLL_ID = "blue-speedster"
 local RAGDOLL_ID = DEFAULT_RAGDOLL_ID
-local ragdollConfig = nil
-local bRagdollConfigApplied = false
+local bRuntimeConfigCached = false
 local bCanRevive = true
 local canReviveHere = true
 local aliveCapsuleHalfHeight = 1.0
@@ -80,6 +85,53 @@ end
 
 local function is_player_actor(actor)
     return is_valid(actor) and actor.HasTag ~= nil and actor:HasTag(PLAYER_TAG)
+end
+
+local function is_revive_blocked_by_beam()
+    return is_valid(obj) and obj.HasTag ~= nil and obj:HasTag(BEAM_BLOCK_REVIVE_TAG)
+end
+
+local function reset_beam_shock_timer()
+    beamShockElapsed = BEAM_SHOCK_INTERVAL
+end
+
+local function apply_beam_shock_impulse()
+    if mesh == nil then
+        return
+    end
+
+    if mesh.AddRandomImpulseToAllRagdollBodies ~= nil then
+        mesh:AddRandomImpulseToAllRagdollBodies(BEAM_SHOCK_IMPULSE_STRENGTH)
+        return
+    end
+
+    if not bWarnedMissingBeamShockImpulse then
+        print("[GOIncRagdollPawn_Test] Missing AddRandomImpulseToAllRagdollBodies binding. Beam shock impulse disabled.")
+        bWarnedMissingBeamShockImpulse = true
+    end
+
+    if mesh.WakeAllRagdollBodies ~= nil then
+        mesh:WakeAllRagdollBodies()
+    end
+end
+
+local function tick_beam_shock(dt)
+    if not is_revive_blocked_by_beam() then
+        reset_beam_shock_timer()
+        return
+    end
+
+    if type(dt) ~= "number" then
+        dt = 0.0
+    end
+
+    beamShockElapsed = beamShockElapsed + dt
+    if beamShockElapsed < BEAM_SHOCK_INTERVAL then
+        return
+    end
+
+    beamShockElapsed = 0.0
+    apply_beam_shock_impulse()
 end
 
 local function cache_components()
@@ -128,7 +180,7 @@ local function cache_components()
         print("[GOIncRagdollPawn_Test] Missing GOIncRagdollMovementComponent")
     end
 
-    -- initial mesh offsets are captured after RagdollData.lua config is applied.
+    -- initial mesh offsets are captured after C++ CharacterConfig has been applied.
     return capsule ~= nil and reviveTrigger ~= nil and mesh ~= nil and movement ~= nil
 end
 
@@ -138,31 +190,6 @@ local function number_or(value, fallback)
         return value
     end
     return fallback
-end
-
-local function bool_or(value, fallback)
-    if type(value) == "boolean" then
-        return value
-    end
-    return fallback
-end
-
-local function string_or(value, fallback)
-    if type(value) == "string" and value ~= "" then
-        return value
-    end
-    return fallback
-end
-
-local function vector_from_table(value, fallback)
-    if value == nil then
-        return fallback
-    end
-
-    local x = number_or(value.x, number_or(value.X, fallback ~= nil and fallback.X or 0.0))
-    local y = number_or(value.y, number_or(value.Y, fallback ~= nil and fallback.Y or 0.0))
-    local z = number_or(value.z, number_or(value.Z, fallback ~= nil and fallback.Z or 0.0))
-    return Vector.new(x, y, z)
 end
 
 local function resolve_ragdoll_id()
@@ -176,151 +203,75 @@ local function resolve_ragdoll_id()
     return DEFAULT_RAGDOLL_ID
 end
 
-local function load_ragdoll_config()
-    local resolvedId = resolve_ragdoll_id()
-    if ragdollConfig ~= nil and RAGDOLL_ID == resolvedId then
-        return ragdollConfig
+local function get_pawn_number(getterName, fallback)
+    if pawn ~= nil and pawn[getterName] ~= nil then
+        local ok, value = pcall(function()
+            return pawn[getterName](pawn)
+        end)
+
+        if ok then
+            return number_or(value, fallback)
+        end
+
+        print("[GOIncRagdollPawn_Test] " .. getterName .. " failed. Using fallback value.")
     end
 
-    RAGDOLL_ID = resolvedId
+    return fallback
+end
 
-    local moduleNames = {
-        "Data.RagdollData",
-        "RagdollData",
-    }
+local function get_pawn_bool(getterName, fallback)
+    if pawn ~= nil and pawn[getterName] ~= nil then
+        local ok, value = pcall(function()
+            return pawn[getterName](pawn)
+        end)
 
-    local data = nil
-    for _, moduleName in ipairs(moduleNames) do
-        local ok, result = pcall(require, moduleName)
-        if ok and result ~= nil then
-            data = result
-            print("[GOIncRagdollPawn_Test] Loaded " .. moduleName)
-            break
+        if ok and type(value) == "boolean" then
+            return value
+        end
+
+        if not ok then
+            print("[GOIncRagdollPawn_Test] " .. getterName .. " failed. Using fallback value.")
         end
     end
 
-    if data == nil then
-        print("[GOIncRagdollPawn_Test] Failed to require RagdollData.lua. Using script defaults.")
-        return nil
-    end
-
-    ragdollConfig = data[RAGDOLL_ID]
-    if ragdollConfig == nil then
-        print("[GOIncRagdollPawn_Test] Missing RagdollData entry: " .. tostring(RAGDOLL_ID) .. ". Using script defaults.")
-        return nil
-    end
-
-    print("[GOIncRagdollPawn_Test] RagdollData applied target: " .. tostring(RAGDOLL_ID) .. " / " .. tostring(ragdollConfig.displayName))
-    return ragdollConfig
+    return fallback
 end
 
-local function capture_initial_mesh_offsets()
-    if capsule ~= nil and mesh ~= nil then
-        initialMeshRelativeLocation = mesh.RelativeLocation
-        initialMeshWorldOffsetFromActor = mesh.Location - obj.Location
-    end
-end
-
-local function apply_ragdoll_config()
-    if bRagdollConfigApplied then
+local function cache_runtime_config_from_pawn()
+    if bRuntimeConfigCached then
         return
     end
 
-    local config = load_ragdoll_config()
-    if config == nil then
-        bRagdollConfigApplied = true
-        return
-    end
-
-    local flee = config.flee or {}
+    RAGDOLL_ID = resolve_ragdoll_id()
 
     -- Runtime behavior values used by this Lua state machine.
-    bCanRevive = bool_or(config.canRevive, bCanRevive)
-    if config.aliveCapsule ~= nil then
-        aliveCapsuleHalfHeight = number_or(config.aliveCapsule.halfHeight, aliveCapsuleHalfHeight)
-    end
+    -- Do not read Data.RagdollData here. That file is now a UI / spawn / score catalog.
+    -- The runtime owner is the C++ GOIncRagdollPawn CharacterConfig.
+    bCanRevive = get_pawn_bool("CanRevive", bCanRevive)
+    aliveCapsuleHalfHeight = get_pawn_number("GetAliveCapsuleHalfHeight", aliveCapsuleHalfHeight)
 
-    FLEE_END_DISTANCE = number_or(flee.endDistance, FLEE_END_DISTANCE)
-    FLEE_STOP_DURATION = number_or(flee.stopDuration, FLEE_STOP_DURATION)
-    FLEE_STOP_MIN_BRAKING_DECELERATION = number_or(flee.stopMinBrakingDeceleration, FLEE_STOP_MIN_BRAKING_DECELERATION)
+    FLEE_END_DISTANCE = get_pawn_number("GetFleeEndDistance", FLEE_END_DISTANCE)
+    FLEE_STOP_DURATION = get_pawn_number("GetFleeStopDuration", FLEE_STOP_DURATION)
+    FLEE_STOP_MIN_BRAKING_DECELERATION = get_pawn_number("GetFleeStopMinBrakingDeceleration", FLEE_STOP_MIN_BRAKING_DECELERATION)
 
-    FLEE_ANIMATION_BASE_SPEED = number_or(flee.animationBaseSpeed, FLEE_ANIMATION_BASE_SPEED)
-    FLEE_ANIMATION_MIN_PLAY_RATE = number_or(flee.animationMinPlayRate, FLEE_ANIMATION_MIN_PLAY_RATE)
-    FLEE_ANIMATION_MAX_PLAY_RATE = number_or(flee.animationMaxPlayRate, FLEE_ANIMATION_MAX_PLAY_RATE)
-    FLEE_STOP_START_PLAY_RATE = number_or(flee.stopStartPlayRate, FLEE_STOP_START_PLAY_RATE)
-    FLEE_STOP_END_PLAY_RATE = number_or(flee.stopEndPlayRate, FLEE_STOP_END_PLAY_RATE)
-    FLEE_ROTATION_YAW_OFFSET_DEGREES = number_or(flee.rotationYawOffset, FLEE_ROTATION_YAW_OFFSET_DEGREES)
+    FLEE_ANIMATION_BASE_SPEED = get_pawn_number("GetFleeAnimationBaseSpeed", FLEE_ANIMATION_BASE_SPEED)
+    FLEE_ANIMATION_MIN_PLAY_RATE = get_pawn_number("GetFleeAnimationMinPlayRate", FLEE_ANIMATION_MIN_PLAY_RATE)
+    FLEE_ANIMATION_MAX_PLAY_RATE = get_pawn_number("GetFleeAnimationMaxPlayRate", FLEE_ANIMATION_MAX_PLAY_RATE)
+    FLEE_STOP_START_PLAY_RATE = get_pawn_number("GetFleeStopStartPlayRate", FLEE_STOP_START_PLAY_RATE)
+    FLEE_STOP_END_PLAY_RATE = get_pawn_number("GetFleeStopEndPlayRate", FLEE_STOP_END_PLAY_RATE)
+    FLEE_ROTATION_YAW_OFFSET_DEGREES = get_pawn_number("GetFleeRotationYawOffsetDegrees", FLEE_ROTATION_YAW_OFFSET_DEGREES)
 
-    REVIVE_BLEND_DURATION = number_or(config.reviveBlendDuration, REVIVE_BLEND_DURATION)
+    REVIVE_BLEND_DURATION = get_pawn_number("GetReviveBlendDuration", REVIVE_BLEND_DURATION)
     REVIVE_BLEND_FALLBACK_DURATION = REVIVE_BLEND_DURATION
 
-    -- Asset / component settings. Functions are guarded so the script also survives older builds.
-    if pawn ~= nil then
-        local meshPath = string_or(config.mesh, "")
-        if meshPath ~= "" and pawn.SetSkeletalMeshPath ~= nil then
-            pawn:SetSkeletalMeshPath(meshPath)
-        end
+    print(
+        "[GOIncRagdollPawn_Test] Runtime config cached from C++ Pawn: " ..
+        tostring(RAGDOLL_ID) ..
+        " / canRevive=" .. tostring(bCanRevive) ..
+        " / fleeEndDistance=" .. tostring(FLEE_END_DISTANCE)
+    )
 
-        local fleeAnimationPath = string_or(config.fleeAnimation, "")
-        if fleeAnimationPath ~= "" and pawn.SetFleeAnimationPath ~= nil then
-            pawn:SetFleeAnimationPath(fleeAnimationPath)
-        end
-
-        if config.meshRelativeLocation ~= nil and pawn.SetMeshRelativeLocation ~= nil then
-            pawn:SetMeshRelativeLocation(vector_from_table(config.meshRelativeLocation, Vector.Zero()))
-        elseif config.meshRelativeLocation ~= nil and mesh ~= nil then
-            mesh.RelativeLocation = vector_from_table(config.meshRelativeLocation, mesh.RelativeLocation)
-        end
-
-        if config.meshRelativeScale ~= nil and pawn.SetMeshRelativeScale ~= nil then
-            pawn:SetMeshRelativeScale(vector_from_table(config.meshRelativeScale, Vector.new(1.0, 1.0, 1.0)))
-        elseif config.meshRelativeScale ~= nil and mesh ~= nil then
-            local scaleVector = vector_from_table(config.meshRelativeScale, Vector.new(1.0, 1.0, 1.0))
-            if mesh.SetRelativeScale ~= nil then
-                mesh:SetRelativeScale(scaleVector)
-            else
-                mesh.RelativeScale = scaleVector
-            end
-        end
-
-        if config.aliveCapsule ~= nil and pawn.SetAliveCapsuleSize ~= nil then
-            pawn:SetAliveCapsuleSize(
-                number_or(config.aliveCapsule.radius, 1.8),
-                number_or(config.aliveCapsule.halfHeight, 3.0)
-            )
-        elseif config.aliveCapsule ~= nil and capsule ~= nil and capsule.SetCapsuleSize ~= nil then
-            capsule:SetCapsuleSize(
-                number_or(config.aliveCapsule.radius, 1.8),
-                number_or(config.aliveCapsule.halfHeight, 3.0)
-            )
-        end
-
-        if config.reviveTriggerCapsule ~= nil and pawn.SetReviveTriggerCapsuleSize ~= nil then
-            pawn:SetReviveTriggerCapsuleSize(
-                number_or(config.reviveTriggerCapsule.radius, 2.4),
-                number_or(config.reviveTriggerCapsule.halfHeight, 3.4)
-            )
-        elseif config.reviveTriggerCapsule ~= nil and reviveTrigger ~= nil and reviveTrigger.SetCapsuleSize ~= nil then
-            reviveTrigger:SetCapsuleSize(
-                number_or(config.reviveTriggerCapsule.radius, 2.4),
-                number_or(config.reviveTriggerCapsule.halfHeight, 3.4)
-            )
-        end
-    end
-
-    if movement ~= nil then
-        if movement.SetMaxSpeed ~= nil then
-            movement:SetMaxSpeed(number_or(flee.speed, FLEE_ANIMATION_BASE_SPEED))
-        end
-        if movement.SetAcceleration ~= nil then
-            movement:SetAcceleration(number_or(flee.acceleration, 15.0))
-        end
-        if movement.SetBrakingDeceleration ~= nil then
-            movement:SetBrakingDeceleration(number_or(flee.brakingDeceleration, 10.0))
-        end
-    end
-
-    bRagdollConfigApplied = true
+    bRuntimeConfigCached = true
 end
 
 local function cache_player()
@@ -629,6 +580,7 @@ end
 
 function EnterDeadRagdoll()
     state = STATE_DEAD
+    reset_beam_shock_timer()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
     fleeStopStartSpeed = 0.0
@@ -694,12 +646,18 @@ function EnterReviving()
         return
     end
 
+    if is_revive_blocked_by_beam() then
+        print("[GOIncRagdollPawn_Test] Revive blocked: ragdoll is being beamed.")
+        return
+    end
+
     if not bCanRevive then
         print("[GOIncRagdollPawn_Test] Revive blocked. canRevive=false for " .. tostring(RAGDOLL_ID))
         return
     end
 
     state = STATE_REVIVING
+    reset_beam_shock_timer()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
     fleeStopStartSpeed = 0.0
@@ -931,7 +889,7 @@ function BeginPlay()
         return
     end
 
-    apply_ragdoll_config()
+    cache_runtime_config_from_pawn()
     capture_initial_mesh_offsets()
     cache_player()
 
@@ -945,7 +903,7 @@ function Tick(dt)
             return
         end
 
-        apply_ragdoll_config()
+        cache_runtime_config_from_pawn()
         capture_initial_mesh_offsets()
     end
 
@@ -961,6 +919,7 @@ function Tick(dt)
     end
 
     if state == STATE_DEAD then
+        tick_beam_shock(dt)
         sync_dead_root_to_ragdoll_safe()
         return
     end
@@ -994,6 +953,11 @@ function OnOverlap(other, overlappedComp, otherComp)
     end
 
     if not is_player_actor(other) then
+        return
+    end
+
+    if is_revive_blocked_by_beam() then
+        print("[GOIncRagdollPawn_Test] Revive blocked: ragdoll is being beamed.")
         return
     end
 

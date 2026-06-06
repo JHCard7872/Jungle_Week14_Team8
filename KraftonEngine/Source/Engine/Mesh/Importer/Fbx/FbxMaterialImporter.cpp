@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <cwctype>
+#include <vector>
 
 namespace
 {
@@ -120,6 +122,125 @@ namespace
 		}
 	}
 
+	std::filesystem::path MakeAbsoluteProjectPath(const FString& ProjectOrAbsolutePath)
+	{
+		namespace fs = std::filesystem;
+
+		fs::path Path(FPaths::ToWide(ProjectOrAbsolutePath));
+		if (Path.is_absolute())
+		{
+			return Path.lexically_normal();
+		}
+
+		return (fs::path(FPaths::RootDir()) / Path).lexically_normal();
+	}
+
+	std::wstring ToLowerWide(std::wstring Text)
+	{
+		std::transform(Text.begin(), Text.end(), Text.begin(),
+			[](wchar_t Ch)
+			{
+				return static_cast<wchar_t>(std::towlower(Ch));
+			});
+
+		return Text;
+	}
+
+	bool EqualsPathSegmentIgnoreCase(const std::wstring& A, const wchar_t* B)
+	{
+		return ToLowerWide(A) == ToLowerWide(B);
+	}
+
+	std::wstring SanitizePathSegment(std::wstring Segment)
+	{
+		if (Segment.empty())
+		{
+			return L"Unnamed";
+		}
+
+		for (wchar_t& Ch : Segment)
+		{
+			const bool bInvalidWindowsFileChar =
+				Ch < 32 ||
+				Ch == L'<' ||
+				Ch == L'>' ||
+				Ch == L':' ||
+				Ch == L'"' ||
+				Ch == L'/' ||
+				Ch == L'\\' ||
+				Ch == L'|' ||
+				Ch == L'?' ||
+				Ch == L'*';
+
+			if (bInvalidWindowsFileChar)
+			{
+				Ch = L'_';
+			}
+		}
+
+		while (!Segment.empty() && (Segment.back() == L' ' || Segment.back() == L'.'))
+		{
+			Segment.pop_back();
+		}
+
+		if (Segment.empty())
+		{
+			return L"Unnamed";
+		}
+
+		return Segment;
+	}
+
+	std::filesystem::path MakeFbxAutoImportNamespace(const FString& SourcePath)
+	{
+		namespace fs = std::filesystem;
+
+		fs::path SourceFsPath(FPaths::ToWide(SourcePath));
+		SourceFsPath = SourceFsPath.lexically_normal();
+
+		fs::path RelativePath(FPaths::ToWide(FPaths::MakeProjectRelative(SourcePath)));
+		RelativePath = RelativePath.lexically_normal();
+
+		std::vector<std::wstring> Parts;
+		for (const fs::path& Part : RelativePath)
+		{
+			const std::wstring Segment = Part.wstring();
+			if (!Segment.empty() && Segment != L".")
+			{
+				Parts.push_back(Segment);
+			}
+		}
+
+		std::wstring DataFolderName;
+		for (size_t Index = 0; Index + 2 < Parts.size(); ++Index)
+		{
+			if (EqualsPathSegmentIgnoreCase(Parts[Index], L"Content") &&
+				EqualsPathSegmentIgnoreCase(Parts[Index + 1], L"Data"))
+			{
+				DataFolderName = Parts[Index + 2];
+				break;
+			}
+		}
+
+		if (DataFolderName.empty())
+		{
+			DataFolderName = SourceFsPath.parent_path().filename().wstring();
+		}
+
+		if (DataFolderName.empty())
+		{
+			DataFolderName = L"Imported";
+		}
+
+		std::wstring SourceStem = SourceFsPath.stem().wstring();
+		if (SourceStem.empty())
+		{
+			SourceStem = L"Source";
+		}
+
+		return fs::path(SanitizePathSegment(DataFolderName)) / SanitizePathSegment(SourceStem);
+	}
+
 	// 실제 파일을 찾아 프로젝트 Content/Texture/Auto/<FBX이름>/ 아래로 복사하고
 	// 프로젝트 상대경로를 돌려준다. 못 찾으면 기존 동작(경로 정리)만 수행한다.
 	FString ImportTextureToProject(const FString& RawTexturePath, const FString& FbxSourcePath)
@@ -174,8 +295,12 @@ namespace
 			return FPaths::MakeProjectRelative(RawTexturePath);
 		}
 
-		const std::wstring SubFolder = FbxPath.stem().wstring();
-		const fs::path DestRelDir = fs::path(L"Content") / L"Texture" / L"Auto" / SubFolder;
+		const fs::path TextureNamespace = MakeFbxAutoImportNamespace(FbxSourcePath);
+		const fs::path DestRelDir =
+			fs::path(L"Content") /
+			L"Texture" /
+			L"Auto" /
+			TextureNamespace;
 		const fs::path DestAbsDir = fs::path(FPaths::RootDir()) / DestRelDir;
 
 		std::error_code Ec;
@@ -243,7 +368,12 @@ namespace
 			JsonData["Parameters"]["HasNormalMap"] = 0.0f;
 		}
 
-		std::ofstream File(FPaths::ToWide(MatPath));
+		std::ofstream File(MakeAbsoluteProjectPath(MatPath));
+		if (!File.is_open())
+		{
+			return;
+		}
+
 		File << JsonData.dump();
 	}
 
@@ -254,7 +384,7 @@ namespace
 			return false;
 		}
 
-		std::ifstream File(FPaths::ToWide(MatPath));
+		std::ifstream File(MakeAbsoluteProjectPath(MatPath));
 		if (!File.is_open())
 		{
 			return true;
@@ -387,7 +517,9 @@ void FFbxMaterialImporter::BuildStaticMaterials(const FFbxImportContext& Context
 	{
 		FStaticMaterial NewMaterial;
 		NewMaterial.MaterialSlotName = MaterialInfo.Name;
-		NewMaterial.MaterialInterface = FMaterialManager::Get().GetOrCreateMaterial(CreateOrUpdateMaterialAsset(MaterialInfo));
+		NewMaterial.MaterialInterface = FMaterialManager::Get().GetOrCreateMaterial(
+			CreateOrUpdateMaterialAsset(MaterialInfo, Context.SourcePath)
+		);
 		OutMaterials.push_back(NewMaterial);
 	}
 }
@@ -399,7 +531,7 @@ void FFbxMaterialImporter::BuildSkeletalMaterials(const FFbxImportContext& Conte
 
 	for (const FFbxImportedMaterialInfo& MaterialInfo : Context.Materials)
 	{
-		const FString MaterialPath = CreateOrUpdateMaterialAsset(MaterialInfo);
+		const FString MaterialPath = CreateOrUpdateMaterialAsset(MaterialInfo, Context.SourcePath);
 		UMaterial* MaterialObject = FMaterialManager::Get().GetOrCreateMaterial(MaterialPath);
 
 		FSkeletalMaterial NewMaterial;
@@ -440,22 +572,45 @@ void FFbxMaterialImporter::BuildSkeletalMaterials(const FFbxImportContext& Conte
 	}
 }
 
-FString FFbxMaterialImporter::CreateOrUpdateMaterialAsset(const FFbxImportedMaterialInfo& MaterialInfo)
+FString FFbxMaterialImporter::CreateOrUpdateMaterialAsset(
+	const FFbxImportedMaterialInfo& MaterialInfo,
+	const FString& SourcePath
+)
 {
-	const FString MatPath = "Content/Material/Auto/" + MaterialInfo.Name + ".mat";
-	const bool bHasImportedTexture = !MaterialInfo.DiffuseTexturePath.empty() || !MaterialInfo.NormalTexturePath.empty();
+	namespace fs = std::filesystem;
 
-	if (std::filesystem::exists(FPaths::ToWide(MatPath)))
+	const std::wstring SafeMaterialName = SanitizePathSegment(
+		FPaths::ToWide(MaterialInfo.Name.empty() ? "Material" : MaterialInfo.Name)
+	);
+
+	const fs::path MaterialNamespace = MakeFbxAutoImportNamespace(SourcePath);
+	const fs::path MatRelPath =
+		fs::path(L"Content") /
+		L"Material" /
+		L"Auto" /
+		MaterialNamespace /
+		(SafeMaterialName + L".mat");
+
+	const FString MatPath = FPaths::ToUtf8(MatRelPath.generic_wstring());
+	const fs::path MatAbsPath = MakeAbsoluteProjectPath(MatPath);
+
+	const bool bHasImportedTexture =
+		!MaterialInfo.DiffuseTexturePath.empty() ||
+		!MaterialInfo.NormalTexturePath.empty();
+
+	std::error_code Ec;
+	if (fs::exists(MatAbsPath, Ec))
 	{
 		if (ShouldRewriteExistingMaterial(MatPath, bHasImportedTexture))
 		{
 			WriteMaterialJson(MaterialInfo, MatPath);
 			FMaterialManager::Get().ReloadMaterial(MatPath);
 		}
+
 		return MatPath;
 	}
 
-	std::filesystem::create_directories(FPaths::ToWide("Content/Material/Auto"));
+	fs::create_directories(MatAbsPath.parent_path(), Ec);
 	WriteMaterialJson(MaterialInfo, MatPath);
 
 	return MatPath;

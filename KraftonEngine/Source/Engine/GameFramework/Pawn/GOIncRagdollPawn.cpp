@@ -29,6 +29,21 @@ namespace
 	constexpr float ReviveGroundTraceUp = 50.0f;
 	constexpr float ReviveGroundTraceDown = 300.0f;
 	constexpr float ReviveGroundSkinWidth = 0.02f;
+
+	void ConfigureDeadRagdollMeshCollisionForGOInc(USkeletalMeshComponent* Mesh)
+	{
+		if (!Mesh)
+		{
+			return;
+		}
+
+		// Dead ragdoll bodies still need to collide with the floor/world and be queryable by the beam,
+		// but AliveFlee movement uses Pawn-channel capsule sweeps.
+		// If dead ragdoll bodies block Pawn, nearby revived ragdolls immediately stop on each other.
+		Mesh->SetCollisionObjectType(ECollisionChannel::WorldDynamic);
+		Mesh->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
+		Mesh->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
+	}
 }
 
 void AGOIncRagdollPawn::InitDefaultComponents()
@@ -237,6 +252,8 @@ void AGOIncRagdollPawn::ConfigureAliveCollisionCapsuleDefaults()
 	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::Pawn);
 	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
 	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
+	// AliveFlee ragdolls should not physically block each other.
+	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
 	CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -396,6 +413,7 @@ void AGOIncRagdollPawn::ApplyInitialRagdollState()
 		return;
 	}
 
+	ConfigureDeadRagdollMeshCollisionForGOInc(Mesh);
 	Mesh->SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode::DisableParentChild);
 	Mesh->SetRagdollGravityEnabled(true);
 	Mesh->SetRagdollEnabled(true);
@@ -416,6 +434,8 @@ void AGOIncRagdollPawn::SetAliveCollisionCapsuleEnabled(bool bEnabled)
 	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::Pawn);
 	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
 	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
+	// Movement sweep should collide with the world, not with other GOInc ragdoll pawns.
+	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
 
 	if (bEnabled)
 	{
@@ -604,11 +624,12 @@ void AGOIncRagdollPawn::EnterDeadRagdollState()
 
 	if (Mesh)
 	{
+		ConfigureDeadRagdollMeshCollisionForGOInc(Mesh);
 		Mesh->SetSimulatePhysics(true);
 		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		Mesh->SetRagdollGravityEnabled(true);
 
-		// Alive/Flee 중 마지막 animation pose 기준으로 ragdoll body가 시작되게 ragdoll을 먼저 켠다.
+		// Alive/Flee 중 마지막 animation pose 기준으로 ragdoll body가 시작되게 ragdoll body를 먼저 켠다.
 		Mesh->SetRagdollEnabled(true);
 		Mesh->SetAllBodiesSimulatePhysics(true);
 		Mesh->SetAllBodiesPhysicsBlendWeight(1.0f);
