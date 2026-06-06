@@ -8,11 +8,11 @@
     "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
     "_pad" : null
   },
-  "PathFileName" : "Content/Material/Auto/Skin.mat",
+  "PathFileName" : "Content/Material/Auto/Beard14.mat",
   "RasterizerState" : "",
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
-    "DiffuseTexture" : "Content/Texture/Auto/eggman/chr_eggman_face_abd.png"
+    "DiffuseTexture" : "Content/Texture/Auto/eggman/chr_eggman_beard_abd.png"
   }
 }
