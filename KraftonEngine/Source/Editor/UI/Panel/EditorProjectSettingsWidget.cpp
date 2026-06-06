@@ -1,5 +1,6 @@
 ﻿#include "Editor/UI/Panel/EditorProjectSettingsWidget.h"
 #include "Core/ProjectSettings.h"
+#include "Editor/Settings/EditorSettings.h"
 #include "Serialization/SceneSaveManager.h"
 #include "GameFramework/GameMode/GameModeBase.h"
 #include "Object/Reflection/UClass.h"
@@ -139,6 +140,17 @@ void EditorProjectSettingsWidget::Render(const FEditorPanelContext& Context)
 				PS.Shadow.MaxPointAtlasPages = static_cast<uint32>(pointPages);
 		}
 	}
+
+	ImGui::Separator();
+	if (ImGui::Button("Save"))
+	{
+		// 에디터 시작 레벨도 동기화 (에디터는 EditorSettings::EditorStartLevel을 사용)
+		FEditorSettings::Get().EditorStartLevel = FProjectSettings::Get().Game.StartLevelName;
+		FProjectSettings::Get().SaveToFile(FProjectSettings::GetDefaultPath());
+		FEditorSettings::Get().SaveToFile(FEditorSettings::GetDefaultSettingsPath());
+	}
+	ImGui::SameLine();
+	ImGui::TextDisabled("%s", FProjectSettings::GetDefaultPath().c_str());
 
 	ImGui::End();
 }

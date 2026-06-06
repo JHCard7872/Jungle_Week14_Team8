@@ -44,5 +44,5 @@ public:
 	void SaveToFile(const FString& Path) const;
 	void LoadFromFile(const FString& Path);
 
-	static FString GetDefaultPath() { return FPaths::ToUtf8(FPaths::ProjectSettingsFilePath()); }
+	static FString GetDefaultPath();
 };
