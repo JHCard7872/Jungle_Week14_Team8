@@ -17,7 +17,6 @@ local Config     = require("Data/GameConfig")
 local ScoreMgr   = require("Manager/ScoreManager")
 local LoadMgr    = require("Manager/ServerLoadManager")
 local MissionMgr = require("Manager/MissionManager")
-local SpawnMgr   = require("Manager/SpawnManager")
 local HUD        = require("UI/HUDController")
 
 local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프레임 잔여 Tick 가드)
@@ -47,7 +46,6 @@ function BeginPlay()
     end
     AudioManager.PlayBGM("bgm_gameplay_0", 0.6)
 
-    -- TODO(UI): HUDController.Create()
     HUD.Create()
     HUD.UpdateFromSession()
 
@@ -56,7 +54,12 @@ function BeginPlay()
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
-    SpawnMgr.Start()   -- TODO(스폰 담당): 현재 빈 스텁 — 구현 대기 중
+    -- 스폰은 Play.Scene의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가
+    -- 자체 Tick으로 담당 — pause 시 액터 Tick이 멈추므로 스폰도 같이 멈춘다
+
+    -- TODO(트럭): Play.Scene에 수거 트럭 액터 배치 — 구성은 TruckTest.Scene 참고
+    --   (TruckBehavior + 자식 UBoxComponent, GenerateOverlapEvents 필수)
+    -- TODO(빔): 플레이어 폰의 LuaScriptComponent가 비어 있음 — 빔 캐릭터 스크립트 배선 필요
 end
 
 function Tick(dt)
@@ -66,7 +69,6 @@ function Tick(dt)
     Session.timeRemaining = Session.timeRemaining - dt
     LoadMgr.Update(dt)
 
-    -- TODO(UI): HUDController.Update()
     HUD.UpdateFromSession()
 
     -- 종료 판정: 시간 초과 또는 서버 과부하

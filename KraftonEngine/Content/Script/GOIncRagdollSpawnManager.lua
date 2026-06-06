@@ -11,6 +11,11 @@
 --
 -- spawnWeight <= 0 means the entry will not spawn.
 -- canSpawn = false also disables the entry if the field exists.
+--
+-- TODO(래그돌 팀 협의): Data/RagdollData.lua에 spawnWeight가 없어서 지금은 매번
+--   DEFAULT_RAGDOLL_ID로 폴백 스폰된다 — 키 통일 + spawnWeight 추가 필요.
+--   스폰 직후 타입 키 태그 + Gold/Silver 추첨 태그 부여도 합류 필요
+--   (ScoreManager가 태그로 점수를 계산한다. 부여 패턴은 Test/Test.lua 참고).
 
 local SPAWN_MIN_X = -10.0
 local SPAWN_MAX_X = 10.0
@@ -18,7 +23,7 @@ local SPAWN_MIN_Y = -10.0
 local SPAWN_MAX_Y = 10.0
 local SPAWN_Z = 1.0
 
-local SPAWN_INTERVAL = 2.0
+local SPAWN_INTERVAL = require("Data.GameConfig").spawnInterval
 local MAX_SPAWN_COUNT = 10
 local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = true
 
