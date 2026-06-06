@@ -48,6 +48,7 @@
 #include "Core/Property/StructProperty.h"
 #include "Platform/Paths.h"
 #include "Math/Vector.h"
+#include "Math/Quat.h"
 #include "Math/Rotator.h"
 #include "Math/MathUtils.h"
 #include "Particles/ParticleEmitterInstances.h"
@@ -228,6 +229,80 @@ namespace
 		Result["WorldHitLocation"] = Hit.WorldHitLocation;
 		Result["End"] = End;
 		Result["Distance"] = Hit.Distance;
+		Result["HitActor"] = Hit.HitActor;
+		Result["HitComponent"] = Hit.HitComponent;
+		Result["PhysicsBody"] = Hit.PhysicsBody;
+		return Result;
+	}
+
+	sol::table LuaPhysicsCapsuleSweep(
+		sol::this_state        State,
+		const FVector&         Start,
+		const FVector&         Direction,
+		float                  MaxDistance,
+		float                  Radius,
+		float                  HalfHeight,
+		sol::optional<AActor*> IgnoreActor)
+	{
+		sol::state_view L(State);
+		sol::table      Result = L.create_table();
+
+		FHitResult Hit{};
+		FVector    SweepDir = Direction;
+		FVector    End = Start;
+		bool       bHit = false;
+
+		const float DirLength = SweepDir.Length();
+		const float SafeRadius = (std::max)(Radius, 0.001f);
+		const float SafeHalfHeight = (std::max)(HalfHeight, SafeRadius + 0.001f);
+		if (DirLength > 1.0e-4f && MaxDistance > 0.0f)
+		{
+			SweepDir = SweepDir * (1.0f / DirLength);
+			End = Start + SweepDir * MaxDistance;
+
+			UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+			if (CurrentWorld)
+			{
+				bHit = CurrentWorld->PhysicsSweep(
+					Start,
+					SweepDir,
+					MaxDistance,
+					FCollisionShape::MakeCapsule(SafeRadius, SafeHalfHeight),
+					FQuat::Identity,
+					Hit,
+					ECollisionChannel::Pawn,
+					IgnoreActor.value_or(nullptr));
+			}
+
+			if (bHit && Hit.bHit)
+			{
+				End = Hit.WorldHitLocation;
+			}
+			else
+			{
+				Hit = {};
+				Hit.bHit = false;
+				Hit.Distance = MaxDistance;
+				Hit.WorldHitLocation = End;
+			}
+		}
+		else
+		{
+			Hit = {};
+			Hit.bHit = false;
+			Hit.Distance = 0.0f;
+			Hit.WorldHitLocation = Start;
+		}
+
+		Result["bHit"] = bHit && Hit.bHit;
+		Result["Hit"] = Hit;
+		Result["Location"] = Hit.WorldHitLocation;
+		Result["WorldHitLocation"] = Hit.WorldHitLocation;
+		Result["WorldNormal"] = Hit.WorldNormal;
+		Result["ImpactNormal"] = Hit.ImpactNormal;
+		Result["End"] = End;
+		Result["Distance"] = Hit.Distance;
+		Result["bStartPenetrating"] = Hit.bStartPenetrating;
 		Result["HitActor"] = Hit.HitActor;
 		Result["HitComponent"] = Hit.HitComponent;
 		Result["PhysicsBody"] = Hit.PhysicsBody;
@@ -3161,6 +3236,7 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"WorldNormal", &FHitResult::WorldNormal,
 		"ImpactNormal", &FHitResult::ImpactNormal,
 		"FaceIndex", &FHitResult::FaceIndex,
+		"bStartPenetrating", &FHitResult::bStartPenetrating,
 		"bHit", &FHitResult::bHit);
 
 	Lua.new_usertype<UCameraComponent>("CameraComponent",
@@ -3493,6 +3569,8 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 	});
 	World.set_function("PhysicsRaycast", &LuaPhysicsRaycast);
 	World.set_function("Raycast", &LuaPhysicsRaycast);
+	World.set_function("PhysicsCapsuleSweep", &LuaPhysicsCapsuleSweep);
+	World.set_function("CapsuleSweep", &LuaPhysicsCapsuleSweep);
 
 	// 게임 특화 usertype/enum/global(GetGameState 등) 은 Game 모듈의
 	// RegisterGameLuaBindings 가 등록한다. 호출 순서는 GameEngine/EditorEngine::Init

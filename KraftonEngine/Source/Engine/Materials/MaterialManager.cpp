@@ -760,9 +760,63 @@ bool FMaterialManager::InjectDefaultParameters(json::JSON& JsonData, FMaterialTe
 			continue;
 		}
 
+		if (ParamName == "EmissiveColor")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = json::Array(0.0f, 0.0f, 0.0f);
+			continue;
+		}
+
+		if (ParamName == "EmissiveIntensity")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.0f;
+			continue;
+		}
+
 		if (ParamName == "EmissiveStrength")
 		{
 			JsonData[MatKeys::Parameters][ParamName] = 1.0f;
+			continue;
+		}
+
+		if (ParamName == "EffectMode")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.0f;
+			continue;
+		}
+
+		if (ParamName == "ScanSpeed")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.0f;
+			continue;
+		}
+
+		if (ParamName == "ScanWidth")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.08f;
+			continue;
+		}
+
+		if (ParamName == "ScanSoftness")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.04f;
+			continue;
+		}
+
+		if (ParamName == "ScanTrailStrength")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.0f;
+			continue;
+		}
+
+		if (ParamName == "FlickerStrength")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.15f;
+			continue;
+		}
+
+		if (ParamName == "LightningScrollSpeed")
+		{
+			JsonData[MatKeys::Parameters][ParamName] = 0.0f;
 			continue;
 		}
 

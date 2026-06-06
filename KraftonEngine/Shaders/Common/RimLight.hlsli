@@ -12,6 +12,8 @@ static const float HitRimFlickerMax = 1.95f;
 static const float HitRimFlickerHz = 7.0f;
 static const float HitRimFlickerDuty = 1.2f;
 static const float HitRimFlickerSoftness = 0.045f;
+static const float HitRimBodyGlow = 0.20f;
+static const float HitRimBodyFlickerInfluence = 0.55f;
 
 float GetAbsSinPulse(float phase)
 {
@@ -110,7 +112,9 @@ float3 ComputeHitRim(float3 normal, float3 viewDir, float3 worldPos, float2 uv, 
 
     float lightning = GetHitRimWorldLightningFactor(worldPos, fakeNormal);
     float flicker = GetHitRimFlickerFactor(fakeNormal);
-    return colorAndIntensity.rgb * rim * intensity * lightning * flicker * HitRimHdrBoost;
+    float stableFlicker = lerp(1.0f, flicker, HitRimBodyFlickerInfluence);
+    float glow = HitRimBodyGlow + rim * lightning;
+    return colorAndIntensity.rgb * glow * intensity * stableFlicker * HitRimHdrBoost;
 }
 
 float GetHitImpactNoiseFactor(float2 uv, float distanceFromCenter)

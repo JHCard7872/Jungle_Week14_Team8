@@ -15,9 +15,15 @@ local CROSSHAIR_EASE_SPEED = 20.0 -- 조준선이 Hit 지점과 MaxDistance 지�
 local CROSSHAIR_SCREEN_PADDING = 0.0
 
 local MOVE_SPEED = 6.0                   -- WASD 수평 이동 속도
-local JUMP_VELOCITY = 6.5                -- Space 입력 시 PhysX 선형 속도 Z에 넣는 점프 속도
+local JUMP_VELOCITY = 6.5                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
+local GRAVITY_ACCELERATION = 9.8         -- PhysX 시뮬레이션 대신 엔진 쪽 이동에서 직접 적용할 중력 가속도
+local PLAYER_CAPSULE_HALF_HEIGHT = 1.0   -- GOIncRoot 캡슐의 실제 월드 반높이. Scene의 HalfHeight 2.0 * ScaleZ 0.5
+local PLAYER_CAPSULE_RADIUS = 0.5        -- GOIncRoot 캡슐의 실제 월드 반지름. Scene의 Radius 1.0 * ScaleXY 0.5
+local GROUND_PROBE_DISTANCE = 0.18       -- 캡슐 바닥 아래로 더 확인할 여유 거리. 너무 크면 낮은 단차에 과하게 붙는다
+local GROUND_WALKABLE_NORMAL_Z = 0.55    -- 이 값보다 위를 향한 표면만 바닥으로 취급해 벽/측면 hit를 배제
+local CAPSULE_SWEEP_SKIN = 0.04          -- CapsuleSweep 결과에서 벽에 딱 붙지 않게 남기는 최소 여유
+local CAPSULE_SWEEP_MIN_MOVE = 0.0001    -- 너무 작은 이동량은 sweep을 생략해 떨림을 줄인다
 local GROUNDED_Z_VELOCITY_EPSILON = 0.05 -- Raycast가 없을 때 접지 판정에 쓰는 Z 속도 허용값
-local GROUND_CHECK_DISTANCE = 1.75       -- 캐릭터 아래 방향 접지 확인 Raycast 거리
 
 local LOOK_SENSITIVITY = 0.12  -- 마우스 이동량을 Yaw/Pitch 각도로 바꾸는 감도
 local MIN_PITCH = -30.0        -- 1인칭 카메라가 위를 볼 수 있는 최소 Pitch. 이 엔진은 음수 Pitch가 위쪽
@@ -25,6 +31,8 @@ local MAX_PITCH = 20.0         -- 1인칭 카메라가 아래를 볼 수 있는 
 local CAMERA_HEIGHT = 1.2      -- Root 기준 카메라 피벗 높이
 local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
 local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
+local SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
+local SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16 -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
 local HIT_RIM_DURATION = 0.50
 local HIT_RIM_FLASH_INTENSITY = 3.5
 local HIT_RIM_SUSTAIN_INTENSITY = 1.6
@@ -100,7 +108,8 @@ local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fir
     direction = nil
 }
 
-local root_body = nil            -- PhysX 이동/점프 속도를 적용할 Root PrimitiveComponent
+local root_body = nil            -- 바닥 레이/쿼리 기준이 되는 GOIncRoot 캡슐 PrimitiveComponent
+local player_velocity = nil      -- PhysX 대신 Lua가 직접 보관하는 GOIncActor 이동 속도
 local camera_pivot = nil         -- Pitch 회전을 담당하는 GOIncCameraPivot
 local camera = nil               -- 실제 활성 카메라 컴포넌트
 local view_weapon_root = nil     -- 카메라 위치/회전에 붙는 1인칭 총 ViewModel 루트
@@ -1256,6 +1265,13 @@ local function update_beam_fade(delta_time)
     end
 end
 
+local function get_slot2_beam_visible_time(hit)
+    if hit ~= nil and hit.bHit then
+        return SLOT2_BEAM_HIT_VISIBLE_TIME
+    end
+    return SLOT2_BEAM_MISS_VISIBLE_TIME
+end
+
 set_beam_visible = function(is_visible)
     if beam_particle == nil then
         return
@@ -1311,6 +1327,24 @@ update_beam_points = function(aim_point)
     end
 
     set_beam_points(source_point, aim_point)
+end
+
+local function apply_slot2_fire(delta_time)
+    if not Input.GetKeyDown(KEY_LBUTTON) then
+        update_beam_fade(delta_time)
+        return
+    end
+
+    local hit, fallback_end = center_physics_raycast(MAX_TRACE_DISTANCE)
+    trigger_hit_rim(hit, true)
+    last_aim_point = get_hit_point_or_end(hit, fallback_end)
+
+    if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
+        beam_particle:ResetParticleSystem()
+    end
+    update_beam_points(last_aim_point)
+    set_beam_visible(true)
+    beam_visible_remaining = get_slot2_beam_visible_time(hit)
 end
 
 local function can_swap_weapon()
@@ -1369,16 +1403,219 @@ local function apply_look_input()
     obj.Rotation = vec(0.0, 0.0, yaw)
 end
 
-local function is_grounded(velocity)
+local function ensure_player_velocity()
+    if player_velocity == nil then
+        player_velocity = Vector.Zero()
+    end
+    return player_velocity
+end
+
+local function get_hit_normal(hit)
+    if hit == nil then
+        return nil
+    end
+
+    if hit.WorldNormal ~= nil and hit.WorldNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+        return hit.WorldNormal
+    end
+    if hit.ImpactNormal ~= nil and hit.ImpactNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+        return hit.ImpactNormal
+    end
+
+    if hit.Hit ~= nil then
+        if hit.Hit.WorldNormal ~= nil and hit.Hit.WorldNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+            return hit.Hit.WorldNormal
+        end
+        if hit.Hit.ImpactNormal ~= nil and hit.Hit.ImpactNormal:Length() > CAPSULE_SWEEP_MIN_MOVE then
+            return hit.Hit.ImpactNormal
+        end
+    end
+
+    return nil
+end
+
+local function get_hit_distance(hit)
+    if hit == nil then
+        return nil
+    end
+    if hit.Distance ~= nil then
+        return hit.Distance
+    end
+    if hit.Hit ~= nil then
+        return hit.Hit.Distance
+    end
+    return nil
+end
+
+local function get_floor_hit(extra_distance)
     if World ~= nil and World.PhysicsRaycast ~= nil then
-        local hit = World.PhysicsRaycast(obj.Location, Vector.Down(), GROUND_CHECK_DISTANCE, obj)
-        return hit ~= nil and hit.bHit
+        local probe_distance = PLAYER_CAPSULE_HALF_HEIGHT + GROUND_PROBE_DISTANCE + math.max(extra_distance or 0.0, 0.0)
+        local hit = World.PhysicsRaycast(obj.Location, Vector.Down(), probe_distance, obj)
+        if hit == nil or not hit.bHit then
+            return nil
+        end
+
+        local normal = get_hit_normal(hit)
+        if normal ~= nil and normal.Z < GROUND_WALKABLE_NORMAL_Z then
+            return nil
+        end
+
+        return hit
+    end
+
+    return nil
+end
+
+local function get_floor_location(hit)
+    if hit == nil then
+        return nil
+    end
+    if hit.WorldHitLocation ~= nil then
+        return hit.WorldHitLocation
+    end
+    if hit.Location ~= nil then
+        return hit.Location
+    end
+    if hit.Hit ~= nil then
+        return hit.Hit.WorldHitLocation
+    end
+    return nil
+end
+
+local function snap_actor_to_floor(hit)
+    local floor_location = get_floor_location(hit)
+    if floor_location == nil then
+        return
+    end
+
+    local location = obj.Location
+    location.Z = floor_location.Z + PLAYER_CAPSULE_HALF_HEIGHT
+    obj.Location = location
+end
+
+local function is_grounded(velocity, extra_distance)
+    local floor_hit = get_floor_hit(extra_distance)
+    if floor_hit ~= nil then
+        return true, floor_hit
+    end
+
+    if World ~= nil and World.PhysicsRaycast ~= nil then
+        return false, nil
     end
 
     return math.abs(velocity.Z) <= GROUNDED_Z_VELOCITY_EPSILON
 end
 
-local function apply_physics_movement()
+local function is_capsule_blocking_hit(hit)
+    if hit == nil or not hit.bHit then
+        return false
+    end
+
+    local start_penetrating = hit.bStartPenetrating
+    if start_penetrating == nil and hit.Hit ~= nil then
+        start_penetrating = hit.Hit.bStartPenetrating
+    end
+
+    local normal = get_hit_normal(hit)
+    if normal == nil then
+        return false
+    end
+
+    if normal.Z >= GROUND_WALKABLE_NORMAL_Z then
+        return false
+    end
+
+    local lateral_normal = vec(normal.X, normal.Y, 0.0)
+    local lateral_length = lateral_normal:Length()
+    if lateral_length <= CAPSULE_SWEEP_MIN_MOVE then
+        return false
+    end
+
+    return not start_penetrating
+end
+
+local function sweep_capsule_delta(start, delta)
+    local distance = delta:Length()
+    if distance <= CAPSULE_SWEEP_MIN_MOVE then
+        return delta, nil
+    end
+
+    if World == nil or World.CapsuleSweep == nil then
+        return delta, nil
+    end
+
+    local direction = delta:Normalized()
+    local sweep_shrink = math.min(CAPSULE_SWEEP_SKIN, PLAYER_CAPSULE_RADIUS * 0.45)
+    local sweep_radius = math.max(PLAYER_CAPSULE_RADIUS - sweep_shrink, 0.001)
+    local sweep_half_height = math.max(PLAYER_CAPSULE_HALF_HEIGHT - sweep_shrink, sweep_radius + 0.001)
+    local hit = World.CapsuleSweep(
+        start,
+        direction,
+        distance,
+        sweep_radius,
+        sweep_half_height,
+        obj)
+    if not is_capsule_blocking_hit(hit) then
+        return delta, nil
+    end
+
+    local hit_distance = get_hit_distance(hit)
+    if hit_distance == nil then
+        return Vector.Zero(), hit
+    end
+
+    local allowed_distance = math.max(hit_distance - CAPSULE_SWEEP_SKIN, 0.0)
+    allowed_distance = math.min(allowed_distance, distance)
+    return direction * allowed_distance, hit
+end
+
+local function project_delta_along_surface(delta, normal)
+    if normal == nil then
+        return Vector.Zero()
+    end
+
+    local wall_normal = vec(normal.X, normal.Y, 0.0)
+    local normal_length = wall_normal:Length()
+    if normal_length <= CAPSULE_SWEEP_MIN_MOVE then
+        return Vector.Zero()
+    end
+
+    wall_normal = wall_normal * (1.0 / normal_length)
+    local into_surface = delta:Dot(wall_normal)
+    if into_surface < 0.0 then
+        return delta - wall_normal * into_surface
+    end
+
+    return delta
+end
+
+local function resolve_horizontal_collision(horizontal_delta)
+    if horizontal_delta:Length() <= CAPSULE_SWEEP_MIN_MOVE then
+        return horizontal_delta
+    end
+
+    local first_delta, hit = sweep_capsule_delta(obj.Location, horizontal_delta)
+    if hit == nil then
+        return first_delta
+    end
+
+    local remaining_delta = horizontal_delta - first_delta
+    remaining_delta.Z = 0.0
+
+    local slide_delta = project_delta_along_surface(remaining_delta, get_hit_normal(hit))
+    slide_delta.Z = 0.0
+    if slide_delta:Length() <= CAPSULE_SWEEP_MIN_MOVE then
+        return first_delta
+    end
+
+    local second_delta = sweep_capsule_delta(obj.Location + first_delta, slide_delta)
+    second_delta.Z = 0.0
+    return first_delta + second_delta
+end
+
+local function apply_kinematic_movement(delta_time)
+    delta_time = math.max(delta_time or 0.0, 0.0)
+
     local forward = flat_normalized(obj.Forward)
     local right = flat_normalized(obj.Right)
     local move_dir = Vector.Zero()
@@ -1396,23 +1633,48 @@ local function apply_physics_movement()
         move_dir = move_dir - right
     end
 
-    if root_body ~= nil then
-        local velocity = root_body:GetLinearVelocity()
-        local horizontal_velocity = Vector.Zero()
+    local velocity = ensure_player_velocity()
+    local horizontal_velocity = Vector.Zero()
 
-        if move_dir:Length() > 0.0001 then
-            horizontal_velocity = move_dir:Normalized() * MOVE_SPEED
+    if move_dir:Length() > 0.0001 then
+        horizontal_velocity = move_dir:Normalized() * MOVE_SPEED
+    end
+
+    velocity.X = horizontal_velocity.X
+    velocity.Y = horizontal_velocity.Y
+
+    local grounded, floor_hit = is_grounded(velocity)
+    if grounded and velocity.Z <= 0.0 then
+        snap_actor_to_floor(floor_hit)
+        velocity.Z = 0.0
+    end
+
+    local did_jump = false
+    if Input.GetKeyDown(KEY_SPACE) and grounded then
+        velocity.Z = JUMP_VELOCITY
+        did_jump = true
+    end
+
+    if did_jump or not grounded or velocity.Z > 0.0 then
+        velocity.Z = velocity.Z - GRAVITY_ACCELERATION * delta_time
+    end
+
+    local horizontal_delta = vec(velocity.X, velocity.Y, 0.0) * delta_time
+    horizontal_delta = resolve_horizontal_collision(horizontal_delta)
+    if delta_time > 0.0 then
+        velocity.X = horizontal_delta.X / delta_time
+        velocity.Y = horizontal_delta.Y / delta_time
+    end
+
+    obj.Location = obj.Location + horizontal_delta + vec(0.0, 0.0, velocity.Z * delta_time)
+
+    if velocity.Z <= 0.0 then
+        local fall_distance = math.max(-velocity.Z * delta_time, 0.0)
+        local landed, landed_hit = is_grounded(velocity, fall_distance)
+        if landed then
+            snap_actor_to_floor(landed_hit)
+            velocity.Z = 0.0
         end
-
-        velocity.X = horizontal_velocity.X
-        velocity.Y = horizontal_velocity.Y
-
-        if Input.GetKeyDown(KEY_SPACE) and is_grounded(velocity) then
-            velocity.Z = JUMP_VELOCITY
-        end
-
-        root_body:SetLinearVelocity(velocity)
-        root_body:SetAngularVelocity(Vector.Zero())
     end
 end
 
@@ -1425,6 +1687,11 @@ local function apply_fire(delta_time)
     end
 
     select_active_beam_particle()
+
+    if weapon_swap_state.active_index == 2 then
+        apply_slot2_fire(delta_time)
+        return
+    end
 
     if update_active_grab(delta_time) then
         return
@@ -1466,9 +1733,18 @@ function BeginPlay()
 
     bind_components()
     cache_view_weapon_base_transforms()
+    player_velocity = Vector.Zero()
 
     if root_body ~= nil then
-        root_body:SetSimulatePhysics(true)
+        root_body:SetSimulatePhysics(false)
+        root_body:SetLinearVelocity(Vector.Zero())
+        root_body:SetAngularVelocity(Vector.Zero())
+        if root_body.SetKinematicPhysics ~= nil then
+            root_body:SetKinematicPhysics(true)
+        end
+        if root_body.SetCollisionEnabled ~= nil then
+            root_body:SetCollisionEnabled("QueryOnly")
+        end
     end
 
     update_camera_view()
@@ -1487,7 +1763,7 @@ end
 
 function PrePhysicsTick(delta_time)
     apply_look_input()
-    apply_physics_movement()
+    apply_kinematic_movement(delta_time)
 end
 
 function Tick(delta_time)

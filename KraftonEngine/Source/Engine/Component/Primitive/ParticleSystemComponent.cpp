@@ -483,6 +483,7 @@ void UParticleSystemComponent::BuildEmitterInstances()
             Instance->Resize(32);
         }
 
+        Instance->Tick_MaterialOverrides(static_cast<int32>(EmitterInstances.size()));
         EmitterInstances.push_back(Instance);
     }
 }
