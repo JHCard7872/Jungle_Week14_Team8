@@ -1,6 +1,7 @@
 local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 튜닝 상수. 값 수정은 해당 파일에서
 local Session = require("GameSession")
 local HUD = require("UI/HUDController")
+local RagdollData = require("Data/RagdollData")
 
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
@@ -187,52 +188,6 @@ local function update_viewport_center()
         viewport_center_x = (size.Width or 0.0) * 0.5
         viewport_center_y = (size.Height or 0.0) * 0.5
     end
-end
-
-local function ease_out_cubic(t)
-    local clamped = clamp(t, 0.0, 1.0)
-    local inverse = 1.0 - clamped
-    return 1.0 - inverse * inverse * inverse
-end
-
-local function project_crosshair_world_position(world_point)
-    update_viewport_center()
-
-    if world_point == nil or Engine == nil or Engine.ProjectWorldToScreen == nil then
-        return viewport_center_x, viewport_center_y
-    end
-
-    local projected = Engine.ProjectWorldToScreen(world_point)
-    if projected == nil or not projected.bValid then
-        return viewport_center_x, viewport_center_y
-    end
-
-    local screen_x = projected.X or viewport_center_x
-    local screen_y = projected.Y or viewport_center_y
-    local width = projected.Width or (viewport_center_x * 2.0)
-    local height = projected.Height or (viewport_center_y * 2.0)
-    if width > 0.0 and height > 0.0 then
-        screen_x = clamp(screen_x, C.CROSSHAIR_SCREEN_PADDING, width - C.CROSSHAIR_SCREEN_PADDING)
-        screen_y = clamp(screen_y, C.CROSSHAIR_SCREEN_PADDING, height - C.CROSSHAIR_SCREEN_PADDING)
-    end
-
-    return screen_x, screen_y
-end
-
-local function move_crosshair_toward(target_x, target_y, delta_time)
-    if crosshair_screen_x == nil or crosshair_screen_y == nil then
-        crosshair_screen_x = target_x
-        crosshair_screen_y = target_y
-        return
-    end
-
-    local alpha = 1.0
-    if delta_time ~= nil and delta_time > 0.0 then
-        alpha = ease_out_cubic(delta_time * C.CROSSHAIR_EASE_SPEED)
-    end
-
-    crosshair_screen_x = crosshair_screen_x + (target_x - crosshair_screen_x) * alpha
-    crosshair_screen_y = crosshair_screen_y + (target_y - crosshair_screen_y) * alpha
 end
 
 local function bind_components()
@@ -746,23 +701,10 @@ local function get_hit_point_or_end(hit, fallback_end)
     return fallback_end
 end
 
-local function get_camera_aim_point()
-    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
-    return get_hit_point_or_end(hit, fallback_end)
-end
-
-local function get_crosshair_target_world()
-    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
-    if Input.GetKey(C.KEY_LBUTTON) and hit ~= nil and hit.bHit then
-        return get_hit_point_or_end(hit, fallback_end)
-    end
-    return fallback_end
-end
-
 local function update_crosshair_aim_position(delta_time)
-    local target_world = get_crosshair_target_world()
-    local target_x, target_y = project_crosshair_world_position(target_world)
-    move_crosshair_toward(target_x, target_y, delta_time)
+    update_viewport_center()
+    crosshair_screen_x = viewport_center_x
+    crosshair_screen_y = viewport_center_y
 end
 
 local function get_grab_distance_origin()
@@ -1603,6 +1545,143 @@ local function get_hit_distance(hit)
     return nil
 end
 
+local function make_hidden_target_state()
+    return {
+        visible = false,
+        ragdollId = "",
+        actorName = "",
+        bodyName = "",
+        distanceText = "",
+        name = "",
+        weightText = "",
+        scoreText = "",
+        imagePath = C.TARGET_INFO_FALLBACK_IMAGE_PATH,
+    }
+end
+
+local function get_actor_name(actor)
+    if actor ~= nil and actor.GetName ~= nil then
+        return actor:GetName()
+    end
+    return ""
+end
+
+local function get_ragdoll_pawn(actor)
+    if actor ~= nil and actor.AsGOIncRagdollPawn ~= nil then
+        return actor:AsGOIncRagdollPawn()
+    end
+    return nil
+end
+
+local function get_ragdoll_id(actor)
+    local ragdoll_pawn = get_ragdoll_pawn(actor)
+    if ragdoll_pawn ~= nil and ragdoll_pawn.GetRagdollId ~= nil then
+        local ragdoll_id = ragdoll_pawn:GetRagdollId()
+        if type(ragdoll_id) == "string" and ragdoll_id ~= "" then
+            return ragdoll_id
+        end
+    end
+    return nil
+end
+
+local function get_ragdoll_display_name(actor, catalog_entry, ragdoll_id)
+    if catalog_entry ~= nil and type(catalog_entry.displayName) == "string" and catalog_entry.displayName ~= "" then
+        return catalog_entry.displayName
+    end
+
+    local ragdoll_pawn = get_ragdoll_pawn(actor)
+    if ragdoll_pawn ~= nil and ragdoll_pawn.GetDisplayName ~= nil then
+        local display_name = ragdoll_pawn:GetDisplayName()
+        if type(display_name) == "string" and display_name ~= "" then
+            return display_name
+        end
+    end
+
+    local actor_name = get_actor_name(actor)
+    if actor_name ~= "" then
+        return actor_name
+    end
+    return ragdoll_id or "Ragdoll"
+end
+
+local function get_body_name(body)
+    if body ~= nil and body.GetBoneName ~= nil then
+        local bone_name = body:GetBoneName()
+        if type(bone_name) == "string" and bone_name ~= "" then
+            return bone_name
+        end
+    end
+    return ""
+end
+
+local function get_body_mass(body, component)
+    if body ~= nil and body.GetMass ~= nil then
+        return body:GetMass()
+    end
+    if component ~= nil and component.GetMass ~= nil then
+        return component:GetMass()
+    end
+    return nil
+end
+
+local function vector_to_target_location(value)
+    if value == nil then
+        return nil
+    end
+    return {
+        x = value.X or 0.0,
+        y = value.Y or 0.0,
+        z = value.Z or 0.0,
+    }
+end
+
+local function build_target_state_from_hit(hit)
+    local actor = get_hit_actor(hit)
+    if not is_ragdoll_actor(actor) then
+        return make_hidden_target_state()
+    end
+
+    local ragdoll_id = get_ragdoll_id(actor)
+    local catalog_entry = ragdoll_id ~= nil and RagdollData[ragdoll_id] or nil
+    local body = get_hit_physics_body(hit)
+    local hit_component = get_hit_component(hit)
+    local distance = get_hit_distance(hit)
+    local body_name = get_body_name(body)
+    local body_mass = get_body_mass(body, hit_component)
+    local catalog_mass = catalog_entry ~= nil and catalog_entry.mass or nil
+    local score = catalog_entry ~= nil and catalog_entry.baseScore or nil
+
+    return {
+        visible = true,
+        ragdollId = ragdoll_id or "",
+        actorName = get_actor_name(actor),
+        bodyName = body_name,
+        bodyMass = body_mass,
+        hitLocation = vector_to_target_location(get_hit_location(hit)),
+        distance = distance,
+        distanceText = distance ~= nil and string.format("%.1fm", distance) or "",
+        name = get_ragdoll_display_name(actor, catalog_entry, ragdoll_id),
+        weight = catalog_mass or body_mass,
+        weightText = catalog_mass ~= nil and string.format("%.1fkg", catalog_mass) or nil,
+        score = score,
+        scoreText = score ~= nil and string.format("+%d", math.floor(math.abs(score))) or nil,
+        imagePath = C.TARGET_INFO_FALLBACK_IMAGE_PATH,
+        referenceImage = catalog_entry ~= nil and catalog_entry.referenceImage or nil,
+    }
+end
+
+local function publish_target_state()
+    local hit = center_physics_raycast(C.MAX_TRACE_DISTANCE)
+    local target_state = build_target_state_from_hit(hit)
+
+    if Session ~= nil then
+        Session.target = target_state
+    end
+    if HUD ~= nil and HUD.SetTargetState ~= nil then
+        HUD.SetTargetState(target_state)
+    end
+end
+
 local function get_floor_hit(extra_distance)
     if World ~= nil and World.PhysicsRaycast ~= nil then
         local probe_distance = C.PLAYER_CAPSULE_HALF_HEIGHT + C.GROUND_PROBE_DISTANCE + math.max(extra_distance or 0.0, 0.0)
@@ -1880,7 +1959,8 @@ end
 
 function BeginPlay()
     update_viewport_center()
-    move_crosshair_toward(viewport_center_x, viewport_center_y, 0.0)
+    crosshair_screen_x = viewport_center_x
+    crosshair_screen_y = viewport_center_y
 
     local current_rotation = obj.Rotation
     yaw = current_rotation.Z
@@ -1910,6 +1990,7 @@ function BeginPlay()
         CameraManager.PossessCamera(camera)
     end
     update_crosshair_aim_position(0.0)
+    publish_target_state()
     publish_crosshair_state(0.0)
 
     print("[GOInc] viewport center: " .. viewport_center_x .. ", " .. viewport_center_y)
@@ -1934,5 +2015,6 @@ function PostCameraTick(delta_time)
     aim_trace_cache.serial = aim_trace_cache.serial + 1
     apply_fire(delta_time)
     update_crosshair_aim_position(delta_time)
+    publish_target_state()
     publish_crosshair_state(delta_time)
 end

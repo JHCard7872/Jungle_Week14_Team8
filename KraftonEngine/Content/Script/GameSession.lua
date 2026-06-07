@@ -30,6 +30,18 @@ local S = {
         },
     },
 
+    target = {
+        visible = false,
+        ragdollId = "",
+        actorName = "",
+        bodyName = "",
+        distanceText = "",
+        name = "",
+        weightText = "",
+        scoreText = "",
+        imagePath = "../../Sprite/id_card_sample.png",
+    },
+
     result = {
         collectedCount = 0,   -- 총 수거 수
         gameOverReason = "",  -- "시간 초과" / "서버 과부하"
@@ -41,6 +53,17 @@ local S = {
 function S.Reset(timeLimit)
     S.score, S.load, S.timeRemaining, S.inputEnabled = 0, 0, timeLimit, true
     S.gun    = { mode = "collect", energy = 100, crosshair = { visible = true, hold = false, rotation = 0.0 } }
+    S.target = {
+        visible = false,
+        ragdollId = "",
+        actorName = "",
+        bodyName = "",
+        distanceText = "",
+        name = "",
+        weightText = "",
+        scoreText = "",
+        imagePath = "../../Sprite/id_card_sample.png",
+    }
     S.result = { collectedCount = 0, gameOverReason = "", gradeText = "" }
 end
 

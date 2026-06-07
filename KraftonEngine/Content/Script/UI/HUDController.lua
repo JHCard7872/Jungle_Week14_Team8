@@ -41,6 +41,7 @@ local state = {
         scoreText = "+300",
         imagePath = "../../Sprite/id_card_sample.png",
     },
+    targetState = nil,
 }
 
 local function clamp(value, min_value, max_value)
@@ -512,6 +513,10 @@ function M.SetCrosshairState(crosshair)
         apply_gun_status()
         apply_crosshair_state()
     end
+end
+
+function M.SetTargetState(target_info)
+    state.targetState = target_info
 end
 
 function M.ShowTargetInfo(target_info)

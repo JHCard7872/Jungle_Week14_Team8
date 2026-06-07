@@ -144,10 +144,10 @@ body {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 88px;
-    height: 88px;
-    margin-left: -44px;
-    margin-top: -44px;
+    width: 160px;
+    height: 160px;
+    margin-left: -80px;
+    margin-top: -80px;
 }
 
 #hud_crosshair_collect,
