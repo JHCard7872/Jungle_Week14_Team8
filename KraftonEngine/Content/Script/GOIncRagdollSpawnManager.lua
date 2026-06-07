@@ -15,23 +15,23 @@
 local SpawnCfg = require("Data.GameConfig").spawn
 local Score = require("Data.ScoreData")
 
-local SPAWN_MIN_X = SpawnCfg.areaMinX
-local SPAWN_MAX_X = SpawnCfg.areaMaxX
-local SPAWN_MIN_Y = SpawnCfg.areaMinY
-local SPAWN_MAX_Y = SpawnCfg.areaMaxY
-local SPAWN_Z = SpawnCfg.z
-
 local SPAWN_INTERVAL = SpawnCfg.interval
 local MAX_SPAWN_COUNT = SpawnCfg.maxCount
 local SPAWN_IMMEDIATELY_ON_BEGIN_PLAY = SpawnCfg.immediateFirst
+local SPAWN_AREA_TAG = SpawnCfg.spawnAreaTag or "GOIncSpawnArea"
+local MAX_LOCATION_RETRY = SpawnCfg.maxLocationRetry or 10
+local MIN_DISTANCE_BETWEEN_SPAWNS = SpawnCfg.minDistanceBetweenSpawns or 0.0
 
 local DEFAULT_CHARACTER_ID = SpawnCfg.defaultRagdollId or "blue-speedster"
 local RagdollData = nil
 
 local spawnTimer = 0.0
 local spawnedCount = 0
+local totalSpawnedEver = 0
 local spawnedPawns = {}
+local spawnAreas = {}
 local bPrintedMaxSpawnReached = false
+local bPrintedNoSpawnAreas = false
 local bPrintedSpawnCandidateSummary = false
 local loggedUnregisteredCharacterIds = {}
 
@@ -51,6 +51,44 @@ end
 
 local function random_range(minValue, maxValue)
     return minValue + (maxValue - minValue) * math.random()
+end
+
+local function cache_spawn_area_boxes()
+    spawnAreas = {}
+    bPrintedNoSpawnAreas = false
+
+    if GOInc == nil or GOInc.FindSpawnAreaBoxes == nil then
+        print("[GOIncRagdollSpawnManager] Missing GOInc.FindSpawnAreaBoxes binding")
+        return
+    end
+
+    local ok, boxes = pcall(GOInc.FindSpawnAreaBoxes, SPAWN_AREA_TAG)
+    if not ok or boxes == nil then
+        print("[GOIncRagdollSpawnManager] Failed to find spawn area boxes. Tag=" .. tostring(SPAWN_AREA_TAG))
+        return
+    end
+
+    for _, box in ipairs(boxes) do
+        if box ~= nil then
+            table.insert(spawnAreas, box)
+        end
+    end
+
+    print(string.format(
+        "[GOIncRagdollSpawnManager] Cached %d spawn area box(es). Tag=%s",
+        #spawnAreas,
+        tostring(SPAWN_AREA_TAG)))
+end
+
+local function print_no_spawn_areas_once()
+    if bPrintedNoSpawnAreas then
+        return
+    end
+
+    bPrintedNoSpawnAreas = true
+    print(string.format(
+        "[GOIncRagdollSpawnManager] No spawn area boxes cached. Place an Actor with Tag='%s' and at least one BoxComponent.",
+        tostring(SPAWN_AREA_TAG)))
 end
 
 local function load_ragdoll_data()
@@ -221,12 +259,66 @@ local function pick_random_character_entry()
     return candidates[#candidates]
 end
 
+local function is_location_far_enough(location)
+    local minDistance = number_or(MIN_DISTANCE_BETWEEN_SPAWNS, 0.0)
+    if minDistance <= 0.0 then
+        return true
+    end
+
+    local minDistanceSq = minDistance * minDistance
+
+    for _, pawn in ipairs(spawnedPawns) do
+        if pawn ~= nil and (pawn.IsValid == nil or pawn:IsValid()) then
+            local pawnLocation = pawn.Location
+            if pawnLocation ~= nil then
+                local dx = location.X - pawnLocation.X
+                local dy = location.Y - pawnLocation.Y
+                local dz = location.Z - pawnLocation.Z
+                local distSq = dx * dx + dy * dy + dz * dz
+                if distSq < minDistanceSq then
+                    return false
+                end
+            end
+        end
+    end
+
+    return true
+end
+
+local function pick_random_spawn_area()
+    if #spawnAreas <= 0 then
+        print_no_spawn_areas_once()
+        return nil
+    end
+
+    local index = math.random(1, #spawnAreas)
+    return spawnAreas[index]
+end
+
 local function make_random_spawn_location()
-    return Vector.new(
-        random_range(SPAWN_MIN_X, SPAWN_MAX_X),
-        random_range(SPAWN_MIN_Y, SPAWN_MAX_Y),
-        SPAWN_Z
-    )
+    local retryCount = math.max(1, number_or(MAX_LOCATION_RETRY, 10))
+
+    for _ = 1, retryCount do
+        local area = pick_random_spawn_area()
+        if area == nil then
+            return nil
+        end
+
+        if GOInc == nil or GOInc.GetRandomPointInSpawnAreaBox == nil then
+            print("[GOIncRagdollSpawnManager] Missing GOInc.GetRandomPointInSpawnAreaBox binding")
+            return nil
+        end
+
+        local ok, location = pcall(GOInc.GetRandomPointInSpawnAreaBox, area)
+        if ok and location ~= nil and is_location_far_enough(location) then
+            return location
+        end
+    end
+
+    print(string.format(
+        "[GOIncRagdollSpawnManager] Failed to find a non-overlapping spawn location after %d attempt(s).",
+        retryCount))
+    return nil
 end
 
 local function can_spawn_more()
@@ -289,6 +381,10 @@ local function spawn_one()
     end
 
     local location = make_random_spawn_location()
+    if location == nil then
+        return nil
+    end
+
     local pawn = GOInc.SpawnRagdollCharacter(characterId, location)
 
     if pawn == nil then
@@ -298,6 +394,7 @@ local function spawn_one()
 
     table.insert(spawnedPawns, pawn)
     spawnedCount = #spawnedPawns
+    totalSpawnedEver = totalSpawnedEver + 1
 
     -- 점수/미션 식별용 타입 태그 — ScoreManager.FindType이 RagdollData 키와 일치하는
     -- 태그를 찾는다. C++ 생성자는 "Ragdoll" 태그만 달아주므로 타입 태그는 여기서 단다.
@@ -323,13 +420,14 @@ local function spawn_one()
     end
 
     print(string.format(
-        "[GOIncRagdollSpawnManager] Spawned %s (%s, %s) at (%.2f, %.2f, %.2f) [%d / %d]",
+        "[GOIncRagdollSpawnManager] Spawned %s (%s, %s) at (%.2f, %.2f, %.2f) [active=%d / %d, total=%d]",
         tostring(characterId),
         tostring(entry.displayName),
         tostring(entry.pawnClass),
         location.X, location.Y, location.Z,
         spawnedCount,
-        MAX_SPAWN_COUNT))
+        MAX_SPAWN_COUNT,
+        totalSpawnedEver))
 
     return pawn
 end
@@ -350,10 +448,15 @@ function BeginPlay()
 
     spawnTimer = 0.0
     spawnedCount = 0
+    totalSpawnedEver = 0
     spawnedPawns = {}
+    spawnAreas = {}
     bPrintedMaxSpawnReached = false
+    bPrintedNoSpawnAreas = false
     bPrintedSpawnCandidateSummary = false
     loggedUnregisteredCharacterIds = {}
+
+    cache_spawn_area_boxes()
 
     if SPAWN_IMMEDIATELY_ON_BEGIN_PLAY then
         spawn_one()
