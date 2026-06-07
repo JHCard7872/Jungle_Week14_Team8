@@ -720,10 +720,57 @@ local function center_physics_raycast(max_distance)
 
     local start, direction = get_camera_aim_ray()
     local fallback_end = start + direction * distance
+    local primitive_hit = nil
+    local primitive_distance = nil
+    local physics_distance = distance
+    local front_hit_epsilon = C.FRONT_HIT_DISTANCE_EPSILON or 0.05
     local hit = nil
 
+    if World ~= nil and World.PrimitiveRaycast ~= nil then
+        primitive_hit = World.PrimitiveRaycast(start, direction, distance, obj)
+        if primitive_hit ~= nil and primitive_hit.bHit then
+            primitive_distance = primitive_hit.Distance
+            if primitive_distance == nil and primitive_hit.Hit ~= nil then
+                primitive_distance = primitive_hit.Hit.Distance
+            end
+            if primitive_distance ~= nil and primitive_distance > 0.0 then
+                physics_distance = math.min(distance, primitive_distance + front_hit_epsilon)
+            end
+        end
+    end
+
     if World ~= nil and World.PhysicsRaycast ~= nil then
-        hit = World.PhysicsRaycast(start, direction, distance, obj)
+        hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+    end
+
+    if primitive_hit ~= nil and primitive_hit.bHit then
+        local physics_hit_distance = nil
+        local physics_hit_actor = nil
+        if hit ~= nil and hit.bHit then
+            physics_hit_distance = hit.Distance
+            if physics_hit_distance == nil and hit.Hit ~= nil then
+                physics_hit_distance = hit.Hit.Distance
+            end
+            physics_hit_actor = hit.HitActor
+            if physics_hit_actor == nil and hit.Hit ~= nil then
+                physics_hit_actor = hit.Hit.HitActor
+            end
+        end
+
+        local primitive_hit_actor = primitive_hit.HitActor
+        if primitive_hit_actor == nil and primitive_hit.Hit ~= nil then
+            primitive_hit_actor = primitive_hit.Hit.HitActor
+        end
+
+        local b_same_front_actor = primitive_hit_actor ~= nil and primitive_hit_actor == physics_hit_actor
+        local b_physics_hit_is_front = physics_hit_distance ~= nil
+            and primitive_distance ~= nil
+            and (physics_hit_distance <= primitive_distance
+                or (b_same_front_actor and physics_hit_distance <= primitive_distance + front_hit_epsilon))
+
+        if hit == nil or not hit.bHit or not b_physics_hit_is_front then
+            hit = primitive_hit
+        end
     end
 
     aim_trace_cache.resolved_serial = aim_trace_cache.serial
@@ -779,12 +826,76 @@ local function update_crosshair_aim_position(delta_time)
     move_crosshair_toward(target_x, target_y, delta_time)
 end
 
-local function compute_grab_target(start, direction)
-    if grabbed_aim_distance == nil then
+local function get_grab_distance_origin()
+    if obj ~= nil and obj.Location ~= nil then
+        return obj.Location
+    end
+    if root_body ~= nil and root_body.GetLocation ~= nil then
+        return root_body:GetLocation()
+    end
+    return nil
+end
+
+local function get_min_actor_grab_distance()
+    return C.GRAB_MIN_ACTOR_DISTANCE or C.GRAB_MIN_AIM_DISTANCE
+end
+
+local function get_aim_ray_point_at_actor_distance(start, direction, actor_origin, distance_from_actor)
+    local to_start = start - actor_origin
+    local b = to_start:Dot(direction)
+    local c = to_start:Dot(to_start) - distance_from_actor * distance_from_actor
+    local discriminant = b * b - c
+    if discriminant < 0.0 then
         return nil
     end
 
-    return start + direction * grabbed_aim_distance
+    local sqrt_discriminant = math.sqrt(discriminant)
+    local near_t = -b - sqrt_discriminant
+    local far_t = -b + sqrt_discriminant
+    local target_t = nil
+    if far_t >= 0.0 then
+        target_t = far_t
+    elseif near_t >= 0.0 then
+        target_t = near_t
+    end
+
+    if target_t == nil then
+        return nil
+    end
+
+    return start + direction * target_t
+end
+
+local function clamp_grab_target_to_actor_distance(start, direction, target_point)
+    local actor_origin = get_grab_distance_origin()
+    if actor_origin == nil or target_point == nil then
+        return target_point
+    end
+
+    local actor_distance = (target_point - actor_origin):Length()
+    local min_actor_distance = get_min_actor_grab_distance()
+    if actor_distance < min_actor_distance then
+        return get_aim_ray_point_at_actor_distance(start, direction, actor_origin, min_actor_distance) or target_point
+    end
+
+    return target_point
+end
+
+local function compute_grab_target(start, direction, base_distance)
+    local target_distance = base_distance or grabbed_aim_distance
+    if target_distance == nil then
+        return nil
+    end
+
+    local target_point = start + direction * target_distance
+    target_point = clamp_grab_target_to_actor_distance(start, direction, target_point)
+
+    local resolved_distance = clamp(
+        (target_point - start):Dot(direction),
+        C.GRAB_MIN_AIM_DISTANCE,
+        C.GRAB_MAX_AIM_DISTANCE
+    )
+    return start + direction * resolved_distance, resolved_distance
 end
 
 local function get_mouse_wheel_notches()
@@ -986,9 +1097,29 @@ local function get_hit_location(hit)
     return nil
 end
 
+local function apply_hit_rim_style(component, style)
+    if component == nil then
+        return
+    end
+
+    if component.SetHitRimStyle ~= nil then
+        component:SetHitRimStyle(style)
+    end
+
+    if style == C.HIT_RIM_STYLE_SCAN_LINES and component.SetHitRimScanParams ~= nil then
+        component:SetHitRimScanParams(C.HIT_SCAN_LINE_DENSITY, C.HIT_SCAN_SCROLL_SPEED)
+    end
+end
+
 local function trigger_hit_rim_on_component(hit_component, should_flash, hit_location)
     if hit_component == nil or hit_component.GetSimulatePhysics == nil or not hit_component:GetSimulatePhysics() then
         return
+    end
+
+    if weapon_swap_state.active_index == 2 then
+        apply_hit_rim_style(hit_component, C.HIT_RIM_STYLE_NOISE)
+    else
+        apply_hit_rim_style(hit_component, C.HIT_RIM_STYLE_SCAN_LINES)
     end
 
     if hit_component.SetHitRimColor ~= nil then
@@ -1050,6 +1181,8 @@ local function trigger_red_beam_rim_on_ragdoll_mesh(hit)
         return
     end
 
+    apply_hit_rim_style(mesh, C.HIT_RIM_STYLE_NOISE)
+
     if mesh.SetHitRimColor ~= nil then
         mesh:SetHitRimColor(1.0, 0.08, 0.04, 1.0)
     end
@@ -1087,7 +1220,12 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
 
     local grab_point = get_hit_point_or_end(hit, fallback_end)
     local grab_distance = compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
-    local target_point = start + direction * grab_distance
+    local target_point, resolved_grab_distance = compute_grab_target(start, direction, grab_distance)
+    if target_point == nil then
+        return false
+    end
+    grab_distance = resolved_grab_distance or grab_distance
+
     grabbed_body = body
     grabbed_owner_actor = owner
     grabbed_hit_component = get_hit_component(hit)
@@ -1125,7 +1263,9 @@ local function apply_grab_force(delta_time, start, direction)
         return
     end
 
-    local desired = compute_grab_target(start, direction)
+    local current_body_center = grabbed_body:GetLocation()
+    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
+    local desired, resolved_grab_distance = compute_grab_target(start, direction)
     if desired == nil then
         clear_grab_state()
         set_beam_visible(false)
@@ -1137,26 +1277,36 @@ local function apply_grab_force(delta_time, start, direction)
     end
     trigger_hit_rim_on_component(grabbed_hit_component)
 
+    if resolved_grab_distance ~= nil then
+        grabbed_aim_distance = resolved_grab_distance
+    end
     grabbed_target_world = desired
 
-    local current_body_center = grabbed_body:GetLocation()
-    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
     local error = clamp_vector_length(desired - current_grab_world, C.GRAB_MAX_ERROR)
     local linear_velocity = grabbed_body:GetLinearVelocity()
 
-    local grab_distance_along_ray = (current_grab_world - start):Dot(direction)
-    local body_distance_along_ray = (current_body_center - start):Dot(direction)
-    local body_radius_proxy = (current_grab_world - current_body_center):Length()
-    local body_surface_distance_along_ray = body_distance_along_ray - body_radius_proxy
-    local current_min_distance = math.min(grab_distance_along_ray, body_surface_distance_along_ray)
+    local actor_origin = get_grab_distance_origin()
+    local actor_distance = nil
+    local actor_outward_direction = nil
+    if actor_origin ~= nil then
+        local actor_to_grab = current_grab_world - actor_origin
+        actor_distance = actor_to_grab:Length()
+        if actor_distance > 0.0001 then
+            actor_outward_direction = actor_to_grab / actor_distance
+        else
+            actor_outward_direction = direction
+        end
+    end
+
     local min_distance_penetration = 0.0
     local blocked_inward_speed = 0.0
-    if current_min_distance < C.GRAB_MIN_AIM_DISTANCE then
-        min_distance_penetration = C.GRAB_MIN_AIM_DISTANCE - current_min_distance
-        local velocity_along_ray = linear_velocity:Dot(direction)
-        blocked_inward_speed = math.max(-velocity_along_ray, 0.0)
-        if velocity_along_ray < 0.0 then
-            linear_velocity = linear_velocity - direction * velocity_along_ray
+    local min_actor_distance = get_min_actor_grab_distance()
+    if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance < min_actor_distance then
+        min_distance_penetration = min_actor_distance - actor_distance
+        local velocity_along_actor = linear_velocity:Dot(actor_outward_direction)
+        blocked_inward_speed = math.max(-velocity_along_actor, 0.0)
+        if velocity_along_actor < 0.0 then
+            linear_velocity = linear_velocity - actor_outward_direction * velocity_along_actor
             grabbed_body:SetLinearVelocity(linear_velocity)
         end
     end
@@ -1171,12 +1321,19 @@ local function apply_grab_force(delta_time, start, direction)
     local acceleration = error * (C.GRAB_SPRING_ACCELERATION * mass_scale)
         - linear_velocity * (C.GRAB_DAMPING_ACCELERATION * mass_scale)
 
-    if min_distance_penetration > 0.0 then
-        local guard_acceleration = direction * (
+    if min_distance_penetration > 0.0 and actor_outward_direction ~= nil then
+        local guard_acceleration = actor_outward_direction * (
             min_distance_penetration * C.GRAB_MIN_DISTANCE_GUARD_ACCELERATION
             + blocked_inward_speed * C.GRAB_MIN_DISTANCE_GUARD_DAMPING
         )
         acceleration = acceleration + guard_acceleration
+    end
+
+    if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance <= min_actor_distance then
+        local inward_acceleration = acceleration:Dot(actor_outward_direction)
+        if inward_acceleration < 0.0 then
+            acceleration = acceleration - actor_outward_direction * inward_acceleration
+        end
     end
 
     acceleration = clamp_vector_length(acceleration, C.GRAB_MAX_ACCELERATION * mass_scale)

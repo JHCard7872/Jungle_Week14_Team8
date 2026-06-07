@@ -8,7 +8,7 @@
 -- ==========================================================================
 
 -- 파생 상수의 기준값. 테이블 생성자 안에서는 자기 필드 참조가 불가해 local로 선행 정의한다
-local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
+local MAX_TRACE_DISTANCE = 15.0 -- 화면 중앙 조준 Raycast 최대 거리
 local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
 
 return {
@@ -41,6 +41,7 @@ return {
     MAX_PITCH = 20.0,         -- 1인칭 카메라가 아래를 볼 수 있는 최대 Pitch
     CAMERA_HEIGHT = 1.2,      -- Root 기준 카메라 피벗 높이
     MAX_TRACE_DISTANCE = MAX_TRACE_DISTANCE,
+    FRONT_HIT_DISTANCE_EPSILON = 0.05, -- Extra range so a physics hit on the same front surface still wins
     BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
     SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
     SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16, -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
@@ -48,6 +49,10 @@ return {
     HIT_RIM_FLASH_INTENSITY = 3.5,
     HIT_RIM_SUSTAIN_INTENSITY = 1.6,
     HIT_RIM_POWER = 2.8,
+    HIT_RIM_STYLE_NOISE = 0.0,
+    HIT_RIM_STYLE_SCAN_LINES = 1.0,
+    HIT_SCAN_LINE_DENSITY = 18.0,
+    HIT_SCAN_SCROLL_SPEED = 2.00,
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
@@ -63,6 +68,7 @@ return {
     GRAB_MIN_MASS_SCALE = 0.45,
     GRAB_MAX_MASS_SCALE = 1.15,
     GRAB_MIN_AIM_DISTANCE = 0.35,
+    GRAB_MIN_ACTOR_DISTANCE = 5,
     GRAB_MAX_AIM_DISTANCE = MAX_TRACE_DISTANCE,
     GRAB_MOUSE_WHEEL_DISTANCE_STEP = 1.25,
     GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 1400.0,

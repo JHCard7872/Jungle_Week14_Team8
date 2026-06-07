@@ -235,6 +235,73 @@ namespace
 		return Result;
 	}
 
+	sol::table LuaPrimitiveRaycast(
+		sol::this_state        State,
+		const FVector&         Start,
+		const FVector&         Direction,
+		float                  MaxDistance,
+		sol::optional<AActor*> IgnoreActor)
+	{
+		sol::state_view L(State);
+		sol::table      Result = L.create_table();
+
+		FHitResult Hit{};
+		AActor*    HitActor = nullptr;
+		FVector    TraceDir = Direction;
+		FVector    End = Start;
+		bool       bHit = false;
+
+		const float DirLength = TraceDir.Length();
+		if (DirLength > 1.0e-4f && MaxDistance > 0.0f)
+		{
+			TraceDir = TraceDir * (1.0f / DirLength);
+			End = Start + TraceDir * MaxDistance;
+
+			UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+			if (CurrentWorld)
+			{
+				bHit = CurrentWorld->RaycastPrimitives(
+					{ Start, TraceDir },
+					Hit,
+					HitActor,
+					IgnoreActor.value_or(nullptr));
+			}
+
+			if (bHit && Hit.bHit && Hit.Distance >= 0.0f && Hit.Distance <= MaxDistance)
+			{
+				Hit.HitActor = HitActor;
+				Hit.WorldHitLocation = Start + TraceDir * Hit.Distance;
+				End = Hit.WorldHitLocation;
+			}
+			else
+			{
+				bHit = false;
+				Hit = {};
+				Hit.bHit = false;
+				Hit.Distance = MaxDistance;
+				Hit.WorldHitLocation = End;
+			}
+		}
+		else
+		{
+			Hit = {};
+			Hit.bHit = false;
+			Hit.Distance = 0.0f;
+			Hit.WorldHitLocation = Start;
+		}
+
+		Result["bHit"] = bHit && Hit.bHit;
+		Result["Hit"] = Hit;
+		Result["Location"] = Hit.WorldHitLocation;
+		Result["WorldHitLocation"] = Hit.WorldHitLocation;
+		Result["End"] = End;
+		Result["Distance"] = Hit.Distance;
+		Result["HitActor"] = Hit.HitActor;
+		Result["HitComponent"] = Hit.HitComponent;
+		Result["PhysicsBody"] = Hit.PhysicsBody;
+		return Result;
+	}
+
 	sol::table LuaPhysicsCapsuleSweep(
 		sol::this_state        State,
 		const FVector&         Start,
@@ -3078,6 +3145,14 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		{
 			Component.SetHitRimColor(FVector4(R.value_or(0.05f), G.value_or(0.85f), B.value_or(1.0f), A.value_or(1.0f)));
 		},
+		"SetHitRimStyle", [](UPrimitiveComponent& Component, sol::optional<float> Style)
+		{
+			Component.SetHitRimStyle(Style.value_or(0.0f));
+		},
+		"SetHitRimScanParams", [](UPrimitiveComponent& Component, sol::optional<float> LineDensity, sol::optional<float> ScrollSpeed)
+		{
+			Component.SetHitRimScanParams(LineDensity.value_or(18.0f), ScrollSpeed.value_or(0.95f));
+		},
 		"SetHitImpactGlow", [](UPrimitiveComponent& Component, const FVector& WorldLocation, sol::optional<float> Radius, sol::optional<float> CoreRadius, sol::optional<float> Intensity)
 		{
 			Component.SetHitImpactGlow(WorldLocation, Radius.value_or(0.32f), CoreRadius.value_or(0.055f), Intensity.value_or(2.6f));
@@ -3569,6 +3644,9 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 	});
 	World.set_function("PhysicsRaycast", &LuaPhysicsRaycast);
 	World.set_function("Raycast", &LuaPhysicsRaycast);
+	World.set_function("PrimitiveRaycast", &LuaPrimitiveRaycast);
+	World.set_function("PickingRaycast", &LuaPrimitiveRaycast);
+	World.set_function("RaycastPrimitives", &LuaPrimitiveRaycast);
 	World.set_function("PhysicsCapsuleSweep", &LuaPhysicsCapsuleSweep);
 	World.set_function("CapsuleSweep", &LuaPhysicsCapsuleSweep);
 

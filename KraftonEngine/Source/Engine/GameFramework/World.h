@@ -62,7 +62,7 @@ public:
 	void BeginDeferredPickingBVHUpdate();
 	void EndDeferredPickingBVHUpdate();
 	void WarmupPickingData() const;
-	bool RaycastPrimitives(const FRay& Ray, FHitResult& OutHitResult, AActor*& OutActor) const;
+	bool RaycastPrimitives(const FRay& Ray, FHitResult& OutHitResult, AActor*& OutActor, const AActor* IgnoreActor = nullptr) const;
 
 	TArray<AActor*> GetActors() const
 	{
