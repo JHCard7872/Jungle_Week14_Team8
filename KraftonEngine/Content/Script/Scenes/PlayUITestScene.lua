@@ -1,8 +1,17 @@
+local AudioData = require("Data/AudioData")
 local HUD = require("UI/HUDController")
+
+local function is_looping_audio_key(key)
+    return key:find("^bgm_") ~= nil or key == "sfx_time_passing"
+end
 
 function BeginPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
+
+    for key, path in pairs(AudioData) do
+        AudioManager.Load(key, path, is_looping_audio_key(key))
+    end
 
     HUD.Create({
         showDebugPanel = true,
