@@ -21,7 +21,7 @@ FGOIncRagdollCharacterConfig AGOIncPikachuRagdollPawn::MakeCharacterConfig() con
 	Config.ReviveTriggerCapsuleHalfHeight = 4.0f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 0.7f;
+	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 7.0f;
 	Config.FleeAcceleration = 13.0f;
