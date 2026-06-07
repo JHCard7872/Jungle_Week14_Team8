@@ -6,6 +6,10 @@
 
 <body>
     <div id="hud_root">
+        <div id="hud_minimap_container">
+            <img id="hud_minimap_image" src="../../Sprite/play_hud_minimap.png" />
+        </div>
+
         <div id="hud_server_load_container">
             <div id="hud_server_load_gauge">
                 <img id="hud_server_load_empty" src="../../Sprite/play_hud_server_load_empty.png" />
