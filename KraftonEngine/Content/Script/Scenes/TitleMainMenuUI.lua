@@ -150,6 +150,7 @@ local function set_main_menu_controls_visible(is_visible)
     set_element_display("menu_scoreboard", is_visible)
     set_element_display("menu_credits", is_visible)
     set_element_display("menu_back_to_title", is_visible)
+    set_element_display("menu_exit_game", is_visible)
 
     -- 라벨은 RCSS :hover에서만 제어한다.
     -- 여기서 SetProperty("display", "none")을 걸면 inline style이 남아서
@@ -289,12 +290,22 @@ local function bind_menu_actions(widget)
         start_title_return_fade()
     end))
 
+    widget:bind_click("menu_exit_game", on_menu_button_click(function()
+        Engine.Exit()
+    end))
+
+    widget:bind_click("menu_exit_game_text", on_menu_button_click(function()
+        Engine.Exit()
+    end))
+
     bind_hover_sound(widget, "menu_help")
     bind_hover_sound(widget, "menu_option")
     bind_hover_sound(widget, "menu_play")
     bind_hover_sound(widget, "menu_scoreboard")
     bind_hover_sound(widget, "menu_credits")
     bind_hover_sound(widget, "menu_back_to_title")
+    bind_hover_sound(widget, "menu_exit_game")
+    bind_hover_sound(widget, "menu_exit_game_text")
 
     bindings_initialized = true
 end

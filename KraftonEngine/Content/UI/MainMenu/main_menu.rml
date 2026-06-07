@@ -63,6 +63,13 @@
                 <div class="menu_label_text">타이틀로</div>
             </div>
 
+            <div id="menu_exit_game">
+                <div id="menu_exit_game_text">[ EXIT GAME ]</div>
+            </div>
+            <div id="label_exit_game" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">게임 종료하기</div>
+            </div>
             <img id="cursor_normal" class="cursor_image" src="../../Sprite/cursor.png" />
             <img id="cursor_click" class="cursor_image" src="../../Sprite/cursor_click.png" />
         </div>
