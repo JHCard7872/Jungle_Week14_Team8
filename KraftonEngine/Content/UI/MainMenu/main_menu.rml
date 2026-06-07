@@ -9,6 +9,10 @@
         <div id="scene_bg"></div>
         <div id="menu_content">
             <img id="menu_background" src="../../Sprite/main_menu_background.png" />
+            <div id="menu_header">
+                <div id="menu_header_title">Main Menu</div>
+                <img id="menu_header_label" src="../../Sprite/ui_label.png" />
+            </div>
 
             <button id="menu_help" class="menu_button">
                 <img class="menu_image menu_default" src="../../Sprite/main_menu_help.png" />
@@ -55,18 +59,17 @@
                 <div class="menu_label_text">크레딧</div>
             </div>
 
-            <button id="menu_back_to_title">
-                <img class="back_button_image" src="../../Sprite/main_menu_backtotitle.png" />
+            <button id="menu_back_to_title" class="corner_menu_button">
+                <img class="corner_menu_button_image" src="../../Sprite/main_menu_backtotitle.png" />
             </button>
             <div id="label_back_to_title" class="menu_label">
                 <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
                 <div class="menu_label_text">타이틀로</div>
             </div>
 
-            <div id="menu_exit_game">
-                <img id="menu_exit_game_image" src="../../Sprite/ui_horiz_button.png" />
-                <div id="menu_exit_game_text">[ EXIT GAME ]</div>
-            </div>
+            <button id="menu_exit_game" class="corner_menu_button">
+                <img id="menu_exit_game_image" class="corner_menu_button_image" src="../../Sprite/main_menu_exit.png" />
+            </button>
             <div id="label_exit_game" class="menu_label">
                 <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
                 <div class="menu_label_text">게임 종료하기</div>
