@@ -22,6 +22,7 @@
                 <img id="hud_server_load_empty" src="../../Sprite/play_hud_server_load_empty.png" />
                 <img id="hud_server_load_green" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_green.png" />
                 <img id="hud_server_load_yellow" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_yellow.png" />
+                <img id="hud_server_load_orange" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_orange.png" />
                 <img id="hud_server_load_red" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_red.png" />
                 <div id="hud_server_load_value">0%</div>
             </div>
@@ -49,6 +50,22 @@
             <div id="hud_target_name">Red Plumber</div>
             <div id="hud_target_weight">12.5kg</div>
             <div id="hud_target_score">+100</div>
+        </div>
+
+        <div id="hud_popup_container">
+            <img id="hud_popup_image" src="../../Sprite/play_hud_popup_collected.png" />
+        </div>
+
+        <div id="hud_start_countdown_overlay">
+            <div id="hud_start_countdown_dim"></div>
+            <img id="hud_start_countdown_image" src="../../Sprite/play_start_countdown_3.png" />
+        </div>
+
+        <div id="hud_gameover_overlay">
+            <div id="hud_gameover_dim"></div>
+            <div id="hud_gameover_banner_clip">
+                <img id="hud_gameover_banner_image" src="../../Sprite/play_end_timeup.png" />
+            </div>
         </div>
 
         <div id="hud_gun_status_container">
@@ -121,6 +138,21 @@
                 <div class="hud_debug_label">Pose</div>
                 <input id="debug_target_image_input" class="hud_debug_input" type="text" value="../../Sprite/ragdoll/ragdoll_sample.png" />
                 <button id="debug_target_image_apply" class="hud_debug_button">Apply</button>
+            </div>
+
+            <div class="hud_debug_row">
+                <div class="hud_debug_label">Popup</div>
+                <select id="debug_popup_event_input" class="hud_debug_input hud_debug_select">
+                    <option value="COLLECTED" selected="selected">COLLECTED</option>
+                    <option value="DANGER">DANGER</option>
+                    <option value="HURRY UP">HURRY UP</option>
+                    <option value="MISSION COMPLETE">MISSION COMPLETE</option>
+                    <option value="PORTAL OPEN">PORTAL OPEN</option>
+                    <option value="REVIVED">REVIVED</option>
+                    <option value="TIME LOW">TIME LOW</option>
+                    <option value="WARNING">WARNING</option>
+                </select>
+                <button id="debug_popup_play" class="hud_debug_button">Play</button>
             </div>
         </div>
     </div>
