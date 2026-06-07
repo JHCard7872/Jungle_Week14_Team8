@@ -274,6 +274,15 @@ struct FParticleEventInstancePayload
 	int32 BurstTrackingCount = 0;
 };
 
+// EventGenerator → EventReceiver 이벤트의 Type 값 (FParticleEventData.Type — 정의는
+// ParticleSystemComponent.h). 컴포넌트 단위로 모였다가 매 컴포넌트 틱 시작에 비워진다.
+// 같은 컴포넌트 안에서 먼저 틱 도는 에미터의 이벤트는 같은 프레임에, 나중 것은 다음 프레임에 수신.
+enum class EParticleEventType : int32
+{
+	Spawn = 0,
+	Death = 1,
+};
+
 // FVector is float3 in this engine. Unreal's CPU particle layout relies heavily on
 // 16-byte groups. We explicitly add padding fields so key vector blocks begin on
 // 16-byte boundaries while keeping the engine-wide FVector layout unchanged.

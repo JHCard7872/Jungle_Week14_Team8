@@ -127,7 +127,9 @@ void UDecalComponent::OnTransformDirty()
 
 bool UDecalComponent::ShouldReceivePrimitive(UPrimitiveComponent* PrimitiveComp) const
 {
-	return PrimitiveComp && PrimitiveComp != this && PrimitiveComp->GetOwner() != GetOwner();
+	// 자기 자신만 제외 — 같은 액터의 메시에도 투영한다 (TrashBox처럼 데칼과
+	// 메시를 한 액터로 묶는 구성 지원. 빌보드 등은 StaticMesh 캐스트에서 걸러짐)
+	return PrimitiveComp && PrimitiveComp != this;
 }
 
 void UDecalComponent::HandleFade(float DeltaTime)

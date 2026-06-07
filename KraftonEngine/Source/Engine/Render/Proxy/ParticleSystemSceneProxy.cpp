@@ -9,6 +9,7 @@
 #include "Materials/MaterialManager.h"
 #include "Core/Logging/Log.h"
 #include "Particles/ParticleHelper.h"
+#include "Particles/ParticleModuleRequired.h"
 #include "Engine/Profiling/Stats/ParticleStats.h"
 #include "Object/Object.h"
 #include "Object/GarbageCollection.h"
@@ -19,6 +20,8 @@ struct FParticleFrameConstants
 {
 	FVector CameraRight; float _pad0;
 	FVector CameraUp;    float _pad1;
+	FVector CameraPosition;
+	float   AlignMode = 0.0f;   // 0=카메라 빌보드, 1=실린드리컬 Z (PSA_CylindricalZ)
 };
 
 struct FBeamTrailMaterialConstants
@@ -370,6 +373,10 @@ void FParticleSystemSceneProxy::FillStagingBuffer(
 		const FDynamicSpriteEmitterReplayDataBase& SpriteSource =
 			static_cast<const FDynamicSpriteEmitterReplayDataBase&>(Source);
 
+		// 정렬 모드(빌보드/실린드리컬)는 SubmitSpriteEmitter가 FrameCB로 흘려보낸다
+		OutBuffer.ScreenAlignment = SpriteSource.RequiredModule
+			? static_cast<int32>(SpriteSource.RequiredModule->ScreenAlignment) : 0;
+
 		for (int32 i = 0; i < Count; ++i)
 		{
 			const uint32 Idx = Source.DataContainer.ParticleIndices
@@ -487,6 +494,8 @@ void FParticleSystemSceneProxy::SubmitSpriteEmitter(
 	FParticleFrameConstants FrameCB;
 	FrameCB.CameraRight = Frame.CameraRight; FrameCB._pad0 = 0.0f;
 	FrameCB.CameraUp    = Frame.CameraUp;    FrameCB._pad1 = 0.0f;
+	FrameCB.CameraPosition = Frame.CameraPosition;
+	FrameCB.AlignMode = (Buffer.ScreenAlignment == PSA_CylindricalZ) ? 1.0f : 0.0f;
 	Buffer.ParticleFrameCB.Update(Context, &FrameCB, sizeof(FParticleFrameConstants));
 
     FShader* Shader = Buffer.Material && Buffer.Material->GetShader() ? Buffer.Material->GetShader()

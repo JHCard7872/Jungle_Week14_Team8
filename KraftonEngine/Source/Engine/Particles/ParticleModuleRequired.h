@@ -103,6 +103,7 @@ enum EParticleScreenAlignment : int
 	PSA_AwayFromCenter,
 	PSA_TypeSpecific,
 	PSA_FacingCameraDistanceBlend,
+	PSA_CylindricalZ,   // 월드 Z축 고정 + Z 둘레로만 카메라 지향 — 빛기둥/소환진용 (06-08 신규)
 	PSA_MAX,
 };
 
