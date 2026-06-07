@@ -1694,7 +1694,13 @@
     <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleMeshRotation.cpp">
       <Filter>Source\Engine\Particles\Rotation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleRotation.cpp">
+      <Filter>Source\Engine\Particles\Rotation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Particles\RotationRate\ParticleModuleMeshRotationRate.cpp">
+      <Filter>Source\Engine\Particles\RotationRate</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\RotationRate\ParticleModuleRotationRate.cpp">
       <Filter>Source\Engine\Particles\RotationRate</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Particles\Size\ParticleModuleSize.cpp">
@@ -3159,7 +3165,13 @@
     <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleMeshRotation.h">
       <Filter>Source\Engine\Particles\Rotation</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleRotation.h">
+      <Filter>Source\Engine\Particles\Rotation</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Particles\RotationRate\ParticleModuleMeshRotationRate.h">
+      <Filter>Source\Engine\Particles\RotationRate</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\RotationRate\ParticleModuleRotationRate.h">
       <Filter>Source\Engine\Particles\RotationRate</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Size\ParticleModuleSize.h">
