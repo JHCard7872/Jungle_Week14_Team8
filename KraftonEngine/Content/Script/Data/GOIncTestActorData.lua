@@ -20,10 +20,10 @@ return {
     KEY_LBUTTON = 0x01, -- 발사 입력 키: 마우스 왼쪽 버튼
     KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
 
-    CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml",
-    CROSSHAIR_Z_ORDER = 1000,
     CROSSHAIR_EASE_SPEED = 20.0, -- 조준선이 Hit 지점과 MaxDistance 지점 사이를 따라가는 속도
     CROSSHAIR_SCREEN_PADDING = 0.0,
+    CROSSHAIR_HOLD_ROTATION_INTERVAL = 0.08,
+    CROSSHAIR_HOLD_ROTATION_STEP = 18.0,
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도

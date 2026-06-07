@@ -2,6 +2,16 @@ local Session = require("GameSession")
 
 local UI_DOCUMENT_PATH = "Content/UI/PlayHUD/play_hud.rml"
 local HUD_Z_ORDER = 200
+local CROSSHAIR_IMAGES = {
+    collect = {
+        normal = "../../Sprite/aim_collect_normal.png",
+        hold = "../../Sprite/aim_collect_shoot.png",
+    },
+    attack = {
+        normal = "../../Sprite/aim_attack_normal.png",
+        hold = "../../Sprite/aim_attack_shoot.png",
+    },
+}
 
 local M = {}
 
@@ -9,6 +19,7 @@ local widget = nil
 local bindings_initialized = false
 local debug_panel_enabled = false
 local mouse_enabled = false
+local crosshair_applied = {}
 
 local state = {
     timeSeconds = 135,
@@ -16,6 +27,13 @@ local state = {
     serverLoad = 67,
     gunMode = "collect",
     gunEnergy = 100,
+    crosshair = {
+        visible = true,
+        x = nil,
+        y = nil,
+        hold = false,
+        rotation = 0.0,
+    },
     target = {
         visible = true,
         name = "Red Plumber",
@@ -142,6 +160,59 @@ local function set_display(element_id, visible)
     widget:SetProperty(element_id, "display", visible and "block" or "none")
 end
 
+local function set_crosshair_property(element_id, property_name, value)
+    if widget == nil then
+        return
+    end
+
+    local key = element_id .. "." .. property_name
+    if crosshair_applied[key] == value then
+        return
+    end
+
+    widget:SetProperty(element_id, property_name, value)
+    crosshair_applied[key] = value
+end
+
+local function set_crosshair_attribute(element_id, attribute_name, value)
+    if widget == nil then
+        return
+    end
+
+    local key = element_id .. "@" .. attribute_name
+    if crosshair_applied[key] == value then
+        return
+    end
+
+    widget:SetAttribute(element_id, attribute_name, value)
+    crosshair_applied[key] = value
+end
+
+local function assign_crosshair_state(crosshair)
+    if crosshair == nil then
+        return
+    end
+
+    if crosshair.mode ~= nil then
+        state.gunMode = normalize_mode(crosshair.mode)
+    end
+    if crosshair.visible ~= nil then
+        state.crosshair.visible = crosshair.visible ~= false
+    end
+    if crosshair.x ~= nil then
+        state.crosshair.x = tonumber(crosshair.x) or state.crosshair.x
+    end
+    if crosshair.y ~= nil then
+        state.crosshair.y = tonumber(crosshair.y) or state.crosshair.y
+    end
+    if crosshair.hold ~= nil then
+        state.crosshair.hold = crosshair.hold == true
+    end
+    if crosshair.rotation ~= nil then
+        state.crosshair.rotation = tonumber(crosshair.rotation) or 0.0
+    end
+end
+
 local function sync_debug_inputs()
     if widget == nil or not debug_panel_enabled then
         return
@@ -188,13 +259,51 @@ end
 local function apply_gun_status()
     local mode = normalize_mode(state.gunMode)
 
-    set_display("hud_crosshair_collect", mode == "collect")
-    set_display("hud_crosshair_attack", mode == "attack")
     set_display("hud_gun_collect_icon", mode == "collect")
     set_display("hud_gun_attack_icon", mode == "attack")
 
     widget:SetText("hud_gun_mode_text", mode_text(mode))
     widget:SetText("hud_gun_energy_text", format_energy(state.gunEnergy))
+end
+
+local function apply_crosshair_state()
+    local mode = normalize_mode(state.gunMode)
+    local images = CROSSHAIR_IMAGES[mode] or CROSSHAIR_IMAGES.collect
+    local hold = state.crosshair.hold == true
+    local x = tonumber(state.crosshair.x)
+    local y = tonumber(state.crosshair.y)
+    local rotation = hold and (tonumber(state.crosshair.rotation) or 0.0) or 0.0
+    local rotation_transform = string.format("rotate(%.1fdeg)", rotation)
+
+    set_display("hud_crosshair_container", state.crosshair.visible ~= false)
+    set_display("hud_crosshair_collect", mode == "collect")
+    set_display("hud_crosshair_attack", mode == "attack")
+
+    if x ~= nil then
+        set_crosshair_property("hud_crosshair_container", "left", string.format("%.2fpx", x))
+    else
+        set_crosshair_property("hud_crosshair_container", "left", "50%")
+    end
+
+    if y ~= nil then
+        set_crosshair_property("hud_crosshair_container", "top", string.format("%.2fpx", y))
+    else
+        set_crosshair_property("hud_crosshair_container", "top", "50%")
+    end
+
+    set_crosshair_attribute(
+        "hud_crosshair_collect",
+        "src",
+        hold and CROSSHAIR_IMAGES.collect.hold or CROSSHAIR_IMAGES.collect.normal
+    )
+    set_crosshair_attribute(
+        "hud_crosshair_attack",
+        "src",
+        hold and images.hold or images.normal
+    )
+
+    set_crosshair_property("hud_crosshair_collect", "transform", rotation_transform)
+    set_crosshair_property("hud_crosshair_attack", "transform", rotation_transform)
 end
 
 local function apply_target_info()
@@ -220,6 +329,7 @@ local function apply_all()
     apply_time()
     apply_score()
     apply_gun_status()
+    apply_crosshair_state()
     apply_target_info()
     apply_debug_panel_state()
 end
@@ -313,6 +423,7 @@ local function ensure_widget()
 
     if widget == nil then
         widget = UI.CreateWidget(UI_DOCUMENT_PATH)
+        crosshair_applied = {}
     end
 
     if widget == nil then
@@ -348,6 +459,7 @@ function M.Destroy()
     bindings_initialized = false
     debug_panel_enabled = false
     mouse_enabled = false
+    crosshair_applied = {}
 end
 
 function M.Refresh()
@@ -363,6 +475,7 @@ function M.UpdateFromSession()
     if Session.gun ~= nil then
         state.gunMode = normalize_mode(Session.gun.mode)
         state.gunEnergy = Session.gun.energy or state.gunEnergy
+        assign_crosshair_state(Session.gun.crosshair)
     end
 
     M.Refresh()
@@ -391,6 +504,14 @@ end
 function M.SetGunEnergy(energy)
     state.gunEnergy = clamp(tonumber(energy) or state.gunEnergy, 0, 999)
     M.Refresh()
+end
+
+function M.SetCrosshairState(crosshair)
+    assign_crosshair_state(crosshair)
+    if widget ~= nil then
+        apply_gun_status()
+        apply_crosshair_state()
+    end
 end
 
 function M.ShowTargetInfo(target_info)

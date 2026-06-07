@@ -1,14 +1,15 @@
 local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 튜닝 상수. 값 수정은 해당 파일에서
 local Session = require("GameSession")
+local HUD = require("UI/HUDController")
 
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
 local viewport_center_x = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 X
 local viewport_center_y = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 Y
-local crosshair_widget = nil
-local crosshair_is_hold = nil
 local crosshair_screen_x = nil
 local crosshair_screen_y = nil
+local crosshair_hold_rotation = 0.0
+local crosshair_hold_rotation_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
 local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
@@ -188,58 +189,6 @@ local function update_viewport_center()
     end
 end
 
-local function setup_crosshair_ui()
-    if crosshair_widget == nil then
-        if UI == nil or UI.CreateWidget == nil then
-            return
-        end
-
-        crosshair_widget = UI.CreateWidget(C.CROSSHAIR_WIDGET_PATH)
-        if crosshair_widget == nil then
-            return
-        end
-    end
-
-    crosshair_widget:SetWantsMouse(false)
-    if crosshair_widget.IsInViewport == nil or not crosshair_widget:IsInViewport() then
-        crosshair_widget:AddToViewportZ(C.CROSSHAIR_Z_ORDER)
-        crosshair_is_hold = nil
-    end
-end
-
-local function update_crosshair_ui()
-    if crosshair_widget == nil then
-        return
-    end
-
-    local is_hold = Input.GetKey(C.KEY_LBUTTON)
-    if crosshair_is_hold == is_hold then
-        return
-    end
-
-    crosshair_is_hold = is_hold
-    if is_hold then
-        crosshair_widget:SetProperty("crosshair_normal", "display", "none")
-        crosshair_widget:SetProperty("crosshair_hold", "display", "block")
-    else
-        crosshair_widget:SetProperty("crosshair_normal", "display", "block")
-        crosshair_widget:SetProperty("crosshair_hold", "display", "none")
-    end
-end
-
-local function set_crosshair_screen_position(screen_x, screen_y)
-    if crosshair_widget == nil then
-        return
-    end
-
-    local left = string.format("%.2fpx", screen_x)
-    local top = string.format("%.2fpx", screen_y)
-    crosshair_widget:SetProperty("crosshair_normal", "left", left)
-    crosshair_widget:SetProperty("crosshair_normal", "top", top)
-    crosshair_widget:SetProperty("crosshair_hold", "left", left)
-    crosshair_widget:SetProperty("crosshair_hold", "top", top)
-end
-
 local function ease_out_cubic(t)
     local clamped = clamp(t, 0.0, 1.0)
     local inverse = 1.0 - clamped
@@ -271,14 +220,9 @@ local function project_crosshair_world_position(world_point)
 end
 
 local function move_crosshair_toward(target_x, target_y, delta_time)
-    if crosshair_widget == nil then
-        return
-    end
-
     if crosshair_screen_x == nil or crosshair_screen_y == nil then
         crosshair_screen_x = target_x
         crosshair_screen_y = target_y
-        set_crosshair_screen_position(crosshair_screen_x, crosshair_screen_y)
         return
     end
 
@@ -289,7 +233,6 @@ local function move_crosshair_toward(target_x, target_y, delta_time)
 
     crosshair_screen_x = crosshair_screen_x + (target_x - crosshair_screen_x) * alpha
     crosshair_screen_y = crosshair_screen_y + (target_y - crosshair_screen_y) * alpha
-    set_crosshair_screen_position(crosshair_screen_x, crosshair_screen_y)
 end
 
 local function bind_components()
@@ -817,10 +760,6 @@ local function get_crosshair_target_world()
 end
 
 local function update_crosshair_aim_position(delta_time)
-    if crosshair_widget == nil then
-        return
-    end
-
     local target_world = get_crosshair_target_world()
     local target_x, target_y = project_crosshair_world_position(target_world)
     move_crosshair_toward(target_x, target_y, delta_time)
@@ -1410,12 +1349,74 @@ local function update_beam_fade(delta_time)
     end
 end
 
+local function get_current_gun_mode()
+    return weapon_swap_state.active_index == 2 and "attack" or "collect"
+end
+
 local function update_session_gun_state()
     if Session == nil or Session.gun == nil then
         return
     end
 
-    Session.gun.mode = weapon_swap_state.active_index == 2 and "shock" or "collect"
+    Session.gun.mode = get_current_gun_mode()
+end
+
+local function update_crosshair_hold_rotation(delta_time, is_hold)
+    if not is_hold then
+        crosshair_hold_rotation = 0.0
+        crosshair_hold_rotation_elapsed = 0.0
+        return
+    end
+
+    local interval = C.CROSSHAIR_HOLD_ROTATION_INTERVAL or 0.08
+    local step = C.CROSSHAIR_HOLD_ROTATION_STEP or 18.0
+    if interval <= 0.0 then
+        interval = 0.08
+    end
+
+    crosshair_hold_rotation_elapsed = crosshair_hold_rotation_elapsed + math.max(delta_time or 0.0, 0.0)
+
+    while crosshair_hold_rotation_elapsed >= interval do
+        crosshair_hold_rotation_elapsed = crosshair_hold_rotation_elapsed - interval
+        crosshair_hold_rotation = crosshair_hold_rotation + step
+        if crosshair_hold_rotation >= 360.0 then
+            crosshair_hold_rotation = crosshair_hold_rotation - 360.0
+        end
+    end
+end
+
+local function build_crosshair_state()
+    update_viewport_center()
+
+    local is_hold = Input.GetKey(C.KEY_LBUTTON)
+    return {
+        mode = get_current_gun_mode(),
+        visible = true,
+        hold = is_hold,
+        rotation = is_hold and crosshair_hold_rotation or 0.0,
+        x = crosshair_screen_x or viewport_center_x,
+        y = crosshair_screen_y or viewport_center_y,
+    }
+end
+
+local function publish_crosshair_state(delta_time)
+    update_crosshair_hold_rotation(delta_time, Input.GetKey(C.KEY_LBUTTON))
+    local crosshair_state = build_crosshair_state()
+
+    if Session ~= nil and Session.gun ~= nil then
+        Session.gun.mode = crosshair_state.mode
+        Session.gun.crosshair = Session.gun.crosshair or {}
+        Session.gun.crosshair.visible = crosshair_state.visible
+        Session.gun.crosshair.hold = crosshair_state.hold
+        Session.gun.crosshair.rotation = crosshair_state.rotation
+        Session.gun.crosshair.x = crosshair_state.x
+        Session.gun.crosshair.y = crosshair_state.y
+        Session.gun.crosshair.mode = crosshair_state.mode
+    end
+
+    if HUD ~= nil and HUD.SetCrosshairState ~= nil then
+        HUD.SetCrosshairState(crosshair_state)
+    end
 end
 
 local function get_slot2_beam_visible_time(hit)
@@ -1879,8 +1880,6 @@ end
 
 function BeginPlay()
     update_viewport_center()
-    setup_crosshair_ui()
-    update_crosshair_ui()
     move_crosshair_toward(viewport_center_x, viewport_center_y, 0.0)
 
     local current_rotation = obj.Rotation
@@ -1911,6 +1910,7 @@ function BeginPlay()
         CameraManager.PossessCamera(camera)
     end
     update_crosshair_aim_position(0.0)
+    publish_crosshair_state(0.0)
 
     print("[GOInc] viewport center: " .. viewport_center_x .. ", " .. viewport_center_y)
     print("[GOInc] camera aim and view weapon separated")
@@ -1934,5 +1934,5 @@ function PostCameraTick(delta_time)
     aim_trace_cache.serial = aim_trace_cache.serial + 1
     apply_fire(delta_time)
     update_crosshair_aim_position(delta_time)
-    update_crosshair_ui()
+    publish_crosshair_state(delta_time)
 end
