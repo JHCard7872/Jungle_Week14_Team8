@@ -3,6 +3,7 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background-color: #ffffffff;
 }
 
 #startup_logo_root {
@@ -11,6 +12,7 @@ body {
     top: 0px;
     width: 100%;
     height: 100%;
+    background-color: #ffffffff;
 }
 
 #startup_logo_background {
@@ -19,7 +21,20 @@ body {
     top: 0px;
     width: 100%;
     height: 100%;
-    background-color: #ffffff;
+    background-color: #ffffffff;
+}
+
+.startup_logo_slot {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0px;
+    height: 420px;
+    margin-left: 0px;
+    margin-top: -210px;
+    overflow: hidden;
+    display: none;
+    background-color: #00ffffff;
 }
 
 .startup_logo_image {
@@ -30,5 +45,5 @@ body {
     height: auto;
     margin-left: -360px;
     margin-top: -180px;
-    opacity: 0;
+    opacity: 1;
 }

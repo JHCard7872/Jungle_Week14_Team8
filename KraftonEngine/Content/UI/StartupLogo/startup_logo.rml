@@ -6,9 +6,16 @@
 <body>
     <div id="startup_logo_root">
         <div id="startup_logo_background"></div>
-        <img id="logo_jungle" class="startup_logo_image" src="../../Sprite/logo/jungle.png" />
-        <img id="logo_jungle_gametechlab" class="startup_logo_image" src="../../Sprite/logo/jungleGameTechlab.png" />
-        <img id="logo_eng_ver2" class="startup_logo_image" src="../../Sprite/logo/eng_ver2.png" />
+
+        <div id="logo_jungle_slot" class="startup_logo_slot">
+            <img id="logo_jungle" class="startup_logo_image" src="../../Sprite/logo/jungle.png" />
+        </div>
+        <div id="logo_jungle_gametechlab_slot" class="startup_logo_slot">
+            <img id="logo_jungle_gametechlab" class="startup_logo_image" src="../../Sprite/logo/jungleGameTechlab.png" />
+        </div>
+        <div id="logo_eng_ver2_slot" class="startup_logo_slot">
+            <img id="logo_eng_ver2" class="startup_logo_image" src="../../Sprite/logo/eng_ver2.png" />
+        </div>
     </div>
 </body>
 </rml>
