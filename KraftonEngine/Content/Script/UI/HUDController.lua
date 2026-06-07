@@ -3,12 +3,15 @@ local Session = require("GameSession")
 local UI_DOCUMENT_PATH = "Content/UI/PlayHUD/play_hud.rml"
 local HUD_Z_ORDER = 200
 local SERVER_LOAD_BAR_WIDTH = 520.0
+local SERVER_LOAD_DISPLAY_PADDING = 4.0
 local SERVER_LOAD_SAFE_THRESHOLD = 30.0
 local SERVER_LOAD_WARNING_THRESHOLD = 60.0
-local SERVER_LOAD_BLINK_THRESHOLD = 90.0
+local SERVER_LOAD_DANGER_BLINK_THRESHOLD = 90.0
 local SERVER_LOAD_OPACITY_FADE_DURATION = 0.18
 local SERVER_LOAD_RED_BLINK_SPEED = 1.8
 local SERVER_LOAD_RED_BLINK_MIN_OPACITY = 0.35
+local SERVER_LOAD_SOURCE_IMAGE_WIDTH = 2590.0
+local SERVER_LOAD_SOURCE_IMAGE_HEIGHT = 233.0
 local CROSSHAIR_IMAGES = {
     collect = {
         normal = "../../Sprite/aim_collect_normal.png",
@@ -218,6 +221,14 @@ local function set_width(element_id, value)
     widget:SetProperty(element_id, "width", string.format("%.2fpx", math.max(0.0, value)))
 end
 
+local function set_attribute(element_id, attribute_name, value)
+    if widget == nil then
+        return
+    end
+
+    widget:SetAttribute(element_id, attribute_name, tostring(value))
+end
+
 local function get_server_load_color(load)
     if load < SERVER_LOAD_SAFE_THRESHOLD then
         return "green"
@@ -268,7 +279,7 @@ local function update_server_load_visual(dt)
         server_load_visual.transitionAlpha = 1.0
     end
 
-    if load >= SERVER_LOAD_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
+    if load >= SERVER_LOAD_DANGER_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
         server_load_visual.blinkPhase = (server_load_visual.blinkPhase + (delta_time * SERVER_LOAD_RED_BLINK_SPEED)) % 1.0
     else
         server_load_visual.blinkPhase = 0.0
@@ -319,17 +330,24 @@ end
 
 local function apply_server_load()
     local load = clamp(state.serverLoad, 0, 100)
-    local fill_width = SERVER_LOAD_BAR_WIDTH * (load / 100.0)
+    local display_load = clamp(load + SERVER_LOAD_DISPLAY_PADDING, 0, 100)
+    local display_ratio = display_load / 100.0
+    local fill_width = SERVER_LOAD_BAR_WIDTH * display_ratio
+    local source_crop_width = math.max(1, round_to_int(SERVER_LOAD_SOURCE_IMAGE_WIDTH * display_ratio))
+    local source_crop_height = round_to_int(SERVER_LOAD_SOURCE_IMAGE_HEIGHT)
     local active_opacity = 1.0
 
     set_width("hud_server_load_green", fill_width)
     set_width("hud_server_load_yellow", fill_width)
     set_width("hud_server_load_red", fill_width)
+    set_attribute("hud_server_load_green", "rect", string.format("0 0 %d %d", source_crop_width, source_crop_height))
+    set_attribute("hud_server_load_yellow", "rect", string.format("0 0 %d %d", source_crop_width, source_crop_height))
+    set_attribute("hud_server_load_red", "rect", string.format("0 0 %d %d", source_crop_width, source_crop_height))
     set_opacity("hud_server_load_green", 0.0)
     set_opacity("hud_server_load_yellow", 0.0)
     set_opacity("hud_server_load_red", 0.0)
 
-    if load >= SERVER_LOAD_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
+    if load >= SERVER_LOAD_DANGER_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
         local triangle = math.abs(1.0 - (server_load_visual.blinkPhase * 2.0))
         active_opacity = SERVER_LOAD_RED_BLINK_MIN_OPACITY + ((1.0 - SERVER_LOAD_RED_BLINK_MIN_OPACITY) * triangle)
     end
