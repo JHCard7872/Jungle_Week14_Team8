@@ -18,7 +18,14 @@ function BeginPlay()
         name = "Red Plumber",
         weightText = "12.5kg",
         scoreText = "+300",
-        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
+    })
+    HUD.SetMissionState({
+        active = true,
+        target = "red-plumber",
+        need = 3,
+        got = 1,
+        text = "빨간 배관공 3체 수거",
     })
 
     Engine.SetCursorVisible(true)

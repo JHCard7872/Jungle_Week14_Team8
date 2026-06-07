@@ -40,6 +40,60 @@ body {
     height: 100%;
 }
 
+#hud_mission_container {
+    position: absolute;
+    left: 0px;
+    top: 430px;
+    width: 350px;
+    height: 120px;
+    display: none;
+    transform-origin: 0% 0%;
+    transform: scale(1.15);
+}
+
+#hud_mission_bg {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#hud_mission_text {
+    position: absolute;
+    left: 40px;
+    top: 40px;
+    width: 170px;
+    height: 50px;
+    font-family: NanumGothic;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 26px;
+    color: #f2fbff;
+    font-effect: shadow(2px 2px #000000aa);
+}
+
+#hud_mission_reference_image {
+    position: absolute;
+    right: 40px;
+    top: 38px;
+    width: 74px;
+    height: 74px;
+}
+
+#hud_mission_progress_text {
+    position: absolute;
+    left: 40px;
+    bottom: 0px;
+    width: 250px;
+    height: 22px;
+    font-family: NanumGothic;
+    font-weight: bold;
+    font-size: 19px;
+    color: #d7faff;
+    font-effect: shadow(2px 2px #000000aa);
+}
+
 
 #hud_server_load_container {
     position: absolute;

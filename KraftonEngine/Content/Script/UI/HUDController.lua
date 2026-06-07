@@ -1,4 +1,5 @@
 local Session = require("GameSession")
+local RagdollData = require("Data/RagdollData")
 
 local UI_DOCUMENT_PATH = "Content/UI/PlayHUD/play_hud.rml"
 local HUD_Z_ORDER = 200
@@ -55,7 +56,16 @@ local state = {
         name = "Red Plumber",
         weightText = "12.5kg",
         scoreText = "+300",
-        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
+    },
+    mission = {
+        active = false,
+        target = "",
+        need = 0,
+        got = 0,
+        text = "",
+        progressText = "목표 0 / 현재 0",
+        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
     },
     targetState = nil,
 }
@@ -167,6 +177,30 @@ local function normalize_target_score_text(text)
         return raw
     end
     return "+" .. raw
+end
+
+local function format_mission_text(target_id, need, text)
+    local raw = tostring(text or "")
+    if raw ~= "" then
+        return raw
+    end
+
+    local catalog_entry = target_id ~= nil and RagdollData[target_id] or nil
+    if catalog_entry ~= nil and catalog_entry.displayName ~= nil then
+        return string.format("%s %d체 수거", catalog_entry.displayName, math.max(0, round_to_int(need or 0)))
+    end
+
+    return ""
+end
+
+local function format_mission_progress_text(need, got)
+    local target_count = math.max(0, round_to_int(need or 0))
+    local current_count = math.max(0, round_to_int(got or 0))
+    return string.format("목표 %d / 현재 %d", target_count, current_count)
+end
+
+local function resolve_mission_image_path(_target_id, fallback_path)
+    return fallback_path
 end
 
 local function set_display(element_id, visible)
@@ -430,6 +464,13 @@ local function apply_target_info()
     widget:SetAttribute("hud_target_pose_image", "src", state.target.imagePath)
 end
 
+local function apply_mission_info()
+    set_display("hud_mission_container", state.mission.active)
+    widget:SetText("hud_mission_text", state.mission.text)
+    widget:SetText("hud_mission_progress_text", state.mission.progressText)
+    widget:SetAttribute("hud_mission_reference_image", "src", state.mission.imagePath)
+end
+
 local function apply_debug_panel_state()
     set_display("hud_debug_panel", debug_panel_enabled)
     sync_debug_inputs()
@@ -446,6 +487,7 @@ local function apply_all()
     apply_gun_status()
     apply_crosshair_state()
     apply_target_info()
+    apply_mission_info()
     apply_debug_panel_state()
 end
 
@@ -608,6 +650,10 @@ function M.UpdateFromSession(dt)
         M.SetTargetState(Session.target)
     end
 
+    if Session.mission ~= nil then
+        M.SetMissionState(Session.mission)
+    end
+
     if widget == nil and ensure_widget() == nil then
         return
     end
@@ -678,6 +724,26 @@ end
 
 function M.HideTargetInfo()
     state.target.visible = false
+    M.Refresh()
+end
+
+function M.SetMissionState(mission_info)
+    mission_info = mission_info or {}
+
+    local target_id = tostring(mission_info.target or "")
+    local need = math.max(0, round_to_int(mission_info.need or 0))
+    local got = math.max(0, round_to_int(mission_info.got or 0))
+    local active = mission_info.active == true
+    local fallback_image = "../../Sprite/ragdoll/ragdoll_sample.png"
+
+    state.mission.active = active
+    state.mission.target = target_id
+    state.mission.need = need
+    state.mission.got = got
+    state.mission.text = format_mission_text(target_id, need, mission_info.text)
+    state.mission.progressText = format_mission_progress_text(need, got)
+    state.mission.imagePath = resolve_mission_image_path(target_id, fallback_image) or fallback_image
+
     M.Refresh()
 end
 
