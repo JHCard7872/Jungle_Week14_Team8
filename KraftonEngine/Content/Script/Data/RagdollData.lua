@@ -21,7 +21,7 @@ return {
     ["blue-speedster"] = {
         id             = "blue-speedster",
         displayName    = "파란 고슴도치",
-        referenceImage = "Content/UI/Images/blue_speedster.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sonic.png",
 
         mass           = 35.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -38,7 +38,7 @@ return {
     ["pink-round"] = {
         id             = "pink-round",
         displayName    = "분홍 동글이",
-        referenceImage = "Content/UI/Images/pink_round.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_kirby.png",
 
         mass           = 18.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
@@ -55,7 +55,7 @@ return {
     ["brown-gorilla"] = {
         id             = "brown-gorilla",
         displayName    = "갈색 고릴라",
-        referenceImage = "Content/UI/Images/brown_gorilla.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
 
         mass           = 160.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
@@ -72,7 +72,7 @@ return {
     ["yellow-mouse"] = {
         id             = "yellow-mouse",
         displayName    = "노란 전기쥐",
-        referenceImage = "Content/UI/Images/yellow_mouse.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Pikachu.png",
 
         mass           = 12.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
@@ -89,7 +89,7 @@ return {
     ["red-plumber"] = {
         id             = "red-plumber",
         displayName    = "빨간 배관공",
-        referenceImage = "Content/UI/Images/red_plumber.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Mario.png",  -- 파일 입수 전
 
         mass           = 65.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -106,7 +106,7 @@ return {
     ["spiked-king"] = {
         id             = "spiked-king",
         displayName    = "가시 대왕",
-        referenceImage = "Content/UI/Images/spiked_king.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_bowser.png",  -- 파일 입수 전
 
         mass           = 200.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -123,7 +123,7 @@ return {
     ["egg-scientist"] = {
         id             = "egg-scientist",
         displayName    = "에그 과학자",
-        referenceImage = "Content/UI/Images/egg_scientist.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Eggman.png",  -- 파일 입수 전
 
         mass           = 120.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -140,7 +140,7 @@ return {
     ["green-swordsman"] = {
         id             = "green-swordsman",
         displayName    = "초록 검사",
-        referenceImage = "Content/UI/Images/green_swordsman.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Link.png",  -- 파일 입수 전
 
         mass           = 60.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -157,7 +157,7 @@ return {
     ["space-chief"] = {
         id             = "space-chief",
         displayName    = "스페이스 치프",
-        referenceImage = "Content/UI/Images/space_chief.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_chief.png",  -- 파일 입수 전
 
         mass           = 170.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -174,7 +174,7 @@ return {
     ["adventurer"] = {
         id             = "adventurer",
         displayName    = "모험가",
-        referenceImage = "Content/UI/Images/adventurer.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
 
         mass           = 55.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
@@ -191,7 +191,7 @@ return {
     ["green-slime"] = {
         id             = "green-slime",
         displayName    = "초록 슬라임",
-        referenceImage = "Content/UI/Images/green_slime.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
 
         mass           = 25.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)

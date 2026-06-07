@@ -1952,7 +1952,7 @@ local function build_target_state_from_hit(hit)
         weightText = catalog_mass ~= nil and string.format("%.1fkg", catalog_mass) or nil,
         score = score,
         scoreText = score ~= nil and string.format("+%d", math.floor(math.abs(score))) or nil,
-        imagePath = C.TARGET_INFO_FALLBACK_IMAGE_PATH,
+        imagePath = catalog_entry ~= nil and catalog_entry.referenceImage or C.TARGET_INFO_FALLBACK_IMAGE_PATH,
         referenceImage = catalog_entry ~= nil and catalog_entry.referenceImage or nil,
     }
 end

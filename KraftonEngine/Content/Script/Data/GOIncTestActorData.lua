@@ -36,7 +36,7 @@ return {
     COLLECT_FIRE_SFX_VOLUME_SCALE = 1.0,
     FOOTSTEP_SFX_INTERVAL = 0.35,
     FOOTSTEP_SFX_VOLUME_SCALE = 1.0,
-    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/ragdoll/ragdoll_sample.png",
+    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
