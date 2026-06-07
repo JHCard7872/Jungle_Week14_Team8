@@ -707,6 +707,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\Particles\Material\ParticleModuleMeshMaterial.cpp" />
     <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleMeshRotation.cpp" />
     <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleRotation.cpp" />
+    <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleVortexRotation.cpp" />
     <ClCompile Include="Source\Engine\Particles\RotationRate\ParticleModuleMeshRotationRate.cpp" />
     <ClCompile Include="Source\Engine\Particles\RotationRate\ParticleModuleRotationRate.cpp" />
     <ClCompile Include="Source\Engine\Particles\Size\ParticleModuleSize.cpp" />
@@ -1203,6 +1204,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\Particles\Material\ParticleModuleMeshMaterial.h" />
     <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleMeshRotation.h" />
     <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleRotation.h" />
+    <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleVortexRotation.h" />
     <ClInclude Include="Source\Engine\Particles\RotationRate\ParticleModuleMeshRotationRate.h" />
     <ClInclude Include="Source\Engine\Particles\RotationRate\ParticleModuleRotationRate.h" />
     <ClInclude Include="Source\Engine\Particles\Size\ParticleModuleSize.h" />

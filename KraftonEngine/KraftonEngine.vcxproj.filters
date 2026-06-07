@@ -1697,6 +1697,9 @@
     <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleRotation.cpp">
       <Filter>Source\Engine\Particles\Rotation</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Rotation\ParticleModuleVortexRotation.cpp">
+      <Filter>Source\Engine\Particles\Rotation</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Particles\RotationRate\ParticleModuleMeshRotationRate.cpp">
       <Filter>Source\Engine\Particles\RotationRate</Filter>
     </ClCompile>
@@ -3166,6 +3169,9 @@
       <Filter>Source\Engine\Particles\Rotation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleRotation.h">
+      <Filter>Source\Engine\Particles\Rotation</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Rotation\ParticleModuleVortexRotation.h">
       <Filter>Source\Engine\Particles\Rotation</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\RotationRate\ParticleModuleMeshRotationRate.h">
