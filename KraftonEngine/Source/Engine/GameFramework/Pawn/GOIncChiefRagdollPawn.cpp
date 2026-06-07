@@ -12,7 +12,7 @@ FGOIncRagdollCharacterConfig AGOIncChiefRagdollPawn::MakeCharacterConfig() const
 	Config.FleeAnimationPath = "Content/Data/chief/Injured Run_mixamo_com.uasset";
 	Config.LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
-	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.9f);
+	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -1.0f);
 	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
 	Config.AliveCapsuleRadius = 0.3f;
@@ -21,7 +21,7 @@ FGOIncRagdollCharacterConfig AGOIncChiefRagdollPawn::MakeCharacterConfig() const
 	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 0.9f;
+	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 3.4f;
 	Config.FleeAcceleration = 12.0f;

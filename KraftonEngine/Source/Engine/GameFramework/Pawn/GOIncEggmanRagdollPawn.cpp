@@ -21,7 +21,7 @@ FGOIncRagdollCharacterConfig AGOIncEggmanRagdollPawn::MakeCharacterConfig() cons
 	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 0.9f;
+	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 3.0f;
 	Config.FleeAcceleration = 11.0f;

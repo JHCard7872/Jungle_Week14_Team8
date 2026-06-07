@@ -63,7 +63,7 @@ return {
         attackPower    = 25,     -- placeholder
 
         pawnClass      = "AGOIncDonkeyKongRagdollPawn",
-        canSpawn       = true,
+        canSpawn       = false,
         spawnWeight    = 1,
         uiOrder        = 30,
     },
@@ -109,7 +109,7 @@ return {
 
         mass           = 24.0,   -- 카탈로그 표시/밸런스용 무게
         baseScore      = 100,    -- 임시 밸런스
-        canRevive      = true,
+        canRevive      = false,
         reviveSpeed    = 2.2,
         attackPower    = 30,     -- placeholder
 

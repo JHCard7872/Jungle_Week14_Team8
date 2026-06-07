@@ -21,7 +21,7 @@ FGOIncRagdollCharacterConfig AGOIncKirbyRagdollPawn::MakeCharacterConfig() const
 	Config.ReviveTriggerCapsuleHalfHeight = 3.5f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 0.6f;
+	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 3.2f;
 	Config.FleeAcceleration = 12.0f;

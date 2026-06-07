@@ -21,7 +21,7 @@ FGOIncRagdollCharacterConfig AGOIncSonicRagdollPawn::MakeCharacterConfig() const
 	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 0.8f;
+	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 4.0f;
 	Config.FleeAcceleration = 15.0f;

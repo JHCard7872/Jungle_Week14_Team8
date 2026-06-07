@@ -1,4 +1,4 @@
-#include "GameFramework/Pawn/GOIncDonkeyKongRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncDonkeyKongRagdollPawn.h"
 
 FGOIncRagdollCharacterConfig AGOIncDonkeyKongRagdollPawn::MakeCharacterConfig() const
 {
@@ -21,7 +21,7 @@ FGOIncRagdollCharacterConfig AGOIncDonkeyKongRagdollPawn::MakeCharacterConfig() 
 	Config.ReviveTriggerCapsuleHalfHeight = 6.0f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 1.0f;
+	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 2.8f;
 	Config.FleeAcceleration = 10.0f;
