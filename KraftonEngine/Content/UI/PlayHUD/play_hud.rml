@@ -52,6 +52,7 @@
         </div>
 
         <div id="hud_gun_status_container">
+            <img id="hud_gun_mode_image" src="../../Sprite/play_hud_gun_mode_collect.png" />
             <div id="hud_gun_mode_label">MODE</div>
             <div id="hud_gun_mode_text">COLLECT</div>
             <div id="hud_gun_energy_text">ENERGY 100%</div>

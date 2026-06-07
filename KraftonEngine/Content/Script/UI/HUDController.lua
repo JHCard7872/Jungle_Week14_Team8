@@ -23,6 +23,10 @@ local CROSSHAIR_IMAGES = {
         hold = "../../Sprite/aim_attack_shoot.png",
     },
 }
+local GUN_MODE_PANEL_IMAGES = {
+    collect = "../../Sprite/play_hud_gun_mode_collect.png",
+    attack = "../../Sprite/play_hud_gun_mode_attack.png",
+}
 
 local M = {}
 
@@ -408,8 +412,10 @@ end
 local function apply_gun_status()
     local mode = normalize_mode(state.gunMode)
 
-    set_display("hud_gun_collect_icon", mode == "collect")
-    set_display("hud_gun_attack_icon", mode == "attack")
+    set_display("hud_gun_mode_image", true)
+    set_display("hud_gun_collect_icon", false)
+    set_display("hud_gun_attack_icon", false)
+    widget:SetAttribute("hud_gun_mode_image", "src", GUN_MODE_PANEL_IMAGES[mode] or GUN_MODE_PANEL_IMAGES.collect)
 
     widget:SetText("hud_gun_mode_text", mode_text(mode))
     widget:SetText("hud_gun_energy_text", format_energy(state.gunEnergy))
