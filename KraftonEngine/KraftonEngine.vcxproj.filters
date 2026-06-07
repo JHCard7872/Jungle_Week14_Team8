@@ -1682,6 +1682,9 @@
     <ClCompile Include="Source\Engine\Particles\Event\ParticleModuleEventGenerator.cpp">
       <Filter>Source\Engine\Particles\Event</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Event\ParticleModuleEventReceiverSpawn.cpp">
+      <Filter>Source\Engine\Particles\Event</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Particles\Lifetime\ParticleModuleLifetime.cpp">
       <Filter>Source\Engine\Particles\Lifetime</Filter>
     </ClCompile>
@@ -3148,6 +3151,9 @@
       <Filter>Source\Engine\Particles\Event</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Event\ParticleModuleEventGenerator.h">
+      <Filter>Source\Engine\Particles\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Event\ParticleModuleEventReceiverSpawn.h">
       <Filter>Source\Engine\Particles\Event</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Lifetime\ParticleModuleLifetime.h">

@@ -122,6 +122,11 @@ public:
 	FParticleCollisionSignature OnParticleCollide;
 	TArray<FParticleEventCollideData> CollisionEvents;
 
+	// EventGenerator가 쌓고 EventReceiver 모듈이 읽는 파티클 이벤트 파이프.
+	// 매 컴포넌트 틱 시작에 비워진다 (CollisionEvents와 동일한 수명 정책).
+	TArray<FParticleEventData> ParticleEvents;
+	void ReportParticleEvent(const FParticleEventData& InEvent) { ParticleEvents.push_back(InEvent); }
+
 	void DispatchCollisionEvents()
 	{
 		for (const FParticleEventCollideData& E : CollisionEvents)
