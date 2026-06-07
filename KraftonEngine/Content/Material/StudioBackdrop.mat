@@ -1,0 +1,13 @@
+{
+  "BlendState" : "",
+  "DepthStencilState" : "",
+  "Origin" : "Editor",
+  "Parameters" : {
+    "DiffuseColor" : [0.347467, 0.291882, 2.517072, 1.000000]
+  },
+  "PathFileName" : "Content/Material/StudioBackdrop.mat",
+  "RasterizerState" : "SolidNoCull",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/Primitive.hlsl",
+  "Textures" : {}
+}

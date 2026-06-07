@@ -1,0 +1,19 @@
+{
+  "BlendState" : "Additive",
+  "DepthStencilState" : "DepthReadOnly",
+  "Domain" : "ParticleSprite",
+  "Origin" : "ParticleEmitter",
+  "Parameters" : {
+    "CameraRight" : [0.000000, 0.000000, 0.000000],
+    "CameraUp" : [0.000000, 0.000000, 0.000000],
+    "_pad0" : 0.000000,
+    "_pad1" : 0.000000
+  },
+  "PathFileName" : "Content/Material/FX_Vortex.mat",
+  "RasterizerState" : "SolidNoCull",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Particle/Sprite.hlsl",
+  "Textures" : {
+    "ParticleTexture" : "Content/Particle/T_Fire_B.PNG"
+  }
+}

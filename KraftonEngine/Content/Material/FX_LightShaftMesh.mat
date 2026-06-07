@@ -1,0 +1,15 @@
+{
+  "BlendState" : "Additive",
+  "DepthStencilState" : "DepthReadOnly",
+  "Origin" : "Editor",
+  "Parameters" : {
+    "Tint" : [1.000000, 1.000000, 1.000000, 1.000000]
+  },
+  "PathFileName" : "Content/Material/FX_LightShaftMesh.mat",
+  "RasterizerState" : "SolidNoCull",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Geometry/UnlitGlow.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Particle/T_LightBeam.png"
+  }
+}

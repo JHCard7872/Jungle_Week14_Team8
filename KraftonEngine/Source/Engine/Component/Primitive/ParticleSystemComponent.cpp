@@ -264,6 +264,9 @@ void UParticleSystemComponent::TickComponent(
         return;
     }
 
+    // 직전 틱의 파티클 이벤트 폐기 — 이번 틱에서 EventGenerator가 새로 쌓는다
+    ParticleEvents.clear();
+
     if (!bInitialized)
     {
         InitializeSystem();
