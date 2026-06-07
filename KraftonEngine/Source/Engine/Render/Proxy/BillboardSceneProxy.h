@@ -23,4 +23,5 @@ protected:
 
 	FVector CachedScale;
 	FVector CachedLocation;
+	float CachedRollDegrees = 0.0f;
 };

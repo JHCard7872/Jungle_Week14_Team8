@@ -28,6 +28,11 @@ public:
 
 	void SetBillboardEnabled(bool bEnable) { bIsBillboard = bEnable; }
 
+	// 화면 평면 기준 Roll 회전입니다.
+	// 빌보드가 카메라를 바라보는 축은 유지하고, Right/Up 축만 Forward 축 기준으로 회전합니다.
+	void SetBillboardRollDegrees(float InDegrees);
+	float GetBillboardRollDegrees() const { return BillboardRollDegrees; }
+
 	// --- Material ---
 	void SetMaterial(class UMaterial* InMaterial);
 	class UMaterial* GetMaterial() const { return Material.Get(); }
@@ -43,6 +48,9 @@ public:
 protected:
 	UPROPERTY(Edit, Save, Category="Rendering", DisplayName="Billboard")
 	bool bIsBillboard = true;
+
+	UPROPERTY(Edit, Save, Category="Rendering", DisplayName="Billboard Roll Degrees")
+	float BillboardRollDegrees = 0.0f;
 
 	UPROPERTY(Edit, Save, Category="Rendering", DisplayName="Material", AssetType="Material")
 	FSoftObjectPtr MaterialSlot = "None";

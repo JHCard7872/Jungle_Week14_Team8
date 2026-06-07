@@ -6,6 +6,7 @@
 #include "Materials/Material.h"
 #include "Texture/Texture2D.h"
 #include "Object/Object.h"
+#include "Math/MathUtils.h"
 
 // ============================================================
 // FBillboardSceneProxy
@@ -37,11 +38,13 @@ void FBillboardSceneProxy::UpdateTransform()
 		bVisible = false;
 		CachedScale = FVector(1, 1, 1);
 		CachedLocation = FVector(0, 0, 0);
+		CachedRollDegrees = 0.0f;
 		return;
 	}
 
 	CachedScale = Comp->GetWorldScale();
 	CachedLocation = Comp->GetWorldLocation();
+	CachedRollDegrees = Comp->GetBillboardRollDegrees();
 }
 
 // ============================================================
@@ -77,10 +80,18 @@ void FBillboardSceneProxy::UpdatePerViewport(const FFrameContext& Frame)
 {
 	if (!bVisible) return;
 
-	// Frame 카메라 벡터로 per-view 빌보드 행렬 계산
-	FVector BillboardForward = Frame.CameraForward * -1.0f;
+	// Frame 카메라 벡터로 per-view 빌보드 행렬 계산.
+	// Forward 축은 카메라 facing을 유지하고, Right/Up 축만 Forward 축 기준 Roll만큼 회전한다.
+	const float RollRadians = CachedRollDegrees * FMath::DegToRad;
+	const float RollCos = std::cos(RollRadians);
+	const float RollSin = std::sin(RollRadians);
+
+	FVector BillboardForward = (Frame.CameraForward * -1.0f).Normalized();
+	FVector BillboardRight = (Frame.CameraRight * RollCos + Frame.CameraUp * RollSin).Normalized();
+	FVector BillboardUp = (Frame.CameraUp * RollCos - Frame.CameraRight * RollSin).Normalized();
+
 	FMatrix RotMatrix;
-	RotMatrix.SetAxes(BillboardForward, Frame.CameraRight, Frame.CameraUp);
+	RotMatrix.SetAxes(BillboardForward, BillboardRight, BillboardUp);
 	FMatrix BillboardMatrix = FMatrix::MakeScaleMatrix(CachedScale)
 		* RotMatrix * FMatrix::MakeTranslationMatrix(CachedLocation);
 
