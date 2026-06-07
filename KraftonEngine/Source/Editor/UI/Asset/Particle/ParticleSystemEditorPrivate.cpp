@@ -173,6 +173,10 @@
         if (Cast<UParticleModuleRotation>(Module)) return "Rotation (Sprite)";
         if (Cast<UParticleModuleRotationRate>(Module)) return "Rotation Rate (Sprite)";
         if (Cast<UParticleModuleVortexRotation>(Module)) return "Vortex Rotation";
+        if (Cast<UParticleModuleLocationRing>(Module)) return "Location Ring";
+        if (Cast<UParticleModuleSizeOverLife>(Module)) return "Size Over Life";
+        if (Cast<UParticleModuleAcceleration>(Module)) return "Acceleration";
+        if (Cast<UParticleModuleAttractorPoint>(Module)) return "Attractor Point";
         if (Cast<UParticleModuleSpawnPerUnit>(Module)) return "Spawn Per Unit";
         if (Cast<UParticleModuleTrailSource>(Module)) return "Trail Source";
         if (Cast<UParticleModuleBeamSource>(Module)) return "Beam Source";
@@ -210,6 +214,10 @@
         if (Cast<UParticleModuleRotation>(Module))         return IM_COL32( 60, 100, 150, 110);
         if (Cast<UParticleModuleRotationRate>(Module))     return IM_COL32( 60, 100, 150, 110);
         if (Cast<UParticleModuleVortexRotation>(Module))   return IM_COL32( 60, 100, 150, 110);
+        if (Cast<UParticleModuleLocationRing>(Module))     return IM_COL32(132,  75, 156, 100); // purple (Location 계열)
+        if (Cast<UParticleModuleSizeOverLife>(Module))     return IM_COL32(196, 130,  60, 100); // orange (Size 계열)
+        if (Cast<UParticleModuleAcceleration>(Module))     return IM_COL32( 70, 140,  90, 100); // green (Velocity 계열)
+        if (Cast<UParticleModuleAttractorPoint>(Module))   return IM_COL32( 70, 140,  90, 100); // green (Velocity 계열)
         if (Cast<UParticleModuleSpawnPerUnit>(Module))     return IM_COL32(110,  90, 140, 110);
         if (Cast<UParticleModuleTrailSource>(Module))      return IM_COL32(110,  90, 140, 110);
         if (Cast<UParticleModuleBeamSource>(Module))       return IM_COL32(130,  75,  90, 110);
