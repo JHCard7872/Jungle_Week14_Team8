@@ -102,6 +102,9 @@ public:
     // Gamepad (XInput 패드 0번. 버튼은 GetKey*(VK_GAMEPAD_*)로 읽는다)
     bool IsGamepadConnected() const { return bGamepadConnected; }
     float GetGamepadAxis(EGamepadAxis Axis) const { return GamepadAxes[static_cast<int>(Axis)]; }
+    // 메뉴 등 "UI가 마우스를 원하는" 상태에서 패드 A를 마우스 왼클릭으로 합성할지.
+    // GameViewportClient::ProcessInput이 매 프레임 갱신한다 (게임플레이 캡처 중엔 꺼져서 A=점프와 충돌 없음)
+    void SetGamepadCursorEmulation(bool bEnable) { bGamepadCursorEmulation = bEnable; }
 
     // Mouse position
     POINT GetMousePos() const { return MousePos; }
@@ -191,6 +194,7 @@ private:
     float GamepadAxes[static_cast<int>(EGamepadAxis::Count)] = {};
     bool bGamepadConnected = false;
     int GamepadReconnectCooldown = 0;   // 미연결 패드 폴링은 비싸서 재시도 간격을 둔다 (프레임 단위)
+    bool bGamepadCursorEmulation = false;
 
     // Window handle for focus check
     HWND OwnerHWnd = nullptr;

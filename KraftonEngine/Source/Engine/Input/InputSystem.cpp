@@ -70,6 +70,12 @@ void InputSystem::Tick()
     // 위 루프가 VK_GAMEPAD_* 슬롯을 false로 깔아둔 뒤 패드 상태로 덮어쓴다
     PollGamepad();
 
+    // 메뉴 커서 모드: 패드 A를 마우스 왼클릭에 합성 (RmlUi 클릭 경로가 VK_LBUTTON을 읽는다)
+    if (bGamepadCursorEmulation && CurrentStates[VK_GAMEPAD_A])
+    {
+        CurrentStates[VK_LBUTTON] = true;
+    }
+
     bLeftDragJustStarted = false;
     bRightDragJustStarted = false;
     bLeftDragJustEnded = false;
