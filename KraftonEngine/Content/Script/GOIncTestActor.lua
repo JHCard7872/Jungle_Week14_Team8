@@ -211,6 +211,9 @@ local function fire_held()
 end
 
 local function crosshair_hold_active()
+    if weapon_swap_state.is_sprinting then
+        return false
+    end
     -- Weapon2는 짧은 빔 펄스만 쏘므로 hold UI 상태에서 완전히 제외한다.
     if weapon_swap_state.active_index == 2 then
         return false
@@ -1090,7 +1093,42 @@ local function get_hit_actor(hit)
     return nil
 end
 
-local function notify_red_beam_hit_ragdoll(hit)
+local function get_slot2_knockback_direction(beam_direction)
+    local direction = beam_direction
+    if direction == nil or direction:Length() <= 0.0001 then
+        local _, fallback_direction = get_camera_aim_ray()
+        direction = fallback_direction
+    end
+    if direction == nil or direction:Length() <= 0.0001 then
+        return nil
+    end
+
+    local knockback_direction = direction:Normalized() + Vector.Up() * C.SLOT2_KNOCKBACK_UP_BIAS
+    if knockback_direction:Length() <= 0.0001 then
+        return nil
+    end
+
+    return knockback_direction:Normalized()
+end
+
+local function build_red_beam_hit_payload(beam_direction)
+    local knockback_direction = get_slot2_knockback_direction(beam_direction)
+    if knockback_direction == nil then
+        return RED_BEAM_HIT_REASON
+    end
+
+    return string.format(
+        "%s|%.6f|%.6f|%.6f|%.6f|%.6f",
+        RED_BEAM_HIT_REASON,
+        knockback_direction.X,
+        knockback_direction.Y,
+        knockback_direction.Z,
+        C.SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS or C.SLOT2_KNOCKBACK_IMPULSE_PER_MASS,
+        C.SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE or 1.0
+    )
+end
+
+local function notify_red_beam_hit_ragdoll(hit, beam_direction)
     local actor = get_hit_actor(hit)
     if not is_ragdoll_actor(actor) then
         return false
@@ -1112,7 +1150,7 @@ local function notify_red_beam_hit_ragdoll(hit)
     end
 
     if script ~= nil and script.CallFunctionString ~= nil then
-        if script:CallFunctionString(RED_BEAM_HIT_FUNCTION, RED_BEAM_HIT_REASON) then
+        if script:CallFunctionString(RED_BEAM_HIT_FUNCTION, build_red_beam_hit_payload(beam_direction)) then
             return true
         end
     end
@@ -1154,6 +1192,30 @@ local function apply_hit_rim_style(component, style)
     end
 end
 
+local function set_hit_rim_color(component, r, g, b, a)
+    if component ~= nil and component.SetHitRimColor ~= nil then
+        component:SetHitRimColor(r, g, b, a)
+    end
+end
+
+local function set_slot1_hit_rim_color(component)
+    set_hit_rim_color(
+        component,
+        C.SLOT1_HIT_RIM_COLOR_R,
+        C.SLOT1_HIT_RIM_COLOR_G,
+        C.SLOT1_HIT_RIM_COLOR_B,
+        C.SLOT1_HIT_RIM_COLOR_A)
+end
+
+local function set_slot2_hit_rim_color(component)
+    set_hit_rim_color(
+        component,
+        C.SLOT2_HIT_RIM_COLOR_R,
+        C.SLOT2_HIT_RIM_COLOR_G,
+        C.SLOT2_HIT_RIM_COLOR_B,
+        C.SLOT2_HIT_RIM_COLOR_A)
+end
+
 local function trigger_hit_rim_on_component(hit_component, should_flash, hit_location)
     if hit_component == nil or hit_component.GetSimulatePhysics == nil or not hit_component:GetSimulatePhysics() then
         return
@@ -1165,12 +1227,10 @@ local function trigger_hit_rim_on_component(hit_component, should_flash, hit_loc
         apply_hit_rim_style(hit_component, C.HIT_RIM_STYLE_SCAN_LINES)
     end
 
-    if hit_component.SetHitRimColor ~= nil then
-        if weapon_swap_state.active_index == 2 then
-            hit_component:SetHitRimColor(1.0, 0.08, 0.04, 1.0)
-        else
-            hit_component:SetHitRimColor(0.05, 0.85, 1.0, 1.0)
-        end
+    if weapon_swap_state.active_index == 2 then
+        set_slot2_hit_rim_color(hit_component)
+    else
+        set_slot1_hit_rim_color(hit_component)
     end
 
     if hit_location ~= nil then
@@ -1225,10 +1285,7 @@ local function trigger_red_beam_rim_on_ragdoll_mesh(hit)
     end
 
     apply_hit_rim_style(mesh, C.HIT_RIM_STYLE_NOISE)
-
-    if mesh.SetHitRimColor ~= nil then
-        mesh:SetHitRimColor(1.0, 0.08, 0.04, 1.0)
-    end
+    set_slot2_hit_rim_color(mesh)
 
     local hit_location = get_hit_location(hit)
     if hit_location ~= nil and mesh.TriggerHitRimAt ~= nil then
@@ -1239,6 +1296,60 @@ local function trigger_red_beam_rim_on_ragdoll_mesh(hit)
     if mesh.TriggerHitRim ~= nil then
         mesh:TriggerHitRim(RED_BEAM_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY)
     end
+end
+
+local function apply_slot2_knockback(hit, beam_direction)
+    if hit == nil or not hit.bHit then
+        return
+    end
+
+    local knockback_direction = get_slot2_knockback_direction(beam_direction)
+    if knockback_direction == nil then
+        return
+    end
+
+    local hit_component = get_hit_component(hit)
+    if hit_component ~= nil and hit_component.ApplyDirectionalRagdollImpulseIfSkeletal ~= nil then
+        if hit_component:ApplyDirectionalRagdollImpulseIfSkeletal(
+            knockback_direction,
+            C.SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS,
+            C.SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE) then
+            return
+        end
+    end
+
+    local body = get_hit_physics_body(hit)
+    if body ~= nil and body.IsValid ~= nil and body:IsValid() then
+        if body.IsDynamic ~= nil and not body:IsDynamic() then
+            return
+        end
+        if body.IsKinematic ~= nil and body:IsKinematic() then
+            return
+        end
+
+        local mass = 1.0
+        if body.GetMass ~= nil then
+            mass = math.max(body:GetMass(), 0.001)
+        end
+
+        body:AddImpulse(knockback_direction * (mass * C.SLOT2_KNOCKBACK_IMPULSE_PER_MASS))
+        body:WakeUp()
+        return
+    end
+
+    if hit_component == nil or hit_component.AddImpulse == nil then
+        return
+    end
+    if hit_component.GetSimulatePhysics ~= nil and not hit_component:GetSimulatePhysics() then
+        return
+    end
+
+    local mass = 1.0
+    if hit_component.GetMass ~= nil then
+        mass = math.max(hit_component:GetMass(), 0.001)
+    end
+
+    hit_component:AddImpulse(knockback_direction * (mass * C.SLOT2_KNOCKBACK_IMPULSE_PER_MASS))
 end
 
 local function begin_beam_grab(hit, start, direction, fallback_end)
@@ -1633,10 +1744,12 @@ local function apply_slot2_fire(delta_time)
 
     play_one_shot_sfx("sfx_gun_attack_shoot")
 
-    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
+    local hit, fallback_end, _, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
     trigger_red_beam_rim_on_ragdoll_mesh(hit)
-    notify_red_beam_hit_ragdoll(hit)
+    if not notify_red_beam_hit_ragdoll(hit, direction) then
+        apply_slot2_knockback(hit, direction)
+    end
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
 
     if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
@@ -2130,6 +2243,19 @@ local function apply_kinematic_movement(delta_time)
     update_footstep_sfx(delta_time, grounded and move_dir:Length() > 0.0001 and not did_jump)
 end
 
+local function block_fire_while_sprinting()
+    if not weapon_swap_state.is_sprinting then
+        return false
+    end
+
+    reset_collect_fire_sfx_timer()
+    clear_grab_state()
+    beam_visible_remaining = 0.0
+    last_aim_point = nil
+    set_beam_visible(false)
+    return true
+end
+
 local function apply_fire(delta_time)
     if weapon_swap_state.is_active then
         reset_collect_fire_sfx_timer()
@@ -2140,6 +2266,10 @@ local function apply_fire(delta_time)
     end
 
     select_active_beam_particle()
+
+    if block_fire_while_sprinting() then
+        return
+    end
 
     if weapon_swap_state.active_index == 2 then
         reset_collect_fire_sfx_timer()
