@@ -136,9 +136,8 @@ public:
 	// PIE 중이 아니면 no-op.
 	void StopPlayInEditorImmediate() { if (IsPlayingInEditor()) EndPlayMap(); }
 
-	// PIE 안에서 Lua 가 Engine.TransitionToScene 호출 시: scene 교체 대신 PIE 세션을 종료해
-	// 에디터 화면으로 복귀. UE 의 Stop Play 와 동일 의미로 매핑 (PIE 중간에 다른 scene 으로
-	// 점프하는 의미가 모호하므로). InScenePath 는 무시.
+	// PIE 안에서 Lua 가 Engine.LoadScene() 호출 시 PIE 세션을 유지하면서 씬을 교체한다.
+	// 다음 Tick 끝(WorldTick 이후)에 old PIE world를 destroy하고 새 씬을 PIE world로 로드.
 	void RequestTransitionToScene(const FString& InScenePath) override;
 
 private:
@@ -152,6 +151,8 @@ private:
 	void LoadStartLevel();
 	bool FindSceneViewportPOV(struct FMinimalViewInfo& OutPOV) const;
 	void RestoreViewportCamera(const FPerspectiveCameraData& CamData);
+	// WorldTick 직후 호출 — 펜딩 PIE 씬 전환이 있으면 destroy + load + BeginPlay 수행.
+	void ProcessPendingPIETransition();
 
 	FSelectionManager SelectionManager;
 	FEditorMainPanel MainPanel;
@@ -164,6 +165,9 @@ private:
 	std::optional<FPlayInEditorSessionInfo> PlayInEditorSessionInfo;
 	// 종료 요청 지연 플래그. Tick 선두에서 확인 후 EndPlayMap 호출.
 	bool bRequestEndPlayMapQueued = false;
+	// PIE 씬 전환 지연 플래그. WorldTick 이후 ProcessPendingPIETransition에서 소비.
+	bool bPendingPIESceneTransition = false;
+	FString PendingPIEScenePath;
 	EPIEControlMode PIEControlMode = EPIEControlMode::Possessed;
 	FString CurrentLevelFilePath;
 

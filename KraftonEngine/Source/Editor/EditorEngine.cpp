@@ -28,6 +28,7 @@
 #include "Materials/MaterialManager.h"
 #include "Engine/Platform/Paths.h"
 #include "Lua/LuaScriptManager.h"
+#include "Profiling/Time/Timer.h"
 #include <filesystem>
 #include "Object/GarbageCollection.h"
 
@@ -169,9 +170,11 @@ void UEditorEngine::Tick(float DeltaTime)
 	MainPanel.TickAssetEditors(DeltaTime);
 
 	WorldTick(DeltaTime);
-    
+
+	ProcessPendingPIETransition();
+
     FGarbageCollector::Get().CollectGarbage();
-    
+
 	Render(DeltaTime);
 	SelectionManager.Tick();
 }
@@ -243,11 +246,109 @@ void UEditorEngine::RequestEndPlayMap()
 	bRequestEndPlayMapQueued = true;
 }
 
-void UEditorEngine::RequestTransitionToScene(const FString& /*InScenePath*/)
+void UEditorEngine::RequestTransitionToScene(const FString& InScenePath)
 {
-	// PIE 중이면 세션 종료(에디터 복귀)로 매핑. PIE 가 아닌 상태(에디터 직접)에서 호출되면
-	// 아무 의미 없으므로 no-op.
-	RequestEndPlayMap();
+	if (!PlayInEditorSessionInfo.has_value())
+	{
+		return;
+	}
+	PendingPIEScenePath = InScenePath;
+	bPendingPIESceneTransition = true;
+}
+
+void UEditorEngine::ProcessPendingPIETransition()
+{
+	if (!bPendingPIESceneTransition || !PlayInEditorSessionInfo.has_value())
+	{
+		bPendingPIESceneTransition = false;
+		return;
+	}
+	bPendingPIESceneTransition = false;
+
+	const FString SceneName = std::move(PendingPIEScenePath);
+	PendingPIEScenePath.clear();
+
+	const FString FilePath = BuildScenePathFromStem(SceneName);
+
+	// Gizmo 프록시를 구 PIE scene 에서 먼저 제거 — DestroyWorldContext 이후에 하면
+	// 이미 파괴된 FScene 에 RemovePrimitive 를 호출해 크래시가 난다.
+	SelectionManager.ClearSelection();
+	if (FWorldContext* EditorCtx = GetWorldContextFromHandle(PlayInEditorSessionInfo->PreviousActiveWorldHandle))
+	{
+		SelectionManager.SetWorld(EditorCtx->World);
+	}
+
+	// 구 PIE world 의 Lua 참조를 먼저 끊는다.
+	FLuaScriptManager::FireWorldReset();
+	InputSystem::Get().ResetAllKeyStates();
+	InputSystem::Get().ResetTransientState();
+
+	// 구 PIE world 파괴 (EndPlay + DestroyObject 수행).
+	DestroyWorldContext(FName("PIE"));
+
+	// 잔여 UI 위젯 / GPU Occlusion readback 정리.
+	UUIManager::Get().ClearViewport();
+	if (IRenderPipeline* Pipeline = GetRenderPipeline())
+	{
+		Pipeline->OnSceneCleared();
+	}
+
+	// 새 씬을 PIE world 로 로드.
+	FWorldContext NewCtx;
+	FPerspectiveCameraData CameraData;
+	const EWorldType PIEType = EWorldType::PIE;
+	FSceneSaveManager::LoadSceneFromJSON(FilePath, NewCtx, CameraData, &PIEType);
+
+	if (!NewCtx.World)
+	{
+		UE_LOG("[EditorEngine] PIE scene transition failed: %s", FilePath.c_str());
+		// 로드 실패 — PIE 상태를 수동으로 정리하고 에디터로 복귀.
+		const FName PrevHandle = PlayInEditorSessionInfo->PreviousActiveWorldHandle;
+		SetActiveWorld(PrevHandle);
+		PlayInEditorSessionInfo.reset();
+		PIEControlMode = EPIEControlMode::Possessed;
+		InputSystem::Get().ResetCaptureStateForPIEEnd();
+		return;
+	}
+
+	// ContextHandle 을 "PIE" 로 강제 — PIE 인프라 전체가 이 핸들을 기대한다.
+	NewCtx.WorldType = EWorldType::PIE;
+	NewCtx.ContextHandle = FName("PIE");
+	NewCtx.ContextName = "PIE";
+	NewCtx.World->SetWorldType(EWorldType::PIE);
+
+	// GameMode 주입.
+	if (UClass* GMClass = AGameModeBase::ResolveClassFromProjectSettings(nullptr))
+	{
+		NewCtx.World->SetGameModeClass(GMClass);
+	}
+
+	WorldList.push_back(NewCtx);
+	SetActiveWorld(FName("PIE"));
+
+	// 뷰포트 POV 프로바이더 및 SelectionManager 를 새 PIE world 로 재바인딩.
+	if (FLevelEditorViewportClient* ActiveVC = ViewportLayout.GetActiveViewport())
+	{
+		NewCtx.World->SetEditorPOVProvider(ActiveVC);
+	}
+	SelectionManager.SetWorld(NewCtx.World);
+
+	// 입력 캡처 재설정.
+	EnterPIEPossessedMode();
+
+	if (IRenderPipeline* Pipeline = GetRenderPipeline())
+	{
+		Pipeline->OnSceneCleared();
+	}
+
+	// BeginPlay 트리거.
+	NewCtx.World->BeginPlay();
+
+	// 로드 시간만큼 dt 가 부풀지 않도록 타이머 리셋.
+	if (FTimer* T = GetTimer())
+	{
+		T->Initialize();
+	}
 }
 
 void UEditorEngine::StartQueuedPlaySessionRequest()
