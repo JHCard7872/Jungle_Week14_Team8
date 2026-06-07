@@ -63,7 +63,6 @@ body {
     font-size: 54px;
     font-weight: bold;
     letter-spacing: 2px;
-    text-shadow: 3px 3px 0px #00000088;
 }
 
 #menu_header_label {
@@ -82,6 +81,18 @@ body {
     height: 100%;
     opacity: 1;
     z-index: 200;
+}
+
+#menu_fade_overlay {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 300;
 }
 
 #title_background {

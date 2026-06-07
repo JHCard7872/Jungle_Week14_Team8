@@ -1,0 +1,63 @@
+body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: NanumGothic;
+    font-weight: bold;
+}
+
+#title_root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#title_click_area {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border: 0px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+#title_background {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#press_any_button {
+    position: absolute;
+    left: 50%;
+    bottom: 15%;
+    width: 100%;
+    margin-left: -50%;
+    color: #ffffff;
+    font-family: NanumGothic;
+    font-size: 60px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 2px;
+    z-index: 20;
+}
+
+#title_fade_overlay {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}

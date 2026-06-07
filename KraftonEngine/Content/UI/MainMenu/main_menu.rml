@@ -82,6 +82,7 @@
             <img id="title_background" src="../../Sprite/title_background.png" />
             <div id="press_any_button">PRESS ANY BUTTON TO START</div>
         </div>
+        <div id="menu_fade_overlay"></div>
     </div>
 </body>
 </rml>

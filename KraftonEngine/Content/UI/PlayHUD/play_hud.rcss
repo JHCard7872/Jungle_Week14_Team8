@@ -360,10 +360,10 @@ body {
 
 #hud_start_countdown_image {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 420px;
-    height: 420px;
+    left: 48%;
+    top: 60%;
+    width: 500px;
+    height:  500px;
     margin-left: -210px;
     margin-top: -210px;
 }

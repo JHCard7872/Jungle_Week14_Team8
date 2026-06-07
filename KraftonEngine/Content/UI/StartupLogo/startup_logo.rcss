@@ -1,0 +1,34 @@
+body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#startup_logo_root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#startup_logo_background {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+}
+
+.startup_logo_image {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 720px;
+    height: auto;
+    margin-left: -360px;
+    margin-top: -180px;
+    opacity: 0;
+}
