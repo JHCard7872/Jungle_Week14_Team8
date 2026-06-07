@@ -23,7 +23,7 @@ return {
     bgm_collector_truck = "BgmCollectorTruck.mp3",
 
     -- Sound effects
-    sfx_foot = "SfxFoot.mp3",
+    sfx_foot = "SfxFootstep.mp3",
     sfx_result_high = "SfxResultHigh.mp3",
     sfx_result_medium = "SfxResultMedium.mp3",
     sfx_result_low = "SfxResultLow.mp3",

@@ -40,7 +40,7 @@ local S = {
         name = "",
         weightText = "",
         scoreText = "",
-        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
     },
 
     mission = {
@@ -73,7 +73,7 @@ function S.Reset(timeLimit)
         name = "",
         weightText = "",
         scoreText = "",
-        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
     }
     S.mission = { active = false, target = "", need = 0, got = 0, text = "" }
     -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
