@@ -714,6 +714,7 @@ local function center_physics_raycast(max_distance)
     local primitive_distance = nil
     local physics_distance = distance
     local front_hit_epsilon = C.FRONT_HIT_DISTANCE_EPSILON or 0.05
+    local b_use_grab_raycast = World ~= nil and World.PhysicsGrabRaycast ~= nil
     local hit = nil
 
     if World ~= nil and World.PrimitiveRaycast ~= nil then
@@ -723,19 +724,26 @@ local function center_physics_raycast(max_distance)
             if primitive_distance == nil and primitive_hit.Hit ~= nil then
                 primitive_distance = primitive_hit.Hit.Distance
             end
-            if primitive_distance ~= nil and primitive_distance > 0.0 then
+            -- Grab raycasts have their own body filter and must be able to pass
+            -- through a same-actor capsule/front primitive to reach the ragdoll body.
+            if not b_use_grab_raycast and primitive_distance ~= nil and primitive_distance > 0.0 then
                 physics_distance = math.min(distance, primitive_distance + front_hit_epsilon)
             end
         end
     end
 
-    if World ~= nil and World.PhysicsRaycast ~= nil then
-        hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+    if World ~= nil then
+        if World.PhysicsGrabRaycast ~= nil then
+            hit = World.PhysicsGrabRaycast(start, direction, physics_distance, obj)
+        elseif World.PhysicsRaycast ~= nil then
+            hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+        end
     end
 
     if primitive_hit ~= nil and primitive_hit.bHit then
         local physics_hit_distance = nil
         local physics_hit_actor = nil
+        local physics_hit_body = nil
         if hit ~= nil and hit.bHit then
             physics_hit_distance = hit.Distance
             if physics_hit_distance == nil and hit.Hit ~= nil then
@@ -744,6 +752,10 @@ local function center_physics_raycast(max_distance)
             physics_hit_actor = hit.HitActor
             if physics_hit_actor == nil and hit.Hit ~= nil then
                 physics_hit_actor = hit.Hit.HitActor
+            end
+            physics_hit_body = hit.PhysicsBody
+            if physics_hit_body == nil and hit.Hit ~= nil then
+                physics_hit_body = hit.Hit.PhysicsBody
             end
         end
 
@@ -757,8 +769,9 @@ local function center_physics_raycast(max_distance)
             and primitive_distance ~= nil
             and (physics_hit_distance <= primitive_distance
                 or (b_same_front_actor and physics_hit_distance <= primitive_distance + front_hit_epsilon))
+        local b_same_actor_grab_body = b_same_front_actor and physics_hit_body ~= nil
 
-        if hit == nil or not hit.bHit or not b_physics_hit_is_front then
+        if hit == nil or not hit.bHit or (not b_physics_hit_is_front and not b_same_actor_grab_body) then
             hit = primitive_hit
         end
     end
@@ -1412,6 +1425,17 @@ local function update_active_grab(delta_time)
     grab_fixed_ray.direction = copy_vec(direction)
     update_grab_visuals()
     return true
+end
+
+local function try_begin_beam_grab_while_held(hit, start, direction, fallback_end)
+    if grabbed_body ~= nil or not fire_held() then
+        return false
+    end
+
+    -- Keep the held beam "hot": if nothing is currently grabbed, a later
+    -- pickable body entering the beam should be grabbed without requiring a
+    -- fresh button press.
+    return begin_beam_grab(hit, start, direction, fallback_end)
 end
 
 local function update_beam_fade(delta_time)
@@ -2098,7 +2122,7 @@ local function apply_fire(delta_time)
     local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
     set_beamed_ragdoll_actor(get_hit_actor(hit))
-    if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
+    if try_begin_beam_grab_while_held(hit, start, direction, fallback_end) then
         return
     end
 

@@ -235,6 +235,72 @@ namespace
 		return Result;
 	}
 
+	sol::table LuaPhysicsGrabRaycast(
+		sol::this_state        State,
+		const FVector&         Start,
+		const FVector&         Direction,
+		float                  MaxDistance,
+		sol::optional<AActor*> IgnoreActor)
+	{
+		sol::state_view L(State);
+		sol::table      Result = L.create_table();
+
+		FHitResult Hit{};
+		FVector    TraceDir = Direction;
+		FVector    End = Start;
+		bool       bHit = false;
+
+		const float DirLength = TraceDir.Length();
+		if (DirLength > 1.0e-4f && MaxDistance > 0.0f)
+		{
+			TraceDir = TraceDir * (1.0f / DirLength);
+			End = Start + TraceDir * MaxDistance;
+
+			UWorld* CurrentWorld = GEngine ? GEngine->GetWorld() : nullptr;
+			if (CurrentWorld)
+			{
+				bHit = CurrentWorld->PhysicsGrabRaycast(
+					Start,
+					TraceDir,
+					MaxDistance,
+					Hit,
+					ECollisionChannel::WorldStatic,
+					IgnoreActor.value_or(nullptr));
+			}
+
+			if (bHit && Hit.bHit)
+			{
+				End = Hit.WorldHitLocation;
+			}
+			else
+			{
+				bHit = false;
+				Hit = {};
+				Hit.bHit = false;
+				Hit.Distance = MaxDistance;
+				Hit.WorldHitLocation = End;
+			}
+		}
+		else
+		{
+			Hit = {};
+			Hit.bHit = false;
+			Hit.Distance = 0.0f;
+			Hit.WorldHitLocation = Start;
+		}
+
+		Result["bHit"] = bHit && Hit.bHit;
+		Result["Hit"] = Hit;
+		Result["Location"] = Hit.WorldHitLocation;
+		Result["WorldHitLocation"] = Hit.WorldHitLocation;
+		Result["End"] = End;
+		Result["Distance"] = Hit.Distance;
+		Result["HitActor"] = Hit.HitActor;
+		Result["HitComponent"] = Hit.HitComponent;
+		Result["PhysicsBody"] = Hit.PhysicsBody;
+		return Result;
+	}
+
 	sol::table LuaPrimitiveRaycast(
 		sol::this_state        State,
 		const FVector&         Start,
@@ -3703,6 +3769,8 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 	});
 	World.set_function("PhysicsRaycast", &LuaPhysicsRaycast);
 	World.set_function("Raycast", &LuaPhysicsRaycast);
+	World.set_function("PhysicsGrabRaycast", &LuaPhysicsGrabRaycast);
+	World.set_function("GrabRaycast", &LuaPhysicsGrabRaycast);
 	World.set_function("PrimitiveRaycast", &LuaPrimitiveRaycast);
 	World.set_function("PickingRaycast", &LuaPrimitiveRaycast);
 	World.set_function("RaycastPrimitives", &LuaPrimitiveRaycast);
