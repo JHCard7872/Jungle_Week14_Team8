@@ -9,6 +9,7 @@
 #include "Physics/BodyInstance.h"
 #include "Physics/ConstraintInstance.h"
 #include "Component/Primitive/SkeletalMeshComponent.h"
+#include "Component/Primitive/StaticMeshComponent.h"
 #include "Math/Quat.h"
 #include "Object/Object.h"  // IsAliveObject
 #include "Core/Logging/Log.h"
@@ -78,6 +79,35 @@ namespace
 
 		AActor* OwnerActor = GetOwnerActorFromPhysXActor(Actor);
 		return OwnerActor == IgnoreActor;
+	}
+
+	bool ShouldAllowPhysicsGrabRaycastBody(const FBodyInstance* HitBody)
+	{
+		if (!HitBody)
+		{
+			return false;
+		}
+
+		// Beam Grab target policy:
+		// - OwnerSkeletalComponent != nullptr: allow ragdoll bone bodies.
+		// - OwnerComponent is UStaticMeshComponent: allow normal StaticMesh BodySetup bodies.
+		// - OwnerComponent is UCapsuleComponent: skip character / sensor capsules.
+		if (HitBody->OwnerSkeletalComponent != nullptr)
+		{
+			return true;
+		}
+
+		if (Cast<UStaticMeshComponent>(HitBody->OwnerComponent) != nullptr)
+		{
+			return true;
+		}
+
+		if (Cast<UCapsuleComponent>(HitBody->OwnerComponent) != nullptr)
+		{
+			return false;
+		}
+
+		return false;
 	}
 
 	bool ResolvePhysXRaycastTarget(const PxRaycastHit& Block, FHitResult& OutHit)
@@ -1609,6 +1639,76 @@ bool FPhysXPhysicsScene::Raycast(const FVector& Start, const FVector& Dir, float
 	PxQueryFilterData FilterData;
 	FilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
 	FChannelRaycastFilter FilterCallback(IgnoreActor, TraceChannel);
+
+	bool bStatus = Scene->raycast(ToPxVec3(Start), ToPxVec3(Dir), MaxDist, Hit, PxHitFlag::eDEFAULT, FilterData, &FilterCallback);
+	if (!bStatus || !Hit.hasBlock) return false;
+
+	const PxRaycastHit& Block = Hit.block;
+	if (!ResolvePhysXRaycastTarget(Block, OutHit))
+	{
+		return false;
+	}
+
+	OutHit.bHit = true;
+	OutHit.Distance = Block.distance;
+	OutHit.WorldHitLocation = ToFVector(Block.position);
+	OutHit.ImpactNormal = ToFVector(Block.normal);
+	OutHit.WorldNormal = OutHit.ImpactNormal;
+
+	return true;
+}
+
+bool FPhysXPhysicsScene::RaycastForPhysicsGrab(const FVector& Start, const FVector& Dir, float MaxDist, FHitResult& OutHit,
+	ECollisionChannel TraceChannel, const AActor* IgnoreActor) const
+{
+	if (!Scene) return false;
+
+	struct FPhysicsGrabRaycastFilter : PxQueryFilterCallback
+	{
+		const AActor* IgnoreActor = nullptr;
+		PxU32 TraceBit = 0;
+
+		FPhysicsGrabRaycastFilter(const AActor* InIgnoreActor, ECollisionChannel InChannel)
+			: IgnoreActor(InIgnoreActor)
+			, TraceBit(1u << static_cast<PxU32>(InChannel))
+		{
+		}
+
+		PxQueryHitType::Enum preFilter(const PxFilterData&, const PxShape* Shape, const PxRigidActor* Actor, PxHitFlags&) override
+		{
+			if (ShouldIgnorePhysXActor(Actor, IgnoreActor))
+			{
+				return PxQueryHitType::eNONE;
+			}
+
+			FBodyInstance* HitBody = GetBodyInstanceFromActor(Actor);
+			if (!ShouldAllowPhysicsGrabRaycastBody(HitBody))
+			{
+				return PxQueryHitType::eNONE;
+			}
+
+			if (Shape)
+			{
+				const PxFilterData ShapeData = Shape->getQueryFilterData();
+				if ((ShapeData.word1 & TraceBit) == 0)
+				{
+					return PxQueryHitType::eNONE;
+				}
+			}
+
+			return PxQueryHitType::eBLOCK;
+		}
+
+		PxQueryHitType::Enum postFilter(const PxFilterData&, const PxQueryHit&) override
+		{
+			return PxQueryHitType::eBLOCK;
+		}
+	};
+
+	PxRaycastBuffer Hit;
+	PxQueryFilterData FilterData;
+	FilterData.flags = PxQueryFlag::eSTATIC | PxQueryFlag::eDYNAMIC | PxQueryFlag::ePREFILTER;
+	FPhysicsGrabRaycastFilter FilterCallback(IgnoreActor, TraceChannel);
 
 	bool bStatus = Scene->raycast(ToPxVec3(Start), ToPxVec3(Dir), MaxDist, Hit, PxHitFlag::eDEFAULT, FilterData, &FilterCallback);
 	if (!bStatus || !Hit.hasBlock) return false;
