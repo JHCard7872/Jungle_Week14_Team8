@@ -810,18 +810,19 @@ local function get_mouse_wheel_notches()
     return 0.0
 end
 
-local function update_grab_distance_from_mouse_wheel()
+local function update_grab_distance_from_mouse_wheel(delta_time)
     if grabbed_aim_distance == nil then
         return
     end
 
     local wheel_notches = get_mouse_wheel_notches()
-    -- 패드 십자키 위/아래 = 휠 1노치와 동일 (누를 때마다 한 단계)
-    if Input.GetKeyDown(C.PAD_KEY_DPAD_UP) then
-        wheel_notches = wheel_notches + 1.0
+    -- 패드: LT = 멀리 / LB = 가까이. 누르고 있는 동안 연속 조절 (사용자 실기 피드백으로 방향 확정)
+    local dt = math.max(delta_time or 0.0, 0.0)
+    if Input.GetKey(C.PAD_KEY_LT) then
+        wheel_notches = wheel_notches + C.PAD_DISTANCE_NOTCHES_PER_SEC * dt
     end
-    if Input.GetKeyDown(C.PAD_KEY_DPAD_DOWN) then
-        wheel_notches = wheel_notches - 1.0
+    if Input.GetKey(C.PAD_KEY_LB) then
+        wheel_notches = wheel_notches - C.PAD_DISTANCE_NOTCHES_PER_SEC * dt
     end
     if math.abs(wheel_notches) <= 0.0001 then
         return
@@ -1281,7 +1282,7 @@ local function update_active_grab(delta_time)
 
     -- 힘 적용은 FixedTick 몫 — 여기(렌더 프레임)서는 조준 레이 캐시와 비주얼만 갱신
     local start, direction = get_camera_aim_ray()
-    update_grab_distance_from_mouse_wheel()
+    update_grab_distance_from_mouse_wheel(delta_time)
     grab_fixed_ray.start = copy_vec(start)
     grab_fixed_ray.direction = copy_vec(direction)
     update_grab_visuals()

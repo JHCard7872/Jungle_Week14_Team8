@@ -21,13 +21,14 @@ return {
     KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
 
     -- 게임패드 (XInput VK 코드 — Input.GetKey* 그대로 사용 가능. 이동/시점은 스틱 축 별도)
-    PAD_KEY_A         = 0xC3, -- A 버튼: 점프
-    PAD_KEY_Y         = 0xC6, -- Y 버튼: 무기 교체
-    PAD_KEY_RT        = 0xCA, -- 오른쪽 트리거(임계값 디지털): 그랩/발사
-    PAD_KEY_DPAD_UP   = 0xCB, -- 십자키 위: 그랩 거리 멀리
-    PAD_KEY_DPAD_DOWN = 0xCC, -- 십자키 아래: 그랩 거리 가까이
+    PAD_KEY_A  = 0xC3, -- A 버튼: 점프 (메뉴에선 엔진이 왼클릭으로 합성)
+    PAD_KEY_Y  = 0xC6, -- Y 버튼: 무기 교체
+    PAD_KEY_RT = 0xCA, -- 오른쪽 트리거(임계값 디지털): 그랩/발사
+    PAD_KEY_LB = 0xC8, -- 왼쪽 숄더: 그랩 거리 가까이
+    PAD_KEY_LT = 0xC9, -- 왼쪽 트리거(임계값 디지털): 그랩 거리 멀리
     PAD_LOOK_YAW_DEG_PER_SEC   = 180.0, -- 우스틱 풀기울임 시 좌우 회전 속도(도/초)
     PAD_LOOK_PITCH_DEG_PER_SEC = 120.0, -- 우스틱 풀기울임 시 상하 회전 속도(도/초). 위로 밀면 위를 본다
+    PAD_DISTANCE_NOTCHES_PER_SEC = 6.0, -- LB/LT를 누르고 있는 동안 초당 휠 노치 환산량
 
     CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml",
     CROSSHAIR_Z_ORDER = 1000,
