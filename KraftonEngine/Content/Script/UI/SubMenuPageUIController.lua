@@ -19,8 +19,6 @@ local MIN_VOLUME = 0
 local MAX_VOLUME = 10
 local DEFAULT_SFX_VOLUME = 8
 local DEFAULT_BGM_VOLUME = 8
-local DEFAULT_INPUT_MODE = "mouse_key"
-
 local PAGE_BODY_IDS = {
     options = "page_body_options",
     controls = "page_body_controls",
@@ -28,10 +26,6 @@ local PAGE_BODY_IDS = {
     credits = "page_body_credits",
 }
 
-local INPUT_MODE_ROW_IDS = {
-    mouse_key = "input_mode_mouse_key",
-    gamepad = "input_mode_gamepad",
-}
 
 local M = {}
 
@@ -83,16 +77,6 @@ local function set_text(element_id, value)
     widget:SetText(element_id, tostring(value))
 end
 
--- "selected" 여부에 따라 class 속성 전체를 다시 써서 .selected RCSS를 토글한다
--- (UserWidget에는 SetClass가 없고 SetAttribute만 있다)
-local function set_input_mode_row_selected(element_id, is_selected)
-    if widget == nil then
-        return
-    end
-
-    local class_value = is_selected and "input_mode_row selected" or "input_mode_row"
-    widget:SetAttribute(element_id, "class", class_value)
-end
 
 local function play_ui_click()
     AudioManager.Play(UI_CLICK_KEY, get_sfx_volume_scalar())
@@ -119,7 +103,7 @@ local function bind_hover_sound(element_id)
     end)
 end
 
--- 화면에 표시되는 볼륨 숫자/입력 모드 선택 표시를 settings 값에 맞춰 갱신한다
+-- 화면에 표시되는 볼륨 숫자를 settings 값에 맞춰 갱신한다
 local function apply_settings_to_view()
     if widget == nil then
         return
@@ -127,10 +111,6 @@ local function apply_settings_to_view()
 
     set_text("sfx_volume_value", settings.sfxVolume)
     set_text("bgm_volume_value", settings.bgmVolume)
-
-    for mode, element_id in pairs(INPUT_MODE_ROW_IDS) do
-        set_input_mode_row_selected(element_id, mode == settings.inputMode)
-    end
 end
 
 local function commit_option_settings()
@@ -175,15 +155,6 @@ local function set_bgm_volume(value)
     commit_option_settings()
 end
 
-local function set_input_mode(mode)
-    if INPUT_MODE_ROW_IDS[mode] == nil then
-        return
-    end
-
-    settings.inputMode = mode
-    apply_settings_to_view()
-    commit_option_settings()
-end
 
 local function set_current_page(page_type, title)
     if widget == nil then
@@ -239,23 +210,12 @@ local function bind_actions()
         set_bgm_volume(settings.bgmVolume + 1)
     end))
 
-    widget:bind_click("input_mode_mouse_key", on_button_click(function()
-        set_input_mode("mouse_key")
-    end))
-
-    widget:bind_click("input_mode_gamepad", on_button_click(function()
-        set_input_mode("gamepad")
-    end))
-
     bind_hover_sound("page_back_button")
     bind_hover_sound("page_confirm_button")
     bind_hover_sound("sfx_volume_down")
     bind_hover_sound("sfx_volume_up")
     bind_hover_sound("bgm_volume_down")
     bind_hover_sound("bgm_volume_up")
-    bind_hover_sound("input_mode_mouse_key")
-    bind_hover_sound("input_mode_gamepad")
-
     bindings_initialized = true
 end
 
@@ -288,7 +248,7 @@ end
 -- 하위 페이지 UI 생성 진입점
 -- options.pageType = "options" | "controls" | "scoreboard" | "credits"
 -- options.title = 화면 좌상단 제목
--- options.initialSettings = { sfxVolume, bgmVolume, inputMode } (선택)
+-- options.initialSettings = { sfxVolume, bgmVolume } (선택)
 -- options.onConfirm = function(settings, pageType) end
 -- options.onBack = function(pageType) end
 function M.Create(options)
@@ -302,7 +262,7 @@ function M.Create(options)
     if initial ~= nil then
         settings.sfxVolume = clamp(initial.sfxVolume or UserSettings.sfxVolume or DEFAULT_SFX_VOLUME, MIN_VOLUME, MAX_VOLUME)
         settings.bgmVolume = clamp(initial.bgmVolume or UserSettings.bgmVolume or DEFAULT_BGM_VOLUME, MIN_VOLUME, MAX_VOLUME)
-        settings.inputMode = INPUT_MODE_ROW_IDS[initial.inputMode] ~= nil and initial.inputMode or UserSettings.inputMode or DEFAULT_INPUT_MODE
+        settings.inputMode = UserSettings.inputMode
     end
 
     if ensure_widget() == nil then
@@ -355,7 +315,7 @@ function M.IsVisible()
     return visible
 end
 
--- 현재 화면에 표시 중인 옵션 설정값을 반환한다 ({ sfxVolume, bgmVolume, inputMode })
+-- 현재 화면에 표시 중인 옵션 설정값을 반환한다 ({ sfxVolume, bgmVolume })
 function M.GetSettings()
     return {
         sfxVolume = settings.sfxVolume,
@@ -378,9 +338,6 @@ function M.ApplySettings(new_settings)
         settings.bgmVolume = clamp(new_settings.bgmVolume, MIN_VOLUME, MAX_VOLUME)
     end
 
-    if new_settings.inputMode ~= nil and INPUT_MODE_ROW_IDS[new_settings.inputMode] ~= nil then
-        settings.inputMode = new_settings.inputMode
-    end
 
     apply_settings_to_view()
 end

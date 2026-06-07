@@ -39,21 +39,6 @@
                     <div id="bgm_volume_value" class="option_value_text">8</div>
                     <button id="bgm_volume_up" class="value_step_button value_up">+</button>
                 </div>
-
-                <!-- Input Mode -->
-                <div id="input_mode_label" class="option_group_label">
-                    <div class="option_group_label_text">Input Mode</div>
-                </div>
-
-                <button id="input_mode_mouse_key" class="input_mode_row selected">
-                    <img class="input_mode_icon" src="../../Sprite/settings_input_mousekeyboard.png" />
-                    <div class="input_mode_text">Mouse &amp; Key</div>
-                </button>
-
-                <button id="input_mode_gamepad" class="input_mode_row">
-                    <img class="input_mode_icon" src="../../Sprite/settings_input_gamepad.png" />
-                    <div class="input_mode_text">GamePad</div>
-                </button>
             </div>
 
             <!-- Controls -->
