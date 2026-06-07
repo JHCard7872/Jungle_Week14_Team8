@@ -1,4 +1,4 @@
-#include "GameFramework/Pawn/GOIncLaraRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncLaraRagdollPawn.h"
 
 FGOIncRagdollCharacterConfig AGOIncLaraRagdollPawn::MakeCharacterConfig() const
 {
@@ -12,11 +12,11 @@ FGOIncRagdollCharacterConfig AGOIncLaraRagdollPawn::MakeCharacterConfig() const
 	Config.FleeAnimationPath = "Content/Data/lara_new/Injured Run_mixamo_com.uasset";
 	Config.LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
-	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -1.1f);
+	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.9f);
 	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
-	Config.AliveCapsuleRadius = 0.8f;
-	Config.AliveCapsuleHalfHeight = 1.5f;
+	Config.AliveCapsuleRadius = 0.3f;
+	Config.AliveCapsuleHalfHeight = 0.9f;
 	Config.ReviveTriggerCapsuleRadius = 4.5f;
 	Config.ReviveTriggerCapsuleHalfHeight = 4.5f;
 

@@ -1,4 +1,4 @@
-#include "GameFramework/Pawn/GOIncEggmanRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncEggmanRagdollPawn.h"
 
 FGOIncRagdollCharacterConfig AGOIncEggmanRagdollPawn::MakeCharacterConfig() const
 {
@@ -12,11 +12,11 @@ FGOIncRagdollCharacterConfig AGOIncEggmanRagdollPawn::MakeCharacterConfig() cons
 	Config.FleeAnimationPath = "Content/Data/Eggman/Injured Run_mixamo_com.uasset";
 	Config.LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
-	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -1.2f);
+	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -1.0f);
 	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
-	Config.AliveCapsuleRadius = 1.0f;
-	Config.AliveCapsuleHalfHeight = 1.6f;
+	Config.AliveCapsuleRadius = 0.4f;
+	Config.AliveCapsuleHalfHeight = 1.0f;
 	Config.ReviveTriggerCapsuleRadius = 5.0f;
 	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;
 
