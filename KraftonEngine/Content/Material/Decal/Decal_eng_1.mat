@@ -1,0 +1,38 @@
+{
+  "BlendState": "",
+  "DepthStencilState": "",
+  "Origin": "Editor",
+  "Parameters": {
+    "DecalColor": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "DecalWorldToLocal": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "PathFileName": "Content/Material/Decal/Decal_eng_1.mat",
+  "RasterizerState": "",
+  "RenderPass": "Decal",
+  "ShaderPath": "Shaders/Geometry/Decal.hlsl",
+  "Textures": {
+    "DiffuseTexture": "Content/Sprite/logo/eng_1.png"
+  }
+}
