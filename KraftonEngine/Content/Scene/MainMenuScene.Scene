@@ -2,14 +2,14 @@
     "Actors":  [
                    {
                        "ClassName":  "AActor",
-                       "Name":  "TitleSceneManager",
+                       "Name":  "MainMenuSceneManager",
                        "NonSceneComponents":  [
                                                   {
                                                       "ClassName":  "ULuaScriptComponent",
                                                       "ObjectId":  4,
                                                       "Properties":  {
-                                                                         "ObjectName":  "ULuaScriptComponent_0",
-                                                                         "ScriptFile":  "Scenes/TitleScene.lua",
+                                                                         "ObjectName":  "ULuaScriptComponent_MainMenuScene",
+                                                                         "ScriptFile":  "Scenes/MainMenuScene.lua",
                                                                          "bAutoActivate":  true,
                                                                          "bEditorOnly":  false,
                                                                          "bHiddenInComponentTree":  false,
@@ -20,7 +20,7 @@
                                               ],
                        "ObjectId":  2,
                        "Properties":  {
-                                          "ObjectName":  "TitleSceneManager",
+                                          "ObjectName":  "MainMenuSceneManager",
                                           "PendingActorLocation":  [
                                                                        1.17912,
                                                                        1.204603,
@@ -784,7 +784,7 @@
     "ClassName":  "UWorld",
     "ContextHandle":  "NewScene",
     "ContextName":  "New Scene",
-    "Name":  "Title",
+    "Name":  "MainMenuScene",
     "ObjectId":  1,
     "PerspectiveCamera":  {
                               "FOV":  1.047198,
