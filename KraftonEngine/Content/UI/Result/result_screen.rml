@@ -27,8 +27,12 @@
 
             <img id="result_stamp_device" src="../../Sprite/result_stamp.png" />
 
+            <!-- 등급별 스탬프 3장 — RmlUi는 src를 스타일로 못 바꾸므로(어트리뷰트라 파싱 에러)
+                 Lua(apply_payload)가 display 토글로 등급에 맞는 한 장만 켠다 -->
             <div id="result_grade_stamp_wrap">
-                <img id="result_grade_stamp_image" src="../../Sprite/result_stamp_you_re_fired.png" />
+                <img id="result_grade_stamp_bonus" class="result_grade_stamp_image" src="../../Sprite/result_stamp_bonus_approved.png" style="display: none;" />
+                <img id="result_grade_stamp_employed" class="result_grade_stamp_image" src="../../Sprite/result_stamp_still_employed.png" style="display: none;" />
+                <img id="result_grade_stamp_fired" class="result_grade_stamp_image" src="../../Sprite/result_stamp_you_re_fired.png" />
             </div>
         </div>
 
@@ -148,6 +152,12 @@
                 <button id="debug_result_dump_layout" class="result_debug_action_button">Dump</button>
             </div>
         </div>
+
+        <!-- 커서 스프라이트 (Retry/Title 버튼 표시 중에만 Lua가 켠다 — OS 커서 대신 사용).
+             이미지를 교체하려면 아래 src 두 개만 바꾸면 된다. 크기는 rcss .result_cursor_image 참조.
+             Lua가 (마우스 - 크기/2)로 위치시키므로 이미지 "중앙"이 실제 클릭 지점이다. -->
+        <img id="result_cursor_normal" class="result_cursor_image" src="../../Sprite/cursor.png" />
+        <img id="result_cursor_click" class="result_cursor_image" src="../../Sprite/cursor_click.png" />
     </div>
 </body>
 </rml>

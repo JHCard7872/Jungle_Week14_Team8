@@ -22,8 +22,25 @@ local S = {
     inputEnabled  = true,  -- 게임플레이 입력 허용 여부 (pause 중 false — 입력 콜백 진입부에서 검사)
 
     gun = {
-        mode   = "collect",  -- "collect" 수거 / "shock" 공격(전기 빔)
+        mode   = "collect",  -- "collect" 수거 / "attack" 공격(전기 빔)
         energy = 100,        -- placeholder — 남은 전기(W). 소모/회복 규칙은 기획 후순위라 미정
+        crosshair = {
+            visible = true,
+            hold = false,
+            rotation = 0.0,
+        },
+    },
+
+    target = {
+        visible = false,
+        ragdollId = "",
+        actorName = "",
+        bodyName = "",
+        distanceText = "",
+        name = "",
+        weightText = "",
+        scoreText = "",
+        imagePath = "../../Sprite/id_card_sample.png",
     },
 
     result = {
@@ -38,7 +55,20 @@ local S = {
 -- 매 판 시작(PlayScene.BeginPlay)에서 호출. 이전 판 값 잔류 방지.
 function S.Reset(timeLimit)
     S.score, S.load, S.timeRemaining, S.inputEnabled = 0, 0, timeLimit, true
-    S.gun    = { mode = "collect", energy = 100 }
+    S.gun    = { mode = "collect", energy = 100, crosshair = { visible = true, hold = false, rotation = 0.0 } }
+    S.target = {
+        visible = false,
+        ragdollId = "",
+        actorName = "",
+        bodyName = "",
+        distanceText = "",
+        name = "",
+        weightText = "",
+        scoreText = "",
+        imagePath = "../../Sprite/id_card_sample.png",
+    }
+    -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
+    -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)
     S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "" }
 end
 

@@ -9,6 +9,9 @@
 
 #include <windows.h>
 
+// 패드 우스틱 메뉴 커서 이동 속도 (풀기울임 px/s) — 느리면 이 값만 키우면 된다
+static constexpr float GAMEPAD_CURSOR_SPEED = 1600.0f;
+
 void UGameViewportClient::BeginGameSession(FViewport* InViewport)
 {
 	Viewport = InViewport;
@@ -25,13 +28,14 @@ void UGameViewportClient::EndGameSession()
 	Viewport = nullptr;
 }
 
-void UGameViewportClient::ProcessInput(const FInputSystemSnapshot& Snapshot, float /*DeltaTime*/)
+void UGameViewportClient::ProcessInput(const FInputSystemSnapshot& Snapshot, float DeltaTime)
 {
 	SetGameInputSnapshot(Snapshot);
 
 	if (!Snapshot.bWindowFocused)
 	{
 		InputSystem::Get().SetUseRawMouse(false);
+		InputSystem::Get().SetGamepadCursorEmulation(false);
 		SetCursorCaptured(false);
 		ResetInputState();
 		return;
@@ -40,18 +44,24 @@ void UGameViewportClient::ProcessInput(const FInputSystemSnapshot& Snapshot, flo
 	if (!bInputPossessed)
 	{
 		InputSystem::Get().SetUseRawMouse(false);
+		InputSystem::Get().SetGamepadCursorEmulation(false);
 		SetCursorCaptured(false);
 		return;
 	}
 
+	// UI가 마우스를 원하는 상태(타이틀/결과/일시정지 메뉴) — 커서가 자유로우므로
+	// 패드 우스틱으로 OS 커서를 움직이고 A를 왼클릭으로 합성한다 (게임플레이 캡처 중엔 비활성)
 	if (UUIManager::Get().AnyViewportWidgetWantsMouse())
 	{
 		InputSystem::Get().SetUseRawMouse(false);
+		InputSystem::Get().SetGamepadCursorEmulation(true);
 		SetCursorCaptured(false);
+		UpdateGamepadCursor(DeltaTime);
 		return;
 	}
 
 	InputSystem::Get().SetUseRawMouse(true);
+	InputSystem::Get().SetGamepadCursorEmulation(false);
 	SetCursorCaptured(true);
 	LockCursorToViewportCenter();
 }
@@ -282,6 +292,62 @@ void UGameViewportClient::LockCursorToViewportCenter()
 	}
 
 	::SetCursorPos(CenterScreen.x, CenterScreen.y);
+}
+
+// 패드 우스틱으로 OS 커서를 이동 (메뉴 전용 — ProcessInput의 wants-mouse 분기에서만 호출).
+// 실제 SetCursorPos를 쓰므로 RmlUi hover/click이 마우스와 완전히 같은 경로로 동작한다.
+// 고FPS에선 프레임당 이동량이 1px 미만이라 정수 절삭하면 안 움직인다(특히 대각) —
+// 소수점 잔여를 멤버에 누적했다가 정수가 모이면 옮긴다.
+void UGameViewportClient::UpdateGamepadCursor(float DeltaTime)
+{
+	InputSystem& Input = InputSystem::Get();
+	const float StickX = Input.GetGamepadAxis(EGamepadAxis::RightX);
+	const float StickY = Input.GetGamepadAxis(EGamepadAxis::RightY);
+	if (StickX == 0.0f && StickY == 0.0f)
+	{
+		GamepadCursorRemainderX = 0.0f;
+		GamepadCursorRemainderY = 0.0f;
+		return;
+	}
+
+	POINT Cursor = {};
+	if (!::GetCursorPos(&Cursor))
+	{
+		return;
+	}
+
+	const float Delta = GAMEPAD_CURSOR_SPEED * (DeltaTime > 0.0f ? DeltaTime : 0.0f);
+	GamepadCursorRemainderX += StickX * Delta;
+	GamepadCursorRemainderY -= StickY * Delta;   // 스틱 위(+)가 화면 위(y 감소)
+
+	const LONG MoveX = static_cast<LONG>(GamepadCursorRemainderX);
+	const LONG MoveY = static_cast<LONG>(GamepadCursorRemainderY);
+	GamepadCursorRemainderX -= static_cast<float>(MoveX);
+	GamepadCursorRemainderY -= static_cast<float>(MoveY);
+	if (MoveX == 0 && MoveY == 0)
+	{
+		return;
+	}
+
+	Cursor.x += MoveX;
+	Cursor.y += MoveY;
+
+	// 게임 창 클라이언트 영역 밖으로 나가지 않게 클램프
+	RECT ClientRect = {};
+	if (GetEffectiveCursorClientRect(ClientRect) && OwnerHWnd)
+	{
+		POINT TopLeft = { ClientRect.left, ClientRect.top };
+		POINT BottomRight = { ClientRect.right, ClientRect.bottom };
+		if (::ClientToScreen(OwnerHWnd, &TopLeft) && ::ClientToScreen(OwnerHWnd, &BottomRight))
+		{
+			if (Cursor.x < TopLeft.x) { Cursor.x = TopLeft.x; }
+			if (Cursor.x > BottomRight.x - 1) { Cursor.x = BottomRight.x - 1; }
+			if (Cursor.y < TopLeft.y) { Cursor.y = TopLeft.y; }
+			if (Cursor.y > BottomRight.y - 1) { Cursor.y = BottomRight.y - 1; }
+		}
+	}
+
+	::SetCursorPos(Cursor.x, Cursor.y);
 }
 
 void UGameViewportClient::SetGameInputSnapshot(const FInputSystemSnapshot& Snapshot)

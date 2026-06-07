@@ -304,8 +304,8 @@ return output;
     }
 
     float3 V = normalize(CameraWorldPos - input.worldPos);
-    float3 hitRim = ComputeHitRim(N, V, input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitRimParams.x);
-    float3 hitImpact = ComputeHitImpactGlow(input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitImpactCenterAndRadius, input.hitImpactParams);
+    float3 hitRim = ComputeHitRim(N, V, input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitRimParams);
+    float3 hitImpact = ComputeHitImpactGlow(input.worldPos, input.texcoord, input.hitRimColorAndIntensity, input.hitImpactCenterAndRadius, input.hitImpactParams, input.hitRimParams);
     // 픽셀별 디퓨즈 결과색을 그대로 발광색으로 사용하고, 세기는 Intensity만으로 조절한다.
     float3 materialEmissive = baseColor.rgb * max(EmissiveIntensity, 0.0f);
 

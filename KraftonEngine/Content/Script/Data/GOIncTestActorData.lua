@@ -8,7 +8,7 @@
 -- ==========================================================================
 
 -- 파생 상수의 기준값. 테이블 생성자 안에서는 자기 필드 참조가 불가해 local로 선행 정의한다
-local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
+local MAX_TRACE_DISTANCE = 15.0 -- 화면 중앙 조준 Raycast 최대 거리
 local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
 
 return {
@@ -20,10 +20,19 @@ return {
     KEY_LBUTTON = 0x01, -- 발사 입력 키: 마우스 왼쪽 버튼
     KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
 
-    CROSSHAIR_WIDGET_PATH = "Content/Data/TestUI/aim_crosshair.rml",
-    CROSSHAIR_Z_ORDER = 1000,
-    CROSSHAIR_EASE_SPEED = 20.0, -- 조준선이 Hit 지점과 MaxDistance 지점 사이를 따라가는 속도
-    CROSSHAIR_SCREEN_PADDING = 0.0,
+    -- 게임패드 (XInput VK 코드 — Input.GetKey* 그대로 사용 가능. 이동/시점은 스틱 축 별도)
+    PAD_KEY_A  = 0xC3, -- A 버튼: 점프 (메뉴에선 엔진이 왼클릭으로 합성)
+    PAD_KEY_Y  = 0xC6, -- Y 버튼: 무기 교체
+    PAD_KEY_RT = 0xCA, -- 오른쪽 트리거(임계값 디지털): 그랩/발사
+    PAD_KEY_LB = 0xC8, -- 왼쪽 숄더: 그랩 거리 가까이
+    PAD_KEY_LT = 0xC9, -- 왼쪽 트리거(임계값 디지털): 그랩 거리 멀리
+    PAD_LOOK_YAW_DEG_PER_SEC   = 180.0, -- 우스틱 풀기울임 시 좌우 회전 속도(도/초)
+    PAD_LOOK_PITCH_DEG_PER_SEC = 120.0, -- 우스틱 풀기울임 시 상하 회전 속도(도/초). 위로 밀면 위를 본다
+    PAD_DISTANCE_NOTCHES_PER_SEC = 6.0, -- LB/LT를 누르고 있는 동안 초당 휠 노치 환산량
+
+    CROSSHAIR_HOLD_ROTATION_INTERVAL = 0.08,
+    CROSSHAIR_HOLD_ROTATION_STEP = 18.0,
+    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/id_card_sample.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
@@ -41,6 +50,7 @@ return {
     MAX_PITCH = 20.0,         -- 1인칭 카메라가 아래를 볼 수 있는 최대 Pitch
     CAMERA_HEIGHT = 1.2,      -- Root 기준 카메라 피벗 높이
     MAX_TRACE_DISTANCE = MAX_TRACE_DISTANCE,
+    FRONT_HIT_DISTANCE_EPSILON = 0.05, -- Extra range so a physics hit on the same front surface still wins
     BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
     SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
     SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16, -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
@@ -48,6 +58,10 @@ return {
     HIT_RIM_FLASH_INTENSITY = 3.5,
     HIT_RIM_SUSTAIN_INTENSITY = 1.6,
     HIT_RIM_POWER = 2.8,
+    HIT_RIM_STYLE_NOISE = 0.0,
+    HIT_RIM_STYLE_SCAN_LINES = 1.0,
+    HIT_SCAN_LINE_DENSITY = 18.0,
+    HIT_SCAN_SCROLL_SPEED = 2.00,
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
@@ -63,6 +77,7 @@ return {
     GRAB_MIN_MASS_SCALE = 0.45,
     GRAB_MAX_MASS_SCALE = 1.15,
     GRAB_MIN_AIM_DISTANCE = 0.35,
+    GRAB_MIN_ACTOR_DISTANCE = 5,
     GRAB_MAX_AIM_DISTANCE = MAX_TRACE_DISTANCE,
     GRAB_MOUSE_WHEEL_DISTANCE_STEP = 1.25,
     GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 1400.0,

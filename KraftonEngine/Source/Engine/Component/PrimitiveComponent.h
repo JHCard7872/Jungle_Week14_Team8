@@ -92,11 +92,13 @@ public:
 	void RefreshHitRim(float SustainIntensity = 1.0f, float Power = 3.0f);
 	void SetHitImpactGlow(const FVector& WorldLocation, float Radius = 0.32f, float CoreRadius = 0.055f, float Intensity = 2.6f);
 	void SetHitRimColor(const FVector4& Color);
+	void SetHitRimStyle(float Style);
+	void SetHitRimScanParams(float LineDensity = 18.0f, float ScrollSpeed = 0.95f);
 	void TriggerHitRimAt(const FVector& WorldLocation, float Duration = 0.18f, float Intensity = 3.5f, float Power = 3.0f, float SustainIntensity = 0.0f, float ImpactRadius = 0.32f, float ImpactCoreRadius = 0.055f, float ImpactIntensity = 2.6f);
 	void RefreshHitRimAt(const FVector& WorldLocation, float SustainIntensity = 1.0f, float Power = 3.0f, float ImpactRadius = 0.32f, float ImpactCoreRadius = 0.055f, float ImpactIntensity = 2.6f);
 	void ClearHitRim();
 	FVector4 GetHitRimColorAndIntensity() const { return FVector4(HitRimColor.X, HitRimColor.Y, HitRimColor.Z, HitRimIntensity); }
-	FVector4 GetHitRimParams() const { return FVector4(HitRimPower, 0.0f, 0.0f, 0.0f); }
+	FVector4 GetHitRimParams() const { return FVector4(HitRimPower, HitRimStyle, HitRimScanLineDensity, HitRimScanScrollSpeed); }
 	FVector4 GetHitImpactCenterAndRadius() const;
 	FVector4 GetHitImpactParams() const;
 
@@ -298,6 +300,9 @@ protected:
 	float HitRimPeakIntensity = 0.0f;
 	float HitRimSustainIntensity = 0.0f;
 	float HitRimPower = 3.0f;
+	float HitRimStyle = 0.0f;
+	float HitRimScanLineDensity = 18.0f;
+	float HitRimScanScrollSpeed = 0.95f;
 	float HitRimDuration = 0.0f;
 	float HitRimRemainingTime = 0.0f;
 	float HitRimHoldRemainingTime = 0.0f;

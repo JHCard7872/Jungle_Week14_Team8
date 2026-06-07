@@ -1,14 +1,16 @@
 local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 튜닝 상수. 값 수정은 해당 파일에서
 local Session = require("GameSession")
+local HUD = require("UI/HUDController")
+local RagdollData = require("Data/RagdollData")
 
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
 local viewport_center_x = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 X
 local viewport_center_y = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 Y
-local crosshair_widget = nil
-local crosshair_is_hold = nil
 local crosshair_screen_x = nil
 local crosshair_screen_y = nil
+local crosshair_hold_rotation = 0.0
+local crosshair_hold_rotation_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
 local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
@@ -189,108 +191,14 @@ local function update_viewport_center()
     end
 end
 
-local function setup_crosshair_ui()
-    if crosshair_widget == nil then
-        if UI == nil or UI.CreateWidget == nil then
-            return
-        end
-
-        crosshair_widget = UI.CreateWidget(C.CROSSHAIR_WIDGET_PATH)
-        if crosshair_widget == nil then
-            return
-        end
-    end
-
-    crosshair_widget:SetWantsMouse(false)
-    if crosshair_widget.IsInViewport == nil or not crosshair_widget:IsInViewport() then
-        crosshair_widget:AddToViewportZ(C.CROSSHAIR_Z_ORDER)
-        crosshair_is_hold = nil
-    end
+-- 발사/그랩 입력 합성 — 마우스 왼쪽 버튼과 패드 RT(임계값 디지털)를 OR로 합친다.
+-- 모든 발사 계열 판정은 이 두 함수를 거쳐야 패드가 같이 동작한다.
+local function fire_pressed()
+    return Input.GetKeyDown(C.KEY_LBUTTON) or Input.GetKeyDown(C.PAD_KEY_RT)
 end
 
-local function update_crosshair_ui()
-    if crosshair_widget == nil then
-        return
-    end
-
-    local is_hold = Input.GetKey(C.KEY_LBUTTON)
-    if crosshair_is_hold == is_hold then
-        return
-    end
-
-    crosshair_is_hold = is_hold
-    if is_hold then
-        crosshair_widget:SetProperty("crosshair_normal", "display", "none")
-        crosshair_widget:SetProperty("crosshair_hold", "display", "block")
-    else
-        crosshair_widget:SetProperty("crosshair_normal", "display", "block")
-        crosshair_widget:SetProperty("crosshair_hold", "display", "none")
-    end
-end
-
-local function set_crosshair_screen_position(screen_x, screen_y)
-    if crosshair_widget == nil then
-        return
-    end
-
-    local left = string.format("%.2fpx", screen_x)
-    local top = string.format("%.2fpx", screen_y)
-    crosshair_widget:SetProperty("crosshair_normal", "left", left)
-    crosshair_widget:SetProperty("crosshair_normal", "top", top)
-    crosshair_widget:SetProperty("crosshair_hold", "left", left)
-    crosshair_widget:SetProperty("crosshair_hold", "top", top)
-end
-
-local function ease_out_cubic(t)
-    local clamped = clamp(t, 0.0, 1.0)
-    local inverse = 1.0 - clamped
-    return 1.0 - inverse * inverse * inverse
-end
-
-local function project_crosshair_world_position(world_point)
-    update_viewport_center()
-
-    if world_point == nil or Engine == nil or Engine.ProjectWorldToScreen == nil then
-        return viewport_center_x, viewport_center_y
-    end
-
-    local projected = Engine.ProjectWorldToScreen(world_point)
-    if projected == nil or not projected.bValid then
-        return viewport_center_x, viewport_center_y
-    end
-
-    local screen_x = projected.X or viewport_center_x
-    local screen_y = projected.Y or viewport_center_y
-    local width = projected.Width or (viewport_center_x * 2.0)
-    local height = projected.Height or (viewport_center_y * 2.0)
-    if width > 0.0 and height > 0.0 then
-        screen_x = clamp(screen_x, C.CROSSHAIR_SCREEN_PADDING, width - C.CROSSHAIR_SCREEN_PADDING)
-        screen_y = clamp(screen_y, C.CROSSHAIR_SCREEN_PADDING, height - C.CROSSHAIR_SCREEN_PADDING)
-    end
-
-    return screen_x, screen_y
-end
-
-local function move_crosshair_toward(target_x, target_y, delta_time)
-    if crosshair_widget == nil then
-        return
-    end
-
-    if crosshair_screen_x == nil or crosshair_screen_y == nil then
-        crosshair_screen_x = target_x
-        crosshair_screen_y = target_y
-        set_crosshair_screen_position(crosshair_screen_x, crosshair_screen_y)
-        return
-    end
-
-    local alpha = 1.0
-    if delta_time ~= nil and delta_time > 0.0 then
-        alpha = ease_out_cubic(delta_time * C.CROSSHAIR_EASE_SPEED)
-    end
-
-    crosshair_screen_x = crosshair_screen_x + (target_x - crosshair_screen_x) * alpha
-    crosshair_screen_y = crosshair_screen_y + (target_y - crosshair_screen_y) * alpha
-    set_crosshair_screen_position(crosshair_screen_x, crosshair_screen_y)
+local function fire_held()
+    return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
 end
 
 local function bind_components()
@@ -721,10 +629,57 @@ local function center_physics_raycast(max_distance)
 
     local start, direction = get_camera_aim_ray()
     local fallback_end = start + direction * distance
+    local primitive_hit = nil
+    local primitive_distance = nil
+    local physics_distance = distance
+    local front_hit_epsilon = C.FRONT_HIT_DISTANCE_EPSILON or 0.05
     local hit = nil
 
+    if World ~= nil and World.PrimitiveRaycast ~= nil then
+        primitive_hit = World.PrimitiveRaycast(start, direction, distance, obj)
+        if primitive_hit ~= nil and primitive_hit.bHit then
+            primitive_distance = primitive_hit.Distance
+            if primitive_distance == nil and primitive_hit.Hit ~= nil then
+                primitive_distance = primitive_hit.Hit.Distance
+            end
+            if primitive_distance ~= nil and primitive_distance > 0.0 then
+                physics_distance = math.min(distance, primitive_distance + front_hit_epsilon)
+            end
+        end
+    end
+
     if World ~= nil and World.PhysicsRaycast ~= nil then
-        hit = World.PhysicsRaycast(start, direction, distance, obj)
+        hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+    end
+
+    if primitive_hit ~= nil and primitive_hit.bHit then
+        local physics_hit_distance = nil
+        local physics_hit_actor = nil
+        if hit ~= nil and hit.bHit then
+            physics_hit_distance = hit.Distance
+            if physics_hit_distance == nil and hit.Hit ~= nil then
+                physics_hit_distance = hit.Hit.Distance
+            end
+            physics_hit_actor = hit.HitActor
+            if physics_hit_actor == nil and hit.Hit ~= nil then
+                physics_hit_actor = hit.Hit.HitActor
+            end
+        end
+
+        local primitive_hit_actor = primitive_hit.HitActor
+        if primitive_hit_actor == nil and primitive_hit.Hit ~= nil then
+            primitive_hit_actor = primitive_hit.Hit.HitActor
+        end
+
+        local b_same_front_actor = primitive_hit_actor ~= nil and primitive_hit_actor == physics_hit_actor
+        local b_physics_hit_is_front = physics_hit_distance ~= nil
+            and primitive_distance ~= nil
+            and (physics_hit_distance <= primitive_distance
+                or (b_same_front_actor and physics_hit_distance <= primitive_distance + front_hit_epsilon))
+
+        if hit == nil or not hit.bHit or not b_physics_hit_is_front then
+            hit = primitive_hit
+        end
     end
 
     aim_trace_cache.resolved_serial = aim_trace_cache.serial
@@ -757,35 +712,82 @@ local function get_hit_point_or_end(hit, fallback_end)
     return fallback_end
 end
 
-local function get_camera_aim_point()
-    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
-    return get_hit_point_or_end(hit, fallback_end)
-end
-
-local function get_crosshair_target_world()
-    local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
-    if Input.GetKey(C.KEY_LBUTTON) and hit ~= nil and hit.bHit then
-        return get_hit_point_or_end(hit, fallback_end)
-    end
-    return fallback_end
-end
-
 local function update_crosshair_aim_position(delta_time)
-    if crosshair_widget == nil then
-        return
-    end
-
-    local target_world = get_crosshair_target_world()
-    local target_x, target_y = project_crosshair_world_position(target_world)
-    move_crosshair_toward(target_x, target_y, delta_time)
+    update_viewport_center()
+    crosshair_screen_x = viewport_center_x
+    crosshair_screen_y = viewport_center_y
 end
 
-local function compute_grab_target(start, direction)
-    if grabbed_aim_distance == nil then
+local function get_grab_distance_origin()
+    if obj ~= nil and obj.Location ~= nil then
+        return obj.Location
+    end
+    if root_body ~= nil and root_body.GetLocation ~= nil then
+        return root_body:GetLocation()
+    end
+    return nil
+end
+
+local function get_min_actor_grab_distance()
+    return C.GRAB_MIN_ACTOR_DISTANCE or C.GRAB_MIN_AIM_DISTANCE
+end
+
+local function get_aim_ray_point_at_actor_distance(start, direction, actor_origin, distance_from_actor)
+    local to_start = start - actor_origin
+    local b = to_start:Dot(direction)
+    local c = to_start:Dot(to_start) - distance_from_actor * distance_from_actor
+    local discriminant = b * b - c
+    if discriminant < 0.0 then
         return nil
     end
 
-    return start + direction * grabbed_aim_distance
+    local sqrt_discriminant = math.sqrt(discriminant)
+    local near_t = -b - sqrt_discriminant
+    local far_t = -b + sqrt_discriminant
+    local target_t = nil
+    if far_t >= 0.0 then
+        target_t = far_t
+    elseif near_t >= 0.0 then
+        target_t = near_t
+    end
+
+    if target_t == nil then
+        return nil
+    end
+
+    return start + direction * target_t
+end
+
+local function clamp_grab_target_to_actor_distance(start, direction, target_point)
+    local actor_origin = get_grab_distance_origin()
+    if actor_origin == nil or target_point == nil then
+        return target_point
+    end
+
+    local actor_distance = (target_point - actor_origin):Length()
+    local min_actor_distance = get_min_actor_grab_distance()
+    if actor_distance < min_actor_distance then
+        return get_aim_ray_point_at_actor_distance(start, direction, actor_origin, min_actor_distance) or target_point
+    end
+
+    return target_point
+end
+
+local function compute_grab_target(start, direction, base_distance)
+    local target_distance = base_distance or grabbed_aim_distance
+    if target_distance == nil then
+        return nil
+    end
+
+    local target_point = start + direction * target_distance
+    target_point = clamp_grab_target_to_actor_distance(start, direction, target_point)
+
+    local resolved_distance = clamp(
+        (target_point - start):Dot(direction),
+        C.GRAB_MIN_AIM_DISTANCE,
+        C.GRAB_MAX_AIM_DISTANCE
+    )
+    return start + direction * resolved_distance, resolved_distance
 end
 
 local function get_mouse_wheel_notches()
@@ -800,12 +802,20 @@ local function get_mouse_wheel_notches()
     return 0.0
 end
 
-local function update_grab_distance_from_mouse_wheel()
+local function update_grab_distance_from_mouse_wheel(delta_time)
     if grabbed_aim_distance == nil then
         return
     end
 
     local wheel_notches = get_mouse_wheel_notches()
+    -- 패드: LT = 멀리 / LB = 가까이. 누르고 있는 동안 연속 조절 (사용자 실기 피드백으로 방향 확정)
+    local dt = math.max(delta_time or 0.0, 0.0)
+    if Input.GetKey(C.PAD_KEY_LT) then
+        wheel_notches = wheel_notches + C.PAD_DISTANCE_NOTCHES_PER_SEC * dt
+    end
+    if Input.GetKey(C.PAD_KEY_LB) then
+        wheel_notches = wheel_notches - C.PAD_DISTANCE_NOTCHES_PER_SEC * dt
+    end
     if math.abs(wheel_notches) <= 0.0001 then
         return
     end
@@ -990,9 +1000,29 @@ local function get_hit_location(hit)
     return nil
 end
 
+local function apply_hit_rim_style(component, style)
+    if component == nil then
+        return
+    end
+
+    if component.SetHitRimStyle ~= nil then
+        component:SetHitRimStyle(style)
+    end
+
+    if style == C.HIT_RIM_STYLE_SCAN_LINES and component.SetHitRimScanParams ~= nil then
+        component:SetHitRimScanParams(C.HIT_SCAN_LINE_DENSITY, C.HIT_SCAN_SCROLL_SPEED)
+    end
+end
+
 local function trigger_hit_rim_on_component(hit_component, should_flash, hit_location)
     if hit_component == nil or hit_component.GetSimulatePhysics == nil or not hit_component:GetSimulatePhysics() then
         return
+    end
+
+    if weapon_swap_state.active_index == 2 then
+        apply_hit_rim_style(hit_component, C.HIT_RIM_STYLE_NOISE)
+    else
+        apply_hit_rim_style(hit_component, C.HIT_RIM_STYLE_SCAN_LINES)
     end
 
     if hit_component.SetHitRimColor ~= nil then
@@ -1054,6 +1084,8 @@ local function trigger_red_beam_rim_on_ragdoll_mesh(hit)
         return
     end
 
+    apply_hit_rim_style(mesh, C.HIT_RIM_STYLE_NOISE)
+
     if mesh.SetHitRimColor ~= nil then
         mesh:SetHitRimColor(1.0, 0.08, 0.04, 1.0)
     end
@@ -1081,6 +1113,12 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     if body.IsDynamic ~= nil and not body:IsDynamic() then
         return false
     end
+    -- IsDynamic은 kinematic도 통과시킨다 (PhysX에선 kinematic도 RigidDynamic) —
+    -- AliveFlee처럼 kinematic 상태인 본은 힘이 안 먹으니 잡기 자체를 무시한다
+    -- (안 끌려오는데 잡힌 척하는 어색함 + 스텝마다 PhysX 경고 스팸 방지)
+    if body.IsKinematic ~= nil and body:IsKinematic() then
+        return false
+    end
 
     -- 소유 액터를 지금(살아있을 때) 캐싱 — 잡는 동안 액터가 Destroy되면
     -- body userdata가 통째로 댕글링되므로, 이후엔 액터 생사로만 판단한다
@@ -1091,7 +1129,12 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
 
     local grab_point = get_hit_point_or_end(hit, fallback_end)
     local grab_distance = compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
-    local target_point = start + direction * grab_distance
+    local target_point, resolved_grab_distance = compute_grab_target(start, direction, grab_distance)
+    if target_point == nil then
+        return false
+    end
+    grab_distance = resolved_grab_distance or grab_distance
+
     grabbed_body = body
     grabbed_owner_actor = owner
     grabbed_hit_component = get_hit_component(hit)
@@ -1134,33 +1177,45 @@ local function apply_grab_force(delta_time, start, direction)
         return
     end
 
-    local desired = compute_grab_target(start, direction)
+    local current_body_center = grabbed_body:GetLocation()
+    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
+    local desired, resolved_grab_distance = compute_grab_target(start, direction)
     if desired == nil then
         clear_grab_state()
         set_beam_visible(false)
         return
     end
 
+    if resolved_grab_distance ~= nil then
+        grabbed_aim_distance = resolved_grab_distance
+    end
     grabbed_target_world = desired
 
-    local current_body_center = grabbed_body:GetLocation()
-    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
     local error = clamp_vector_length(desired - current_grab_world, C.GRAB_MAX_ERROR)
     local linear_velocity = grabbed_body:GetLinearVelocity()
 
-    local grab_distance_along_ray = (current_grab_world - start):Dot(direction)
-    local body_distance_along_ray = (current_body_center - start):Dot(direction)
-    local body_radius_proxy = (current_grab_world - current_body_center):Length()
-    local body_surface_distance_along_ray = body_distance_along_ray - body_radius_proxy
-    local current_min_distance = math.min(grab_distance_along_ray, body_surface_distance_along_ray)
+    local actor_origin = get_grab_distance_origin()
+    local actor_distance = nil
+    local actor_outward_direction = nil
+    if actor_origin ~= nil then
+        local actor_to_grab = current_grab_world - actor_origin
+        actor_distance = actor_to_grab:Length()
+        if actor_distance > 0.0001 then
+            actor_outward_direction = actor_to_grab / actor_distance
+        else
+            actor_outward_direction = direction
+        end
+    end
+
     local min_distance_penetration = 0.0
     local blocked_inward_speed = 0.0
-    if current_min_distance < C.GRAB_MIN_AIM_DISTANCE then
-        min_distance_penetration = C.GRAB_MIN_AIM_DISTANCE - current_min_distance
-        local velocity_along_ray = linear_velocity:Dot(direction)
-        blocked_inward_speed = math.max(-velocity_along_ray, 0.0)
-        if velocity_along_ray < 0.0 then
-            linear_velocity = linear_velocity - direction * velocity_along_ray
+    local min_actor_distance = get_min_actor_grab_distance()
+    if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance < min_actor_distance then
+        min_distance_penetration = min_actor_distance - actor_distance
+        local velocity_along_actor = linear_velocity:Dot(actor_outward_direction)
+        blocked_inward_speed = math.max(-velocity_along_actor, 0.0)
+        if velocity_along_actor < 0.0 then
+            linear_velocity = linear_velocity - actor_outward_direction * velocity_along_actor
             grabbed_body:SetLinearVelocity(linear_velocity)
         end
     end
@@ -1175,12 +1230,19 @@ local function apply_grab_force(delta_time, start, direction)
     local acceleration = error * (C.GRAB_SPRING_ACCELERATION * mass_scale)
         - linear_velocity * (C.GRAB_DAMPING_ACCELERATION * mass_scale)
 
-    if min_distance_penetration > 0.0 then
-        local guard_acceleration = direction * (
+    if min_distance_penetration > 0.0 and actor_outward_direction ~= nil then
+        local guard_acceleration = actor_outward_direction * (
             min_distance_penetration * C.GRAB_MIN_DISTANCE_GUARD_ACCELERATION
             + blocked_inward_speed * C.GRAB_MIN_DISTANCE_GUARD_DAMPING
         )
         acceleration = acceleration + guard_acceleration
+    end
+
+    if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance <= min_actor_distance then
+        local inward_acceleration = acceleration:Dot(actor_outward_direction)
+        if inward_acceleration < 0.0 then
+            acceleration = acceleration - actor_outward_direction * inward_acceleration
+        end
     end
 
     acceleration = clamp_vector_length(acceleration, C.GRAB_MAX_ACCELERATION * mass_scale)
@@ -1257,14 +1319,14 @@ local function update_active_grab(delta_time)
         return false
     end
 
-    if not Input.GetKey(C.KEY_LBUTTON) then
+    if not fire_held() then
         end_beam_grab(true)
         return true
     end
 
     -- 힘 적용은 FixedTick 몫 — 여기(렌더 프레임)서는 조준 레이 캐시와 비주얼만 갱신
     local start, direction = get_camera_aim_ray()
-    update_grab_distance_from_mouse_wheel()
+    update_grab_distance_from_mouse_wheel(delta_time)
     grab_fixed_ray.start = copy_vec(start)
     grab_fixed_ray.direction = copy_vec(direction)
     update_grab_visuals()
@@ -1283,12 +1345,74 @@ local function update_beam_fade(delta_time)
     end
 end
 
+local function get_current_gun_mode()
+    return weapon_swap_state.active_index == 2 and "attack" or "collect"
+end
+
 local function update_session_gun_state()
     if Session == nil or Session.gun == nil then
         return
     end
 
-    Session.gun.mode = weapon_swap_state.active_index == 2 and "shock" or "collect"
+    Session.gun.mode = get_current_gun_mode()
+end
+
+local function update_crosshair_hold_rotation(delta_time, is_hold)
+    if not is_hold then
+        crosshair_hold_rotation = 0.0
+        crosshair_hold_rotation_elapsed = 0.0
+        return
+    end
+
+    local interval = C.CROSSHAIR_HOLD_ROTATION_INTERVAL or 0.08
+    local step = C.CROSSHAIR_HOLD_ROTATION_STEP or 18.0
+    if interval <= 0.0 then
+        interval = 0.08
+    end
+
+    crosshair_hold_rotation_elapsed = crosshair_hold_rotation_elapsed + math.max(delta_time or 0.0, 0.0)
+
+    while crosshair_hold_rotation_elapsed >= interval do
+        crosshair_hold_rotation_elapsed = crosshair_hold_rotation_elapsed - interval
+        crosshair_hold_rotation = crosshair_hold_rotation + step
+        if crosshair_hold_rotation >= 360.0 then
+            crosshair_hold_rotation = crosshair_hold_rotation - 360.0
+        end
+    end
+end
+
+local function build_crosshair_state()
+    update_viewport_center()
+
+    local is_hold = Input.GetKey(C.KEY_LBUTTON)
+    return {
+        mode = get_current_gun_mode(),
+        visible = true,
+        hold = is_hold,
+        rotation = is_hold and crosshair_hold_rotation or 0.0,
+        x = crosshair_screen_x or viewport_center_x,
+        y = crosshair_screen_y or viewport_center_y,
+    }
+end
+
+local function publish_crosshair_state(delta_time)
+    update_crosshair_hold_rotation(delta_time, Input.GetKey(C.KEY_LBUTTON))
+    local crosshair_state = build_crosshair_state()
+
+    if Session ~= nil and Session.gun ~= nil then
+        Session.gun.mode = crosshair_state.mode
+        Session.gun.crosshair = Session.gun.crosshair or {}
+        Session.gun.crosshair.visible = crosshair_state.visible
+        Session.gun.crosshair.hold = crosshair_state.hold
+        Session.gun.crosshair.rotation = crosshair_state.rotation
+        Session.gun.crosshair.x = crosshair_state.x
+        Session.gun.crosshair.y = crosshair_state.y
+        Session.gun.crosshair.mode = crosshair_state.mode
+    end
+
+    if HUD ~= nil and HUD.SetCrosshairState ~= nil then
+        HUD.SetCrosshairState(crosshair_state)
+    end
 end
 
 local function get_slot2_beam_visible_time(hit)
@@ -1356,7 +1480,7 @@ update_beam_points = function(aim_point)
 end
 
 local function apply_slot2_fire(delta_time)
-    if not Input.GetKeyDown(C.KEY_LBUTTON) then
+    if not fire_pressed() then
         update_beam_fade(delta_time)
         return
     end
@@ -1401,7 +1525,7 @@ local function begin_weapon_swap()
 end
 
 local function update_weapon_swap(delta_time)
-    if Input.GetKeyDown(C.KEY_Q) then
+    if Input.GetKeyDown(C.KEY_Q) or Input.GetKeyDown(C.PAD_KEY_Y) then
         begin_weapon_swap()
     end
 
@@ -1421,12 +1545,18 @@ local function update_weapon_swap(delta_time)
     end
 end
 
-local function apply_look_input()
+local function apply_look_input(delta_time)
     local mouse_x = Input.GetMouseDeltaX()
     local mouse_y = Input.GetMouseDeltaY()
 
-    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY
-    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY, C.MIN_PITCH, C.MAX_PITCH)
+    -- 패드 우스틱 — 마우스(픽셀 델타)와 달리 기울임(-1~1) × 속도(도/초) × dt로 환산해 합산.
+    -- 이 엔진은 음수 Pitch가 위쪽이라 스틱 위(+RY)에서 빼준다.
+    local dt = math.max(delta_time or 0.0, 0.0)
+    local pad_yaw = Input.GetGamepadAxis("RX") * C.PAD_LOOK_YAW_DEG_PER_SEC * dt
+    local pad_pitch = Input.GetGamepadAxis("RY") * C.PAD_LOOK_PITCH_DEG_PER_SEC * dt
+
+    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY + pad_yaw
+    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY - pad_pitch, C.MIN_PITCH, C.MAX_PITCH)
 
     obj.Rotation = vec(0.0, 0.0, yaw)
 end
@@ -1473,6 +1603,143 @@ local function get_hit_distance(hit)
         return hit.Hit.Distance
     end
     return nil
+end
+
+local function make_hidden_target_state()
+    return {
+        visible = false,
+        ragdollId = "",
+        actorName = "",
+        bodyName = "",
+        distanceText = "",
+        name = "",
+        weightText = "",
+        scoreText = "",
+        imagePath = C.TARGET_INFO_FALLBACK_IMAGE_PATH,
+    }
+end
+
+local function get_actor_name(actor)
+    if actor ~= nil and actor.GetName ~= nil then
+        return actor:GetName()
+    end
+    return ""
+end
+
+local function get_ragdoll_pawn(actor)
+    if actor ~= nil and actor.AsGOIncRagdollPawn ~= nil then
+        return actor:AsGOIncRagdollPawn()
+    end
+    return nil
+end
+
+local function get_ragdoll_id(actor)
+    local ragdoll_pawn = get_ragdoll_pawn(actor)
+    if ragdoll_pawn ~= nil and ragdoll_pawn.GetRagdollId ~= nil then
+        local ragdoll_id = ragdoll_pawn:GetRagdollId()
+        if type(ragdoll_id) == "string" and ragdoll_id ~= "" then
+            return ragdoll_id
+        end
+    end
+    return nil
+end
+
+local function get_ragdoll_display_name(actor, catalog_entry, ragdoll_id)
+    if catalog_entry ~= nil and type(catalog_entry.displayName) == "string" and catalog_entry.displayName ~= "" then
+        return catalog_entry.displayName
+    end
+
+    local ragdoll_pawn = get_ragdoll_pawn(actor)
+    if ragdoll_pawn ~= nil and ragdoll_pawn.GetDisplayName ~= nil then
+        local display_name = ragdoll_pawn:GetDisplayName()
+        if type(display_name) == "string" and display_name ~= "" then
+            return display_name
+        end
+    end
+
+    local actor_name = get_actor_name(actor)
+    if actor_name ~= "" then
+        return actor_name
+    end
+    return ragdoll_id or "Ragdoll"
+end
+
+local function get_body_name(body)
+    if body ~= nil and body.GetBoneName ~= nil then
+        local bone_name = body:GetBoneName()
+        if type(bone_name) == "string" and bone_name ~= "" then
+            return bone_name
+        end
+    end
+    return ""
+end
+
+local function get_body_mass(body, component)
+    if body ~= nil and body.GetMass ~= nil then
+        return body:GetMass()
+    end
+    if component ~= nil and component.GetMass ~= nil then
+        return component:GetMass()
+    end
+    return nil
+end
+
+local function vector_to_target_location(value)
+    if value == nil then
+        return nil
+    end
+    return {
+        x = value.X or 0.0,
+        y = value.Y or 0.0,
+        z = value.Z or 0.0,
+    }
+end
+
+local function build_target_state_from_hit(hit)
+    local actor = get_hit_actor(hit)
+    if not is_ragdoll_actor(actor) then
+        return make_hidden_target_state()
+    end
+
+    local ragdoll_id = get_ragdoll_id(actor)
+    local catalog_entry = ragdoll_id ~= nil and RagdollData[ragdoll_id] or nil
+    local body = get_hit_physics_body(hit)
+    local hit_component = get_hit_component(hit)
+    local distance = get_hit_distance(hit)
+    local body_name = get_body_name(body)
+    local body_mass = get_body_mass(body, hit_component)
+    local catalog_mass = catalog_entry ~= nil and catalog_entry.mass or nil
+    local score = catalog_entry ~= nil and catalog_entry.baseScore or nil
+
+    return {
+        visible = true,
+        ragdollId = ragdoll_id or "",
+        actorName = get_actor_name(actor),
+        bodyName = body_name,
+        bodyMass = body_mass,
+        hitLocation = vector_to_target_location(get_hit_location(hit)),
+        distance = distance,
+        distanceText = distance ~= nil and string.format("%.1fm", distance) or "",
+        name = get_ragdoll_display_name(actor, catalog_entry, ragdoll_id),
+        weight = catalog_mass or body_mass,
+        weightText = catalog_mass ~= nil and string.format("%.1fkg", catalog_mass) or nil,
+        score = score,
+        scoreText = score ~= nil and string.format("+%d", math.floor(math.abs(score))) or nil,
+        imagePath = C.TARGET_INFO_FALLBACK_IMAGE_PATH,
+        referenceImage = catalog_entry ~= nil and catalog_entry.referenceImage or nil,
+    }
+end
+
+local function publish_target_state()
+    local hit = center_physics_raycast(C.MAX_TRACE_DISTANCE)
+    local target_state = build_target_state_from_hit(hit)
+
+    if Session ~= nil then
+        Session.target = target_state
+    end
+    if HUD ~= nil and HUD.SetTargetState ~= nil then
+        HUD.SetTargetState(target_state)
+    end
 end
 
 local function get_floor_hit(extra_distance)
@@ -1661,6 +1928,10 @@ local function apply_kinematic_movement(delta_time)
         move_dir = move_dir - right
     end
 
+    -- 패드 좌스틱 합산 (XInput LY는 위가 +라 전진과 부호가 맞다).
+    -- 아래에서 방향을 normalize하므로 스틱 기울임 정도는 속도에 영향 없음 (WASD와 동일 거동)
+    move_dir = move_dir + forward * Input.GetGamepadAxis("LY") + right * Input.GetGamepadAxis("LX")
+
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
 
@@ -1678,7 +1949,7 @@ local function apply_kinematic_movement(delta_time)
     end
 
     local did_jump = false
-    if Input.GetKeyDown(C.KEY_SPACE) and grounded then
+    if (Input.GetKeyDown(C.KEY_SPACE) or Input.GetKeyDown(C.PAD_KEY_A)) and grounded then
         velocity.Z = C.JUMP_VELOCITY
         did_jump = true
     end
@@ -1725,8 +1996,8 @@ local function apply_fire(delta_time)
         return
     end
 
-    local is_fire_pressed = Input.GetKeyDown(C.KEY_LBUTTON)
-    local is_fire_held = Input.GetKey(C.KEY_LBUTTON)
+    local is_fire_pressed = fire_pressed()
+    local is_fire_held = fire_held()
     if not is_fire_held then
         clear_beamed_ragdoll_actor()
         update_beam_fade(delta_time)
@@ -1752,9 +2023,8 @@ end
 
 function BeginPlay()
     update_viewport_center()
-    setup_crosshair_ui()
-    update_crosshair_ui()
-    move_crosshair_toward(viewport_center_x, viewport_center_y, 0.0)
+    crosshair_screen_x = viewport_center_x
+    crosshair_screen_y = viewport_center_y
 
     local current_rotation = obj.Rotation
     yaw = current_rotation.Z
@@ -1784,13 +2054,15 @@ function BeginPlay()
         CameraManager.PossessCamera(camera)
     end
     update_crosshair_aim_position(0.0)
+    publish_target_state()
+    publish_crosshair_state(0.0)
 
     print("[GOInc] viewport center: " .. viewport_center_x .. ", " .. viewport_center_y)
     print("[GOInc] camera aim and view weapon separated")
 end
 
 function PrePhysicsTick(delta_time)
-    apply_look_input()
+    apply_look_input(delta_time)
     apply_kinematic_movement(delta_time)
 end
 
@@ -1807,7 +2079,8 @@ function PostCameraTick(delta_time)
     aim_trace_cache.serial = aim_trace_cache.serial + 1
     apply_fire(delta_time)
     update_crosshair_aim_position(delta_time)
-    update_crosshair_ui()
+    publish_target_state()
+    publish_crosshair_state(delta_time)
 end
 
 -- 물리 고정 스텝(1/60)마다 호출 — grab 힘/토크는 여기서만 적용한다 (스텝당 정확히 1회).

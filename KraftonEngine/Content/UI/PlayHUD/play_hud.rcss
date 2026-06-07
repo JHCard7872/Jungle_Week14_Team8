@@ -150,12 +150,10 @@ body {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 88px;
-    height: 88px;
-    margin-left: -44px;
-    margin-top: -44px;
-    transform-origin: 50% 50%;
-    transform: scale(1.2);
+    width: 160px;
+    height: 160px;
+    margin-left: -80px;
+    margin-top: -80px;
 }
 
 #hud_crosshair_collect,
@@ -163,7 +161,9 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 88px;
+    width: 160px;
+    height: 160px;
+    transform-origin: 50% 50%;
 }
 
 #hud_crosshair_attack {

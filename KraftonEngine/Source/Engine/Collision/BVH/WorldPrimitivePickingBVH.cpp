@@ -105,12 +105,12 @@ void FWorldPrimitivePickingBVH::EnsureBuilt(const TArray<AActor*>& Actors)
  * @param OutActor 교차된 프리미티브를 소유한 액터 포인터 (반환용)
  * @return 교차한 액터가 있으면 true, 없으면 false를 반환합니다.
  */
-bool FWorldPrimitivePickingBVH::Raycast(const FRay& Ray, FHitResult& OutHitResult, AActor*& OutActor) const
+bool FWorldPrimitivePickingBVH::Raycast(const FRay& Ray, FHitResult& OutHitResult, AActor*& OutActor, const AActor* IgnoreActor) const
 {
-	return RaycastInternal(Ray, 3.402823466e+38F, OutHitResult, OutActor);
+	return RaycastInternal(Ray, 3.402823466e+38F, OutHitResult, OutActor, IgnoreActor);
 }
 
-bool FWorldPrimitivePickingBVH::Linecast(const FVector& Start, const FVector& End, FHitResult& OutHitResult, AActor*& OutActor) const
+bool FWorldPrimitivePickingBVH::Linecast(const FVector& Start, const FVector& End, FHitResult& OutHitResult, AActor*& OutActor, const AActor* IgnoreActor) const
 {
 	FVector Dir = End - Start;
 	const float MaxDistance = Dir.Length();
@@ -119,10 +119,10 @@ bool FWorldPrimitivePickingBVH::Linecast(const FVector& Start, const FVector& En
 		return false;
 	}
 	Dir /= MaxDistance;
-	return RaycastInternal({ Start, Dir }, MaxDistance, OutHitResult, OutActor);
+	return RaycastInternal({ Start, Dir }, MaxDistance, OutHitResult, OutActor, IgnoreActor);
 }
 
-bool FWorldPrimitivePickingBVH::RaycastInternal(const FRay& Ray, float MaxDistance, FHitResult& OutHitResult, AActor*& OutActor) const
+bool FWorldPrimitivePickingBVH::RaycastInternal(const FRay& Ray, float MaxDistance, FHitResult& OutHitResult, AActor*& OutActor, const AActor* IgnoreActor) const
 {
 	struct FTraversalEntry
 	{
@@ -250,7 +250,7 @@ bool FWorldPrimitivePickingBVH::RaycastInternal(const FRay& Ray, float MaxDistan
 
 				const FLeaf& Leaf = Leaves[PrimitiveEntries[EntryIndex].NodeIndex];
 
-                if (!IsValid(Leaf.Primitive) || !IsValid(Leaf.Owner))
+                if (!IsValid(Leaf.Primitive) || !IsValid(Leaf.Owner) || Leaf.Owner == IgnoreActor)
                 {
                     continue;
                 }

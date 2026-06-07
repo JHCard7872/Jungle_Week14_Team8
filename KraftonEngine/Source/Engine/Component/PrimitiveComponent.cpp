@@ -288,6 +288,32 @@ void UPrimitiveComponent::SetHitRimColor(const FVector4& Color)
 	MarkHitRimRenderDirty();
 }
 
+void UPrimitiveComponent::SetHitRimStyle(float Style)
+{
+	const float NewStyle = Style >= 0.5f ? 1.0f : 0.0f;
+	if (HitRimStyle == NewStyle)
+	{
+		return;
+	}
+
+	HitRimStyle = NewStyle;
+	MarkHitRimRenderDirty();
+}
+
+void UPrimitiveComponent::SetHitRimScanParams(float LineDensity, float ScrollSpeed)
+{
+	const float NewLineDensity = LineDensity > 0.001f ? LineDensity : 18.0f;
+	const float NewScrollSpeed = ScrollSpeed > 0.0f ? ScrollSpeed : 0.0f;
+	if (HitRimScanLineDensity == NewLineDensity && HitRimScanScrollSpeed == NewScrollSpeed)
+	{
+		return;
+	}
+
+	HitRimScanLineDensity = NewLineDensity;
+	HitRimScanScrollSpeed = NewScrollSpeed;
+	MarkHitRimRenderDirty();
+}
+
 void UPrimitiveComponent::TriggerHitRimAt(const FVector& WorldLocation, float Duration, float Intensity, float Power, float SustainIntensity, float ImpactRadius, float ImpactCoreRadius, float ImpactIntensity)
 {
 	TriggerHitRim(Duration, Intensity, Power, SustainIntensity);

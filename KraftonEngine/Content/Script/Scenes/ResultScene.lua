@@ -31,7 +31,7 @@ local function show_action_prompt()
     save_prompt_open = false
     action_prompt_open = true
     waiting_for_next = false
-    Engine.SetCursorVisible(true)
+    -- OS 커서는 숨긴 채 ResultUI의 커서 스프라이트(aim 이미지)가 따라다닌다
 
     ResultUI.ShowActionButtons(
         function() Engine.LoadScene("Play") end,
@@ -63,7 +63,7 @@ local function show_save_prompt()
     waiting_for_next = false
     save_prompt_open = true
     ResultUI.SetWantsMouse(false)
-    Engine.SetCursorVisible(true)
+    -- OS 커서 대신 모달의 커서 스프라이트(showCursor)가 따라다닌다
 
     Modal.Create({
         zOrder = 270,
@@ -71,6 +71,7 @@ local function show_save_prompt()
         message = "점수를 저장하시겠습니까?",
         leftText = "YES",
         rightText = "NO",
+        showCursor = true,
         onLeft = function()
             save_current_score()
             local msg = score_saved and "저장되었습니다." or "저장에 실패했습니다."
@@ -79,6 +80,7 @@ local function show_save_prompt()
                 title = "Score Save",
                 message = msg,
                 leftText = "OK",
+                showCursor = true,
                 onLeft = function()
                     show_action_prompt()
                 end,
