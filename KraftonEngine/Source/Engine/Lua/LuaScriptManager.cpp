@@ -2617,9 +2617,21 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	{
 		FAudioManager::Get().PlayAudio(SoundName, Volume);
 	});
+	AudioManager.set_function("PlayManaged", [](const FString& SoundName, const FString& ChannelName, float Volume)
+	{
+		FAudioManager::Get().PlayManagedAudio(SoundName, ChannelName, Volume);
+	});
 	AudioManager.set_function("PlayBGM", [](const FString& SoundName, float Volume)
 	{
 		FAudioManager::Get().PlayBGM(SoundName, Volume);
+	});
+	AudioManager.set_function("SetBGMVolume", [](float Volume)
+	{
+		FAudioManager::Get().SetBGMVolume(Volume);
+	});
+	AudioManager.set_function("SetBgmVolume", [](float Volume)
+	{
+		FAudioManager::Get().SetBGMVolume(Volume);
 	});
 	AudioManager.set_function("StopBGM", []()
 	{
@@ -2632,6 +2644,10 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	AudioManager.set_function("StopLoop", [](const FString& LoopName)
 	{
 		FAudioManager::Get().StopLoop(LoopName);
+	});
+	AudioManager.set_function("StopManaged", [](const FString& ChannelName)
+	{
+		FAudioManager::Get().StopManagedAudio(ChannelName);
 	});
 	AudioManager.set_function("StopAllLoops", []()
 	{
