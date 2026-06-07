@@ -25,6 +25,12 @@
                 <div id="modal_button_right_label" class="modal_button_label">No</div>
             </button>
         </div>
+
+        <!-- 커서 스프라이트 (showCursor 옵션 켠 모달 전용 — 일시정지 메뉴 등).
+             이미지를 교체하려면 아래 src 두 개만 바꾸면 된다. 크기는 rcss .modal_cursor_image 참조.
+             Lua가 (마우스 - 크기/2)로 위치시키므로 이미지 "중앙"이 실제 클릭 지점이다. -->
+        <img id="modal_cursor_normal" class="modal_cursor_image" src="../../Sprite/cursor.png" />
+        <img id="modal_cursor_click" class="modal_cursor_image" src="../../Sprite/cursor_click.png" />
     </div>
 </body>
 </rml>

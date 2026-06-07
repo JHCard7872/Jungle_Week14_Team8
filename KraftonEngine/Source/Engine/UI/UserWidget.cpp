@@ -41,6 +41,7 @@ void UUserWidget::BeginDestroy()
     ClearEventListeners();
     PendingClickBindings.clear();
     PendingHoverBindings.clear();
+    PendingMouseMoveBindings.clear();
     ClearDocument();
 
     OwningPlayer.Reset();
@@ -90,6 +91,17 @@ void UUserWidget::BindHover(const FString& ElementId, sol::protected_function Ca
 	}
 }
 
+// mousemove는 씬 Tick이 멈춘 일시정지 중에도 UIManager 입력 경로로 디스패치된다 —
+// pause 메뉴의 커서 스프라이트가 이 이벤트로 위치를 갱신한다.
+void UUserWidget::BindMouseMove(const FString& ElementId, sol::protected_function Callback)
+{
+	PendingMouseMoveBindings.push_back({ ElementId, Callback });
+	if (IsDocumentLoaded())
+	{
+		RegisterEventListeners();
+	}
+}
+
 void UUserWidget::RegisterEventListeners()
 {
 	if (!Document)
@@ -100,6 +112,7 @@ void UUserWidget::RegisterEventListeners()
 	ClearEventListeners();
 	RegisterWidgetEventListeners(Document, PendingClickBindings, "click", "click", EventListeners);
 	RegisterWidgetEventListeners(Document, PendingHoverBindings, "mouseover", "hover", EventListeners);
+	RegisterWidgetEventListeners(Document, PendingMouseMoveBindings, "mousemove", "mousemove", EventListeners);
 }
 
 void UUserWidget::ClearEventListeners()

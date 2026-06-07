@@ -2137,6 +2137,23 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	{
 		return static_cast<float>(GetLuaInputSnapshot().ScrollDelta) / static_cast<float>(WHEEL_DELTA);
 	});
+	// 게임패드 — 디지털 버튼은 VK_GAMEPAD_*(0xC3~) 코드로 GetKey/GetKeyDown/GetKeyUp 그대로 사용.
+	// 아날로그 축만 별도 API: 스틱 "LX","LY","RX","RY"(-1~1, 위/오른쪽 +) / 트리거 "LT","RT"(0~1)
+	Input.set_function("GetGamepadAxis", [](const std::string& AxisName) -> float
+	{
+		const FInputSystemSnapshot Snapshot = GetLuaInputSnapshot();
+		if (AxisName == "LX") { return Snapshot.GetGamepadAxis(EGamepadAxis::LeftX); }
+		if (AxisName == "LY") { return Snapshot.GetGamepadAxis(EGamepadAxis::LeftY); }
+		if (AxisName == "RX") { return Snapshot.GetGamepadAxis(EGamepadAxis::RightX); }
+		if (AxisName == "RY") { return Snapshot.GetGamepadAxis(EGamepadAxis::RightY); }
+		if (AxisName == "LT") { return Snapshot.GetGamepadAxis(EGamepadAxis::LeftTrigger); }
+		if (AxisName == "RT") { return Snapshot.GetGamepadAxis(EGamepadAxis::RightTrigger); }
+		return 0.0f;
+	});
+	Input.set_function("IsGamepadConnected", []()
+	{
+		return GetLuaInputSnapshot().bGamepadConnected;
+	});
 	Input.set_function("GetMouseX", []()
 	{
 		if (GEngine)
@@ -3713,6 +3730,10 @@ void FLuaScriptManager::RegisterUIBindings(sol::state& Lua)
 		"bind_hover", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
 	{
 		Widget.BindHover(ElementId, Callback);
+	},
+		"bind_mousemove", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
+	{
+		Widget.BindMouseMove(ElementId, Callback);
 	},
 		"SetText", &UUserWidget::SetText,
 		"set_text", &UUserWidget::SetText,

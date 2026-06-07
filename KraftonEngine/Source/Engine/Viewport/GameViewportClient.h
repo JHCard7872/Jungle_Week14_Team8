@@ -48,6 +48,7 @@ public:
 private:
 	void SetCursorCaptured(bool bCaptured);
 	void ApplyCursorClip();
+	void UpdateGamepadCursor(float DeltaTime);
 
 	bool GetEffectiveCursorClientRect(RECT& OutClientRect) const;
 	void LockCursorToViewportCenter();
@@ -65,4 +66,8 @@ private:
 
 	FInputSystemSnapshot GameInputSnapshot{};
 	bool bHasGameInputSnapshot = false;
+
+	// 패드 커서 이동의 소수점 잔여 누적 (고FPS 정수 절삭 보정)
+	float GamepadCursorRemainderX = 0.0f;
+	float GamepadCursorRemainderY = 0.0f;
 };

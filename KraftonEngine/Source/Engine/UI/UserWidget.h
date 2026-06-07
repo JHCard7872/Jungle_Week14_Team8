@@ -71,6 +71,7 @@ public:
 	void RemoveFromParent();
 	void BindClick(const FString& ElementId, sol::protected_function Callback);
 	void BindHover(const FString& ElementId, sol::protected_function Callback);
+	void BindMouseMove(const FString& ElementId, sol::protected_function Callback);
 	void RegisterEventListeners();
 	void ClearEventListeners();
 	void SetText(const FString& ElementId, const FString& Text);
@@ -103,6 +104,7 @@ private:
 	FString DocumentPath;
 	TArray<std::pair<FString, sol::protected_function>> PendingClickBindings;
 	TArray<std::pair<FString, sol::protected_function>> PendingHoverBindings;
+	TArray<std::pair<FString, sol::protected_function>> PendingMouseMoveBindings;
 	TArray<FWidgetEventListener*> EventListeners;
 	int32 ZOrder = 0;
 	bool bInViewport = false;

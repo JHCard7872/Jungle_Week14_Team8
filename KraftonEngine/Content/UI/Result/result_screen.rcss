@@ -130,12 +130,25 @@ body {
     z-index: 160;
 }
 
-#result_grade_stamp_image {
+.result_grade_stamp_image {
     position: absolute;
     left: 0px;
     top: 0px;
     width: 100%;
     height: 100%;
+}
+
+/* 커서 스프라이트 — 크기를 바꾸면 ResultUIController.lua의 CURSOR_SIZE도 같이 맞출 것
+   (중앙 핫스팟 계산용). Play 씬 크로스헤어(64px)와 동일 크기. */
+.result_cursor_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 64px;
+    height: 64px;
+    display: none;
+    z-index: 1000;
+    pointer-events: none;
 }
 
 /* =========================================================
