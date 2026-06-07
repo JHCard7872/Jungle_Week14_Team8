@@ -22,6 +22,7 @@ local POPUP_SHOW_DURATION = 0.45
 local POPUP_BLINK_INTERVAL = 0.08
 local POPUP_BLINK_COUNT = 4
 local POPUP_BLINK_MIN_OPACITY = 0.25
+local REVIVE_POPUP_SUPPRESS_WINDOW = 3.0
 local CROSSHAIR_IMAGES = {
     collect = {
         normal = "../../Sprite/aim_collect_normal.png",
@@ -89,6 +90,8 @@ local mouse_enabled = false
 local crosshair_applied = {}
 local popup_queue = {}
 local popup_routine = nil
+local popup_event_clock = 0.0
+local last_revive_popup_push_time = nil
 local popup_state = {
     visible = false,
     imagePath = "../../Sprite/play_hud_popup_collected.png",
@@ -136,7 +139,7 @@ local state = {
         name = "Red Plumber",
         weightText = "12.5kg",
         scoreText = "+300",
-        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
+        imagePath = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
     },
     mission = {
         active = false,
@@ -145,7 +148,7 @@ local state = {
         got = 0,
         text = "",
         progressText = "목표 0 / 현재 0",
-        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
+        imagePath = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
     },
     targetState = nil,
     gameplayHudVisible = false,
@@ -260,6 +263,14 @@ local function normalize_target_score_text(text)
     return "+" .. raw
 end
 
+local function resolve_ragdoll_image_path(target_id, fallback_path)
+    local catalog_entry = target_id ~= nil and RagdollData[target_id] or nil
+    if catalog_entry ~= nil and catalog_entry.referenceImage ~= nil and catalog_entry.referenceImage ~= "" then
+        return catalog_entry.referenceImage
+    end
+    return fallback_path
+end
+
 local function format_mission_text(target_id, need, text)
     local raw = tostring(text or "")
     if raw ~= "" then
@@ -280,8 +291,8 @@ local function format_mission_progress_text(need, got)
     return string.format("목표 %d / 현재 %d", target_count, current_count)
 end
 
-local function resolve_mission_image_path(_target_id, fallback_path)
-    return fallback_path
+local function resolve_mission_image_path(target_id, fallback_path)
+    return resolve_ragdoll_image_path(target_id, fallback_path)
 end
 
 local function get_sfx_volume_scalar()
@@ -343,6 +354,7 @@ local function reset_popup_queue()
 
     popup_routine = nil
     popup_queue = {}
+    last_revive_popup_push_time = nil
     popup_state.visible = false
     popup_state.opacity = 1.0
     popup_state.currentEvent = nil
@@ -454,6 +466,14 @@ local function queue_popup_internal(request)
     local event_name = request.eventName
     if event_name == nil or POPUP_EVENT_DEFINITIONS[event_name] == nil then
         return false
+    end
+
+    if event_name == "REVIVED" then
+        local last_time = last_revive_popup_push_time
+        if last_time ~= nil and (popup_event_clock - last_time) < REVIVE_POPUP_SUPPRESS_WINDOW then
+            return false
+        end
+        last_revive_popup_push_time = popup_event_clock
     end
 
     popup_queue[#popup_queue + 1] = request
@@ -682,7 +702,6 @@ local function apply_server_load()
     local fill_width = SERVER_LOAD_BAR_WIDTH * display_ratio
     local source_crop_width = math.max(1, round_to_int(SERVER_LOAD_SOURCE_IMAGE_WIDTH * display_ratio))
     local source_crop_height = round_to_int(SERVER_LOAD_SOURCE_IMAGE_HEIGHT)
-    local active_opacity = 1.0
 
     set_width("hud_server_load_green", fill_width)
     set_width("hud_server_load_yellow", fill_width)
@@ -692,25 +711,41 @@ local function apply_server_load()
     set_attribute("hud_server_load_yellow", "rect", string.format("0 0 %d %d", source_crop_width, source_crop_height))
     set_attribute("hud_server_load_orange", "rect", string.format("0 0 %d %d", source_crop_width, source_crop_height))
     set_attribute("hud_server_load_red", "rect", string.format("0 0 %d %d", source_crop_width, source_crop_height))
-    set_opacity("hud_server_load_green", 0.0)
-    set_opacity("hud_server_load_yellow", 0.0)
-    set_opacity("hud_server_load_orange", 0.0)
-    set_opacity("hud_server_load_red", 0.0)
-
-    if load >= SERVER_LOAD_DANGER_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
-        local triangle = math.abs(1.0 - (server_load_visual.blinkPhase * 2.0))
-        active_opacity = SERVER_LOAD_RED_BLINK_MIN_OPACITY + ((1.0 - SERVER_LOAD_RED_BLINK_MIN_OPACITY) * triangle)
-    end
 
     widget:SetText("hud_server_load_value", format_load(load))
 
+    -- 각 색의 최종 opacity를 먼저 계산한 뒤 한 번에 적용한다.
+    -- "전부 0으로 초기화 → 일부만 복구" 패턴은 그 사이 렌더링이 끼어들면
+    -- 바가 순간적으로 비어 보이는 문제가 생기므로 사용하지 않는다.
+    local green_op, yellow_op, orange_op, red_op = 0.0, 0.0, 0.0, 0.0
+
     if server_load_visual.previousColor ~= nil then
-        set_opacity(get_server_load_element_id(server_load_visual.previousColor), 1.0 - server_load_visual.transitionAlpha)
-        set_opacity(get_server_load_element_id(server_load_visual.activeColor), server_load_visual.transitionAlpha)
-        return
+        local prev_alpha = 1.0 - server_load_visual.transitionAlpha
+        local next_alpha = server_load_visual.transitionAlpha
+        if server_load_visual.previousColor == "green" then green_op = prev_alpha
+        elseif server_load_visual.previousColor == "yellow" then yellow_op = prev_alpha
+        elseif server_load_visual.previousColor == "orange" then orange_op = prev_alpha
+        else red_op = prev_alpha end
+        if server_load_visual.activeColor == "green" then green_op = next_alpha
+        elseif server_load_visual.activeColor == "yellow" then yellow_op = next_alpha
+        elseif server_load_visual.activeColor == "orange" then orange_op = next_alpha
+        else red_op = next_alpha end
+    else
+        local active_opacity = 1.0
+        if load >= SERVER_LOAD_DANGER_BLINK_THRESHOLD and server_load_visual.activeColor == "red" then
+            local triangle = math.abs(1.0 - (server_load_visual.blinkPhase * 2.0))
+            active_opacity = SERVER_LOAD_RED_BLINK_MIN_OPACITY + ((1.0 - SERVER_LOAD_RED_BLINK_MIN_OPACITY) * triangle)
+        end
+        if server_load_visual.activeColor == "green" then green_op = active_opacity
+        elseif server_load_visual.activeColor == "yellow" then yellow_op = active_opacity
+        elseif server_load_visual.activeColor == "orange" then orange_op = active_opacity
+        else red_op = active_opacity end
     end
 
-    set_opacity(get_server_load_element_id(server_load_visual.activeColor), active_opacity)
+    set_opacity("hud_server_load_green", green_op)
+    set_opacity("hud_server_load_yellow", yellow_op)
+    set_opacity("hud_server_load_orange", orange_op)
+    set_opacity("hud_server_load_red", red_op)
 end
 
 local function apply_popup()
@@ -805,7 +840,6 @@ end
 local function apply_target_info()
     set_display("hud_target_info_container", state.target.visible)
     widget:SetText("hud_target_name", state.target.name)
-    widget:SetText("hud_target_weight", state.target.weightText)
     widget:SetText("hud_target_score", state.target.scoreText)
     -- src는 스타일이 아니라 요소 속성 — SetProperty로 넣으면 RmlUi 파싱 오류가 난다
     widget:SetAttribute("hud_target_pose_image", "src", state.target.imagePath)
@@ -980,6 +1014,8 @@ function M.Destroy()
     debug_panel_enabled = false
     mouse_enabled = false
     crosshair_applied = {}
+    popup_event_clock = 0.0
+    last_revive_popup_push_time = nil
     reset_server_load_visual()
     reset_popup_queue()
     start_countdown_state.active = false
@@ -996,6 +1032,8 @@ function M.Refresh()
 end
 
 function M.Update(dt)
+    popup_event_clock = popup_event_clock + math.max(0.0, tonumber(dt) or 0.0)
+
     if widget == nil and ensure_widget() == nil then
         return
     end
@@ -1006,6 +1044,8 @@ function M.Update(dt)
 end
 
 function M.UpdateFromSession(dt)
+    popup_event_clock = popup_event_clock + math.max(0.0, tonumber(dt) or 0.0)
+
     local previous_time = state.timeSeconds
     local previous_load = state.serverLoad
 
@@ -1103,7 +1143,7 @@ function M.ShowTargetInfo(target_info)
         or (target_info.score ~= nil and normalize_target_score_text(target_info.score))
         or (target_info.baseScore ~= nil and normalize_target_score_text(target_info.baseScore))
         or state.target.scoreText
-    state.target.imagePath = target_info.imagePath or target_info.referenceImage or state.target.imagePath
+    state.target.imagePath = resolve_ragdoll_image_path(target_info.ragdollId, target_info.imagePath or target_info.referenceImage or state.target.imagePath)
     M.Refresh()
 end
 
@@ -1119,7 +1159,7 @@ function M.SetMissionState(mission_info)
     local need = math.max(0, round_to_int(mission_info.need or 0))
     local got = math.max(0, round_to_int(mission_info.got or 0))
     local active = mission_info.active == true
-    local fallback_image = "../../Sprite/ragdoll/ragdoll_sample.png"
+    local fallback_image = "../../Sprite/Ragdoll_Image/ragdoll_sample.png"
 
     state.mission.active = active
     state.mission.target = target_id
