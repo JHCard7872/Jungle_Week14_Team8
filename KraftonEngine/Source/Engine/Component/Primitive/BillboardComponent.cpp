@@ -1,4 +1,4 @@
-#include "BillboardComponent.h"
+﻿#include "BillboardComponent.h"
 #include "GameFramework/World.h"
 #include "Component/Camera/CameraComponent.h"
 #include "Render/Proxy/BillboardSceneProxy.h"
@@ -8,8 +8,34 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialManager.h"
 #include "Object/GarbageCollection.h"
+#include "Math/MathUtils.h"
 
 #include <cstring>
+#include <cmath>
+
+namespace
+{
+	void BuildBillboardAxesWithRoll(const FVector& CameraForward, float RollDegrees, FVector& OutForward, FVector& OutRight, FVector& OutUp)
+	{
+		OutForward = (CameraForward * -1.0f).Normalized();
+		FVector WorldUp = FVector(0.0f, 0.0f, 1.0f);
+
+		if (std::abs(OutForward.Dot(WorldUp)) > 0.99f)
+		{
+			WorldUp = FVector(0.0f, 1.0f, 0.0f);
+		}
+
+		const FVector BaseRight = WorldUp.Cross(OutForward).Normalized();
+		const FVector BaseUp = OutForward.Cross(BaseRight).Normalized();
+
+		const float RollRadians = RollDegrees * FMath::DegToRad;
+		const float RollCos = std::cos(RollRadians);
+		const float RollSin = std::sin(RollRadians);
+
+		OutRight = (BaseRight * RollCos + BaseUp * RollSin).Normalized();
+		OutUp = (BaseUp * RollCos - BaseRight * RollSin).Normalized();
+	}
+}
 
 FPrimitiveSceneProxy* UBillboardComponent::CreateSceneProxy()
 {
@@ -38,6 +64,38 @@ void UBillboardComponent::AddReferencedObjects(FReferenceCollector& Collector)
 	Collector.AddReferencedObject(Material, "UBillboardComponent.Material");
 }
 
+void UBillboardComponent::SetBillboardRollDegrees(float InDegrees)
+{
+	if (FMath::Abs(BillboardRollDegrees - InDegrees) <= FMath::KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+
+	BillboardRollDegrees = InDegrees;
+	MarkRenderTransformDirty();
+}
+
+void UBillboardComponent::SetBillboardTintColor(const FVector4& InColor)
+{
+	if (FMath::Abs(BillboardTintColor.X - InColor.X) <= FMath::KINDA_SMALL_NUMBER &&
+		FMath::Abs(BillboardTintColor.Y - InColor.Y) <= FMath::KINDA_SMALL_NUMBER &&
+		FMath::Abs(BillboardTintColor.Z - InColor.Z) <= FMath::KINDA_SMALL_NUMBER &&
+		FMath::Abs(BillboardTintColor.W - InColor.W) <= FMath::KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+
+	BillboardTintColor = InColor;
+	MarkRenderTransformDirty();
+}
+
+void UBillboardComponent::SetBillboardOpacity(float InOpacity)
+{
+	FVector4 NewColor = BillboardTintColor;
+	NewColor.W = FMath::Clamp(InOpacity, 0.0f, 1.0f);
+	SetBillboardTintColor(NewColor);
+}
+
 void UBillboardComponent::SetMaterial(UMaterial* InMaterial)
 {
 	Material = InMaterial;
@@ -57,6 +115,11 @@ void UBillboardComponent::SetMaterial(UMaterial* InMaterial)
 void UBillboardComponent::PostEditProperty(const char* PropertyName)
 {
 	UPrimitiveComponent::PostEditProperty(PropertyName);
+
+	if (strcmp(PropertyName, "BillboardRollDegrees") == 0 || strcmp(PropertyName, "BillboardTintColor") == 0)
+	{
+		MarkRenderTransformDirty();
+	}
 
 	if (strcmp(PropertyName, "MaterialSlot") == 0 || strcmp(PropertyName, "Material") == 0)
 	{
@@ -86,23 +149,7 @@ void UBillboardComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	FMinimalViewInfo POV;
 	if (!World->GetActivePOV(POV)) return;
 
-	FVector WorldLocation = GetWorldLocation();
-	FVector CameraForward = POV.Rotation.GetForwardVector().Normalized();
-	FVector Forward = CameraForward * -1;
-	FVector WorldUp = FVector(0.0f, 0.0f, 1.0f);
-
-	if (std::abs(Forward.Dot(WorldUp)) > 0.99f)
-	{
-		WorldUp = FVector(0.0f, 1.0f, 0.0f); // 임시 Up축 변경
-	}
-
-	FVector Right = WorldUp.Cross(Forward).Normalized();
-	FVector Up = Forward.Cross(Right).Normalized();
-
-	FMatrix RotMatrix;
-	RotMatrix.SetAxes(Forward, Right, Up);
-
-	CachedWorldMatrix = FMatrix::MakeScaleMatrix(GetWorldScale()) * RotMatrix * FMatrix::MakeTranslationMatrix(WorldLocation);
+	CachedWorldMatrix = ComputeBillboardMatrix(POV.Rotation.GetForwardVector().Normalized());
 
 	UpdateWorldAABB();
 }
@@ -134,17 +181,11 @@ bool UBillboardComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHit
 
 FMatrix UBillboardComponent::ComputeBillboardMatrix(const FVector& CameraForward) const
 {
-	// TickComponent와 동일한 로직
-	FVector Forward = (CameraForward * -1.0f).Normalized();
-	FVector WorldUp = FVector(0.0f, 0.0f, 1.0f);
-
-	if (std::abs(Forward.Dot(WorldUp)) > 0.99f)
-	{
-		WorldUp = FVector(0.0f, 1.0f, 0.0f);
-	}
-
-	FVector Right = WorldUp.Cross(Forward).Normalized();
-	FVector Up = Forward.Cross(Right).Normalized();
+	// TickComponent / Picking에서 동일한 Roll 적용 행렬을 사용한다.
+	FVector Forward;
+	FVector Right;
+	FVector Up;
+	BuildBillboardAxesWithRoll(CameraForward, BillboardRollDegrees, Forward, Right, Up);
 
 	FMatrix RotMatrix;
 	RotMatrix.SetAxes(Forward, Right, Up);

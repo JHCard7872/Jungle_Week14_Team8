@@ -209,9 +209,9 @@ local function fire_held()
 end
 
 local function crosshair_hold_active()
-    -- Weapon2는 클릭 순간의 짧은 빔 펄스이므로, 누르고 있는 동안 hold UI를 유지하지 않는다.
+    -- Weapon2는 짧은 빔 펄스만 쏘므로 hold UI 상태에서 완전히 제외한다.
     if weapon_swap_state.active_index == 2 then
-        return fire_pressed()
+        return false
     end
     return fire_held()
 end
