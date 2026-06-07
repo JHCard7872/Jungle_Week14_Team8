@@ -47,3 +47,15 @@ body {
     margin-top: -180px;
     opacity: 1;
 }
+
+#startup_fade_overlay {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+}

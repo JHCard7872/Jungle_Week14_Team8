@@ -49,6 +49,22 @@ local function set_fade_overlay_opacity(alpha)
     set_element_opacity("title_fade_overlay", alpha)
 end
 
+local function stop_title_bgm()
+    if AudioManager == nil then
+        return
+    end
+    if AudioManager.StopBGM ~= nil then
+        AudioManager.StopBGM()
+        return
+    end
+    if AudioManager.Stop ~= nil then
+        AudioManager.Stop("bgm_title_0")
+    end
+    if AudioManager.StopManaged ~= nil then
+        AudioManager.StopManaged("bgm_title_0")
+    end
+end
+
 local function ensure_title_widget()
     if UI == nil or UI.CreateWidget == nil then
         return nil
@@ -103,6 +119,7 @@ local function begin_main_menu_transition()
     waiting_for_input = false
     Session.sceneTransition = Session.sceneTransition or {}
     Session.sceneTransition.mainMenuFadeInDuration = MAIN_MENU_FADE_IN_DURATION
+    stop_title_bgm()
     request_scene_load("MainMenu")
     transition_phase = "start_sfx"
     transition_elapsed = 0.0

@@ -4,6 +4,8 @@ local REVEAL_IN_DURATION = 0.8
 local HOLD_DURATION = 0.25
 local REVEAL_OUT_DURATION = 0.8
 local LOGO_FULL_WIDTH = 720.0
+local STARTUP_TO_TITLE_FADE_OUT_DURATION = 0.5
+local TITLE_FADE_IN_DURATION = 0.5
 
 -- opacity로 로고 자체를 반투명하게 만들면 흰 배경과 섞이면서
 -- 중간 프레임의 채도가 죽어 보인다. 그래서 로고 색은 항상 100%로 두고,
@@ -17,6 +19,8 @@ local LOGO_IDS = {
 local widget = nil
 local sequence_elapsed = 0.0
 local pending_scene_name = nil
+local fade_out_elapsed = 0.0
+local fade_out_active = false
 
 local function smoothstep01(t)
     local x = math.max(0.0, math.min(1.0, t))
@@ -37,6 +41,19 @@ local function set_display(element_id, visible)
     end
 
     widget:SetProperty(element_id, "display", visible and "block" or "none")
+end
+
+local function set_element_opacity(element_id, alpha)
+    if widget == nil then
+        return
+    end
+
+    local clamped = math.max(0.0, math.min(1.0, alpha or 0.0))
+    widget:SetProperty(element_id, "opacity", string.format("%.3f", clamped))
+end
+
+local function set_fade_overlay_opacity(alpha)
+    set_element_opacity("startup_fade_overlay", alpha)
 end
 
 local function set_logo_slot_width(element_id, width)
@@ -82,6 +99,16 @@ local function reset_logo_slots()
     end
 end
 
+local function begin_fade_out_to_title()
+    if fade_out_active then
+        return
+    end
+
+    fade_out_active = true
+    fade_out_elapsed = 0.0
+    set_fade_overlay_opacity(0.0)
+end
+
 local function update_logo_sequence(dt)
     local logo_duration = REVEAL_IN_DURATION + HOLD_DURATION + REVEAL_OUT_DURATION
     local total_duration = logo_duration * #LOGO_IDS
@@ -90,7 +117,7 @@ local function update_logo_sequence(dt)
     reset_logo_slots()
 
     if sequence_elapsed >= total_duration then
-        request_scene_load("Title")
+        begin_fade_out_to_title()
         return
     end
 
@@ -119,15 +146,22 @@ function BeginPlay()
 
     sequence_elapsed = 0.0
     pending_scene_name = nil
+    fade_out_elapsed = 0.0
+    fade_out_active = false
 
     if ensure_widget() ~= nil then
         reset_logo_slots()
+        set_fade_overlay_opacity(0.0)
     else
         request_scene_load("Title")
     end
 
     Engine.SetOnEscape(function()
-        request_scene_load("Title")
+        if widget ~= nil then
+            begin_fade_out_to_title()
+        else
+            request_scene_load("Title")
+        end
     end)
 end
 
@@ -140,6 +174,19 @@ function Tick(dt)
     end
 
     if widget == nil then
+        return
+    end
+
+    if fade_out_active then
+        fade_out_elapsed = math.min(fade_out_elapsed + (dt or 0.0), STARTUP_TO_TITLE_FADE_OUT_DURATION)
+        local t = STARTUP_TO_TITLE_FADE_OUT_DURATION <= 0.0 and 1.0 or (fade_out_elapsed / STARTUP_TO_TITLE_FADE_OUT_DURATION)
+        set_fade_overlay_opacity(smoothstep01(t))
+        if t >= 1.0 then
+            local Session = require("GameSession")
+            Session.sceneTransition = Session.sceneTransition or {}
+            Session.sceneTransition.titleFadeInDuration = TITLE_FADE_IN_DURATION
+            request_scene_load("Title")
+        end
         return
     end
 
@@ -157,4 +204,6 @@ function EndPlay()
     widget = nil
     sequence_elapsed = 0.0
     pending_scene_name = nil
+    fade_out_elapsed = 0.0
+    fade_out_active = false
 end
