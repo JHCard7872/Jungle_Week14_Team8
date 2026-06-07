@@ -23,7 +23,7 @@ FGOIncRagdollCharacterConfig AGOIncPikachuRagdollPawn::MakeCharacterConfig() con
 	Config.bCanRevive = true;
 	Config.ReviveBlendDuration = 0.7f;
 
-	Config.FleeSpeed = 3.4f;
+	Config.FleeSpeed = 7.0f;
 	Config.FleeAcceleration = 13.0f;
 	Config.FleeBrakingDeceleration = 8.5f;
 	Config.FleeEndDistance = 8.5f;
