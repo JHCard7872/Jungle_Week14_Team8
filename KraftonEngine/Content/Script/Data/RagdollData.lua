@@ -110,7 +110,7 @@ return {
 
         mass           = 200.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
-        canRevive      = false,
+        canRevive      = true,
         reviveSpeed    = 2.2,
         attackPower    = 30,     -- placeholder
 

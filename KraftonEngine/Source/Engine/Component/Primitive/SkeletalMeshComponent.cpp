@@ -27,6 +27,7 @@
 
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 
 #include "Object/GarbageCollection.h"
@@ -52,6 +53,26 @@ namespace
         );
 
         return NormalizeConstraintFrame(LocalFrame);
+    }
+
+    float GetSafeRagdollScaleComponent(float Scale)
+    {
+        constexpr float ScaleTolerance = 1.0e-6f;
+        if (std::abs(Scale) > ScaleTolerance)
+        {
+            return Scale;
+        }
+
+        return Scale < 0.0f ? -ScaleTolerance : ScaleTolerance;
+    }
+
+    FVector DivideRagdollVectorByScale(const FVector& Vector, const FVector& Scale)
+    {
+        return FVector(
+            Vector.X / GetSafeRagdollScaleComponent(Scale.X),
+            Vector.Y / GetSafeRagdollScaleComponent(Scale.Y),
+            Vector.Z / GetSafeRagdollScaleComponent(Scale.Z)
+        );
     }
 }
 
@@ -1828,7 +1849,10 @@ bool USkeletalMeshComponent::BuildRagdollPhysicsLocalPose(const TArray<FTransfor
         return false;
     }
 
-    const FMatrix ComponentWorldInv = GetWorldMatrix().GetAffineInverse();
+    FTransform ComponentWorldTransform = FTransform::FromMatrixWithScale(GetWorldMatrix());
+    const FVector ComponentScale = ComponentWorldTransform.Scale;
+    ComponentWorldTransform.Scale = FVector::OneVector;
+    const FMatrix ComponentWorldRigidInv = ComponentWorldTransform.ToMatrix().GetAffineInverse();
 
     TArray<FMatrix> PhysicsGlobalMatrices;
     PhysicsGlobalMatrices.resize(BoneCount, FMatrix::Identity);
@@ -1851,9 +1875,17 @@ bool USkeletalMeshComponent::BuildRagdollPhysicsLocalPose(const TArray<FTransfor
 
         const FMatrix BodyWorldMatrix = Body->GetBodyTransform().ToMatrix();
 
-        // Body world -> component-space global bone transform
-        PhysicsGlobalMatrices[BoneIndex] =
-            BodyWorldMatrix * ComponentWorldInv;
+        // Body world -> raw component-space global bone transform.
+        // PhysX bodies do not carry scale, so remove only the component rigid transform
+        // first, then divide the resulting translation by the component scale.
+        // Using the full ComponentWorld inverse here makes scaled components shrink the
+        // reconstructed ragdoll bone distances during body -> bone sync.
+        FMatrix PhysicsGlobalMatrix = BodyWorldMatrix * ComponentWorldRigidInv;
+        PhysicsGlobalMatrix.SetLocation(
+            DivideRagdollVectorByScale(PhysicsGlobalMatrix.GetLocation(), ComponentScale)
+        );
+
+        PhysicsGlobalMatrices[BoneIndex] = PhysicsGlobalMatrix;
 
         bHasPhysicsBody[BoneIndex] = true;
     }
