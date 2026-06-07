@@ -1113,6 +1113,12 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     if body.IsDynamic ~= nil and not body:IsDynamic() then
         return false
     end
+    -- IsDynamic은 kinematic도 통과시킨다 (PhysX에선 kinematic도 RigidDynamic) —
+    -- AliveFlee처럼 kinematic 상태인 본은 힘이 안 먹으니 잡기 자체를 무시한다
+    -- (안 끌려오는데 잡힌 척하는 어색함 + 스텝마다 PhysX 경고 스팸 방지)
+    if body.IsKinematic ~= nil and body:IsKinematic() then
+        return false
+    end
 
     -- 소유 액터를 지금(살아있을 때) 캐싱 — 잡는 동안 액터가 Destroy되면
     -- body userdata가 통째로 댕글링되므로, 이후엔 액터 생사로만 판단한다

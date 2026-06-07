@@ -67,7 +67,9 @@ function S.Reset(timeLimit)
         scoreText = "",
         imagePath = "../../Sprite/id_card_sample.png",
     }
-    S.result = { collectedCount = 0, gameOverReason = "", gradeText = "" }
+    -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
+    -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)
+    S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "" }
 end
 
 return S
