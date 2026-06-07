@@ -152,6 +152,12 @@
                 <button id="debug_result_dump_layout" class="result_debug_action_button">Dump</button>
             </div>
         </div>
+
+        <!-- 커서 스프라이트 (Retry/Title 버튼 표시 중에만 Lua가 켠다 — OS 커서 대신 사용).
+             이미지를 교체하려면 아래 src 두 개만 바꾸면 된다. 크기는 rcss .result_cursor_image 참조.
+             Lua가 (마우스 - 크기/2)로 위치시키므로 이미지 "중앙"이 실제 클릭 지점이다. -->
+        <img id="result_cursor_normal" class="result_cursor_image" src="../../Sprite/cursor.png" />
+        <img id="result_cursor_click" class="result_cursor_image" src="../../Sprite/cursor_click.png" />
     </div>
 </body>
 </rml>

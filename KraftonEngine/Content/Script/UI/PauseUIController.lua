@@ -7,7 +7,8 @@
 
 local Modal = require("UI/ModalDialogUIController")
 
-local PAUSE_Z_ORDER = 220
+-- 게임플레이 크로스헤어(z=1000)가 pause 중에도 그려지므로 그 위에 떠야 한다
+local PAUSE_Z_ORDER = 1100
 
 local M = {}
 
@@ -25,6 +26,8 @@ function M.Create(options)
         title = "Paused",
         message = "",
         leftText = "Continue",
+        -- pause 중엔 OS 커서를 숨긴 채 모달의 커서 스프라이트(aim 이미지)를 쓴다
+        showCursor = true,
         onLeft = function()
             if on_continue ~= nil then
                 on_continue()
@@ -44,6 +47,7 @@ function M.Show()
         title = "Paused",
         message = "",
         leftText = "Continue",
+        showCursor = true,
         onLeft = function()
             if on_continue ~= nil then
                 on_continue()

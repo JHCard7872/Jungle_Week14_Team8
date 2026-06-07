@@ -30,8 +30,8 @@ local PAD_KEY_MENU = 0xCF
 
 -- PauseUI.Show/Hide가 widget:SetWantsMouse를 토글하면 GameViewportClient가
 -- 자동으로 커서 캡처/중앙 고정을 풀거나 다시 건다 (AnyViewportWidgetWantsMouse 참고).
--- 거기에 더해 평소 게임플레이에선 OS 커서를 숨겨두므로(크로스헤어 대신),
--- pause 중엔 보이게/해제 시엔 다시 숨기게 명시적으로 맞춰준다.
+-- OS 커서는 pause 중에도 계속 숨긴다 — 모달의 커서 스프라이트(aim 이미지, showCursor 옵션)가
+-- 마우스를 대신 따라다닌다 (Title 메뉴와 같은 방식).
 -- ESC/P는 진입 전용이다 — 다시 눌러도 풀리지 않으며, Continue 버튼만이 해제 수단이다.
 local function enterPause()
     print("[Pause] enterPause() called, IsPaused=" .. tostring(Engine.IsPaused()))
@@ -40,7 +40,7 @@ local function enterPause()
     Engine.PauseGame()
     Session.inputEnabled = false
     PauseUI.Show()
-    Engine.SetCursorVisible(true)
+    Engine.SetCursorVisible(false)   -- OS 화살표 숨김 — 모달의 커서 스프라이트가 대신한다
 end
 
 local function exitPause()
@@ -51,7 +51,6 @@ local function exitPause()
     Engine.ResumeGame()
     Session.inputEnabled = true
     PauseUI.Hide()
-    Engine.SetCursorVisible(false)
 end
 
 function BeginPlay()

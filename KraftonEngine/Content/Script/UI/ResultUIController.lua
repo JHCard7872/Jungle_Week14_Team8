@@ -179,6 +179,10 @@ local debug_panel_enabled = false
 local base_mouse_enabled = false
 -- 실제 위젯에 적용할 마우스 입력 사용 여부
 local mouse_enabled = false
+-- 커서 스프라이트 (OS 커서 대신 aim 이미지 — Title 메뉴와 같은 방식).
+-- 크기는 rcss .result_cursor_image와 같은 값이어야 한다 (중앙 핫스팟 계산용)
+local VK_LBUTTON = 0x01
+local CURSOR_SIZE = 64
 -- 각 사운드가 이미 재생됐는지 여부 (soundLeadTime 적용으로 phase 전환 전에 트리거)
 local sfx_slide_triggered = false
 local sfx_stamp_triggered = false
@@ -1053,11 +1057,38 @@ function M.SetDebugPanelEnabled(enabled)
     apply_debug_panel_state()
 end
 
+-- 커서 스프라이트 갱신 — 마우스가 켜진 동안만 표시하고 위치/클릭 상태를 따라간다.
+-- (Result 씬은 Tick이 살아있어 매 프레임 호출로 충분 — Title 메뉴와 같은 방식)
+local function update_cursor_sprite()
+    if widget == nil then
+        return
+    end
+
+    if not mouse_enabled then
+        set_display("result_cursor_normal", false)
+        set_display("result_cursor_click", false)
+        return
+    end
+
+    local left = string.format("%dpx", Input.GetMouseX() - CURSOR_SIZE / 2)
+    local top = string.format("%dpx", Input.GetMouseY() - CURSOR_SIZE / 2)
+    set_property("result_cursor_normal", "left", left)
+    set_property("result_cursor_normal", "top", top)
+    set_property("result_cursor_click", "left", left)
+    set_property("result_cursor_click", "top", top)
+
+    local is_click = Input.GetKey(VK_LBUTTON)
+    set_display("result_cursor_normal", not is_click)
+    set_display("result_cursor_click", is_click)
+end
+
 -- 매 프레임 호출해서 현재 phase에 맞는 애니메이션을 진행한다.
 function M.Update(dt)
     if widget == nil then
         return
     end
+
+    update_cursor_sprite()
 
     local delta = math.max(0.0, tonumber(dt) or 0.0)
     phase_elapsed = phase_elapsed + delta
