@@ -43,7 +43,9 @@ local weapon_swap_state = {
     start_angle = 0.0,
     target_angle = 0.0,
     current_angle = 0.0,
-    is_active = false
+    is_active = false,
+    walk_phase = 0.0,
+    walk_weight = 0.0
 }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
@@ -514,8 +516,9 @@ local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_lo
     end
 end
 
-local function update_view_weapon()
+local function update_view_weapon(delta_time)
     local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
+    local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(delta_time, player_velocity, weapon_swap_state, vec, clamp)
 
     if view_weapon_root ~= nil then
         if camera ~= nil then
@@ -531,8 +534,12 @@ local function update_view_weapon()
     end
 
     if weapon_visual_pivot ~= nil then
-        weapon_visual_pivot.RelativeLocation = weapon_offset
-        weapon_visual_pivot.Rotation = copy_vec(base_weapon_visual_rotation)
+        weapon_visual_pivot.RelativeLocation = weapon_offset + walk_offset
+        weapon_visual_pivot.Rotation = vec(
+            base_weapon_visual_rotation.X + walk_rotation.X,
+            base_weapon_visual_rotation.Y + walk_rotation.Y,
+            base_weapon_visual_rotation.Z + walk_rotation.Z
+        )
     end
 
     if weapon_components.swap_pivot ~= nil then
@@ -2012,7 +2019,7 @@ function BeginPlay()
     end
 
     update_camera_view()
-    update_view_weapon()
+    update_view_weapon(0.0)
     set_beam_visible(false)
 
     if camera ~= nil then
@@ -2038,7 +2045,7 @@ function Tick(delta_time)
     obj.Rotation = vec(0.0, 0.0, yaw)
     select_active_beam_particle()
     update_camera_view()
-    update_view_weapon()
+    update_view_weapon(delta_time)
 end
 
 function PostCameraTick(delta_time)

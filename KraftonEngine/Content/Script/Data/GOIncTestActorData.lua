@@ -85,6 +85,15 @@ return {
     WEAPON_PITCH_PULLBACK = 0.05,  -- 극단 Pitch에서 총을 카메라 쪽으로 살짝 당기는 Forward 보정량
     WEAPON_PITCH_INWARD_OFFSET = 0.00, -- 극단 Pitch에서 총을 화면 안쪽으로 넣는 Right 보정량
     WEAPON_PITCH_UP_OFFSET = 0.04, -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
+    WEAPON_WALK_BOB_MIN_SPEED = 0.2, -- 이 속도보다 느리면 걷기 무기 흔들림을 끈다
+    WEAPON_WALK_BOB_BLEND_SPEED = 2.0, -- 걷기 시작/정지 시 무기 흔들림이 붙고 빠지는 속도
+    WEAPON_WALK_BOB_FREQUENCY = 3.0, -- 걷기 무기 흔들림 위상 속도(rad/sec)
+    WEAPON_WALK_BOB_FORWARD = 0.012, -- 걷기 중 총이 카메라 Forward 축으로 앞뒤 움직이는 폭
+    WEAPON_WALK_BOB_RIGHT = 0.022,   -- 걷기 중 총이 카메라 Right 축으로 좌우 움직이는 폭
+    WEAPON_WALK_BOB_UP = 0.030,      -- 걷기 중 총이 카메라 Up 축으로 상하 움직이는 폭
+    WEAPON_WALK_BOB_ROLL = 0.55,     -- 걷기 중 총 VisualPivot에 더하는 Roll 흔들림(deg)
+    WEAPON_WALK_BOB_PITCH = 0.35,    -- 걷기 중 총 VisualPivot에 더하는 Pitch 흔들림(deg)
+    WEAPON_WALK_BOB_YAW = 0.30,      -- 걷기 중 총 VisualPivot에 더하는 Yaw 흔들림(deg)
     WEAPON_SWAP_DURATION = 0.28,
     WEAPON_SWAP_ROTATION_DEGREES = 180.0,
     WEAPON_SWAP_DIRECTION = -1.0,
@@ -103,4 +112,41 @@ return {
     BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
     BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
+
+    UpdateWeaponWalkBob = function(self, delta_time, velocity, state, make_vec, clamp_value)
+        local dt = math.max(delta_time or 0.0, 0.0)
+        local vx = velocity and velocity.X or 0.0
+        local vy = velocity and velocity.Y or 0.0
+        local horizontal_speed = math.sqrt(vx * vx + vy * vy)
+        local target_weight = 0.0
+
+        if horizontal_speed > self.WEAPON_WALK_BOB_MIN_SPEED then
+            target_weight = clamp_value(horizontal_speed / self.MOVE_SPEED, 0.0, 1.0)
+        end
+
+        local blend_alpha = clamp_value(dt * self.WEAPON_WALK_BOB_BLEND_SPEED, 0.0, 1.0)
+        state.walk_weight = state.walk_weight + (target_weight - state.walk_weight) * blend_alpha
+
+        if state.walk_weight > 0.001 then
+            local stride_scale = 0.75 + target_weight * 0.25
+            state.walk_phase = state.walk_phase + dt * self.WEAPON_WALK_BOB_FREQUENCY * stride_scale
+        else
+            state.walk_phase = 0.0
+            state.walk_weight = 0.0
+        end
+
+        local side = math.sin(state.walk_phase)
+        local step = math.sin(state.walk_phase * 2.0)
+        local weight = state.walk_weight
+
+        return make_vec(
+            step * self.WEAPON_WALK_BOB_FORWARD * weight,
+            side * self.WEAPON_WALK_BOB_RIGHT * weight,
+            -math.abs(step) * self.WEAPON_WALK_BOB_UP * weight
+        ), make_vec(
+            -side * self.WEAPON_WALK_BOB_ROLL * weight,
+            step * self.WEAPON_WALK_BOB_PITCH * weight,
+            side * self.WEAPON_WALK_BOB_YAW * weight
+        )
+    end,
 }
