@@ -48,7 +48,9 @@ local weapon_swap_state = {
     current_angle = 0.0,
     is_active = false,
     walk_phase = 0.0,
-    walk_weight = 0.0
+    walk_weight = 0.0,
+    sprint_weight = 0.0,
+    is_sprinting = false
 }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
@@ -204,6 +206,14 @@ end
 
 local function fire_held()
     return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
+end
+
+local function crosshair_hold_active()
+    -- Weapon2는 클릭 순간의 짧은 빔 펄스이므로, 누르고 있는 동안 hold UI를 유지하지 않는다.
+    if weapon_swap_state.active_index == 2 then
+        return fire_pressed()
+    end
+    return fire_held()
 end
 
 local function reset_collect_fire_sfx_timer()
@@ -591,7 +601,8 @@ end
 
 local function update_view_weapon(delta_time)
     local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
-    local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(delta_time, player_velocity, weapon_swap_state, vec, clamp)
+    local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(
+        delta_time, player_velocity, weapon_swap_state, vec, clamp, weapon_swap_state.is_sprinting)
 
     if view_weapon_root ~= nil then
         if camera ~= nil then
@@ -1451,10 +1462,10 @@ local function update_crosshair_hold_rotation(delta_time, is_hold)
     end
 end
 
-local function build_crosshair_state()
+local function build_crosshair_state(is_hold)
     update_viewport_center()
 
-    local is_hold = Input.GetKey(C.KEY_LBUTTON)
+    is_hold = is_hold == true
     return {
         mode = get_current_gun_mode(),
         visible = true,
@@ -1466,8 +1477,9 @@ local function build_crosshair_state()
 end
 
 local function publish_crosshair_state(delta_time)
-    update_crosshair_hold_rotation(delta_time, Input.GetKey(C.KEY_LBUTTON))
-    local crosshair_state = build_crosshair_state()
+    local is_hold = crosshair_hold_active()
+    update_crosshair_hold_rotation(delta_time, is_hold)
+    local crosshair_state = build_crosshair_state(is_hold)
 
     if Session ~= nil and Session.gun ~= nil then
         Session.gun.mode = crosshair_state.mode
@@ -2007,9 +2019,11 @@ local function apply_kinematic_movement(delta_time)
 
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
+    weapon_swap_state.is_sprinting = Input.GetKey(C.KEY_SHIFT) and move_dir:Length() > 0.0001
 
     if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized() * C.MOVE_SPEED
+        horizontal_velocity = move_dir:Normalized()
+            * (C.MOVE_SPEED * (weapon_swap_state.is_sprinting and C.SPRINT_SPEED_MULTIPLIER or 1.0))
     end
 
     velocity.X = horizontal_velocity.X

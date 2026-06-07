@@ -17,6 +17,7 @@ return {
     KEY_S = 0x53,       -- 후진 입력 키: S
     KEY_D = 0x44,       -- 우측 이동 입력 키: D
     KEY_SPACE = 0x20,   -- 점프 입력 키: Space
+    KEY_SHIFT = 0x10,   -- 달리기 입력 키: Shift
     KEY_LBUTTON = 0x01, -- 발사 입력 키: 마우스 왼쪽 버튼
     KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
 
@@ -37,6 +38,7 @@ return {
     TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
+    SPRINT_SPEED_MULTIPLIER = 2.0,     -- Shift를 누른 채 이동할 때 수평 속도 배율
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
     GRAVITY_ACCELERATION = 9.8,         -- PhysX 시뮬레이션 대신 엔진 쪽 이동에서 직접 적용할 중력 가속도
     PLAYER_CAPSULE_HALF_HEIGHT = 1.0,   -- GOIncRoot 캡슐의 실제 월드 반높이. Scene의 HalfHeight 2.0 * ScaleZ 0.5
@@ -106,6 +108,15 @@ return {
     WEAPON_WALK_BOB_ROLL = 0.55,     -- 걷기 중 총 VisualPivot에 더하는 Roll 흔들림(deg)
     WEAPON_WALK_BOB_PITCH = 0.35,    -- 걷기 중 총 VisualPivot에 더하는 Pitch 흔들림(deg)
     WEAPON_WALK_BOB_YAW = 0.30,      -- 걷기 중 총 VisualPivot에 더하는 Yaw 흔들림(deg)
+    WEAPON_SPRINT_BLEND_SPEED = 7.0,      -- 달리기 시작/해제 시 총 내림 연출이 섞이는 속도
+    WEAPON_SPRINT_BOB_FREQUENCY_SCALE = 1.45, -- 달릴 때 걷기 Bob 템포 배율
+    WEAPON_SPRINT_BOB_AMPLITUDE_SCALE = 0.55, -- 달릴 때 Bob 폭을 얕게 줄이는 배율
+    WEAPON_SPRINT_LOWER_FORWARD = -0.025, -- 달릴 때 총을 카메라 쪽으로 살짝 당긴다
+    WEAPON_SPRINT_LOWER_RIGHT = 0.0,      -- 달릴 때 총 좌우 기준 위치 보정
+    WEAPON_SPRINT_LOWER_UP = -0.085,      -- 달릴 때 총을 화면 아래로 내리는 양
+    WEAPON_SPRINT_LOWER_ROLL = 0.0,       -- 달릴 때 총 기본 Roll 보정
+    WEAPON_SPRINT_LOWER_PITCH = 1.1,      -- 달릴 때 총을 살짝 아래로 숙이는 Pitch 보정
+    WEAPON_SPRINT_LOWER_YAW = 0.0,        -- 달릴 때 총 기본 Yaw 보정
     WEAPON_SWAP_DURATION = 0.28,
     WEAPON_SWAP_ROTATION_DEGREES = 180.0,
     WEAPON_SWAP_DIRECTION = -1.0,
@@ -126,22 +137,35 @@ return {
     BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
 
-    UpdateWeaponWalkBob = function(self, delta_time, velocity, state, make_vec, clamp_value)
+    UpdateWeaponWalkBob = function(self, delta_time, velocity, state, make_vec, clamp_value, is_sprinting)
         local dt = math.max(delta_time or 0.0, 0.0)
         local vx = velocity and velocity.X or 0.0
         local vy = velocity and velocity.Y or 0.0
         local horizontal_speed = math.sqrt(vx * vx + vy * vy)
         local target_weight = 0.0
+        local sprint_target_weight = 0.0
+
+        state.walk_weight = state.walk_weight or 0.0
+        state.walk_phase = state.walk_phase or 0.0
+        state.sprint_weight = state.sprint_weight or 0.0
 
         if horizontal_speed > self.WEAPON_WALK_BOB_MIN_SPEED then
             target_weight = clamp_value(horizontal_speed / self.MOVE_SPEED, 0.0, 1.0)
         end
+        if is_sprinting and target_weight > 0.0 then
+            sprint_target_weight = 1.0
+        end
 
         local blend_alpha = clamp_value(dt * self.WEAPON_WALK_BOB_BLEND_SPEED, 0.0, 1.0)
         state.walk_weight = state.walk_weight + (target_weight - state.walk_weight) * blend_alpha
+        local sprint_blend_alpha = clamp_value(dt * self.WEAPON_SPRINT_BLEND_SPEED, 0.0, 1.0)
+        state.sprint_weight = state.sprint_weight
+            + (sprint_target_weight - state.sprint_weight) * sprint_blend_alpha
 
         if state.walk_weight > 0.001 then
-            local stride_scale = 0.75 + target_weight * 0.25
+            local sprint_tempo_scale = 1.0
+                + (self.WEAPON_SPRINT_BOB_FREQUENCY_SCALE - 1.0) * state.sprint_weight
+            local stride_scale = (0.75 + target_weight * 0.25) * sprint_tempo_scale
             state.walk_phase = state.walk_phase + dt * self.WEAPON_WALK_BOB_FREQUENCY * stride_scale
         else
             state.walk_phase = 0.0
@@ -150,16 +174,24 @@ return {
 
         local side = math.sin(state.walk_phase)
         local step = math.sin(state.walk_phase * 2.0)
-        local weight = state.walk_weight
+        local sprint_amplitude_scale = 1.0
+            + (self.WEAPON_SPRINT_BOB_AMPLITUDE_SCALE - 1.0) * state.sprint_weight
+        local weight = state.walk_weight * sprint_amplitude_scale
 
         return make_vec(
-            step * self.WEAPON_WALK_BOB_FORWARD * weight,
-            side * self.WEAPON_WALK_BOB_RIGHT * weight,
+            step * self.WEAPON_WALK_BOB_FORWARD * weight
+                + self.WEAPON_SPRINT_LOWER_FORWARD * state.sprint_weight,
+            side * self.WEAPON_WALK_BOB_RIGHT * weight
+                + self.WEAPON_SPRINT_LOWER_RIGHT * state.sprint_weight,
             -math.abs(step) * self.WEAPON_WALK_BOB_UP * weight
+                + self.WEAPON_SPRINT_LOWER_UP * state.sprint_weight
         ), make_vec(
-            -side * self.WEAPON_WALK_BOB_ROLL * weight,
-            step * self.WEAPON_WALK_BOB_PITCH * weight,
+            -side * self.WEAPON_WALK_BOB_ROLL * weight
+                + self.WEAPON_SPRINT_LOWER_ROLL * state.sprint_weight,
+            step * self.WEAPON_WALK_BOB_PITCH * weight
+                + self.WEAPON_SPRINT_LOWER_PITCH * state.sprint_weight,
             side * self.WEAPON_WALK_BOB_YAW * weight
+                + self.WEAPON_SPRINT_LOWER_YAW * state.sprint_weight
         )
     end,
 }
