@@ -185,6 +185,14 @@ public:
     UFUNCTION(Pure, Category = "Physics|Ragdoll")
     float GetRagdollMassScale() const { return RagdollMassScale; }
 
+    // Sets the desired total mass of the whole ragdoll.
+    // Internally this converts the requested kg-like value to RagdollMassScale,
+    // preserving each PhysicsAsset body's relative mass ratio.
+    UFUNCTION(Callable, Exec, Category = "Physics|Ragdoll")
+    void SetRagdollTotalMass(float InTotalMass);
+    UFUNCTION(Pure, Category = "Physics|Ragdoll")
+    float GetRagdollTotalMass() const;
+
     UFUNCTION(Callable, Category = "Physics|PhysicalAnimation")
     bool BeginPhysicalAnimation();
 
@@ -280,6 +288,8 @@ protected:
 
     bool ShouldRagdollIgnoreSameOwner() const;
     bool ShouldRagdollConstraintEnableCollision() const;
+    float CalculateUnscaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const;
+    float CalculateUnscaledRagdollTotalMass() const;
     float CalculateScaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const;
     void ApplyRagdollMassScaleToExistingBodies();
 

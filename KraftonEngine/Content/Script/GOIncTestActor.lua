@@ -1360,41 +1360,35 @@ local function apply_grab_force(delta_time, start, direction)
         end
     end
 
-    local mass = math.max(grabbed_body:GetMass(), 0.001)
-    local mass_scale = clamp(
-        math.pow(C.GRAB_REFERENCE_MASS / mass, C.GRAB_MASS_POWER),
-        C.GRAB_MIN_MASS_SCALE,
-        C.GRAB_MAX_MASS_SCALE
-    )
-
-    local acceleration = error * (C.GRAB_SPRING_ACCELERATION * mass_scale)
-        - linear_velocity * (C.GRAB_DAMPING_ACCELERATION * mass_scale)
+    -- 질량 보정 제거: AddForce는 PhysX에서 F = m*a로 처리되므로,
+    -- 여기서 force에 mass를 다시 곱하면 RagdollMassScale 차이가 상쇄된다.
+    -- 따라서 같은 빔 힘을 넣고, 무거운 body는 자연스럽게 덜 가속되게 둔다.
+    local force = error * C.GRAB_SPRING_ACCELERATION
+        - linear_velocity * C.GRAB_DAMPING_ACCELERATION
 
     if min_distance_penetration > 0.0 and actor_outward_direction ~= nil then
-        local guard_acceleration = actor_outward_direction * (
+        local guard_force = actor_outward_direction * (
             min_distance_penetration * C.GRAB_MIN_DISTANCE_GUARD_ACCELERATION
             + blocked_inward_speed * C.GRAB_MIN_DISTANCE_GUARD_DAMPING
         )
-        acceleration = acceleration + guard_acceleration
+        force = force + guard_force
     end
 
     if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance <= min_actor_distance then
-        local inward_acceleration = acceleration:Dot(actor_outward_direction)
-        if inward_acceleration < 0.0 then
-            acceleration = acceleration - actor_outward_direction * inward_acceleration
+        local inward_force = force:Dot(actor_outward_direction)
+        if inward_force < 0.0 then
+            force = force - actor_outward_direction * inward_force
         end
     end
 
-    acceleration = clamp_vector_length(acceleration, C.GRAB_MAX_ACCELERATION * mass_scale)
-
-    local force = acceleration * mass
+    force = clamp_vector_length(force, C.GRAB_MAX_ACCELERATION)
     grabbed_body:AddForce(force)
 
     local grab_offset = current_grab_world - current_body_center
     if grab_offset:Length() > 1.0 then
-        local torque = grab_offset:Cross(force) * (C.GRAB_TORQUE_SCALE * mass_scale)
-            - grabbed_body:GetAngularVelocity() * (C.GRAB_ANGULAR_DAMPING * mass * mass_scale)
-        torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE * mass * mass_scale)
+        local torque = grab_offset:Cross(force) * C.GRAB_TORQUE_SCALE
+            - grabbed_body:GetAngularVelocity() * C.GRAB_ANGULAR_DAMPING
+        torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE)
         grabbed_body:AddTorque(torque)
     end
 

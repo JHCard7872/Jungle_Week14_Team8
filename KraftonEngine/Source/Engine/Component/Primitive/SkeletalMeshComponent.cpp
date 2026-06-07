@@ -248,6 +248,40 @@ void USkeletalMeshComponent::SetRagdollMassScale(float InMassScale)
     }
 }
 
+void USkeletalMeshComponent::SetRagdollTotalMass(float InTotalMass)
+{
+    const float DesiredTotalMass = std::max(InTotalMass, 0.001f);
+    const float BaseTotalMass = CalculateUnscaledRagdollTotalMass();
+
+    if (BaseTotalMass <= 0.001f)
+    {
+        UE_LOG("SetRagdollTotalMass fallback: invalid base total mass. Desired=%f", DesiredTotalMass);
+        SetRagdollMassScale(DesiredTotalMass);
+        return;
+    }
+
+    SetRagdollMassScale(DesiredTotalMass / BaseTotalMass);
+}
+
+float USkeletalMeshComponent::GetRagdollTotalMass() const
+{
+    if (!Bodies.empty())
+    {
+        float TotalMass = 0.0f;
+        for (const FBodyInstance* Body : Bodies)
+        {
+            if (Body)
+            {
+                TotalMass += Body->GetMass();
+            }
+        }
+        return std::max(TotalMass, 0.001f);
+    }
+
+    const float BaseTotalMass = CalculateUnscaledRagdollTotalMass();
+    return std::max(BaseTotalMass * std::max(RagdollMassScale, 0.001f), 0.001f);
+}
+
 void USkeletalMeshComponent::EnablePartialRagdollBelow(FName BoneName)
 {
     SetRagdollEnabled(true);
@@ -1259,6 +1293,24 @@ bool USkeletalMeshComponent::CreateRagdollConstraintsFromPhysicsAsset()
         return false;
     }
 
+    TArray<FMatrix> BoneGlobals;
+    GetCurrentBoneGlobalMatrices(BoneGlobals);
+    const FMatrix ComponentWorld = GetWorldMatrix();
+
+    auto GetRagdollBodyRuntimeScale = [&](const FBodyInstance* Body) -> FVector
+    {
+        if (!Body || Body->BoneIndex < 0 || Body->BoneIndex >= static_cast<int32>(BoneGlobals.size()))
+        {
+            return FVector::OneVector;
+        }
+
+        const FTransform BodyWorldTransform = FTransform::FromMatrixWithScale(
+            BoneGlobals[Body->BoneIndex] * ComponentWorld
+        );
+
+        return BodyWorldTransform.Scale.GetAbs();
+    };
+
     bool bCreatedAny = false;
 
     for (const FConstraintInstanceInitDesc& InitDesc : InitDescs)
@@ -1300,8 +1352,20 @@ bool USkeletalMeshComponent::CreateRagdollConstraintsFromPhysicsAsset()
         Constraint->ParentBoneName = InitDesc.ParentBoneName;
         Constraint->ChildBoneName = InitDesc.ChildBoneName;
 
-        Constraint->ParentFrame = NormalizeConstraintFrame(InitDesc.ParentFrame);
-        Constraint->ChildFrame = NormalizeConstraintFrame(InitDesc.ChildFrame);
+        FTransform ParentFrame = NormalizeConstraintFrame(InitDesc.ParentFrame);
+        FTransform ChildFrame = NormalizeConstraintFrame(InitDesc.ChildFrame);
+
+        // PhysicsAsset constraint frames are stored in unscaled body-local space.
+        // Ragdoll bodies already apply the component/bone runtime scale when their shapes
+        // are created, so the joint anchor locations must use the same scale as well.
+        // Without this, scaled SkeletalMeshComponents can create small bodies with
+        // original-size joint offsets, causing projection/solver corrections to launch
+        // the ragdoll.
+        ParentFrame.Location = ParentFrame.Location * GetRagdollBodyRuntimeScale(ParentBody);
+        ChildFrame.Location = ChildFrame.Location * GetRagdollBodyRuntimeScale(ChildBody);
+
+        Constraint->ParentFrame = ParentFrame;
+        Constraint->ChildFrame = ChildFrame;
 
         Constraint->TwistLimitDegrees = InitDesc.TwistLimitDegrees;
         Constraint->Swing1LimitDegrees = InitDesc.Swing1LimitDegrees;
@@ -1341,15 +1405,60 @@ bool USkeletalMeshComponent::ShouldRagdollConstraintEnableCollision() const
     return RagdollSelfCollisionMode == ERagdollSelfCollisionMode::EnableAll;
 }
 
-float USkeletalMeshComponent::CalculateScaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const
+float USkeletalMeshComponent::CalculateUnscaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const
 {
     if (!BodySetup)
     {
         return 0.001f;
     }
 
+    return std::max(BodySetup->CalculateMass(BodyScale), 0.001f);
+}
+
+float USkeletalMeshComponent::CalculateUnscaledRagdollTotalMass() const
+{
+    UPhysicsAsset* PhysicsAsset = const_cast<USkeletalMeshComponent*>(this)->GetPhysicsAssetForRagdoll();
+    if (!PhysicsAsset)
+    {
+        return 0.0f;
+    }
+
+    TArray<FMatrix> BoneGlobals;
+    GetCurrentBoneGlobalMatrices(BoneGlobals);
+    const FMatrix ComponentWorld = GetWorldMatrix();
+
+    float TotalMass = 0.0f;
+    const TArray<UBodySetup*>& BodySetups = PhysicsAsset->GetBodySetups();
+    for (const UBodySetup* BodySetup : BodySetups)
+    {
+        if (!BodySetup)
+        {
+            continue;
+        }
+
+        if (BodySetup->CollisionReponse == EBodyCollisionResponse::BodyCollision_Disabled)
+        {
+            continue;
+        }
+
+        FVector BodyScale = FVector::OneVector;
+        const int32 BoneIndex = FindBoneIndexByName(BodySetup->BoneName);
+        if (BoneIndex >= 0 && BoneIndex < static_cast<int32>(BoneGlobals.size()))
+        {
+            const FTransform BodyWorldTransform = FTransform::FromMatrixWithScale(BoneGlobals[BoneIndex] * ComponentWorld);
+            BodyScale = BodyWorldTransform.Scale;
+        }
+
+        TotalMass += CalculateUnscaledRagdollBodyMass(BodySetup, BodyScale);
+    }
+
+    return TotalMass;
+}
+
+float USkeletalMeshComponent::CalculateScaledRagdollBodyMass(const UBodySetup* BodySetup, const FVector& BodyScale) const
+{
     const float MassScale = std::max(RagdollMassScale, 0.001f);
-    return std::max(BodySetup->CalculateMass(BodyScale) * MassScale, 0.001f);
+    return std::max(CalculateUnscaledRagdollBodyMass(BodySetup, BodyScale) * MassScale, 0.001f);
 }
 
 void USkeletalMeshComponent::ApplyRagdollMassScaleToExistingBodies()
