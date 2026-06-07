@@ -48,6 +48,7 @@ private:
 		int32               DynamicIndexCount   = 0;
 		EDynamicEmitterType EmitterType         = EDynamicEmitterType::Sprite;
 		EParticleBlendMode  BlendMode           = EParticleBlendMode::AlphaBlend;
+		int32               ScreenAlignment     = 0;        // EParticleScreenAlignment (Sprite 전용)
 		UMaterial*          Material            = nullptr;
 		FMeshBuffer*        EmitterMeshBuffer   = nullptr;  // Mesh 에미터 전용
 		TArray<UMaterial*>  MeshSectionMaterials;
