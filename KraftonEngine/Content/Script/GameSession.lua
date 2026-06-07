@@ -4,7 +4,7 @@
 --        score·result.collectedCount·result.baseScore·result.urgentScore = ScoreManager
 --        load = ServerLoadManager
 --        timeRemaining·result.gameOverReason = PlayScene / inputEnabled = PlayScene ESC 토글
---        gun.* = GunBehavior
+--        gun.* = GunBehavior / mission.* = MissionManager
 -- [사용법] local Session = require("GameSession") 후 필드 직독. 쓰기는 위 담당만.
 --          결과 화면 점수는 별도 필드 없이 Session.score를 그대로 읽는다 (모듈은 씬을 넘어 생존).
 -- [특이사항] require 모듈은 씬 전환에서 살아남는다 — PlayScene.BeginPlay의 Reset() 호출이 의무.
@@ -40,7 +40,15 @@ local S = {
         name = "",
         weightText = "",
         scoreText = "",
-        imagePath = "../../Sprite/id_card_sample.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
+    },
+
+    mission = {
+        active = false,  -- 발급된 미션 존재 여부 (래그돌이 없으면 발급 보류로 false)
+        target = "",     -- 목표 타입 id (RagdollData 키)
+        need   = 0,      -- 목표 수
+        got    = 0,      -- 현재 수거 수
+        text   = "",     -- HUD 표시 문구 ("xxx N체 수거")
     },
 
     result = {
@@ -65,9 +73,12 @@ function S.Reset(timeLimit)
         name = "",
         weightText = "",
         scoreText = "",
-        imagePath = "../../Sprite/id_card_sample.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
     }
-    S.result = { collectedCount = 0, gameOverReason = "", gradeText = "" }
+    S.mission = { active = false, target = "", need = 0, got = 0, text = "" }
+    -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
+    -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)
+    S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "" }
 end
 
 return S

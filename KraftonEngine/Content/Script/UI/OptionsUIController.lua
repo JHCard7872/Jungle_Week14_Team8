@@ -7,13 +7,14 @@
 --          onConfirm/onBack 콜백과 GetSettings/ApplySettings로 담당한다.
 -- =============================================================================
 
+local UserSettings = require("Data/UserSettings")
+
 local UI_DOCUMENT_PATH = "Content/UI/Options/options.rml"
 -- Pause(220)보다 위에 뜨도록
 local OPTIONS_Z_ORDER = 230
 
 local UI_CLICK_KEY = "sfx_ui_click"
 local UI_HOVER_KEY = "sfx_ui_hover"
-local UI_SFX_VOLUME = 1.0
 
 local MIN_VOLUME = 0
 local MAX_VOLUME = 10
@@ -82,12 +83,13 @@ local function set_input_mode_row_selected(element_id, is_selected)
     widget:SetAttribute(element_id, "class", class_value)
 end
 
+-- 화면에서 조정 중인 sfxVolume 값을 그대로 사용 — 볼륨 +/- 클릭음이 곧 미리듣기가 된다
 local function play_ui_click()
-    AudioManager.Play(UI_CLICK_KEY, UI_SFX_VOLUME)
+    AudioManager.Play(UI_CLICK_KEY, UserSettings.VolumeToScalar(settings.sfxVolume))
 end
 
 local function play_ui_hover()
-    AudioManager.Play(UI_HOVER_KEY, UI_SFX_VOLUME)
+    AudioManager.Play(UI_HOVER_KEY, UserSettings.VolumeToScalar(settings.sfxVolume))
 end
 
 local function on_button_click(callback)

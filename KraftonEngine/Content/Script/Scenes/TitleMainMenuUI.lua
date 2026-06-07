@@ -5,15 +5,14 @@ local ScoreStorage = require("Data/ScoreStorage")
 local UI_ROOT_PATH = "Content/UI/"
 local MAIN_MENU_RELATIVE_PATH = "MainMenu/main_menu.rml"
 local MAIN_MENU_Z_ORDER = 100
-local CURSOR_HOTSPOT_X = 8
-local CURSOR_HOTSPOT_Y = 6
+-- 커서는 중앙 조준점 디자인이라 이미지 중심을 마우스에 맞춘다 (Pause/Result와 동일 패턴).
+-- rcss .cursor_image 크기와 반드시 동기화할 것 (rml src 2개 + rcss 크기 + 이 값 세 곳)
+local CURSOR_SIZE = 150
 local VK_LBUTTON = 0x01
 
 local MAIN_BGM_KEY = "bgm_main_0"
 local UI_CLICK_KEY = "sfx_ui_click"
 local UI_HOVER_KEY = "sfx_ui_hover"
-local MENU_BGM_VOLUME = 0.6
-local SFX_VOLUME = 1.0
 local MENU_FADE_DURATION = 0.45
 local PRESS_BLINK_SPEED = 3.2
 local SUB_PAGE_FADE_DURATION = 0.3
@@ -104,8 +103,8 @@ local function update_cursor_position()
 
     local mouse_x = Input.GetMouseX()
     local mouse_y = Input.GetMouseY()
-    local left = string.format("%dpx", mouse_x - CURSOR_HOTSPOT_X)
-    local top = string.format("%dpx", mouse_y - CURSOR_HOTSPOT_Y)
+    local left = string.format("%dpx", mouse_x - CURSOR_SIZE / 2)
+    local top = string.format("%dpx", mouse_y - CURSOR_SIZE / 2)
 
     main_menu_widget:SetProperty("cursor_normal", "left", left)
     main_menu_widget:SetProperty("cursor_normal", "top", top)
@@ -150,6 +149,7 @@ local function set_main_menu_controls_visible(is_visible)
     set_element_display("menu_scoreboard", is_visible)
     set_element_display("menu_credits", is_visible)
     set_element_display("menu_back_to_title", is_visible)
+    set_element_display("menu_exit_game", is_visible)
 
     -- 라벨은 RCSS :hover에서만 제어한다.
     -- 여기서 SetProperty("display", "none")을 걸면 inline style이 남아서
@@ -289,12 +289,22 @@ local function bind_menu_actions(widget)
         start_title_return_fade()
     end))
 
+    widget:bind_click("menu_exit_game", on_menu_button_click(function()
+        Engine.Exit()
+    end))
+
+    widget:bind_click("menu_exit_game_text", on_menu_button_click(function()
+        Engine.Exit()
+    end))
+
     bind_hover_sound(widget, "menu_help")
     bind_hover_sound(widget, "menu_option")
     bind_hover_sound(widget, "menu_play")
     bind_hover_sound(widget, "menu_scoreboard")
     bind_hover_sound(widget, "menu_credits")
     bind_hover_sound(widget, "menu_back_to_title")
+    bind_hover_sound(widget, "menu_exit_game")
+    bind_hover_sound(widget, "menu_exit_game_text")
 
     bindings_initialized = true
 end

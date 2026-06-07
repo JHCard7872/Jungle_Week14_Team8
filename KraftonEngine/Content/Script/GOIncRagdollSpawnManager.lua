@@ -13,6 +13,7 @@
 -- MAX_SPAWN_COUNT limits ALIVE pawns, not total spawns — collected (destroyed) pawns free their slot.
 
 local SpawnCfg = require("Data.GameConfig").spawn
+local Score = require("Data.ScoreData")
 
 local SPAWN_MIN_X = SpawnCfg.areaMinX
 local SPAWN_MAX_X = SpawnCfg.areaMaxX
@@ -304,6 +305,21 @@ local function spawn_one()
         pawn:AddTag(characterId)
     else
         print("[GOIncRagdollSpawnManager] Missing AddTag binding — score/mission type tag disabled")
+    end
+
+    -- 금/은 변형 추첨 — Gold/Silver 태그만 달면 ScoreManager가 배수(×3/×2)를 자동 적용한다.
+    -- 머티리얼 바인딩이 없는 구버전 빌드면 태그도 달지 않는다 (비주얼 없는 배수는 혼란만 줌)
+    if pawn.AddTag ~= nil and GOInc.SetRagdollOverrideMaterial ~= nil then
+        local roll = math.random()
+        if roll < Score.goldChance then
+            pawn:AddTag("Gold")
+            GOInc.SetRagdollOverrideMaterial(pawn, "Content/Material/Gold.mat")
+            print("[GOIncRagdollSpawnManager] Variant: Gold " .. tostring(characterId))
+        elseif roll < Score.goldChance + Score.silverChance then
+            pawn:AddTag("Silver")
+            GOInc.SetRagdollOverrideMaterial(pawn, "Content/Material/Silver.mat")
+            print("[GOIncRagdollSpawnManager] Variant: Silver " .. tostring(characterId))
+        end
     end
 
     print(string.format(

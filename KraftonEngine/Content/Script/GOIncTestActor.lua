@@ -2,7 +2,9 @@ local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 
 local Session = require("GameSession")
 local HUD = require("UI/HUDController")
 local RagdollData = require("Data/RagdollData")
+local UserSettings = require("Data/UserSettings")
 
+local COLLECT_FIRE_SFX_CHANNEL = "CollectFireSfx"
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
 local viewport_center_x = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 X
@@ -11,6 +13,7 @@ local crosshair_screen_x = nil
 local crosshair_screen_y = nil
 local crosshair_hold_rotation = 0.0
 local crosshair_hold_rotation_elapsed = 0.0
+local collect_fire_sfx_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
 local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
@@ -193,6 +196,76 @@ local function update_viewport_center()
     end
 end
 
+-- 발사/그랩 입력 합성 — 마우스 왼쪽 버튼과 패드 RT(임계값 디지털)를 OR로 합친다.
+-- 모든 발사 계열 판정은 이 두 함수를 거쳐야 패드가 같이 동작한다.
+local function fire_pressed()
+    return Input.GetKeyDown(C.KEY_LBUTTON) or Input.GetKeyDown(C.PAD_KEY_RT)
+end
+
+local function fire_held()
+    return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
+end
+
+local function reset_collect_fire_sfx_timer()
+    collect_fire_sfx_elapsed = 0.0
+    if AudioManager ~= nil and AudioManager.StopManaged ~= nil then
+        AudioManager.StopManaged(COLLECT_FIRE_SFX_CHANNEL)
+    end
+end
+
+local function get_sfx_volume(volume_scale)
+    local volume = volume_scale or 1.0
+    if UserSettings ~= nil and UserSettings.GetSfxVolumeScalar ~= nil then
+        volume = volume * UserSettings.GetSfxVolumeScalar()
+    end
+    return volume
+end
+
+local function play_one_shot_sfx(key, volume_scale)
+    if AudioManager == nil or AudioManager.Play == nil then
+        return
+    end
+
+    AudioManager.Play(key, get_sfx_volume(volume_scale))
+end
+
+local function play_collect_fire_sfx()
+    if AudioManager == nil then
+        return
+    end
+
+    local volume = get_sfx_volume(C.COLLECT_FIRE_SFX_VOLUME_SCALE or 1.0)
+
+    if AudioManager.PlayManaged ~= nil then
+        AudioManager.PlayManaged("sfx_gun_shoot", COLLECT_FIRE_SFX_CHANNEL, volume)
+        return
+    end
+
+    if AudioManager.Play ~= nil then
+        AudioManager.Play("sfx_gun_shoot", volume)
+    end
+end
+
+local function update_collect_fire_sfx(delta_time, should_play)
+    if not should_play then
+        reset_collect_fire_sfx_timer()
+        return
+    end
+
+    collect_fire_sfx_elapsed = collect_fire_sfx_elapsed - math.max(delta_time or 0.0, 0.0)
+    if collect_fire_sfx_elapsed > 0.0 then
+        return
+    end
+
+    play_collect_fire_sfx()
+
+    local interval = C.COLLECT_FIRE_SFX_INTERVAL or 0.10
+    if interval <= 0.0 then
+        interval = 0.10
+    end
+    collect_fire_sfx_elapsed = interval
+end
+
 local function bind_components()
     root_body = obj:GetRootPrimitiveComponent()
     camera_pivot = obj:GetComponentByName("GOIncCameraPivot")
@@ -369,11 +442,11 @@ local function get_weapon_offset_for_pitch()
 end
 
 local function get_beam_source_pitch_influence()
-    if pitch > 0.0 then
-        return C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE
-    end
-
+    -- pitch 0 경계에서 0.9↔0.45로 즉시 점프하면 빔 소스 위치/탄젠트가 꺾여 보인다
+    -- (수평 부근 조준에서 간헐적으로 빔이 휘던 원인) — 경계 구간을 보간으로 잇는다
+    local blend = ease_in_out(clamp(pitch / C.BEAM_SOURCE_PITCH_BLEND_DEGREES, 0.0, 1.0))
     return C.BEAM_SOURCE_PITCH_INFLUENCE
+        + (C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE - C.BEAM_SOURCE_PITCH_INFLUENCE) * blend
 end
 
 local function get_beam_source_offset_for_pitch()
@@ -799,12 +872,20 @@ local function get_mouse_wheel_notches()
     return 0.0
 end
 
-local function update_grab_distance_from_mouse_wheel()
+local function update_grab_distance_from_mouse_wheel(delta_time)
     if grabbed_aim_distance == nil then
         return
     end
 
     local wheel_notches = get_mouse_wheel_notches()
+    -- 패드: LT = 멀리 / LB = 가까이. 누르고 있는 동안 연속 조절 (사용자 실기 피드백으로 방향 확정)
+    local dt = math.max(delta_time or 0.0, 0.0)
+    if Input.GetKey(C.PAD_KEY_LT) then
+        wheel_notches = wheel_notches + C.PAD_DISTANCE_NOTCHES_PER_SEC * dt
+    end
+    if Input.GetKey(C.PAD_KEY_LB) then
+        wheel_notches = wheel_notches - C.PAD_DISTANCE_NOTCHES_PER_SEC * dt
+    end
     if math.abs(wheel_notches) <= 0.0001 then
         return
     end
@@ -1102,6 +1183,12 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     if body.IsDynamic ~= nil and not body:IsDynamic() then
         return false
     end
+    -- IsDynamic은 kinematic도 통과시킨다 (PhysX에선 kinematic도 RigidDynamic) —
+    -- AliveFlee처럼 kinematic 상태인 본은 힘이 안 먹으니 잡기 자체를 무시한다
+    -- (안 끌려오는데 잡힌 척하는 어색함 + 스텝마다 PhysX 경고 스팸 방지)
+    if body.IsKinematic ~= nil and body:IsKinematic() then
+        return false
+    end
 
     -- 소유 액터를 지금(살아있을 때) 캐싱 — 잡는 동안 액터가 Destroy되면
     -- body userdata가 통째로 댕글링되므로, 이후엔 액터 생사로만 판단한다
@@ -1302,14 +1389,14 @@ local function update_active_grab(delta_time)
         return false
     end
 
-    if not Input.GetKey(C.KEY_LBUTTON) then
+    if not fire_held() then
         end_beam_grab(true)
         return true
     end
 
     -- 힘 적용은 FixedTick 몫 — 여기(렌더 프레임)서는 조준 레이 캐시와 비주얼만 갱신
     local start, direction = get_camera_aim_ray()
-    update_grab_distance_from_mouse_wheel()
+    update_grab_distance_from_mouse_wheel(delta_time)
     grab_fixed_ray.start = copy_vec(start)
     grab_fixed_ray.direction = copy_vec(direction)
     update_grab_visuals()
@@ -1463,10 +1550,12 @@ update_beam_points = function(aim_point)
 end
 
 local function apply_slot2_fire(delta_time)
-    if not Input.GetKeyDown(C.KEY_LBUTTON) then
+    if not fire_pressed() then
         update_beam_fade(delta_time)
         return
     end
+
+    play_one_shot_sfx("sfx_gun_attack_shoot")
 
     local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
@@ -1502,13 +1591,14 @@ local function begin_weapon_swap()
     weapon_swap_state.elapsed = 0.0
     weapon_swap_state.start_angle = weapon_swap_state.current_angle
     weapon_swap_state.target_angle = get_next_weapon_swap_angle()
+    play_one_shot_sfx("sfx_gun_mode_change")
     beam_visible_remaining = 0.0
     clear_grab_state()
     set_beam_visible(false)
 end
 
 local function update_weapon_swap(delta_time)
-    if Input.GetKeyDown(C.KEY_Q) then
+    if Input.GetKeyDown(C.KEY_Q) or Input.GetKeyDown(C.PAD_KEY_Y) then
         begin_weapon_swap()
     end
 
@@ -1528,12 +1618,18 @@ local function update_weapon_swap(delta_time)
     end
 end
 
-local function apply_look_input()
+local function apply_look_input(delta_time)
     local mouse_x = Input.GetMouseDeltaX()
     local mouse_y = Input.GetMouseDeltaY()
 
-    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY
-    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY, C.MIN_PITCH, C.MAX_PITCH)
+    -- 패드 우스틱 — 마우스(픽셀 델타)와 달리 기울임(-1~1) × 속도(도/초) × dt로 환산해 합산.
+    -- 이 엔진은 음수 Pitch가 위쪽이라 스틱 위(+RY)에서 빼준다.
+    local dt = math.max(delta_time or 0.0, 0.0)
+    local pad_yaw = Input.GetGamepadAxis("RX") * C.PAD_LOOK_YAW_DEG_PER_SEC * dt
+    local pad_pitch = Input.GetGamepadAxis("RY") * C.PAD_LOOK_PITCH_DEG_PER_SEC * dt
+
+    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY + pad_yaw
+    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY - pad_pitch, C.MIN_PITCH, C.MAX_PITCH)
 
     obj.Rotation = vec(0.0, 0.0, yaw)
 end
@@ -1905,6 +2001,10 @@ local function apply_kinematic_movement(delta_time)
         move_dir = move_dir - right
     end
 
+    -- 패드 좌스틱 합산 (XInput LY는 위가 +라 전진과 부호가 맞다).
+    -- 아래에서 방향을 normalize하므로 스틱 기울임 정도는 속도에 영향 없음 (WASD와 동일 거동)
+    move_dir = move_dir + forward * Input.GetGamepadAxis("LY") + right * Input.GetGamepadAxis("LX")
+
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
 
@@ -1922,7 +2022,7 @@ local function apply_kinematic_movement(delta_time)
     end
 
     local did_jump = false
-    if Input.GetKeyDown(C.KEY_SPACE) and grounded then
+    if (Input.GetKeyDown(C.KEY_SPACE) or Input.GetKeyDown(C.PAD_KEY_A)) and grounded then
         velocity.Z = C.JUMP_VELOCITY
         did_jump = true
     end
@@ -1952,6 +2052,7 @@ end
 
 local function apply_fire(delta_time)
     if weapon_swap_state.is_active then
+        reset_collect_fire_sfx_timer()
         beam_visible_remaining = 0.0
         clear_beamed_ragdoll_actor()
         set_beam_visible(false)
@@ -1961,16 +2062,19 @@ local function apply_fire(delta_time)
     select_active_beam_particle()
 
     if weapon_swap_state.active_index == 2 then
+        reset_collect_fire_sfx_timer()
         apply_slot2_fire(delta_time)
         return
     end
 
     if update_active_grab(delta_time) then
+        update_collect_fire_sfx(delta_time, fire_held())
         return
     end
 
-    local is_fire_pressed = Input.GetKeyDown(C.KEY_LBUTTON)
-    local is_fire_held = Input.GetKey(C.KEY_LBUTTON)
+    local is_fire_pressed = fire_pressed()
+    local is_fire_held = fire_held()
+    update_collect_fire_sfx(delta_time, is_fire_held)
     if not is_fire_held then
         clear_beamed_ragdoll_actor()
         update_beam_fade(delta_time)
@@ -2035,7 +2139,7 @@ function BeginPlay()
 end
 
 function PrePhysicsTick(delta_time)
-    apply_look_input()
+    apply_look_input(delta_time)
     apply_kinematic_movement(delta_time)
 end
 

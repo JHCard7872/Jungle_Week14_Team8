@@ -2,6 +2,13 @@ local Session = require("GameSession")
 
 local UI_DOCUMENT_PATH = "Content/UI/PlayHUD/play_hud.rml"
 local HUD_Z_ORDER = 200
+local SERVER_LOAD_BAR_WIDTH = 520.0
+local SERVER_LOAD_SAFE_THRESHOLD = 30.0
+local SERVER_LOAD_WARNING_THRESHOLD = 60.0
+local SERVER_LOAD_BLINK_THRESHOLD = 90.0
+local SERVER_LOAD_OPACITY_FADE_DURATION = 0.18
+local SERVER_LOAD_RED_BLINK_SPEED = 1.8
+local SERVER_LOAD_RED_BLINK_MIN_OPACITY = 0.35
 local CROSSHAIR_IMAGES = {
     collect = {
         normal = "../../Sprite/aim_collect_normal.png",
@@ -20,6 +27,12 @@ local bindings_initialized = false
 local debug_panel_enabled = false
 local mouse_enabled = false
 local crosshair_applied = {}
+local server_load_visual = {
+    activeColor = "red",
+    previousColor = nil,
+    transitionAlpha = 1.0,
+    blinkPhase = 0.0,
+}
 
 local state = {
     timeSeconds = 135,
@@ -35,11 +48,11 @@ local state = {
         rotation = 0.0,
     },
     target = {
-        visible = true,
+        visible = false,
         name = "Red Plumber",
         weightText = "12.5kg",
         scoreText = "+300",
-        imagePath = "../../Sprite/id_card_sample.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
     },
     targetState = nil,
 }
@@ -189,6 +202,79 @@ local function set_crosshair_attribute(element_id, attribute_name, value)
     crosshair_applied[key] = value
 end
 
+local function set_opacity(element_id, value)
+    if widget == nil then
+        return
+    end
+
+    widget:SetProperty(element_id, "opacity", string.format("%.3f", clamp(value, 0.0, 1.0)))
+end
+
+local function set_width(element_id, value)
+    if widget == nil then
+        return
+    end
+
+    widget:SetProperty(element_id, "width", string.format("%.2fpx", math.max(0.0, value)))
+end
+
+local function get_server_load_color(load)
+    if load < SERVER_LOAD_SAFE_THRESHOLD then
+        return "green"
+    elseif load < SERVER_LOAD_WARNING_THRESHOLD then
+        return "yellow"
+    end
+    return "red"
+end
+
+local function get_server_load_element_id(color)
+    if color == "green" then
+        return "hud_server_load_green"
+    elseif color == "yellow" then
+        return "hud_server_load_yellow"
+    end
+    return "hud_server_load_red"
+end
+
+local function reset_server_load_visual()
+    local load = clamp(state.serverLoad, 0, 100)
+
+    server_load_visual.activeColor = get_server_load_color(load)
+    server_load_visual.previousColor = nil
+    server_load_visual.transitionAlpha = 1.0
+    server_load_visual.blinkPhase = 0.0
+end
+
+local function update_server_load_visual(dt)
+    local load = clamp(state.serverLoad, 0, 100)
+    local delta_time = math.max(0.0, tonumber(dt) or 0.0)
+    local next_color = get_server_load_color(load)
+
+    if next_color ~= server_load_visual.activeColor then
+        server_load_visual.previousColor = server_load_visual.activeColor
+        server_load_visual.activeColor = next_color
+        server_load_visual.transitionAlpha = 0.0
+        server_load_visual.blinkPhase = 0.0
+    end
+
+    if server_load_visual.previousColor ~= nil then
+        local fade_step = delta_time <= 0.0 and 1.0 or (delta_time / SERVER_LOAD_OPACITY_FADE_DURATION)
+        server_load_visual.transitionAlpha = math.min(server_load_visual.transitionAlpha + fade_step, 1.0)
+
+        if server_load_visual.transitionAlpha >= 1.0 then
+            server_load_visual.previousColor = nil
+        end
+    else
+        server_load_visual.transitionAlpha = 1.0
+    end
+
+    if load >= SERVER_LOAD_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
+        server_load_visual.blinkPhase = (server_load_visual.blinkPhase + (delta_time * SERVER_LOAD_RED_BLINK_SPEED)) % 1.0
+    else
+        server_load_visual.blinkPhase = 0.0
+    end
+end
+
 local function assign_crosshair_state(crosshair)
     if crosshair == nil then
         return
@@ -233,20 +319,30 @@ end
 
 local function apply_server_load()
     local load = clamp(state.serverLoad, 0, 100)
-    local angle = -90.0 + (load * 1.8)
-    local color = "#79ff86"
+    local fill_width = SERVER_LOAD_BAR_WIDTH * (load / 100.0)
+    local active_opacity = 1.0
 
-    if load >= 90 then
-        color = "#ff6b6b"
-    elseif load >= 70 then
-        color = "#ffb347"
-    elseif load >= 40 then
-        color = "#ffe66d"
+    set_width("hud_server_load_green", fill_width)
+    set_width("hud_server_load_yellow", fill_width)
+    set_width("hud_server_load_red", fill_width)
+    set_opacity("hud_server_load_green", 0.0)
+    set_opacity("hud_server_load_yellow", 0.0)
+    set_opacity("hud_server_load_red", 0.0)
+
+    if load >= SERVER_LOAD_BLINK_THRESHOLD and server_load_visual.activeColor == "red" and server_load_visual.previousColor == nil then
+        local triangle = math.abs(1.0 - (server_load_visual.blinkPhase * 2.0))
+        active_opacity = SERVER_LOAD_RED_BLINK_MIN_OPACITY + ((1.0 - SERVER_LOAD_RED_BLINK_MIN_OPACITY) * triangle)
     end
 
     widget:SetText("hud_server_load_value", format_load(load))
-    widget:SetProperty("hud_server_load_value", "color", color)
-    widget:SetProperty("hud_server_load_arrow", "transform", string.format("rotate(%.1fdeg)", angle))
+
+    if server_load_visual.previousColor ~= nil then
+        set_opacity(get_server_load_element_id(server_load_visual.previousColor), 1.0 - server_load_visual.transitionAlpha)
+        set_opacity(get_server_load_element_id(server_load_visual.activeColor), server_load_visual.transitionAlpha)
+        return
+    end
+
+    set_opacity(get_server_load_element_id(server_load_visual.activeColor), active_opacity)
 end
 
 local function apply_time()
@@ -425,6 +521,7 @@ local function ensure_widget()
     if widget == nil then
         widget = UI.CreateWidget(UI_DOCUMENT_PATH)
         crosshair_applied = {}
+        reset_server_load_visual()
     end
 
     if widget == nil then
@@ -461,6 +558,7 @@ function M.Destroy()
     debug_panel_enabled = false
     mouse_enabled = false
     crosshair_applied = {}
+    reset_server_load_visual()
 end
 
 function M.Refresh()
@@ -468,7 +566,16 @@ function M.Refresh()
     apply_all()
 end
 
-function M.UpdateFromSession()
+function M.Update(dt)
+    if widget == nil and ensure_widget() == nil then
+        return
+    end
+
+    update_server_load_visual(dt)
+    apply_server_load()
+end
+
+function M.UpdateFromSession(dt)
     state.timeSeconds = Session.timeRemaining or state.timeSeconds
     state.score = Session.score or state.score
     state.serverLoad = Session.load or state.serverLoad
@@ -479,7 +586,16 @@ function M.UpdateFromSession()
         assign_crosshair_state(Session.gun.crosshair)
     end
 
-    M.Refresh()
+    if Session.target ~= nil then
+        M.SetTargetState(Session.target)
+    end
+
+    if widget == nil and ensure_widget() == nil then
+        return
+    end
+
+    update_server_load_visual(dt)
+    apply_all()
 end
 
 function M.SetTimeSeconds(seconds)
@@ -494,6 +610,7 @@ end
 
 function M.SetServerLoad(load)
     state.serverLoad = clamp(tonumber(load) or state.serverLoad, 0, 100)
+    update_server_load_visual(0.0)
     M.Refresh()
 end
 
@@ -517,6 +634,13 @@ end
 
 function M.SetTargetState(target_info)
     state.targetState = target_info
+
+    if target_info ~= nil and target_info.visible == true then
+        M.ShowTargetInfo(target_info)
+        return
+    end
+
+    M.HideTargetInfo()
 end
 
 function M.ShowTargetInfo(target_info)

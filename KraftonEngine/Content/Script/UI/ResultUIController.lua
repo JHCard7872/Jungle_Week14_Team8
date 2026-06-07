@@ -179,6 +179,10 @@ local debug_panel_enabled = false
 local base_mouse_enabled = false
 -- 실제 위젯에 적용할 마우스 입력 사용 여부
 local mouse_enabled = false
+-- 커서 스프라이트 (OS 커서 대신 aim 이미지 — Title 메뉴와 같은 방식).
+-- 크기는 rcss .result_cursor_image와 같은 값이어야 한다 (중앙 핫스팟 계산용)
+local VK_LBUTTON = 0x01
+local CURSOR_SIZE = 64
 -- 각 사운드가 이미 재생됐는지 여부 (soundLeadTime 적용으로 phase 전환 전에 트리거)
 local sfx_slide_triggered = false
 local sfx_stamp_triggered = false
@@ -217,28 +221,36 @@ local state = {
     hintOpacity = 0.0,
 }
 
--- 랭크별 도장 이미지와 결과 사운드 매핑
+-- 랭크별 도장 이미지와 결과 사운드 매핑.
+-- RmlUi는 img src를 스타일 속성으로 못 바꾸므로(파싱 에러) rml에 3장을 미리 두고
+-- stampElementId로 등급에 맞는 한 장만 display 토글한다.
+local GRADE_STAMP_ELEMENT_IDS = {
+    "result_grade_stamp_bonus",
+    "result_grade_stamp_employed",
+    "result_grade_stamp_fired",
+}
+
 local RESULT_PRESETS = {
     A = {
-        stampImage = "../../Sprite/result_stamp_bonus_approved.png",
+        stampElementId = "result_grade_stamp_bonus",
         stampOriginalWidth = 1279,
         stampOriginalHeight = 699,
         resultSfx = "sfx_result_high",
     },
     B = {
-        stampImage = "../../Sprite/result_stamp_still_employed.png",
+        stampElementId = "result_grade_stamp_employed",
         stampOriginalWidth = 1236,
         stampOriginalHeight = 667,
         resultSfx = "sfx_result_medium",
     },
     C = {
-        stampImage = "../../Sprite/result_stamp_still_employed.png",
+        stampElementId = "result_grade_stamp_employed",
         stampOriginalWidth = 1236,
         stampOriginalHeight = 667,
         resultSfx = "sfx_result_medium",
     },
     F = {
-        stampImage = "../../Sprite/result_stamp_you_re_fired.png",
+        stampElementId = "result_grade_stamp_fired",
         stampOriginalWidth = 1258,
         stampOriginalHeight = 653,
         resultSfx = "sfx_result_low",
@@ -454,7 +466,7 @@ local function build_result_payload()
         collectedCount = count_value,
         totalScoreText = format_score(total_score),
         resultSfx = preset.resultSfx,
-        stampImage = preset.stampImage,
+        stampElementId = preset.stampElementId,
         stampOriginalWidth = preset.stampOriginalWidth,
         stampOriginalHeight = preset.stampOriginalHeight,
     }
@@ -477,7 +489,10 @@ local function apply_payload()
 
     set_text("result_total_value", current_payload.totalScoreText)
     set_text("result_grade_letter", current_payload.rank)
-    set_property("result_grade_stamp_image", "src", current_payload.stampImage)
+
+    for _, element_id in ipairs(GRADE_STAMP_ELEMENT_IDS) do
+        set_display(element_id, element_id == current_payload.stampElementId)
+    end
 end
 
 -- 클립보드 stage와 클립보드 이미지의 위치/크기/스케일을 적용한다.
@@ -639,8 +654,11 @@ local function apply_stamp_layout()
         string.format("rotate(%.1fdeg)", LAYOUT.gradeStamp.rotation)
     )
 
-    set_px("result_grade_stamp_image", "width", LAYOUT.gradeStamp.width)
-    set_px("result_grade_stamp_image", "height", grade_stamp_height)
+    -- 사이징은 현재 등급의 활성 스탬프에만 적용 (나머지 2장은 display none)
+    local stamp_element_id = current_payload ~= nil and current_payload.stampElementId
+        or "result_grade_stamp_fired"
+    set_px(stamp_element_id, "width", LAYOUT.gradeStamp.width)
+    set_px(stamp_element_id, "height", grade_stamp_height)
 end
 
 -- 현재 state와 LAYOUT을 바탕으로 모든 시각 상태를 한 번에 반영한다.
@@ -1039,11 +1057,38 @@ function M.SetDebugPanelEnabled(enabled)
     apply_debug_panel_state()
 end
 
+-- 커서 스프라이트 갱신 — 마우스가 켜진 동안만 표시하고 위치/클릭 상태를 따라간다.
+-- (Result 씬은 Tick이 살아있어 매 프레임 호출로 충분 — Title 메뉴와 같은 방식)
+local function update_cursor_sprite()
+    if widget == nil then
+        return
+    end
+
+    if not mouse_enabled then
+        set_display("result_cursor_normal", false)
+        set_display("result_cursor_click", false)
+        return
+    end
+
+    local left = string.format("%dpx", Input.GetMouseX() - CURSOR_SIZE / 2)
+    local top = string.format("%dpx", Input.GetMouseY() - CURSOR_SIZE / 2)
+    set_property("result_cursor_normal", "left", left)
+    set_property("result_cursor_normal", "top", top)
+    set_property("result_cursor_click", "left", left)
+    set_property("result_cursor_click", "top", top)
+
+    local is_click = Input.GetKey(VK_LBUTTON)
+    set_display("result_cursor_normal", not is_click)
+    set_display("result_cursor_click", is_click)
+end
+
 -- 매 프레임 호출해서 현재 phase에 맞는 애니메이션을 진행한다.
 function M.Update(dt)
     if widget == nil then
         return
     end
+
+    update_cursor_sprite()
 
     local delta = math.max(0.0, tonumber(dt) or 0.0)
     phase_elapsed = phase_elapsed + delta

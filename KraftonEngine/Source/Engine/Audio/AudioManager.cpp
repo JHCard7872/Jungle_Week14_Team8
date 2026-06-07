@@ -31,6 +31,7 @@ void FAudioManager::Shutdown()
 	{
 		MasterGroup = nullptr;
 		BGMChannel = nullptr;
+		ManagedChannels.clear();
 		LoopChannels.clear();
 		Audios.clear();
 		return;
@@ -115,6 +116,29 @@ void FAudioManager::PlayAudio(const FString& Key, float Volume)
 	}
 }
 
+void FAudioManager::PlayManagedAudio(const FString& Key, const FString& ChannelName, float Volume)
+{
+	if (!System || !Audios.contains(Key) || ChannelName.empty())
+	{
+		return;
+	}
+
+	if (FMOD::Channel* ExistingChannel = FindPlayingManagedChannel(ChannelName))
+	{
+		ExistingChannel->stop();
+		ManagedChannels.erase(ChannelName);
+	}
+
+	FMOD::Channel* Channel = nullptr;
+	System->playSound(Audios[Key].Sound, nullptr, false, &Channel);
+
+	if (Channel)
+	{
+		Channel->setVolume(std::clamp(Volume, 0.0f, 1.0f));
+		ManagedChannels[ChannelName] = Channel;
+	}
+}
+
 void FAudioManager::PlayBGM(const FString& Key, float Volume)
 {
 	if (!System || !Audios.contains(Key))
@@ -131,6 +155,23 @@ void FAudioManager::PlayBGM(const FString& Key, float Volume)
 	}
 }
 
+void FAudioManager::SetBGMVolume(float Volume)
+{
+	if (!BGMChannel)
+	{
+		return;
+	}
+
+	bool bIsPlaying = false;
+	if (BGMChannel->isPlaying(&bIsPlaying) != FMOD_OK || !bIsPlaying)
+	{
+		BGMChannel = nullptr;
+		return;
+	}
+
+	BGMChannel->setVolume(std::clamp(Volume, 0.0f, 1.0f));
+}
+
 void FAudioManager::StopBGM()
 {
 	if (BGMChannel)
@@ -145,11 +186,20 @@ void FAudioManager::StopAllPlayback()
 	if (!System)
 	{
 		BGMChannel = nullptr;
+		ManagedChannels.clear();
 		LoopChannels.clear();
 		return;
 	}
 
 	StopBGM();
+	for (auto& Pair : ManagedChannels)
+	{
+		if (Pair.second)
+		{
+			Pair.second->stop();
+		}
+	}
+	ManagedChannels.clear();
 	StopAllLoops();
 
 	// Master group stop catches fire-and-forget one-shot channels that are not
@@ -203,6 +253,20 @@ void FAudioManager::StopLoop(const FString& LoopName)
 	LoopChannels.erase(LoopName);
 }
 
+void FAudioManager::StopManagedAudio(const FString& ChannelName)
+{
+	if (!ManagedChannels.contains(ChannelName))
+	{
+		return;
+	}
+
+	if (ManagedChannels[ChannelName])
+	{
+		ManagedChannels[ChannelName]->stop();
+	}
+	ManagedChannels.erase(ChannelName);
+}
+
 void FAudioManager::StopAllLoops()
 {
 	for (auto& Pair : LoopChannels)
@@ -234,6 +298,24 @@ void FAudioManager::SetLoopPitch(const FString& LoopName, float Pitch)
 bool FAudioManager::IsLoopPlaying(const FString& LoopName)
 {
 	return FindPlayingLoopChannel(LoopName) != nullptr;
+}
+
+FMOD::Channel* FAudioManager::FindPlayingManagedChannel(const FString& ChannelName)
+{
+	if (!ManagedChannels.contains(ChannelName))
+	{
+		return nullptr;
+	}
+
+	FMOD::Channel* Channel = ManagedChannels[ChannelName];
+	bool bIsPlaying = false;
+	if (!Channel || Channel->isPlaying(&bIsPlaying) != FMOD_OK || !bIsPlaying)
+	{
+		ManagedChannels.erase(ChannelName);
+		return nullptr;
+	}
+
+	return Channel;
 }
 
 FMOD::Channel* FAudioManager::FindPlayingLoopChannel(const FString& LoopName)
@@ -291,12 +373,14 @@ void FAudioManager::LoadDefaultAudios()
 	LoadAudio("sfx_result_high", "SfxResultHigh.mp3");
 	LoadAudio("sfx_result_medium", "SfxResultMedium.mp3");
 	LoadAudio("sfx_result_low", "SfxResultLow.mp3");
-	LoadAudio("sfx_gun_shoot", "SfxGunShoot.mp3");
+	LoadAudio("sfx_gun_shoot", "SfxGunCollectShoot.mp3");
+	LoadAudio("sfx_gun_attack_shoot", "SfxGunAttackShoot.mp3");
+	LoadAudio("sfx_gun_mode_change", "SfxGunModeChange.mp3");
 	LoadAudio("sfx_beam_grab", "SfxBeamGrab.mp3");
 	LoadAudio("sfx_collect", "SfxCollect.mp3");
 	LoadAudio("sfx_hit", "SfxHit.mp3");
 	LoadAudio("sfx_ui_click", "SfxUiClick.mp3");
 	LoadAudio("sfx_ui_hover", "SfxUiHover.mp3");
 	LoadAudio("sfx_game_over", "SfxGameOver.mp3");
-	LoadAudio("sfx_revive", "SfxRevive.mp3");
+	LoadAudio("sfx_revive", "SfxRevivedRagdoll.mp3");
 }

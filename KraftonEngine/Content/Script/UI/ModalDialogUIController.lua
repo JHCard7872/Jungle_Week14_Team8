@@ -9,6 +9,9 @@
 local UI_DOCUMENT_PATH = "Content/UI/Common/modal_dialog.rml"
 local DEFAULT_Z_ORDER = 260
 local UI_CLICK_KEY = "sfx_ui_click"
+local VK_LBUTTON = 0x01
+-- rcss .modal_cursor_image의 width/height와 같은 값 — 이미지 중앙을 클릭 지점에 맞추는 데 쓴다
+local CURSOR_SIZE = 64
 
 local Settings = require("Data/UserSettings")
 
@@ -20,6 +23,8 @@ local visible = false
 local current_z_order = DEFAULT_Z_ORDER
 local on_left = nil
 local on_right = nil
+-- 커서 스프라이트 사용 여부 (Pause처럼 OS 커서를 숨긴 채 뜨는 모달이 켠다)
+local show_cursor = false
 
 local function set_display(element_id, is_visible)
     if widget == nil then
@@ -43,6 +48,30 @@ local function play_ui_click()
     end
 end
 
+-- 커서 스프라이트를 마우스 위치(중앙 핫스팟)로 옮기고 클릭 상태에 맞는 한 장만 켠다.
+-- 일시정지 중엔 씬 Tick이 멈추므로 mousemove 이벤트(아래 bind_actions)로만 갱신된다.
+local function update_cursor_sprite()
+    if widget == nil or not (show_cursor and visible) then
+        return
+    end
+
+    local left = string.format("%dpx", Input.GetMouseX() - CURSOR_SIZE / 2)
+    local top = string.format("%dpx", Input.GetMouseY() - CURSOR_SIZE / 2)
+    widget:SetProperty("modal_cursor_normal", "left", left)
+    widget:SetProperty("modal_cursor_normal", "top", top)
+    widget:SetProperty("modal_cursor_click", "left", left)
+    widget:SetProperty("modal_cursor_click", "top", top)
+
+    local is_click = Input.GetKey(VK_LBUTTON)
+    set_display("modal_cursor_normal", not is_click)
+    set_display("modal_cursor_click", is_click)
+end
+
+local function hide_cursor_sprite()
+    set_display("modal_cursor_normal", false)
+    set_display("modal_cursor_click", false)
+end
+
 local function bind_actions()
     if widget == nil or bindings_initialized or widget.bind_click == nil then
         return
@@ -61,6 +90,11 @@ local function bind_actions()
             on_right()
         end
     end)
+
+    -- modal_root가 전체 화면이라 모든 마우스 이동이 여기로 버블된다
+    if widget.bind_mousemove ~= nil then
+        widget:bind_mousemove("modal_root", update_cursor_sprite)
+    end
 
     bindings_initialized = true
 end
@@ -95,6 +129,7 @@ function M.Create(options)
     current_z_order = options.zOrder or DEFAULT_Z_ORDER
     on_left = options.onLeft
     on_right = options.onRight
+    show_cursor = options.showCursor == true
 
     if ensure_widget() == nil then
         return nil
@@ -128,6 +163,7 @@ function M.Show()
 
     widget:SetWantsMouse(true)
     set_display("modal_root", true)
+    update_cursor_sprite()   -- 마우스가 안 움직여도 첫 위치는 보여야 한다
 end
 
 function M.Hide()
@@ -139,6 +175,7 @@ function M.Hide()
 
     widget:SetWantsMouse(false)
     set_display("modal_root", false)
+    hide_cursor_sprite()
 end
 
 function M.IsVisible()
@@ -156,6 +193,7 @@ function M.Destroy()
     current_z_order = DEFAULT_Z_ORDER
     on_left = nil
     on_right = nil
+    show_cursor = false
 end
 
 return M

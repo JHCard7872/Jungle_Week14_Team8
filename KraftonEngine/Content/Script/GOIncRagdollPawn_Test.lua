@@ -11,6 +11,7 @@ local STATE_DEAD = "DeadRagdoll"
 local STATE_REVIVING = "Reviving"
 local STATE_ALIVE = "AliveFlee"
 local STATE_FLEE_STOPPING = "FleeStopping"
+local UserSettings = require("Data/UserSettings")
 
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
@@ -59,6 +60,9 @@ local state = STATE_DEAD
 
 local initialMeshRelativeLocation = nil
 local initialMeshWorldOffsetFromActor = nil
+local reviveMeshRelativeLocationStart = nil
+local reviveMeshRelativeLocationTarget = nil
+local bReviveMeshRelativeLocationBlend = false
 
 local fleeStopElapsed = 0.0
 local fleeStopStartSpeed = 0.0
@@ -182,6 +186,19 @@ local function apply_random_ragdoll_impulse(strength, context)
     if mesh.WakeAllRagdollBodies ~= nil then
         mesh:WakeAllRagdollBodies()
     end
+end
+
+local function play_revive_sfx()
+    if AudioManager == nil or AudioManager.Play == nil then
+        return
+    end
+
+    local volume = 1.0
+    if UserSettings ~= nil and UserSettings.GetSfxVolumeScalar ~= nil then
+        volume = UserSettings.GetSfxVolumeScalar()
+    end
+
+    AudioManager.Play("sfx_revive", volume)
 end
 
 local function apply_beam_shock_impulse()
@@ -695,6 +712,78 @@ local function smoothstep(alpha)
     return alpha * alpha * (3.0 - 2.0 * alpha)
 end
 
+local function copy_vector(value)
+    if value == nil then
+        return nil
+    end
+
+    return Vector.new(value.X, value.Y, value.Z)
+end
+
+local function lerp_vector(fromValue, toValue, alpha)
+    if fromValue == nil then
+        return copy_vector(toValue)
+    end
+
+    if toValue == nil then
+        return copy_vector(fromValue)
+    end
+
+    alpha = clamp01(alpha)
+
+    return Vector.new(
+        fromValue.X + (toValue.X - fromValue.X) * alpha,
+        fromValue.Y + (toValue.Y - fromValue.Y) * alpha,
+        fromValue.Z + (toValue.Z - fromValue.Z) * alpha
+    )
+end
+
+local function cancel_revive_mesh_relative_location_blend()
+    bReviveMeshRelativeLocationBlend = false
+    reviveMeshRelativeLocationStart = nil
+    reviveMeshRelativeLocationTarget = nil
+end
+
+local function begin_revive_mesh_relative_location_blend()
+    cancel_revive_mesh_relative_location_blend()
+
+    if mesh == nil or initialMeshRelativeLocation == nil then
+        return
+    end
+
+    reviveMeshRelativeLocationStart = copy_vector(mesh.RelativeLocation)
+    reviveMeshRelativeLocationTarget = copy_vector(initialMeshRelativeLocation)
+
+    if reviveMeshRelativeLocationStart == nil or reviveMeshRelativeLocationTarget == nil then
+        return
+    end
+
+    bReviveMeshRelativeLocationBlend = true
+end
+
+local function tick_revive_mesh_relative_location_blend(alpha)
+    if not bReviveMeshRelativeLocationBlend then
+        return
+    end
+
+    if mesh == nil or reviveMeshRelativeLocationStart == nil or reviveMeshRelativeLocationTarget == nil then
+        cancel_revive_mesh_relative_location_blend()
+        return
+    end
+
+    local smoothAlpha = smoothstep(alpha)
+    mesh.RelativeLocation = lerp_vector(
+        reviveMeshRelativeLocationStart,
+        reviveMeshRelativeLocationTarget,
+        smoothAlpha
+    )
+end
+
+local function finish_revive_mesh_relative_location_blend()
+    cancel_revive_mesh_relative_location_blend()
+    restore_initial_mesh_relative_location()
+end
+
 local function normalize_angle_degrees(angle)
     while angle > 180.0 do
         angle = angle - 360.0
@@ -760,6 +849,7 @@ function EnterDeadRagdoll()
     reviveElapsed = 0.0
     reviveStartYaw = obj.Rotation.Z
     reviveTargetYaw = obj.Rotation.Z
+    cancel_revive_mesh_relative_location_blend()
 
     if pawn ~= nil and pawn.EnterDeadRagdollState ~= nil then
         pawn:EnterDeadRagdollState()
@@ -884,9 +974,12 @@ function EnterReviving()
         if mesh ~= nil and mesh.SetRagdollRecoveryDuration ~= nil then
             mesh:SetRagdollRecoveryDuration(REVIVE_BLEND_DURATION)
         end
+        -- Reviving 진입이 실제 flee animation / recovery target pose를 거는 시점이다.
+        -- 부활 SFX는 이 타이밍에 맞춰 재생한다.
+        play_revive_sfx()
         pawn:EnterRevivingState()
         set_flee_animation_play_rate(1.0)
-        restore_initial_mesh_relative_location()
+        begin_revive_mesh_relative_location_blend()
         return
     end
 
@@ -908,6 +1001,7 @@ function EnterReviving()
 
     -- 목표 animation pose가 있어야 recovery가 ragdoll pose -> animation pose로 보간된다.
     if pawn ~= nil then
+        play_revive_sfx()
         pawn:PlayFleeAnimation()
     end
     set_flee_animation_play_rate(1.0)
@@ -927,7 +1021,7 @@ function EnterReviving()
         mesh:SetRagdollEnabled(false)
         mesh:SetCollisionEnabled("NoCollision")
 
-        restore_initial_mesh_relative_location()
+        begin_revive_mesh_relative_location_blend()
     end
 end
 
@@ -969,7 +1063,7 @@ function EnterAliveFlee()
         end
     end
 
-    restore_initial_mesh_relative_location()
+    finish_revive_mesh_relative_location_blend()
     set_flee_animation_play_rate(1.0)
 
     -- Reviving yaw blend의 마지막 값을 확정해 첫 AliveFlee Tick에서 회전이 튀지 않게 한다.
@@ -985,6 +1079,8 @@ local function TickReviving(dt)
     local yawAlpha = smoothstep(reviveAlpha)
     local yaw = lerp_yaw_degrees(reviveStartYaw, reviveTargetYaw, yawAlpha)
     obj.Rotation = Vector.new(0.0, 0.0, yaw)
+
+    tick_revive_mesh_relative_location_blend(reviveAlpha)
 
     if mesh ~= nil and mesh.IsRagdollRecovering ~= nil then
         -- C++의 SkeletalPhysicsMode/Recovering 상태를 직접 확인한다.

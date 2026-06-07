@@ -18,7 +18,7 @@ function BeginPlay()
         name = "Red Plumber",
         weightText = "12.5kg",
         scoreText = "+300",
-        imagePath = "../../Sprite/id_card_sample.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
     })
 
     Engine.SetCursorVisible(true)
@@ -28,6 +28,7 @@ function BeginPlay()
 end
 
 function Tick(dt)
+    HUD.Update(dt)
 end
 
 function EndPlay()

@@ -20,9 +20,21 @@ return {
     KEY_LBUTTON = 0x01, -- 발사 입력 키: 마우스 왼쪽 버튼
     KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
 
+    -- 게임패드 (XInput VK 코드 — Input.GetKey* 그대로 사용 가능. 이동/시점은 스틱 축 별도)
+    PAD_KEY_A  = 0xC3, -- A 버튼: 점프 (메뉴에선 엔진이 왼클릭으로 합성)
+    PAD_KEY_Y  = 0xC6, -- Y 버튼: 무기 교체
+    PAD_KEY_RT = 0xCA, -- 오른쪽 트리거(임계값 디지털): 그랩/발사
+    PAD_KEY_LB = 0xC8, -- 왼쪽 숄더: 그랩 거리 가까이
+    PAD_KEY_LT = 0xC9, -- 왼쪽 트리거(임계값 디지털): 그랩 거리 멀리
+    PAD_LOOK_YAW_DEG_PER_SEC   = 180.0, -- 우스틱 풀기울임 시 좌우 회전 속도(도/초)
+    PAD_LOOK_PITCH_DEG_PER_SEC = 120.0, -- 우스틱 풀기울임 시 상하 회전 속도(도/초). 위로 밀면 위를 본다
+    PAD_DISTANCE_NOTCHES_PER_SEC = 6.0, -- LB/LT를 누르고 있는 동안 초당 휠 노치 환산량
+
     CROSSHAIR_HOLD_ROTATION_INTERVAL = 0.08,
     CROSSHAIR_HOLD_ROTATION_STEP = 18.0,
-    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/id_card_sample.png",
+    COLLECT_FIRE_SFX_INTERVAL = 0.10,
+    COLLECT_FIRE_SFX_VOLUME_SCALE = 1.0,
+    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
@@ -109,6 +121,7 @@ return {
     BEAM_SOURCE_UP_BIAS = 0.0,        -- Beam 시작점 상하 미세 보정
     BEAM_SOURCE_PITCH_INFLUENCE = 0.9, -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
     BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45, -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
+    BEAM_SOURCE_PITCH_BLEND_DEGREES = 15.0, -- 위 두 influence를 잇는 보간 구간(도). 수평(pitch 0)에서 즉시 점프하면 빔이 꺾여 보인다
     BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
     BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율

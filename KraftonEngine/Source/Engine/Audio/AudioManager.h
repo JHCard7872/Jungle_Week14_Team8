@@ -15,9 +15,12 @@ public:
 
 	bool LoadAudio(const FString& Key, const FString& Path, bool bLoop = false);
 	void PlayAudio(const FString& Key, float Volume = 1.0f);
+	void PlayManagedAudio(const FString& Key, const FString& ChannelName, float Volume = 1.0f);
 	void PlayBGM(const FString& Key, float Volume = 1.0f);
+	void SetBGMVolume(float Volume);
 	void StopBGM();
 	void StopAllPlayback();
+	void StopManagedAudio(const FString& ChannelName);
 	void PlayLoop(const FString& Key, const FString& LoopName, float Volume = 1.0f, float Pitch = 1.0f);
 	void StopLoop(const FString& LoopName);
 	void StopAllLoops();
@@ -29,6 +32,7 @@ public:
 
 private:
 	void LoadDefaultAudios();
+	FMOD::Channel* FindPlayingManagedChannel(const FString& ChannelName);
 	FMOD::Channel* FindPlayingLoopChannel(const FString& LoopName);
 
 private:
@@ -48,5 +52,6 @@ private:
 	FMOD::Channel* BGMChannel = nullptr;
 
 	TMap<FString, FLoadedAudio> Audios;
+	TMap<FString, FMOD::Channel*> ManagedChannels;
 	TMap<FString, FMOD::Channel*> LoopChannels;
 };

@@ -25,11 +25,13 @@ local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프
 
 -- P: 일시정지 진입용 보조 키. Key 테이블에 정의가 없어 VK 코드를 직접 사용한다.
 local KEY_P = 0x50
+-- 게임패드 Menu(Start) 버튼 — XInput VK 코드 (ESC와 동일하게 일시정지 진입)
+local PAD_KEY_MENU = 0xCF
 
 -- PauseUI.Show/Hide가 widget:SetWantsMouse를 토글하면 GameViewportClient가
 -- 자동으로 커서 캡처/중앙 고정을 풀거나 다시 건다 (AnyViewportWidgetWantsMouse 참고).
--- 거기에 더해 평소 게임플레이에선 OS 커서를 숨겨두므로(크로스헤어 대신),
--- pause 중엔 보이게/해제 시엔 다시 숨기게 명시적으로 맞춰준다.
+-- OS 커서는 pause 중에도 계속 숨긴다 — 모달의 커서 스프라이트(aim 이미지, showCursor 옵션)가
+-- 마우스를 대신 따라다닌다 (Title 메뉴와 같은 방식).
 -- ESC/P는 진입 전용이다 — 다시 눌러도 풀리지 않으며, Continue 버튼만이 해제 수단이다.
 local function enterPause()
     print("[Pause] enterPause() called, IsPaused=" .. tostring(Engine.IsPaused()))
@@ -38,7 +40,7 @@ local function enterPause()
     Engine.PauseGame()
     Session.inputEnabled = false
     PauseUI.Show()
-    Engine.SetCursorVisible(true)
+    Engine.SetCursorVisible(false)   -- OS 화살표 숨김 — 모달의 커서 스프라이트가 대신한다
 end
 
 local function exitPause()
@@ -49,7 +51,6 @@ local function exitPause()
     Engine.ResumeGame()
     Session.inputEnabled = true
     PauseUI.Hide()
-    Engine.SetCursorVisible(false)
 end
 
 function BeginPlay()
@@ -82,8 +83,8 @@ function Tick(dt)
     UpdateCoroutines(dt)   -- 코루틴 심장 — 반드시 첫 줄
     if ended then return end
 
-    -- P: 일시정지 진입 전용 (pause 중엔 이 Tick 자체가 멈추므로 재입력으로는 못 푼다 — Continue 버튼만 해제 가능)
-    if Input.GetKeyDown(KEY_P) then
+    -- P/패드 Menu: 일시정지 진입 전용 (pause 중엔 이 Tick 자체가 멈추므로 재입력으로는 못 푼다 — Continue 버튼만 해제 가능)
+    if Input.GetKeyDown(KEY_P) or Input.GetKeyDown(PAD_KEY_MENU) then
         enterPause()
     end
 
@@ -94,7 +95,7 @@ function Tick(dt)
     Session.timeRemaining = Session.timeRemaining - dt
     LoadMgr.Update(dt)
 
-    HUD.UpdateFromSession()
+    HUD.UpdateFromSession(dt)
 
     -- 종료 판정: 시간 초과 또는 서버 과부하
     if Session.timeRemaining <= 0 or Session.load >= Config.maxServerLoad then
