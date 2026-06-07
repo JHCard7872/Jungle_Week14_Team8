@@ -1312,6 +1312,71 @@ void FParticleSystemEditorWidget::RenderEmittersPanel(float Width, float Height)
                             }
                         );
                         AddItem(
+                            "Rotation (Sprite)",
+                            !bMeshType && !bBeamType && !bRibbonType,
+                            HasModuleOfType<UParticleModuleRotation>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleRotation>(L);
+                                N->bEnabled     = true;
+                                N->RotationMin  = 0.0f;
+                                N->RotationMax  = 1.0f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Rotation Rate (Sprite)",
+                            !bMeshType && !bBeamType && !bRibbonType,
+                            HasModuleOfType<UParticleModuleRotationRate>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleRotationRate>(L);
+                                N->bEnabled         = true;
+                                N->RotationRateMin  = 0.1f;
+                                N->RotationRateMax  = 0.5f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Vortex Rotation",
+                            !bBeamType && !bRibbonType,
+                            HasModuleOfType<UParticleModuleVortexRotation>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleVortexRotation>(L);
+                                N->bEnabled          = true;
+                                N->TurnsPerSecondMin = 0.5f;
+                                N->TurnsPerSecondMax = 1.0f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Event Generator",
+                            true,
+                            HasModuleOfType<UParticleModuleEventGenerator>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleEventGenerator>(L);
+                                N->bEnabled             = true;
+                                N->bGenerateDeathEvents = true;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Event Receiver Spawn",
+                            true,
+                            HasModuleOfType<UParticleModuleEventReceiverSpawn>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleEventReceiverSpawn>(L);
+                                N->bEnabled          = true;
+                                N->bAcceptDeathEvents = true;
+                                N->SpawnCountMin     = 1;
+                                N->SpawnCountMax     = 2;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
                             "Collision",
                             true,
                             HasModuleOfType<UParticleModuleCollision>(LOD0),

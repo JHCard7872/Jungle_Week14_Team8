@@ -164,11 +164,15 @@
         if (Cast<UParticleModuleSize>(Module)) return "Size";
         if (Cast<UParticleModuleColorOverLife>(Module)) return "Color Over Life";
         if (Cast<UParticleModuleEventGenerator>(Module)) return "Event Generator";
+        if (Cast<UParticleModuleEventReceiverSpawn>(Module)) return "Event Receiver Spawn";
         if (Cast<UParticleModuleCollision>(Module)) return "Collision";
         if (Cast<UParticleModuleColor>(Module)) return "Color";
         if (Cast<UParticleModuleMeshMaterial>(Module)) return "Mesh Material";
         if (Cast<UParticleModuleMeshRotation>(Module)) return "Mesh Rotation";
         if (Cast<UParticleModuleMeshRotationRate>(Module)) return "Mesh Rotation Rate";
+        if (Cast<UParticleModuleRotation>(Module)) return "Rotation (Sprite)";
+        if (Cast<UParticleModuleRotationRate>(Module)) return "Rotation Rate (Sprite)";
+        if (Cast<UParticleModuleVortexRotation>(Module)) return "Vortex Rotation";
         if (Cast<UParticleModuleSpawnPerUnit>(Module)) return "Spawn Per Unit";
         if (Cast<UParticleModuleTrailSource>(Module)) return "Trail Source";
         if (Cast<UParticleModuleBeamSource>(Module)) return "Beam Source";
@@ -199,9 +203,13 @@
         if (Cast<UParticleModuleColor>(Module))            return IM_COL32( 80, 130, 170, 100); // blue
         if (Cast<UParticleModuleCollision>(Module))        return IM_COL32(170,  90,  50, 100); // brown
         if (Cast<UParticleModuleEventGenerator>(Module))   return IM_COL32(160,  95, 130, 100); // pink
+        if (Cast<UParticleModuleEventReceiverSpawn>(Module)) return IM_COL32(160,  95, 130, 100); // pink
         if (Cast<UParticleModuleMeshMaterial>(Module))     return IM_COL32( 60,  80, 130, 110);
         if (Cast<UParticleModuleMeshRotation>(Module))     return IM_COL32( 60, 100, 150, 110);
         if (Cast<UParticleModuleMeshRotationRate>(Module)) return IM_COL32( 60, 100, 150, 110);
+        if (Cast<UParticleModuleRotation>(Module))         return IM_COL32( 60, 100, 150, 110);
+        if (Cast<UParticleModuleRotationRate>(Module))     return IM_COL32( 60, 100, 150, 110);
+        if (Cast<UParticleModuleVortexRotation>(Module))   return IM_COL32( 60, 100, 150, 110);
         if (Cast<UParticleModuleSpawnPerUnit>(Module))     return IM_COL32(110,  90, 140, 110);
         if (Cast<UParticleModuleTrailSource>(Module))      return IM_COL32(110,  90, 140, 110);
         if (Cast<UParticleModuleBeamSource>(Module))       return IM_COL32(130,  75,  90, 110);
