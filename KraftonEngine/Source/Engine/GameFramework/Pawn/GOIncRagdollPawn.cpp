@@ -682,12 +682,17 @@ void AGOIncRagdollPawn::EnterRevivingState()
 	SetReviveTriggerCapsuleEnabled(false);
 	SetAliveCollisionCapsuleEnabled(false);
 
-	// 목표 animation pose가 있어야 recovery가 ragdoll pose -> animation pose로 보간된다.
+	// Recovery target pose는 필요하므로 animation asset은 세팅한다.
 	PlayFleeAnimation();
+
+	// 하지만 Reviving blend 중에는 animation 시간이 흐르지 않게 멈춘다.
+	if (Mesh)
+	{
+		Mesh->SetPlaying(false);
+	}
 
 	if (Mesh)
 	{
-		// SetRagdollEnabled(false) 내부 recovery가 현재 ragdoll pose를 잡도록 둔다.
 		Mesh->SetRagdollGravityEnabled(false);
 		Mesh->SetRagdollEnabled(false);
 		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);

@@ -1,4 +1,4 @@
-#include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
+﻿#include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
 
 FGOIncRagdollCharacterConfig AGOIncPikachuRagdollPawn::MakeCharacterConfig() const
 {
@@ -12,11 +12,11 @@ FGOIncRagdollCharacterConfig AGOIncPikachuRagdollPawn::MakeCharacterConfig() con
 	Config.FleeAnimationPath = "Content/Data/Pikachu/Pikachu_GLTF_created_0_Walking.uasset";
 	Config.LuaScriptFile = "GOIncRagdollPawn_Test.lua";
 
-	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.8f);
+	Config.MeshRelativeLocation = FVector(0.0f, 0.0f, -0.6f);
 	Config.MeshRelativeScale = FVector(1.0f, 1.0f, 1.0f);
 
-	Config.AliveCapsuleRadius = 1.0f;
-	Config.AliveCapsuleHalfHeight = 1.2f;
+	Config.AliveCapsuleRadius = 0.4f;
+	Config.AliveCapsuleHalfHeight = 0.6f;
 	Config.ReviveTriggerCapsuleRadius = 4.0f;
 	Config.ReviveTriggerCapsuleHalfHeight = 4.0f;
 
