@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -829,6 +829,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\Viewport\GameViewportClient.cpp" />
     <ClCompile Include="Source\Engine\Viewport\Viewport.cpp" />
     <ClCompile Include="Source\Engine\Viewport\ViewportClient.cpp" />
+    <ClCompile Include="Source\Game\Actors\GOIncTrashBox.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp" />
     <ClCompile Include="Source\Game\Actors\SummonPortalActor.cpp" />
     <ClCompile Include="Source\Game\GameActorPlacements.cpp" />
@@ -1370,6 +1371,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\Viewport\GameViewportClient.h" />
     <ClInclude Include="Source\Engine\Viewport\Viewport.h" />
     <ClInclude Include="Source\Engine\Viewport\ViewportClient.h" />
+    <ClInclude Include="Source\Game\Actors\GOIncTrashBox.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTruck.h" />
     <ClInclude Include="Source\Game\Actors\SummonPortalActor.h" />
     <ClInclude Include="Source\Game\GameActorPlacements.h" />

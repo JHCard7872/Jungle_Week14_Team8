@@ -4,6 +4,8 @@
 #include "Component/Primitive/ParticleSystemComponent.h"
 #include "Component/Primitive/StaticMeshComponent.h"
 #include "Component/SceneComponent.h"
+#include "Component/Script/LuaScriptComponent.h"
+#include "Component/Shape/BoxComponent.h"
 #include "Core/Logging/Log.h"
 #include "Core/Types/CollisionTypes.h"
 #include "Materials/MaterialManager.h"
@@ -20,6 +22,7 @@ namespace
 	const FString SummonPortalTemplatePath = "Content/Particle/FX_StrangePortal.uasset";
 	const FString ShaftPlaneMeshPath = "Content/Data/BasicShape/Plane.obj";
 	const FString ShaftMaterialPath = "Content/Material/FX_LightShaftMesh.mat";
+	const FString CollectorLuaScriptFile = "CollectorBehavior.lua";
 
 	constexpr int32 ShaftCount = 30;
 	constexpr float ShaftRingRadius = 2.05f; // FX_StrangePortal 바닥 링(Radius 2.0~2.1) 위에 걸치는 값
@@ -95,4 +98,24 @@ void ASummonPortalActor::InitDefaultComponents()
 	{
 		UE_LOG("[SummonPortal] 파티클 로드 실패. Path=%s", SummonPortalTemplatePath.c_str());
 	}
+
+	// 5) CollectTrigger — 링 안쪽 수거 판정 박스 (Play.Scene 튜닝값을 extent에 구움).
+	//    Root가 자전하므로 박스도 같이 돌지만 정사각이라 영향 미미.
+	//    QueryOnly·Kinematic·GenerateOverlapEvents=true 조합 — 하나라도 빠지면
+	//    OnOverlap이 안 와서 수거가 조용히 죽는다.
+	UBoxComponent* Trigger = AddComponent<UBoxComponent>();
+	Trigger->SetFName(FName("CollectTrigger"));
+	Trigger->AttachToComponent(Root);
+	Trigger->SetRelativeLocation(FVector(0.0f, 0.0f, 1.75f));
+	Trigger->SetBoxExtent(FVector(1.4f, 1.4f, 1.75f));
+	Trigger->SetSimulatePhysics(false);
+	Trigger->SetKinematicPhysics(true);
+	Trigger->SetGenerateOverlapEvents(true);
+	Trigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	Trigger->SetCollisionObjectType(ECollisionChannel::Trigger);
+	Trigger->SetCollisionResponseToAllChannels(ECollisionResponse::Overlap);
+
+	// 6) LuaScript — 수거(점수/미션/소멸) 처리 전부 Lua에서.
+	ULuaScriptComponent* Script = AddComponent<ULuaScriptComponent>();
+	Script->SetScriptFile(CollectorLuaScriptFile);
 }

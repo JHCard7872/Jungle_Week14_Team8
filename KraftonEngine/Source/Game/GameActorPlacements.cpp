@@ -2,6 +2,7 @@
 
 #include "Engine/Runtime/ActorPlacementRegistry.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/Actors/GOIncTrashBox.h"
 #include "Game/Actors/GOIncTruck.h"
 #include "Game/Actors/SummonPortalActor.h"
 #include "Game/GOIncRagdollCharacterRegistry.h"
@@ -89,6 +90,19 @@ void RegisterGameActorPlacements()
 				Truck->SetActorLocation(Location);
 			}
 			return Truck;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc TrashBox",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncTrashBox* TrashBox = World ? World->SpawnActor<AGOIncTrashBox>() : nullptr;
+			if (TrashBox)
+			{
+				TrashBox->InitDefaultComponents();
+				TrashBox->SetActorLocation(Location);
+			}
+			return TrashBox;
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(
