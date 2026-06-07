@@ -7,6 +7,7 @@
 <body>
     <div id="result_root">
         <img id="result_background" src="../../Sprite/result_background.png" />
+        <img id="result_pre_popup_shadow" src="../../Sprite/result_pre_popup_shadow.png" />
 
         <div id="result_clipboard_stage">
             <img id="result_clipboard_image" src="../../Sprite/result_clipboard.png" />

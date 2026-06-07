@@ -63,6 +63,7 @@ local function show_save_prompt()
     waiting_for_next = false
     save_prompt_open = true
     ResultUI.SetWantsMouse(false)
+    ResultUI.SetPrePopupShadowVisible(false)
     -- OS 커서 대신 모달의 커서 스프라이트(showCursor)가 따라다닌다
 
     Modal.Create({
