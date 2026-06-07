@@ -64,6 +64,9 @@ LRESULT FWindowsApplication::WndProc(HWND hWnd, unsigned int Msg, WPARAM wParam,
 	case WM_MOUSEWHEEL:
 		InputSystem::Get().AddScrollDelta(GET_WHEEL_DELTA_WPARAM(wParam));
 		return 0;
+	case WM_CHAR:
+		InputSystem::Get().AddTextChar(static_cast<wchar_t>(wParam));
+		return 0;
 	case WM_INPUT:
 	{
 		UINT DataSize = 0;
