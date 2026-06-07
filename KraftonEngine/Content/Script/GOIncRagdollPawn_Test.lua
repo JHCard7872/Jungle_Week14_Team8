@@ -26,6 +26,8 @@ local RED_BEAM_JITTER_LINEAR_STRENGTH = 0.015
 local RED_BEAM_JITTER_TORQUE_STRENGTH = 0.55
 local RED_BEAM_JITTER_ROOT_SCALE = 0.08
 local RED_BEAM_JITTER_MAX_LINEAR_SPEED = 0.30
+local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS = 18.00
+local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE = 1.60
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -77,6 +79,9 @@ local beamShockElapsed = BEAM_SHOCK_INTERVAL
 local redBeamShockRemaining = 0.0
 local redBeamShockElapsed = RED_BEAM_SHOCK_INTERVAL
 local bKilledByRedBeam = false
+local pendingRedBeamKnockbackDirection = nil
+local pendingRedBeamKnockbackImpulsePerMass = 0.0
+local pendingRedBeamKnockbackCenterBodyScale = RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE
 
 local FLEE_ROTATION_YAW_OFFSET_DEGREES = 0.0
 
@@ -241,6 +246,84 @@ local function apply_red_beam_jitter_impulse()
     end
 
     apply_random_ragdoll_impulse(0.01, "Red beam jitter fallback")
+end
+
+local function split_payload(value)
+    local parts = {}
+    for part in tostring(value or ""):gmatch("([^|]+)") do
+        parts[#parts + 1] = part
+    end
+
+    return parts
+end
+
+local function parse_red_beam_hit_payload(reason)
+    local parts = split_payload(reason)
+    local baseReason = parts[1] or "Slot2RedBeam"
+    local dx = tonumber(parts[2])
+    local dy = tonumber(parts[3])
+    local dz = tonumber(parts[4])
+    local impulsePerMass = tonumber(parts[5]) or RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS
+    local centerBodyScale = tonumber(parts[6]) or RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE
+
+    if dx == nil or dy == nil or dz == nil then
+        return baseReason, nil, impulsePerMass, centerBodyScale
+    end
+
+    local direction = Vector.new(dx, dy, dz)
+    if direction:Length() <= 0.0001 then
+        return baseReason, nil, impulsePerMass, centerBodyScale
+    end
+
+    return baseReason, direction:Normalized(), impulsePerMass, centerBodyScale
+end
+
+local function apply_red_beam_ragdoll_knockback(direction, impulsePerMass, centerBodyScale)
+    if mesh == nil or direction == nil or direction:Length() <= 0.0001 then
+        return false
+    end
+
+    local strength = impulsePerMass or RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS
+    if strength <= 0.0 then
+        return false
+    end
+
+    if mesh.AddDirectionalImpulseToAllRagdollBodies == nil then
+        return false
+    end
+
+    local scale = centerBodyScale or RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE
+    mesh:AddDirectionalImpulseToAllRagdollBodies(direction:Normalized(), strength, scale)
+
+    if mesh.WakeAllRagdollBodies ~= nil then
+        mesh:WakeAllRagdollBodies()
+    end
+
+    return true
+end
+
+local function set_pending_red_beam_knockback(direction, impulsePerMass, centerBodyScale)
+    pendingRedBeamKnockbackDirection = direction
+    pendingRedBeamKnockbackImpulsePerMass = impulsePerMass or RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS
+    pendingRedBeamKnockbackCenterBodyScale = centerBodyScale or RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE
+end
+
+local function apply_pending_red_beam_knockback()
+    if pendingRedBeamKnockbackDirection == nil then
+        return false
+    end
+
+    local applied = apply_red_beam_ragdoll_knockback(
+        pendingRedBeamKnockbackDirection,
+        pendingRedBeamKnockbackImpulsePerMass,
+        pendingRedBeamKnockbackCenterBodyScale
+    )
+
+    pendingRedBeamKnockbackDirection = nil
+    pendingRedBeamKnockbackImpulsePerMass = 0.0
+    pendingRedBeamKnockbackCenterBodyScale = RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE
+
+    return applied
 end
 
 local function tick_beam_shock(dt)
@@ -905,27 +988,37 @@ function RequestDeadRagdoll(reason)
 end
 
 function OnRedBeamHit(reason)
-    -- Slot2 red beam should permanently kill only pawns that are currently alive/reviving.
-    -- DeadRagdoll pawns are ignored here so already-dead, non-revivable actors are not newly polluted.
+    local hitReason, knockbackDirection, knockbackImpulsePerMass, knockbackCenterBodyScale = parse_red_beam_hit_payload(reason)
+
     if state == STATE_DEAD then
-        return
+        if redBeamShockRemaining > 0.0 then
+            set_pending_red_beam_knockback(knockbackDirection, knockbackImpulsePerMass, knockbackCenterBodyScale)
+        else
+            apply_red_beam_ragdoll_knockback(knockbackDirection, knockbackImpulsePerMass, knockbackCenterBodyScale)
+        end
+        return true
     end
 
+    -- Slot2 red beam should permanently kill only pawns that are currently alive/reviving.
+    -- Already-dead ragdolls can still receive the one-shot knockback above without changing revive state.
     if state ~= STATE_REVIVING and state ~= STATE_ALIVE and state ~= STATE_FLEE_STOPPING then
-        return
+        return false
     end
+
+    set_pending_red_beam_knockback(knockbackDirection, knockbackImpulsePerMass, knockbackCenterBodyScale)
 
     bKilledByRedBeam = true
     if is_valid(obj) and obj.AddTag ~= nil then
         obj:AddTag(RED_BEAM_KILLED_TAG)
     end
 
-    print("[GOIncRagdollPawn_Test] Red beam killed ragdoll permanently. reason: " .. tostring(reason))
-    RequestEnterDeadRagdoll(reason or "Slot2RedBeam")
+    print("[GOIncRagdollPawn_Test] Red beam killed ragdoll permanently. reason: " .. tostring(hitReason))
+    RequestEnterDeadRagdoll(hitReason or "Slot2RedBeam")
     set_revive_trigger_enabled(false)
 
     start_red_beam_shock()
     apply_red_beam_jitter_impulse()
+    return true
 end
 
 function EnterReviving()
@@ -1215,6 +1308,7 @@ function Tick(dt)
         local bRedBeamShocking = tick_red_beam_shock(dt)
 
         if not bRedBeamShocking then
+            apply_pending_red_beam_knockback()
             sync_dead_root_to_ragdoll_safe()
         end
 

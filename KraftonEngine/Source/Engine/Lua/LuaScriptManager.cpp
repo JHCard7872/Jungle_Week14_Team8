@@ -12,6 +12,7 @@
 #include "Component/PrimitiveComponent.h"
 #include "Component/SceneComponent.h"
 #include "Component/Primitive/ParticleSystemComponent.h"
+#include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Component/Primitive/StaticMeshComponent.h"
 
 #include "Particles/ParticleSystem.h"
@@ -3247,8 +3248,18 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		"SetSimulatePhysics", &UPrimitiveComponent::SetSimulatePhysics,
 		"GetSimulatePhysics", &UPrimitiveComponent::GetSimulatePhysics,
 		"AddForce", &UPrimitiveComponent::AddForce,
+		"AddImpulse", &UPrimitiveComponent::AddImpulse,
 		"AddForceAtLocation", &UPrimitiveComponent::AddForceAtLocation,
 		"AddTorque", &UPrimitiveComponent::AddTorque,
+		"ApplyDirectionalRagdollImpulseIfSkeletal", [](UPrimitiveComponent& Component, const FVector& Direction, float ImpulsePerMass, float CenterBodyScale)
+	{
+		if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(&Component))
+		{
+			SkeletalMesh->AddDirectionalImpulseToAllRagdollBodies(Direction, ImpulsePerMass, CenterBodyScale);
+			return true;
+		}
+		return false;
+	},
 		"GetLinearVelocity", &UPrimitiveComponent::GetLinearVelocity,
 		"SetLinearVelocity", &UPrimitiveComponent::SetLinearVelocity,
 		"GetAngularVelocity", &UPrimitiveComponent::GetAngularVelocity,

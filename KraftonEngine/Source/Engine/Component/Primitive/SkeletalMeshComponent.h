@@ -123,6 +123,9 @@ public:
     void AddRandomImpulseToAllRagdollBodies(float Strength);
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")
+    void AddDirectionalImpulseToAllRagdollBodies(const FVector& Direction, float ImpulsePerMass, float CenterBodyScale);
+
+    UFUNCTION(Callable, Category="Physics|Ragdoll")
     void BeginRagdollJitterAnchor();
 
     UFUNCTION(Callable, Category="Physics|Ragdoll")

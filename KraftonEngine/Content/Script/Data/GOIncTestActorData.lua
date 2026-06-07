@@ -60,12 +60,25 @@ return {
     BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
     SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
     SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16, -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
+    SLOT2_KNOCKBACK_IMPULSE_PER_MASS = 5.00, -- Slot2 피격 순간에만 주는 넉백. 질량을 곱해 크기 차이와 무관하게 반응이 보이게 한다
+    SLOT2_KNOCKBACK_UP_BIAS = 2.50, -- 빔 방향에 위쪽을 섞어 뒤로 밀리면서 살짝 뜨는 느낌을 만든다
+    SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS = 18.00, -- Skeletal ragdoll 전용 넉백. Static 수치는 유지하고 ragdoll만 더 확실하게 밀어낸다
+    SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE = 1.60, -- 본 이름 대신 컴포넌트 동기화용 중심 body를 더 강하게 밀어 전체 ragdoll 이동감을 만든다
     HIT_RIM_DURATION = 0.50,
     HIT_RIM_FLASH_INTENSITY = 3.5,
     HIT_RIM_SUSTAIN_INTENSITY = 1.6,
     HIT_RIM_POWER = 2.8,
     HIT_RIM_STYLE_NOISE = 0.0,
     HIT_RIM_STYLE_SCAN_LINES = 1.0,
+    SLOT1_HIT_RIM_COLOR_R = 0.05,
+    SLOT1_HIT_RIM_COLOR_G = 0.85,
+    SLOT1_HIT_RIM_COLOR_B = 1.00,
+    SLOT1_HIT_RIM_COLOR_A = 1.00,
+    -- RedBeam particle color ratio is about (5.0, 0.1, 2.5), normalized here for rim tint.
+    SLOT2_HIT_RIM_COLOR_R = 1.00,
+    SLOT2_HIT_RIM_COLOR_G = 0.02,
+    SLOT2_HIT_RIM_COLOR_B = 0.50,
+    SLOT2_HIT_RIM_COLOR_A = 1.00,
     HIT_SCAN_LINE_DENSITY = 18.0,
     HIT_SCAN_SCROLL_SPEED = 2.00,
     HIT_IMPACT_RADIUS = 0.16,

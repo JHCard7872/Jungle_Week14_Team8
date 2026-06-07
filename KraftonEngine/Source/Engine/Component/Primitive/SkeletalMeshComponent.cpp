@@ -773,6 +773,33 @@ void USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies(float Strength)
     }
 }
 
+void USkeletalMeshComponent::AddDirectionalImpulseToAllRagdollBodies(const FVector& Direction, float ImpulsePerMass, float CenterBodyScale)
+{
+    if (ImpulsePerMass <= 0.0f || Direction.IsNearlyZero(0.001f) || Bodies.empty())
+    {
+        return;
+    }
+
+    FVector NormalizedDirection = Direction;
+    NormalizedDirection.Normalize();
+
+    FBodyInstance* SyncBody = FindRagdollComponentSyncBody();
+    const float ClampedCenterBodyScale = std::clamp(CenterBodyScale, 0.0f, 2.0f);
+
+    for (FBodyInstance* Body : Bodies)
+    {
+        if (!Body || !Body->IsValidBodyInstance() || !Body->bSimulatePhysics || Body->bKinematic)
+        {
+            continue;
+        }
+
+        const float BodyScale = (Body == SyncBody) ? ClampedCenterBodyScale : 0.55f;
+        const float BodyMass = std::max(Body->GetMass(), 0.001f);
+        Body->WakeUp();
+        Body->AddImpulse(NormalizedDirection * (BodyMass * ImpulsePerMass * BodyScale));
+    }
+}
+
 void USkeletalMeshComponent::BeginRagdollJitterAnchor()
 {
     if (bRagdollJitterAnchorEnabled)
@@ -879,15 +906,7 @@ void USkeletalMeshComponent::AddJitterImpulseToAllRagdollBodies(
             continue;
         }
 
-        float BodyScale = 1.0f;
-        if (Body == SyncBody ||
-            Body->BoneName == FName("Pelvis") ||
-            Body->BoneName == FName("Hips") ||
-            Body->BoneName == FName("Root") ||
-            Body->BoneName == FName("root"))
-        {
-            BodyScale = ClampedRootScale;
-        }
+        const float BodyScale = (Body == SyncBody) ? ClampedRootScale : 1.0f;
 
         const float RandomScale = 0.75f + FMath::FRand() * 0.5f;
         const float FinalScale = BodyScale * RandomScale;
