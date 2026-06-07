@@ -5,7 +5,7 @@ local UserSettings = require("Data/UserSettings")
 local UI_DOCUMENT_PATH = "Content/UI/PlayHUD/play_hud.rml"
 local HUD_Z_ORDER = 200
 local SERVER_LOAD_BAR_WIDTH = 520.0
-local SERVER_LOAD_DISPLAY_PADDING = 4.0
+local SERVER_LOAD_DISPLAY_PADDING = 0.0
 local SERVER_LOAD_SAFE_THRESHOLD = 30.0
 local SERVER_LOAD_WARNING_THRESHOLD = 60.0
 local SERVER_LOAD_DANGER_THRESHOLD = 80.0
@@ -18,9 +18,10 @@ local SERVER_LOAD_SOURCE_IMAGE_HEIGHT = 233.0
 local TIME_LOW_THRESHOLD = 30.0
 local HURRY_UP_THRESHOLD = 10.0
 local TIME_PASSING_LOOP_CHANNEL = "PlayHudTimePassingLoop"
-local POPUP_SHOW_DURATION = 0.3
-local POPUP_BLINK_INTERVAL = 0.1
-local POPUP_BLINK_COUNT = 3
+local POPUP_SHOW_DURATION = 0.45
+local POPUP_BLINK_INTERVAL = 0.08
+local POPUP_BLINK_COUNT = 4
+local POPUP_BLINK_MIN_OPACITY = 0.25
 local CROSSHAIR_IMAGES = {
     collect = {
         normal = "../../Sprite/aim_collect_normal.png",
@@ -104,7 +105,7 @@ local gameover_overlay_state = {
     revealRatio = 0.0,
 }
 local server_load_visual = {
-    activeColor = "red",
+    activeColor = "green",
     previousColor = nil,
     transitionAlpha = 1.0,
     blinkPhase = 0.0,
@@ -118,9 +119,9 @@ local event_state = {
 }
 
 local state = {
-    timeSeconds = 135,
-    score = 12850,
-    serverLoad = 67,
+    timeSeconds = 0,
+    score = 0,
+    serverLoad = 0,
     gunMode = "collect",
     gunEnergy = 100,
     crosshair = {
@@ -147,6 +148,7 @@ local state = {
         imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
     },
     targetState = nil,
+    gameplayHudVisible = false,
 }
 
 local function clamp(value, min_value, max_value)
@@ -415,17 +417,20 @@ local function process_next_popup()
                 play_sound(definition.soundKey)
                 M.Refresh()
 
-                Wait(POPUP_SHOW_DURATION)
-
+                -- 팝업은 그냥 한 번 뜨고 끝나는 대신, 짧게 점멸해서 이벤트 발생감을 준다.
                 for _ = 1, POPUP_BLINK_COUNT do
-                    popup_state.opacity = 0.0
-                    M.Refresh()
-                    Wait(POPUP_BLINK_INTERVAL)
-
                     popup_state.opacity = 1.0
                     M.Refresh()
                     Wait(POPUP_BLINK_INTERVAL)
+
+                    popup_state.opacity = POPUP_BLINK_MIN_OPACITY
+                    M.Refresh()
+                    Wait(POPUP_BLINK_INTERVAL)
                 end
+
+                popup_state.opacity = 1.0
+                M.Refresh()
+                Wait(POPUP_SHOW_DURATION)
 
                 set_popup_visible(false)
                 M.Refresh()
@@ -711,7 +716,10 @@ end
 local function apply_popup()
     set_display("hud_popup_container", popup_state.visible)
     widget:SetAttribute("hud_popup_image", "src", popup_state.imagePath)
+    -- 일부 RmlUi 빌드에서는 부모 opacity가 자식 img에 안정적으로 전파되지 않아
+    -- 컨테이너와 이미지 양쪽에 모두 적용한다.
     set_opacity("hud_popup_container", popup_state.opacity)
+    set_opacity("hud_popup_image", popup_state.opacity)
 end
 
 local function apply_start_countdown()
@@ -737,6 +745,12 @@ end
 
 local function apply_gun_status()
     local mode = normalize_mode(state.gunMode)
+    local visible = state.gameplayHudVisible == true
+
+    set_display("hud_gun_status_container", visible)
+    if not visible then
+        return
+    end
 
     set_display("hud_gun_mode_image", true)
     set_display("hud_gun_collect_icon", false)
@@ -944,6 +958,10 @@ function M.Create(options)
     debug_panel_enabled = options.showDebugPanel == true
     mouse_enabled = options.wantsMouse == true or debug_panel_enabled
 
+    state.timeSeconds = Session.timeRemaining or 0
+    state.score = Session.score or 0
+    state.serverLoad = Session.load or 0
+    state.gameplayHudVisible = false
     reset_server_load_visual()
     reset_runtime_event_state()
     ensure_widget()
@@ -969,6 +987,7 @@ function M.Destroy()
     start_countdown_state.overlayOpacity = 0.3
     gameover_overlay_state.active = false
     gameover_overlay_state.revealRatio = 0.0
+    state.gameplayHudVisible = false
 end
 
 function M.Refresh()
@@ -1017,6 +1036,11 @@ function M.UpdateFromSession(dt)
 
     update_server_load_visual(dt)
     apply_all()
+end
+
+function M.SetGameplayHudVisible(visible)
+    state.gameplayHudVisible = visible == true
+    M.Refresh()
 end
 
 function M.SetTimeSeconds(seconds)

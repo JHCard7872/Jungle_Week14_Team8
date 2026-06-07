@@ -38,6 +38,26 @@ local function is_looping_audio_key(key)
     return key:find("^bgm_") ~= nil or key == "sfx_time_passing"
 end
 
+local function stop_gameplay_bgm()
+    if AudioManager == nil then
+        return
+    end
+
+    if AudioManager.StopBGM ~= nil then
+        AudioManager.StopBGM()
+        return
+    end
+
+    if AudioManager.Stop ~= nil then
+        AudioManager.Stop("bgm_gameplay_0")
+        return
+    end
+
+    if AudioManager.StopManaged ~= nil then
+        AudioManager.StopManaged("bgm_gameplay_0")
+    end
+end
+
 local function start_gameplay()
     if gameplay_started then
         return
@@ -47,9 +67,12 @@ local function start_gameplay()
     intro_active = false
     Session.inputEnabled = true
 
+    AudioManager.PlayBGM("bgm_gameplay_0", UserSettings.GetBgmVolumeScalar())
+
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
+    HUD.SetGameplayHudVisible(true)
     HUD.UpdateFromSession(0.0)
 end
 
@@ -57,6 +80,9 @@ local function begin_start_countdown()
     intro_active = true
     gameplay_started = false
     Session.inputEnabled = false
+    Session.load = 0
+    HUD.SetServerLoad(0)
+    HUD.SetGameplayHudVisible(false)
 
     HUD.SetStartCountdownStep("3", COUNTDOWN_DIM_OPACITY)
 
@@ -125,9 +151,9 @@ function BeginPlay()
     for key, path in pairs(AudioData) do
         AudioManager.Load(key, path, is_looping_audio_key(key))
     end
-    AudioManager.PlayBGM("bgm_gameplay_0", UserSettings.GetBgmVolumeScalar())
-
     HUD.Create()
+    HUD.SetGameplayHudVisible(false)
+    HUD.SetServerLoad(0)
     HUD.UpdateFromSession()
     PauseUI.Create({ onContinue = exitPause })
     HUD.SetStartCountdownVisible(false)
@@ -168,6 +194,7 @@ function Tick(dt)
         ended = true
         Session.result.gameOverReason =
             Session.timeRemaining <= 0 and "시간 초과" or "서버 과부하"
+        stop_gameplay_bgm()
         AudioManager.Play("sfx_game_over", UserSettings.GetSfxVolumeScalar())
         HUD.ShowGameOverOverlay(function()
             Engine.LoadScene("Result")
@@ -177,6 +204,7 @@ end
 
 function EndPlay()
     StopAllCoroutines()
+    stop_gameplay_bgm()
     AudioManager.StopAllLoops()
     HUD.Destroy()
     PauseUI.Destroy()
