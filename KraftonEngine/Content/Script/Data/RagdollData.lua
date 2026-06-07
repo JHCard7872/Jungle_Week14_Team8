@@ -153,23 +153,6 @@ return {
         uiOrder        = 80,
     },
 
-    ["pink-princess"] = {
-        id             = "pink-princess",
-        displayName    = "분홍 공주",
-        referenceImage = "Content/UI/Images/pink_princess.png",  -- 파일 입수 전
-
-        mass           = 10.5,   -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 100,    -- 임시 밸런스
-        canRevive      = true,
-        reviveSpeed    = 3.4,
-        attackPower    = 10,     -- placeholder
-
-        pawnClass      = "AGOIncPeachRagdollPawn",
-        canSpawn       = true,
-        spawnWeight    = 1,
-        uiOrder        = 90,
-    },
-
     ["space-chief"] = {
         id             = "space-chief",
         displayName    = "스페이스 치프",

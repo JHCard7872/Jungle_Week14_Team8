@@ -112,6 +112,7 @@ return {
     BEAM_SOURCE_UP_BIAS = 0.0,        -- Beam 시작점 상하 미세 보정
     BEAM_SOURCE_PITCH_INFLUENCE = 0.9, -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
     BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45, -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
+    BEAM_SOURCE_PITCH_BLEND_DEGREES = 15.0, -- 위 두 influence를 잇는 보간 구간(도). 수평(pitch 0)에서 즉시 점프하면 빔이 꺾여 보인다
     BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
     BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율

@@ -1,12 +1,11 @@
 -- =============================================================================
 -- MissionManager — 미션 발급/추적/완료 (require 모듈)
--- [역할] 임계치 방식 미션의 전부. 미션 상태(current)는 이 모듈이 소유한다 —
---        HUD는 GetCurrent()로 읽기만 (Session에 미션 필드 없음).
+-- [역할] 임계치 방식 미션의 전부. 미션 상태(current)는 이 모듈이 소유하고,
+--        바뀔 때마다 Session.mission에 캐시를 발행한다 (쓰는 주체 = 이 모듈만).
 -- [사용법] PlayScene.BeginPlay에서 Start().
 --          수거 시 TruckBehavior가 NotifyRecovered(actor) 호출.
---          HUD: local m = MissionManager.GetCurrent() → m.text, m.got, m.need
---          (HUD 연결은 아직 미구현 — 현재 GetCurrent 소비처는 Test 스크립트뿐이라
---           미션은 화면에 안 보이고, 달성 시 점수 증가로만 관측된다)
+--          HUD: Session.mission 직독 → m.active, m.text, m.got, m.need
+--          (Session.score/target과 같은 직독 패턴 — HUD 비주얼 연결은 아직 미구현)
 -- [특이사항] 발급 규칙(달성 불가능한 미션 방지):
 --            1순위 — 살아있는 수 >= minCount인 타입 중 랜덤, 목표 = minCount
 --            2순위 — 충족 타입이 없으면 최다 보유 타입, 목표 = 그 보유 수
@@ -21,9 +20,21 @@
 local Ragdolls = require("Data/RagdollData")
 local Mission  = require("Data/MissionData")
 local ScoreMgr = require("Manager/ScoreManager")
+local Session  = require("GameSession")
 
 local M = {}
 local current = nil   -- { target, need, got, text } / 발급 보류면 nil
+
+-- current가 바뀔 때마다 호출 — HUD가 직독하는 Session.mission 캐시를 갱신한다
+local function publish()
+    Session.mission = {
+        active = current ~= nil,
+        target = current ~= nil and current.target or "",
+        need   = current ~= nil and current.need or 0,
+        got    = current ~= nil and current.got or 0,
+        text   = current ~= nil and current.text or "",
+    }
+end
 
 -- 살아있는 래그돌을 타입별로 집계 (스폰 매니저가 단 타입 태그 기준)
 local function countAlive()
@@ -66,6 +77,7 @@ function M.IssueNext()
         end
         if not bestId then
             current = nil   -- 래그돌이 한 마리도 없음 — 보류
+            publish()
             return
         end
         target, need = bestId, bestN
@@ -77,6 +89,7 @@ function M.IssueNext()
         got    = 0,
         text   = string.format("%s %d체 수거", Ragdolls[target].displayName, need),
     }
+    publish()
 end
 
 function M.NotifyRecovered(actor)
@@ -92,8 +105,10 @@ function M.NotifyRecovered(actor)
     if current.got >= current.need then
         ScoreMgr.AddBonus(current.need * Mission.rewardPerBody)
         -- TODO: 미션 달성 사운드 키가 AudioData에 추가되면 여기서 재생
-        M.IssueNext()
+        M.IssueNext()   -- 내부에서 publish됨
+        return
     end
+    publish()
 end
 
 -- HUD 전용 읽기 getter (쓰지 말 것)

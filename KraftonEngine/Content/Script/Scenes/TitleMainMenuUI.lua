@@ -5,8 +5,9 @@ local ScoreStorage = require("Data/ScoreStorage")
 local UI_ROOT_PATH = "Content/UI/"
 local MAIN_MENU_RELATIVE_PATH = "MainMenu/main_menu.rml"
 local MAIN_MENU_Z_ORDER = 100
-local CURSOR_HOTSPOT_X = 8
-local CURSOR_HOTSPOT_Y = 6
+-- 커서는 중앙 조준점 디자인이라 이미지 중심을 마우스에 맞춘다 (Pause/Result와 동일 패턴).
+-- rcss .cursor_image 크기와 반드시 동기화할 것 (rml src 2개 + rcss 크기 + 이 값 세 곳)
+local CURSOR_SIZE = 150
 local VK_LBUTTON = 0x01
 
 local MAIN_BGM_KEY = "bgm_main_0"
@@ -102,8 +103,8 @@ local function update_cursor_position()
 
     local mouse_x = Input.GetMouseX()
     local mouse_y = Input.GetMouseY()
-    local left = string.format("%dpx", mouse_x - CURSOR_HOTSPOT_X)
-    local top = string.format("%dpx", mouse_y - CURSOR_HOTSPOT_Y)
+    local left = string.format("%dpx", mouse_x - CURSOR_SIZE / 2)
+    local top = string.format("%dpx", mouse_y - CURSOR_SIZE / 2)
 
     main_menu_widget:SetProperty("cursor_normal", "left", left)
     main_menu_widget:SetProperty("cursor_normal", "top", top)

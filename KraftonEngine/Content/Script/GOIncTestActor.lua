@@ -440,11 +440,11 @@ local function get_weapon_offset_for_pitch()
 end
 
 local function get_beam_source_pitch_influence()
-    if pitch > 0.0 then
-        return C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE
-    end
-
+    -- pitch 0 경계에서 0.9↔0.45로 즉시 점프하면 빔 소스 위치/탄젠트가 꺾여 보인다
+    -- (수평 부근 조준에서 간헐적으로 빔이 휘던 원인) — 경계 구간을 보간으로 잇는다
+    local blend = ease_in_out(clamp(pitch / C.BEAM_SOURCE_PITCH_BLEND_DEGREES, 0.0, 1.0))
     return C.BEAM_SOURCE_PITCH_INFLUENCE
+        + (C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE - C.BEAM_SOURCE_PITCH_INFLUENCE) * blend
 end
 
 local function get_beam_source_offset_for_pitch()

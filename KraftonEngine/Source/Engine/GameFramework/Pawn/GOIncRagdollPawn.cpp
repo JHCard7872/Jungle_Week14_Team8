@@ -670,8 +670,8 @@ void AGOIncRagdollPawn::EnterDeadRagdollState()
 	SetAliveCollisionCapsuleEnabled(false);
 	SetReviveTriggerCapsuleEnabled(true);
 
-	StopFleeAnimation();
 	ForceDeadRagdollPhysicsEnabled();
+	StopFleeAnimation();
 }
 
 void AGOIncRagdollPawn::EnterRevivingState()

@@ -15,6 +15,9 @@ return {
 
     engineVolume   = 0.2,   -- bgm_collector_truck 루프 볼륨
 
+    collectFxPath  = "Content/Data/Buble.uasset", -- 수거 "뾰로롱" 파티클 (전용 에셋 입수 시 교체)
+    collectFxLife  = 1.5,   -- 수거 파티클 자동 정리 수명(초)
+
     waypoints = {           -- 순서대로 순회, 마지막 → 처음으로 순환 (후진 없음)
         { -40, -40, 0 },
         {  40, -40, 0 },
