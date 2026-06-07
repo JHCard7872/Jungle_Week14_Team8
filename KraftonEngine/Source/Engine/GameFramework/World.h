@@ -164,6 +164,11 @@ public:
 		ECollisionChannel TraceChannel = ECollisionChannel::WorldStatic,
 		const AActor* IgnoreActor = nullptr) const;
 
+	// Beam grab 전용 physics raycast — capsule은 제외하고 ragdoll body / StaticMesh BodySetup만 후보로 둔다.
+	bool PhysicsGrabRaycast(const FVector& Start, const FVector& Dir, float MaxDist, FHitResult& OutHit,
+		ECollisionChannel TraceChannel = ECollisionChannel::WorldStatic,
+		const AActor* IgnoreActor = nullptr) const;
+
 	bool PhysicsSweep(const FVector& Start, const FVector& Dir, float MaxDist,
 		const FCollisionShape& Shape, const FQuat& ShapeRot, FHitResult& OutHit,
 		ECollisionChannel TraceChannel, const AActor* IgnoreActor) const;

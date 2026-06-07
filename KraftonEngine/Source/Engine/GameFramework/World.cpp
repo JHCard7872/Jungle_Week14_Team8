@@ -241,6 +241,14 @@ bool UWorld::PhysicsRaycast(const FVector& Start, const FVector& Dir, float MaxD
 	return false;
 }
 
+bool UWorld::PhysicsGrabRaycast(const FVector& Start, const FVector& Dir, float MaxDist, FHitResult& OutHit,
+	ECollisionChannel TraceChannel, const AActor* IgnoreActor) const
+{
+	if (PhysicsScene)
+		return PhysicsScene->RaycastForPhysicsGrab(Start, Dir, MaxDist, OutHit, TraceChannel, IgnoreActor);
+	return false;
+}
+
 bool UWorld::PhysicsSweep(const FVector& Start, const FVector& Dir, float MaxDist, const FCollisionShape& Shape, const FQuat& ShapeRot, FHitResult& OutHit, ECollisionChannel TraceChannel, const AActor* IgnoreActor) const
 {
 	if (PhysicsScene)

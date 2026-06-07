@@ -446,6 +446,7 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"EnterRevivingState", &AGOIncRagdollPawn::EnterRevivingState,
 		"EnterAliveFleeState", &AGOIncRagdollPawn::EnterAliveFleeState,
 		"RequestDeadRagdoll", &AGOIncRagdollPawn::RequestDeadRagdoll,
+		"ShowAliveExclamation", &AGOIncRagdollPawn::ShowAliveExclamation,
 		"PlayFleeAnimation", &AGOIncRagdollPawn::PlayFleeAnimation,
 		"StopFleeAnimation", &AGOIncRagdollPawn::StopFleeAnimation);
 

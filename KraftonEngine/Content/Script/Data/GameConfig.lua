@@ -19,7 +19,7 @@ return {
         areaMaxX =  10.0,
         areaMinY = -10.0,
         areaMaxY =  10.0,
-        z        =  1.0,        -- 스폰 높이
+        z        =  3.0,        -- 스폰 높이
         defaultRagdollId = "blue-speedster",  -- 추첨 실패 시 폴백 타입
     },
 }

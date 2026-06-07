@@ -122,7 +122,7 @@ public:
 
 	// 트랜스폼/AABB 변경 시 호출 — 프록시·Octree·PickingBVH·VisibleSet을 일괄 갱신.
 	void MarkRenderTransformDirty();
-
+	void SetIgnoreSameOwnerCollision(bool bIgnore);
 	// 가시성 토글 시 호출 — 위와 동일하되 Visibility dirty 플래그를 사용.
 	void MarkRenderVisibilityDirty();
 

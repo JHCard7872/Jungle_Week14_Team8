@@ -1066,6 +1066,10 @@ function EnterAliveFlee()
     finish_revive_mesh_relative_location_blend()
     set_flee_animation_play_rate(1.0)
 
+    if pawn ~= nil and pawn.ShowAliveExclamation ~= nil then
+        pawn:ShowAliveExclamation(1.5)
+    end
+
     -- Reviving yaw blend의 마지막 값을 확정해 첫 AliveFlee Tick에서 회전이 튀지 않게 한다.
     obj.Rotation = Vector.new(0.0, 0.0, reviveTargetYaw)
 

@@ -23,4 +23,6 @@ protected:
 
 	FVector CachedScale;
 	FVector CachedLocation;
+	FVector4 CachedTintColor = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+	float CachedRollDegrees = 0.0f;
 };

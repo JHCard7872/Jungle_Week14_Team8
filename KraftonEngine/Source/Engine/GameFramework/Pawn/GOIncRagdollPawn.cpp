@@ -1,6 +1,7 @@
 ﻿#include "GameFramework/Pawn/GOIncRagdollPawn.h"
 
 #include "Animation/AnimationManager.h"
+#include "Component/Primitive/BillboardComponent.h"
 #include "Component/Movement/GOIncRagdollMovementComponent.h"
 #include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Component/Script/LuaScriptComponent.h"
@@ -11,6 +12,8 @@
 #include "GameFramework/World.h"
 #include "Mesh/MeshManager.h"
 #include "Mesh/Skeletal/SkeletalMesh.h"
+#include "Materials/MaterialManager.h"
+#include "Math/MathUtils.h"
 #include "PhysicsEngine/PhysicsAssetManager.h"
 #include "Runtime/Engine.h"
 
@@ -29,6 +32,10 @@ namespace
 	constexpr float ReviveGroundTraceUp = 50.0f;
 	constexpr float ReviveGroundTraceDown = 300.0f;
 	constexpr float ReviveGroundSkinWidth = 0.02f;
+	const FString AliveExclamationMaterialPath = "Content/Sprite/play_exclamation_mark.mat";
+	constexpr float DefaultAliveExclamationDuration = 0.5f;
+	constexpr float AliveExclamationCapsuleOffsetZ = 0.2f;
+	const FVector AliveExclamationBaseScale(0.24f, 0.105f, 0.43f);
 
 	void ConfigureDeadRagdollMeshCollisionForGOInc(USkeletalMeshComponent* Mesh)
 	{
@@ -60,7 +67,7 @@ namespace
 		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
 		// Alive Capsule is the moving physical body for AliveFlee, so it should push against
 		// other GOInc ragdolls / alive capsules instead of ghosting through them.
-		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Block);
+		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
 	}
 
 	void ConfigureReviveTriggerCapsuleCollisionForGOInc(UCapsuleComponent* TriggerCapsule)
@@ -75,6 +82,8 @@ namespace
 		TriggerCapsule->SetCollisionObjectType(ECollisionChannel::Trigger);
 		TriggerCapsule->SetCollisionResponseToAllChannels(ECollisionResponse::Ignore);
 		TriggerCapsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Overlap);
+
+		TriggerCapsule->SetIgnoreSameOwnerCollision(true);
 	}
 }
 
@@ -134,6 +143,13 @@ void AGOIncRagdollPawn::EnsureDefaultComponents()
 		Mesh = AddComponent<USkeletalMeshComponent>();
 		Mesh->AttachToComponent(GOIncRootComponent);
 	}
+
+	if (!AliveExclamationBillboardComponent)
+	{
+		AliveExclamationBillboardComponent = AddComponent<UBillboardComponent>();
+		AliveExclamationBillboardComponent->AttachToComponent(GOIncRootComponent);
+	}
+	ConfigureAliveExclamationBillboardDefaults();
 
 	if (!RagdollMovementComponent)
 	{
@@ -388,6 +404,184 @@ void AGOIncRagdollPawn::AttachGOIncSceneComponentsToRoot()
 		Mesh->AttachToComponent(GOIncRootComponent);
 		Mesh->SetWorldLocation(WorldLocation);
 	}
+
+	if (AliveExclamationBillboardComponent && AliveExclamationBillboardComponent->GetParent() != GOIncRootComponent)
+	{
+		const FVector WorldLocation = AliveExclamationBillboardComponent->GetWorldLocation();
+		AliveExclamationBillboardComponent->AttachToComponent(GOIncRootComponent);
+		AliveExclamationBillboardComponent->SetWorldLocation(WorldLocation);
+	}
+}
+
+
+void AGOIncRagdollPawn::ConfigureAliveExclamationBillboardDefaults()
+{
+	if (!AliveExclamationBillboardComponent)
+	{
+		return;
+	}
+
+	AliveExclamationBillboardComponent->SetBillboardEnabled(true);
+	AliveExclamationBillboardComponent->SetCastShadow(false);
+	AliveExclamationBillboardComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AliveExclamationBillboardComponent->SetRelativeLocation(GetAliveExclamationBillboardRelativeLocation());
+	if (!bAliveExclamationPlaying)
+	{
+		AliveExclamationBillboardComponent->SetRelativeScale(AliveExclamationBaseScale);
+		AliveExclamationBillboardComponent->SetBillboardRollDegrees(0.0f);
+		AliveExclamationBillboardComponent->SetBillboardOpacity(1.0f);
+		AliveExclamationBillboardComponent->SetVisibility(false);
+	}
+
+	EnsureAliveExclamationBillboardMaterial();
+}
+
+void AGOIncRagdollPawn::EnsureAliveExclamationBillboardMaterial()
+{
+	if (!AliveExclamationBillboardComponent)
+	{
+		return;
+	}
+
+	if (AliveExclamationBillboardComponent->GetMaterial())
+	{
+		return;
+	}
+
+	UMaterial* Material = FMaterialManager::Get().GetOrCreateMaterial(AliveExclamationMaterialPath);
+	if (Material)
+	{
+		AliveExclamationBillboardComponent->SetMaterial(Material);
+	}
+}
+
+FVector AGOIncRagdollPawn::GetAliveExclamationBillboardRelativeLocation() const
+{
+	if (!CapsuleComponent)
+	{
+		return FVector(0.0f, 0.0f, DefaultAliveCapsuleHalfHeight + AliveExclamationCapsuleOffsetZ);
+	}
+
+	FVector RelativeLocation = CapsuleComponent->GetRelativeLocation();
+	RelativeLocation.Z += CapsuleComponent->GetScaledCapsuleHalfHeight() + AliveExclamationCapsuleOffsetZ;
+	return RelativeLocation;
+}
+
+void AGOIncRagdollPawn::HideAliveExclamation()
+{
+	bAliveExclamationPlaying = false;
+	AliveExclamationElapsed = 0.0f;
+
+	if (!AliveExclamationBillboardComponent)
+	{
+		return;
+	}
+
+	AliveExclamationBillboardComponent->SetBillboardRollDegrees(0.0f);
+	AliveExclamationBillboardComponent->SetBillboardOpacity(1.0f);
+	AliveExclamationBillboardComponent->SetRelativeScale(AliveExclamationBaseScale);
+	AliveExclamationBillboardComponent->SetVisibility(false);
+}
+
+void AGOIncRagdollPawn::ShowAliveExclamation(float Duration)
+{
+	EnsureDefaultComponents();
+	RefreshGOIncRagdollPawnComponents();
+
+	if (!AliveExclamationBillboardComponent)
+	{
+		return;
+	}
+
+	EnsureAliveExclamationBillboardMaterial();
+
+	AliveExclamationDuration = Duration > 0.0f ? Duration : DefaultAliveExclamationDuration;
+	AliveExclamationElapsed = 0.0f;
+	bAliveExclamationPlaying = true;
+
+	AliveExclamationBillboardComponent->SetRelativeLocation(GetAliveExclamationBillboardRelativeLocation());
+	AliveExclamationBillboardComponent->SetRelativeScale(AliveExclamationBaseScale * 0.12f);
+	AliveExclamationBillboardComponent->SetBillboardRollDegrees(-220.0f);
+	AliveExclamationBillboardComponent->SetBillboardOpacity(0.0f);
+	AliveExclamationBillboardComponent->SetVisibility(true);
+}
+
+void AGOIncRagdollPawn::UpdateAliveExclamationBillboard(float DeltaTime)
+{
+	if (!bAliveExclamationPlaying || !AliveExclamationBillboardComponent)
+	{
+		return;
+	}
+
+	AliveExclamationElapsed += DeltaTime;
+
+	// 전체 표시 시간.
+	// Lua에서 pawn:ShowAliveExclamation(1.5) 이런 식으로 넘기면 이 값이 늘어남.
+	const float RequestedDuration = AliveExclamationDuration > 0.0f
+		? AliveExclamationDuration
+		: DefaultAliveExclamationDuration;
+
+	// 등장/사라짐은 기존 느낌 유지용으로 초 단위 고정.
+	// 더 빠르게 등장시키고 싶으면 0.18f 정도로 줄이고,
+	// 더 천천히 사라지게 하고 싶으면 0.32f를 늘리면 됨.
+	constexpr float AppearSeconds = 0.11f;
+	constexpr float DisappearSeconds = 0.16f;
+
+	// 전체 시간이 너무 짧아도 등장/사라짐은 최소 보장.
+	const float Duration = FMath::Max(RequestedDuration, AppearSeconds + DisappearSeconds + 0.001f);
+
+	const float DisappearStartSeconds = FMath::Max(AppearSeconds, Duration - DisappearSeconds);
+	const float Time = AliveExclamationElapsed;
+
+	const auto SmoothStep = [](float Alpha) -> float
+		{
+			Alpha = FMath::Clamp(Alpha, 0.0f, 1.0f);
+			return Alpha * Alpha * (3.0f - 2.0f * Alpha);
+		};
+
+	float RollDegrees = 0.0f;
+	float ScaleMul = 1.0f;
+	float Opacity = 1.0f;
+
+	if (Time < AppearSeconds)
+	{
+		// 등장 구간: 항상 AppearSeconds 동안만 진행.
+		const float A = SmoothStep(Time / AppearSeconds);
+
+		RollDegrees = FMath::Lerp(-220.0f, 0.0f, A);
+		ScaleMul = FMath::Lerp(0.12f, 1.18f, A);
+		Opacity = A;
+	}
+	else if (Time < DisappearStartSeconds)
+	{
+		// 유지 구간: Duration이 길어질수록 여기만 길어짐.
+		// 회전은 멈추고, 크기만 1.18 -> 1.0으로 안정화.
+		const float HoldSeconds = FMath::Max(DisappearStartSeconds - AppearSeconds, 0.001f);
+		const float A = SmoothStep((Time - AppearSeconds) / HoldSeconds);
+
+		RollDegrees = 0.0f;
+		ScaleMul = FMath::Lerp(1.18f, 1.0f, A);
+		Opacity = 1.0f;
+	}
+	else
+	{
+		// 사라짐 구간: 항상 DisappearSeconds 동안만 진행.
+		const float A = SmoothStep((Time - DisappearStartSeconds) / DisappearSeconds);
+
+		RollDegrees = FMath::Lerp(18.0f, 220.0f, A);
+		ScaleMul = FMath::Lerp(1.0f, 0.12f, A);
+		Opacity = 1.0f - A;
+	}
+
+	AliveExclamationBillboardComponent->SetRelativeLocation(GetAliveExclamationBillboardRelativeLocation());
+	AliveExclamationBillboardComponent->SetRelativeScale(AliveExclamationBaseScale * ScaleMul);
+	AliveExclamationBillboardComponent->SetBillboardRollDegrees(RollDegrees);
+	AliveExclamationBillboardComponent->SetBillboardOpacity(Opacity);
+
+	if (AliveExclamationElapsed >= Duration)
+	{
+		HideAliveExclamation();
+	}
 }
 
 void AGOIncRagdollPawn::ConfigureMovementUpdatedComponent()
@@ -426,6 +620,12 @@ void AGOIncRagdollPawn::ConfigureMovementUpdatedComponent()
 
 void AGOIncRagdollPawn::ApplyInitialRagdollState()
 {
+	RefreshGOIncRagdollPawnComponents();
+
+	SetMovementRuntimeEnabled(false, false);
+	SetAliveCollisionCapsuleEnabled(false);
+	SetReviveTriggerCapsuleEnabled(true);
+
 	if (!Mesh || !Mesh->GetSkeletalMesh())
 	{
 		return;
@@ -434,6 +634,8 @@ void AGOIncRagdollPawn::ApplyInitialRagdollState()
 	ConfigureDeadRagdollMeshCollisionForGOInc(Mesh);
 	Mesh->SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode::DisableParentChild);
 	Mesh->SetRagdollGravityEnabled(true);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetSimulatePhysics(true);
 	Mesh->SetRagdollEnabled(true);
 	Mesh->WakeAllRagdollBodies();
 }
@@ -665,6 +867,7 @@ bool AGOIncRagdollPawn::PrepareReviveFromRagdoll()
 void AGOIncRagdollPawn::EnterDeadRagdollState()
 {
 	RefreshGOIncRagdollPawnComponents();
+	HideAliveExclamation();
 
 	SetMovementRuntimeEnabled(false, false);
 	SetAliveCollisionCapsuleEnabled(false);
@@ -677,6 +880,7 @@ void AGOIncRagdollPawn::EnterDeadRagdollState()
 void AGOIncRagdollPawn::EnterRevivingState()
 {
 	RefreshGOIncRagdollPawnComponents();
+	HideAliveExclamation();
 
 	SetMovementRuntimeEnabled(false, false);
 	SetReviveTriggerCapsuleEnabled(false);
@@ -721,6 +925,7 @@ void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 	CapsuleComponent = nullptr;
 	ReviveTriggerCapsuleComponent = nullptr;
 	Mesh = GetComponentByClass<USkeletalMeshComponent>();
+	AliveExclamationBillboardComponent = GetComponentByClass<UBillboardComponent>();
 	RagdollMovementComponent = GetComponentByClass<UGOIncRagdollMovementComponent>();
 	LuaScriptComponent = GetComponentByClass<ULuaScriptComponent>();
 
@@ -762,6 +967,7 @@ void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 	}
 	EnsureReviveTriggerCapsuleComponent();
 	AttachGOIncSceneComponentsToRoot();
+	ConfigureAliveExclamationBillboardDefaults();
 	ConfigureMovementUpdatedComponent();
 }
 
@@ -896,6 +1102,12 @@ void AGOIncRagdollPawn::BeginPlay()
 	Super::BeginPlay();
 }
 
+void AGOIncRagdollPawn::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	UpdateAliveExclamationBillboard(DeltaTime);
+}
+
 void AGOIncRagdollPawn::PostDuplicate()
 {
 	Super::PostDuplicate();
@@ -970,6 +1182,10 @@ void AGOIncRagdollPawn::OnOwnedComponentRemoved(UActorComponent* Component)
 	if (Component == Mesh)
 	{
 		Mesh = nullptr;
+	}
+	if (Component == AliveExclamationBillboardComponent)
+	{
+		AliveExclamationBillboardComponent = nullptr;
 	}
 	if (Component == RagdollMovementComponent)
 	{
