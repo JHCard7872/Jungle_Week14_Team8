@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Component/PrimitiveComponent.h"
 #include "Render/Resource/MeshBufferManager.h"
 #include "Core/Types/ResourceTypes.h"
@@ -33,6 +33,12 @@ public:
 	void SetBillboardRollDegrees(float InDegrees);
 	float GetBillboardRollDegrees() const { return BillboardRollDegrees; }
 
+	// Per-object tint/opacity입니다. 셰이더가 PerObject.Color를 사용하면 alpha fade까지 적용됩니다.
+	void SetBillboardTintColor(const FVector4& InColor);
+	const FVector4& GetBillboardTintColor() const { return BillboardTintColor; }
+	void SetBillboardOpacity(float InOpacity);
+	float GetBillboardOpacity() const { return BillboardTintColor.W; }
+
 	// --- Material ---
 	void SetMaterial(class UMaterial* InMaterial);
 	class UMaterial* GetMaterial() const { return Material.Get(); }
@@ -52,10 +58,12 @@ protected:
 	UPROPERTY(Edit, Save, Category="Rendering", DisplayName="Billboard Roll Degrees")
 	float BillboardRollDegrees = 0.0f;
 
+	UPROPERTY(Edit, Save, Category="Rendering", DisplayName="Billboard Tint Color")
+	FVector4 BillboardTintColor = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
+
 	UPROPERTY(Edit, Save, Category="Rendering", DisplayName="Material", AssetType="Material")
 	FSoftObjectPtr MaterialSlot = "None";
 	// Runtime loaded material reference. MaterialSlot is the persistent asset identity.
 	UPROPERTY(Transient, Category="Rendering")
 	TObjectPtr<UMaterial> Material = nullptr;
 };
-

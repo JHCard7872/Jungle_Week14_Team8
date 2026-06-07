@@ -4,6 +4,7 @@
 #include "Object/Ptr/SoftObjectPtr.h"
 #include "Object/Reflection/UStruct.h"
 
+class UBillboardComponent;
 class UCapsuleComponent;
 class USceneComponent;
 class USkeletalMeshComponent;
@@ -116,6 +117,7 @@ public:
 	bool GetUseEditableCharacterConfig() const { return bUseEditableCharacterConfig; }
 
 	void BeginPlay() override;
+	void Tick(float DeltaTime) override;
 	void PostDuplicate() override;
 	void PostEditProperty(const char* PropertyName) override;
 
@@ -240,6 +242,11 @@ public:
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|State")
 	void RequestDeadRagdoll(const FString& Reason);
 
+	// AliveFlee 진입 순간 AliveCapsule 바로 위에 1회성 느낌표 빌보드를 표시한다.
+	// 회전은 UBillboardComponent의 화면 평면 Roll 기능을 사용한다.
+	UFUNCTION(Callable, Category = "GOIncRagdollPawn|VFX")
+	void ShowAliveExclamation(float Duration = 0.5f);
+
 	UFUNCTION(Callable, Category = "GOIncRagdollPawn|Animation")
 	void PlayFleeAnimation();
 
@@ -258,6 +265,11 @@ protected:
 	void ConfigureMovementUpdatedComponent();
 	void ConfigureAliveCollisionCapsuleDefaults();
 	void ConfigureReviveTriggerCapsuleDefaults();
+	void ConfigureAliveExclamationBillboardDefaults();
+	void EnsureAliveExclamationBillboardMaterial();
+	void HideAliveExclamation();
+	void UpdateAliveExclamationBillboard(float DeltaTime);
+	FVector GetAliveExclamationBillboardRelativeLocation() const;
 	void ApplyInitialRagdollState();
 	void SetAliveCollisionCapsuleEnabled(bool bEnabled);
 	void SetReviveTriggerCapsuleEnabled(bool bEnabled);
@@ -272,6 +284,7 @@ protected:
 	UCapsuleComponent* CapsuleComponent = nullptr;
 	UCapsuleComponent* ReviveTriggerCapsuleComponent = nullptr;
 	USkeletalMeshComponent* Mesh = nullptr;
+	UBillboardComponent* AliveExclamationBillboardComponent = nullptr;
 	UGOIncRagdollMovementComponent* RagdollMovementComponent = nullptr;
 	ULuaScriptComponent* LuaScriptComponent = nullptr;
 
@@ -286,4 +299,8 @@ protected:
 	FString SkeletalMeshPath;
 	FString PhysicsAssetPath;
 	FString FleeAnimationPath;
+
+	float AliveExclamationDuration = 0.5f;
+	float AliveExclamationElapsed = 0.0f;
+	bool bAliveExclamationPlaying = false;
 };

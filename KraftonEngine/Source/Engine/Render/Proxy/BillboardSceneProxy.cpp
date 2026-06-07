@@ -1,4 +1,4 @@
-#include "Render/Proxy/BillboardSceneProxy.h"
+﻿#include "Render/Proxy/BillboardSceneProxy.h"
 #include "Component/Primitive/BillboardComponent.h"
 #include "Render/Resource/MeshBufferManager.h"
 #include "Render/Types/FrameContext.h"
@@ -7,6 +7,8 @@
 #include "Texture/Texture2D.h"
 #include "Object/Object.h"
 #include "Math/MathUtils.h"
+
+#include <cmath>
 
 // ============================================================
 // FBillboardSceneProxy
@@ -38,12 +40,14 @@ void FBillboardSceneProxy::UpdateTransform()
 		bVisible = false;
 		CachedScale = FVector(1, 1, 1);
 		CachedLocation = FVector(0, 0, 0);
+		CachedTintColor = FVector4(1.0f, 1.0f, 1.0f, 1.0f);
 		CachedRollDegrees = 0.0f;
 		return;
 	}
 
 	CachedScale = Comp->GetWorldScale();
 	CachedLocation = Comp->GetWorldLocation();
+	CachedTintColor = Comp->GetBillboardTintColor();
 	CachedRollDegrees = Comp->GetBillboardRollDegrees();
 }
 
@@ -96,5 +100,6 @@ void FBillboardSceneProxy::UpdatePerViewport(const FFrameContext& Frame)
 		* RotMatrix * FMatrix::MakeTranslationMatrix(CachedLocation);
 
 	PerObjectConstants = FPerObjectConstants::FromWorldMatrix(BillboardMatrix);
+	PerObjectConstants.Color = CachedTintColor;
 	MarkPerObjectCBDirty();
 }

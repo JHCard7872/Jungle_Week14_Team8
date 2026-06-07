@@ -1,4 +1,4 @@
-#include "BillboardComponent.h"
+﻿#include "BillboardComponent.h"
 #include "GameFramework/World.h"
 #include "Component/Camera/CameraComponent.h"
 #include "Render/Proxy/BillboardSceneProxy.h"
@@ -11,6 +11,7 @@
 #include "Math/MathUtils.h"
 
 #include <cstring>
+#include <cmath>
 
 namespace
 {
@@ -74,6 +75,27 @@ void UBillboardComponent::SetBillboardRollDegrees(float InDegrees)
 	MarkRenderTransformDirty();
 }
 
+void UBillboardComponent::SetBillboardTintColor(const FVector4& InColor)
+{
+	if (FMath::Abs(BillboardTintColor.X - InColor.X) <= FMath::KINDA_SMALL_NUMBER &&
+		FMath::Abs(BillboardTintColor.Y - InColor.Y) <= FMath::KINDA_SMALL_NUMBER &&
+		FMath::Abs(BillboardTintColor.Z - InColor.Z) <= FMath::KINDA_SMALL_NUMBER &&
+		FMath::Abs(BillboardTintColor.W - InColor.W) <= FMath::KINDA_SMALL_NUMBER)
+	{
+		return;
+	}
+
+	BillboardTintColor = InColor;
+	MarkRenderTransformDirty();
+}
+
+void UBillboardComponent::SetBillboardOpacity(float InOpacity)
+{
+	FVector4 NewColor = BillboardTintColor;
+	NewColor.W = FMath::Clamp(InOpacity, 0.0f, 1.0f);
+	SetBillboardTintColor(NewColor);
+}
+
 void UBillboardComponent::SetMaterial(UMaterial* InMaterial)
 {
 	Material = InMaterial;
@@ -94,7 +116,7 @@ void UBillboardComponent::PostEditProperty(const char* PropertyName)
 {
 	UPrimitiveComponent::PostEditProperty(PropertyName);
 
-	if (strcmp(PropertyName, "BillboardRollDegrees") == 0)
+	if (strcmp(PropertyName, "BillboardRollDegrees") == 0 || strcmp(PropertyName, "BillboardTintColor") == 0)
 	{
 		MarkRenderTransformDirty();
 	}
