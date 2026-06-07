@@ -5,6 +5,7 @@ local RagdollData = require("Data/RagdollData")
 local UserSettings = require("Data/UserSettings")
 
 local COLLECT_FIRE_SFX_CHANNEL = "CollectFireSfx"
+local FOOTSTEP_SFX_CHANNEL = "FootstepSfx"
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
 local viewport_center_x = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 X
@@ -14,6 +15,7 @@ local crosshair_screen_y = nil
 local crosshair_hold_rotation = 0.0
 local crosshair_hold_rotation_elapsed = 0.0
 local collect_fire_sfx_elapsed = 0.0
+local footstep_sfx_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
 local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
@@ -211,6 +213,13 @@ local function reset_collect_fire_sfx_timer()
     end
 end
 
+local function reset_footstep_sfx_timer()
+    footstep_sfx_elapsed = 0.0
+    if AudioManager ~= nil and AudioManager.StopManaged ~= nil then
+        AudioManager.StopManaged(FOOTSTEP_SFX_CHANNEL)
+    end
+end
+
 local function get_sfx_volume(volume_scale)
     local volume = volume_scale or 1.0
     if UserSettings ~= nil and UserSettings.GetSfxVolumeScalar ~= nil then
@@ -244,6 +253,23 @@ local function play_collect_fire_sfx()
     end
 end
 
+local function play_footstep_sfx()
+    if AudioManager == nil then
+        return
+    end
+
+    local volume = get_sfx_volume(C.FOOTSTEP_SFX_VOLUME_SCALE or 1.0)
+
+    if AudioManager.PlayManaged ~= nil then
+        AudioManager.PlayManaged("sfx_foot", FOOTSTEP_SFX_CHANNEL, volume)
+        return
+    end
+
+    if AudioManager.Play ~= nil then
+        AudioManager.Play("sfx_foot", volume)
+    end
+end
+
 local function update_collect_fire_sfx(delta_time, should_play)
     if not should_play then
         reset_collect_fire_sfx_timer()
@@ -262,6 +288,26 @@ local function update_collect_fire_sfx(delta_time, should_play)
         interval = 0.10
     end
     collect_fire_sfx_elapsed = interval
+end
+
+local function update_footstep_sfx(delta_time, should_play)
+    if not should_play then
+        reset_footstep_sfx_timer()
+        return
+    end
+
+    footstep_sfx_elapsed = footstep_sfx_elapsed - math.max(delta_time or 0.0, 0.0)
+    if footstep_sfx_elapsed > 0.0 then
+        return
+    end
+
+    play_footstep_sfx()
+
+    local interval = C.FOOTSTEP_SFX_INTERVAL or 0.35
+    if interval <= 0.0 then
+        interval = 0.35
+    end
+    footstep_sfx_elapsed = interval
 end
 
 local function bind_components()
@@ -2041,6 +2087,8 @@ local function apply_kinematic_movement(delta_time)
             velocity.Z = 0.0
         end
     end
+
+    update_footstep_sfx(delta_time, grounded and move_dir:Length() > 0.0001 and not did_jump)
 end
 
 local function apply_fire(delta_time)
@@ -2102,6 +2150,8 @@ function BeginPlay()
     bind_components()
     cache_view_weapon_base_transforms()
     player_velocity = Vector.Zero()
+    reset_collect_fire_sfx_timer()
+    reset_footstep_sfx_timer()
 
     if root_body ~= nil then
         root_body:SetSimulatePhysics(false)
@@ -2129,6 +2179,11 @@ function BeginPlay()
 
     print("[GOInc] viewport center: " .. viewport_center_x .. ", " .. viewport_center_y)
     print("[GOInc] camera aim and view weapon separated")
+end
+
+function EndPlay()
+    reset_collect_fire_sfx_timer()
+    reset_footstep_sfx_timer()
 end
 
 function PrePhysicsTick(delta_time)

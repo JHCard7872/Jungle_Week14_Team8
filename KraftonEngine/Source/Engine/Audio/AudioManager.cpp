@@ -369,7 +369,7 @@ void FAudioManager::LoadDefaultAudios()
 	LoadAudio("bgm_main_0", "BgmMain_0.mp3", true);
 	LoadAudio("bgm_cutscene", "BgmCutScene.mp3", true);
 	LoadAudio("bgm_collector_truck", "BgmCollectorTruck.mp3", true);
-	LoadAudio("sfx_foot", "SfxFoot.mp3");
+	LoadAudio("sfx_foot", "SfxFootstep.mp3");
 	LoadAudio("sfx_result_high", "SfxResultHigh.mp3");
 	LoadAudio("sfx_result_medium", "SfxResultMedium.mp3");
 	LoadAudio("sfx_result_low", "SfxResultLow.mp3");
