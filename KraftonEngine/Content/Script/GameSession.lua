@@ -1,7 +1,8 @@
 -- =========================================================================================
 -- GameSession — 세션 값 홀더 (require 모듈, 단일 진실원천)
 -- [역할] 게임 중 변하는 공유 값만 보관. 계산/규칙 없음. 필드마다 쓰는 주체는 1명이다:
---        score·result.collectedCount = ScoreManager / load = ServerLoadManager
+--        score·result.collectedCount·result.baseScore·result.urgentScore = ScoreManager
+--        load = ServerLoadManager
 --        timeRemaining·result.gameOverReason = PlayScene / inputEnabled = PlayScene ESC 토글
 --        gun.* = GunBehavior
 -- [사용법] local Session = require("GameSession") 후 필드 직독. 쓰기는 위 담당만.
@@ -44,6 +45,8 @@ local S = {
 
     result = {
         collectedCount = 0,   -- 총 수거 수
+        baseScore      = 0,   -- 기본 회수 실적 — 수거 점수 누계 (결과 화면 표시용)
+        urgentScore    = 0,   -- 긴급 요청 처리 실적 — 미션 보너스 누계 (결과 화면 표시용)
         gameOverReason = "",  -- "시간 초과" / "서버 과부하"
         gradeText      = "",  -- 평가 문구 ("정규직 전환 실패" 등) — 3차 폴리시
     },

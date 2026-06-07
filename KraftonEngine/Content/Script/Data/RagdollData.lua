@@ -17,42 +17,6 @@
 -- ============================================================================
 
 return {
-    ["red-plumber"] = {
-        id             = "red-plumber",
-        displayName    = "빨간 배관공",
-        referenceImage = "Content/UI/Images/red_plumber.png",  -- 파일 입수 전
-
-        mass           = 12.5,   -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 100,    -- 임시 밸런스
-        canRevive      = true,
-        reviveSpeed    = 2.5,    -- 카탈로그 표시/밸런스용 부활 속도
-        attackPower    = 15,     -- placeholder — 적용 규칙 미정
-
-        -- 아직 GOIncMarioRagdollPawn은 구현하지 않았으므로 스폰에서는 제외
-        pawnClass      = "",
-        canSpawn       = false,
-        spawnWeight    = 0,
-        uiOrder        = 90,
-    },
-
-    ["green-slime"] = {
-        id             = "green-slime",
-        displayName    = "초록 슬라임",
-        referenceImage = "Content/UI/Images/green_slime.png",  -- 파일 입수 전
-
-        mass           = 6.0,    -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 80,     -- 임시 밸런스
-        canRevive      = false,
-        reviveSpeed    = 0,
-        attackPower    = 0,      -- placeholder
-
-        -- 아직 전용 Pawn이 없으므로 스폰에서는 제외
-        pawnClass      = "",
-        canSpawn       = false,
-        spawnWeight    = 0,
-        uiOrder        = 100,
-    },
-
     ["blue-speedster"] = {
         id             = "blue-speedster",
         displayName    = "파란 고슴도치",
@@ -66,7 +30,7 @@ return {
 
         pawnClass      = "AGOIncSonicRagdollPawn",
         canSpawn       = true,
-        spawnWeight    = 10,
+        spawnWeight    = 1,
         uiOrder        = 10,
     },
 
@@ -76,14 +40,14 @@ return {
         referenceImage = "Content/UI/Images/pink_round.png",
 
         mass           = 6.5,    -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 120,    -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 3.5,
         attackPower    = 8,      -- placeholder
 
         pawnClass      = "AGOIncKirbyRagdollPawn",
         canSpawn       = true,
-        spawnWeight    = 8,
+        spawnWeight    = 1,
         uiOrder        = 20,
     },
 
@@ -93,14 +57,14 @@ return {
         referenceImage = "Content/UI/Images/brown_gorilla.png",
 
         mass           = 20.0,   -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 180,    -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 2.0,
         attackPower    = 25,     -- placeholder
 
         pawnClass      = "AGOIncDonkeyKongRagdollPawn",
         canSpawn       = true,
-        spawnWeight    = 3,
+        spawnWeight    = 1,
         uiOrder        = 30,
     },
 
@@ -110,14 +74,151 @@ return {
         referenceImage = "Content/UI/Images/yellow_mouse.png",
 
         mass           = 5.5,    -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 140,    -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 4.5,
         attackPower    = 18,     -- placeholder
 
         pawnClass      = "AGOIncPikachuRagdollPawn",
         canSpawn       = true,
-        spawnWeight    = 7,
+        spawnWeight    = 1,
         uiOrder        = 40,
+    },
+
+    ["red-plumber"] = {
+        id             = "red-plumber",
+        displayName    = "빨간 배관공",
+        referenceImage = "Content/UI/Images/red_plumber.png",  -- 파일 입수 전
+
+        mass           = 12.5,   -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 2.5,    -- 카탈로그 표시/밸런스용 부활 속도
+        attackPower    = 15,     -- placeholder — 적용 규칙 미정
+
+        pawnClass      = "AGOIncMarioRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 50,
+    },
+
+    ["spiked-king"] = {
+        id             = "spiked-king",
+        displayName    = "가시 대왕",
+        referenceImage = "Content/UI/Images/spiked_king.png",  -- 파일 입수 전
+
+        mass           = 24.0,   -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 2.2,
+        attackPower    = 30,     -- placeholder
+
+        pawnClass      = "AGOIncBowserRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 60,
+    },
+
+    ["egg-scientist"] = {
+        id             = "egg-scientist",
+        displayName    = "에그 과학자",
+        referenceImage = "Content/UI/Images/egg_scientist.png",  -- 파일 입수 전
+
+        mass           = 14.0,   -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 2.8,
+        attackPower    = 12,     -- placeholder
+
+        pawnClass      = "AGOIncEggmanRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 70,
+    },
+
+    ["green-swordsman"] = {
+        id             = "green-swordsman",
+        displayName    = "초록 검사",
+        referenceImage = "Content/UI/Images/green_swordsman.png",  -- 파일 입수 전
+
+        mass           = 11.5,   -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 3.8,
+        attackPower    = 20,     -- placeholder
+
+        pawnClass      = "AGOIncLinkRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 80,
+    },
+
+    ["pink-princess"] = {
+        id             = "pink-princess",
+        displayName    = "분홍 공주",
+        referenceImage = "Content/UI/Images/pink_princess.png",  -- 파일 입수 전
+
+        mass           = 10.5,   -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 3.4,
+        attackPower    = 10,     -- placeholder
+
+        pawnClass      = "AGOIncPeachRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 90,
+    },
+
+    ["space-chief"] = {
+        id             = "space-chief",
+        displayName    = "스페이스 치프",
+        referenceImage = "Content/UI/Images/space_chief.png",  -- 파일 입수 전
+
+        mass           = 16.5,   -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 3.0,
+        attackPower    = 22,     -- placeholder
+
+        pawnClass      = "AGOIncChiefRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 100,
+    },
+
+    ["adventurer"] = {
+        id             = "adventurer",
+        displayName    = "모험가",
+        referenceImage = "Content/UI/Images/adventurer.png",  -- 파일 입수 전
+
+        mass           = 9.5,    -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 임시 밸런스
+        canRevive      = true,
+        reviveSpeed    = 3.7,
+        attackPower    = 16,     -- placeholder
+
+        pawnClass      = "AGOIncLaraRagdollPawn",
+        canSpawn       = true,
+        spawnWeight    = 1,
+        uiOrder        = 110,
+    },
+
+    ["green-slime"] = {
+        id             = "green-slime",
+        displayName    = "초록 슬라임",
+        referenceImage = "Content/UI/Images/green_slime.png",  -- 파일 입수 전
+
+        mass           = 6.0,    -- 카탈로그 표시/밸런스용 무게
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
+        canRevive      = false,
+        reviveSpeed    = 0,
+        attackPower    = 0,      -- placeholder
+
+        -- Content/Data에 실제 asset 폴더와 전용 Pawn이 없으므로 스폰에서는 제외
+        pawnClass      = "",
+        canSpawn       = false,
+        spawnWeight    = 0,
+        uiOrder        = 900,
     },
 }

@@ -462,6 +462,9 @@ void UWorld::Tick(float DeltaTime, ELevelTick TickType)
 			[this](float FixedDeltaTime)
 			{
 				TickPhysicalAnimationComponentsPrePhysics(FixedDeltaTime);
+				// Lua FixedTick — 물리 고정 스텝(1/60) 동기. 렌더 프레임당 0~4회 가변 호출.
+				// 이 안에서 액터 스폰/파괴/씬 로드 금지 — 물리 서브스텝 루프 내부다.
+				FLuaScriptManager::TickFixed(FixedDeltaTime);
 			}
 		);
 	}

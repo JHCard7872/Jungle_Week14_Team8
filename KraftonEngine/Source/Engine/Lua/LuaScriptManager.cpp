@@ -516,6 +516,32 @@ void FLuaScriptManager::TickPostCamera(float DeltaTime)
 	}
 }
 
+void FLuaScriptManager::TickFixed(float FixedDeltaTime)
+{
+	if (!IsInitialized()) return;
+
+	TArray<TWeakObjectPtr<ULuaScriptComponent>> Components;
+	{
+		std::lock_guard<std::mutex> Lock(ComponentMutex);
+		RegisteredComponents.erase(
+			std::remove_if(
+				RegisteredComponents.begin(),
+				RegisteredComponents.end(),
+				[](const TWeakObjectPtr<ULuaScriptComponent>& Component) { return !Component.IsValid(); }),
+			RegisteredComponents.end());
+		Components = RegisteredComponents;
+	}
+
+	for (const TWeakObjectPtr<ULuaScriptComponent>& ComponentPtr : Components)
+	{
+		ULuaScriptComponent* Component = ComponentPtr.Get();
+		if (IsValid(Component))
+		{
+			Component->TickFixed(FixedDeltaTime);
+		}
+	}
+}
+
 void FLuaScriptManager::RegisterAnimInstance(ULuaAnimInstance* Instance)
 {
     if (!IsAliveObject(Instance)) return;

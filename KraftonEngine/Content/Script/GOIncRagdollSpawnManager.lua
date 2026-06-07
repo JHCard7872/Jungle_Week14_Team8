@@ -10,6 +10,7 @@
 -- spawnWeight <= 0 means the entry will not spawn.
 -- canSpawn must be true to spawn.
 -- pawnClass must be non-empty to spawn.
+-- MAX_SPAWN_COUNT limits ALIVE pawns, not total spawns — collected (destroyed) pawns free their slot.
 
 local SpawnCfg = require("Data.GameConfig").spawn
 
@@ -30,6 +31,8 @@ local spawnTimer = 0.0
 local spawnedCount = 0
 local spawnedPawns = {}
 local bPrintedMaxSpawnReached = false
+local bPrintedSpawnCandidateSummary = false
+local loggedUnregisteredCharacterIds = {}
 
 local function number_or(value, fallback)
     if type(value) == "number" then
@@ -90,6 +93,65 @@ local function is_spawnable_config(config)
     return number_or(config.spawnWeight, 0.0) > 0.0
 end
 
+local function is_character_registered(characterId)
+    if GOInc == nil or GOInc.IsRagdollCharacterRegistered == nil then
+        return true
+    end
+
+    local ok, result = pcall(GOInc.IsRagdollCharacterRegistered, characterId)
+    if not ok then
+        print("[GOIncRagdollSpawnManager] GOInc.IsRagdollCharacterRegistered failed for " .. tostring(characterId))
+        return false
+    end
+
+    return result == true
+end
+
+local function print_unregistered_character_once(characterId, pawnClass)
+    local key = tostring(characterId)
+    if loggedUnregisteredCharacterIds[key] then
+        return
+    end
+
+    loggedUnregisteredCharacterIds[key] = true
+    print(string.format(
+        "[GOIncRagdollSpawnManager] Skip unregistered character id: %s (%s)",
+        tostring(characterId),
+        tostring(pawnClass)))
+end
+
+local function sort_spawn_candidates(lhs, rhs)
+    local lhsOrder = number_or(lhs.uiOrder, 999999)
+    local rhsOrder = number_or(rhs.uiOrder, 999999)
+
+    if lhsOrder ~= rhsOrder then
+        return lhsOrder < rhsOrder
+    end
+
+    return tostring(lhs.id) < tostring(rhs.id)
+end
+
+local function print_spawn_candidate_summary_once(candidates, totalWeight)
+    if bPrintedSpawnCandidateSummary then
+        return
+    end
+
+    bPrintedSpawnCandidateSummary = true
+    print(string.format(
+        "[GOIncRagdollSpawnManager] Spawn candidates ready: %d entries, totalWeight=%.2f",
+        #candidates,
+        totalWeight))
+
+    for _, entry in ipairs(candidates) do
+        print(string.format(
+            "  - %s (%s, %s), weight=%.2f",
+            tostring(entry.id),
+            tostring(entry.displayName),
+            tostring(entry.pawnClass),
+            entry.weight))
+    end
+end
+
 local function build_spawn_candidates()
     local data = load_ragdoll_data()
     if data == nil then
@@ -103,16 +165,25 @@ local function build_spawn_candidates()
         if type(tableKey) == "string" and tableKey ~= "" and is_spawnable_config(config) then
             local characterId = resolve_character_id(tableKey, config)
             local weight = number_or(config.spawnWeight, 0.0)
-            totalWeight = totalWeight + weight
 
-            table.insert(candidates, {
-                id = characterId,
-                displayName = config.displayName or characterId,
-                pawnClass = config.pawnClass,
-                weight = weight,
-            })
+            if is_character_registered(characterId) then
+                totalWeight = totalWeight + weight
+
+                table.insert(candidates, {
+                    id = characterId,
+                    displayName = config.displayName or characterId,
+                    pawnClass = config.pawnClass,
+                    weight = weight,
+                    uiOrder = config.uiOrder,
+                })
+            else
+                print_unregistered_character_once(characterId, config.pawnClass)
+            end
         end
     end
+
+    table.sort(candidates, sort_spawn_candidates)
+    print_spawn_candidate_summary_once(candidates, totalWeight)
 
     return candidates, totalWeight
 end
@@ -121,7 +192,13 @@ local function pick_random_character_entry()
     local candidates, totalWeight = build_spawn_candidates()
 
     if candidates == nil or #candidates <= 0 or totalWeight <= 0.0 then
-        print("[GOIncRagdollSpawnManager] No spawnable character entries. Fallback: " .. DEFAULT_CHARACTER_ID)
+        print("[GOIncRagdollSpawnManager] No spawnable registered character entries. Fallback: " .. DEFAULT_CHARACTER_ID)
+
+        if not is_character_registered(DEFAULT_CHARACTER_ID) then
+            print("[GOIncRagdollSpawnManager] Default character id is not registered: " .. tostring(DEFAULT_CHARACTER_ID))
+            return nil
+        end
+
         return {
             id = DEFAULT_CHARACTER_ID,
             displayName = DEFAULT_CHARACTER_ID,
@@ -159,6 +236,24 @@ local function can_spawn_more()
     return spawnedCount < MAX_SPAWN_COUNT
 end
 
+-- 수거(Destroy)된 폰을 목록에서 걷어내 spawnedCount를 "살아있는 수"로 유지한다.
+-- 자리가 비면 다시 스폰 가능 — 안 하면 누적 10마리 이후 스폰이 영구 정지한다.
+local function prune_dead_pawns()
+    for i = #spawnedPawns, 1, -1 do
+        local pawn = spawnedPawns[i]
+        if pawn == nil or (pawn.IsValid ~= nil and not pawn:IsValid()) then
+            table.remove(spawnedPawns, i)
+        end
+    end
+
+    spawnedCount = #spawnedPawns
+
+    -- 자리가 다시 비었으면 "max reached" 안내도 다음 만석 때 다시 찍히게 리셋
+    if MAX_SPAWN_COUNT > 0 and spawnedCount < MAX_SPAWN_COUNT then
+        bPrintedMaxSpawnReached = false
+    end
+end
+
 local function print_max_spawn_reached_once()
     if bPrintedMaxSpawnReached then
         return
@@ -182,7 +277,16 @@ local function spawn_one()
     end
 
     local entry = pick_random_character_entry()
+    if entry == nil then
+        return nil
+    end
+
     local characterId = entry.id
+    if not is_character_registered(characterId) then
+        print("[GOIncRagdollSpawnManager] Selected character id is not registered: " .. tostring(characterId))
+        return nil
+    end
+
     local location = make_random_spawn_location()
     local pawn = GOInc.SpawnRagdollCharacter(characterId, location)
 
@@ -191,8 +295,16 @@ local function spawn_one()
         return nil
     end
 
-    spawnedCount = spawnedCount + 1
-    spawnedPawns[spawnedCount] = pawn
+    table.insert(spawnedPawns, pawn)
+    spawnedCount = #spawnedPawns
+
+    -- 점수/미션 식별용 타입 태그 — ScoreManager.FindType이 RagdollData 키와 일치하는
+    -- 태그를 찾는다. C++ 생성자는 "Ragdoll" 태그만 달아주므로 타입 태그는 여기서 단다.
+    if pawn.AddTag ~= nil then
+        pawn:AddTag(characterId)
+    else
+        print("[GOIncRagdollSpawnManager] Missing AddTag binding — score/mission type tag disabled")
+    end
 
     print(string.format(
         "[GOIncRagdollSpawnManager] Spawned %s (%s, %s) at (%.2f, %.2f, %.2f) [%d / %d]",
@@ -224,6 +336,8 @@ function BeginPlay()
     spawnedCount = 0
     spawnedPawns = {}
     bPrintedMaxSpawnReached = false
+    bPrintedSpawnCandidateSummary = false
+    loggedUnregisteredCharacterIds = {}
 
     if SPAWN_IMMEDIATELY_ON_BEGIN_PLAY then
         spawn_one()
@@ -231,6 +345,8 @@ function BeginPlay()
 end
 
 function Tick(deltaTime)
+    prune_dead_pawns()
+
     if not can_spawn_more() then
         print_max_spawn_reached_once()
         return
