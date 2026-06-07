@@ -12,11 +12,8 @@
 #include "Core/Logging/Log.h"
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/GOIncRagdollCharacterRegistry.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
-#include "GameFramework/Pawn/GOIncDonkeyKongRagdollPawn.h"
-#include "GameFramework/Pawn/GOIncKirbyRagdollPawn.h"
-#include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
-#include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
 #include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
 #include "Math/Transform.h"
@@ -183,6 +180,11 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			return SpawnedPawn;
 		});
 
+		GOInc.set_function("IsRagdollCharacterRegistered", [](const FString& CharacterId) -> bool
+		{
+			return IsGOIncRagdollCharacterRegistered(CharacterId);
+		});
+
 		GOInc.set_function("SpawnRagdollCharacter", [](const FString& CharacterId, const FVector& Location) -> AGOIncRagdollPawn*
 		{
 			if (!GEngine)
@@ -198,65 +200,8 @@ void RegisterGameLuaBindings(sol::state& Lua)
 				return nullptr;
 			}
 
-			AGOIncRagdollPawn* SpawnedPawn = nullptr;
-
-			if (CharacterId == "blue-speedster")
-			{
-				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncSonicRagdollPawn>(
-					[&](AGOIncSonicRagdollPawn* Pawn)
-					{
-						if (!Pawn)
-						{
-							return;
-						}
-
-						Pawn->InitDefaultComponents();
-						Pawn->SetActorLocation(Location);
-					});
-			}
-			else if (CharacterId == "pink-round")
-			{
-				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncKirbyRagdollPawn>(
-					[&](AGOIncKirbyRagdollPawn* Pawn)
-					{
-						if (!Pawn)
-						{
-							return;
-						}
-
-						Pawn->InitDefaultComponents();
-						Pawn->SetActorLocation(Location);
-					});
-			}
-			else if (CharacterId == "brown-gorilla")
-			{
-				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncDonkeyKongRagdollPawn>(
-					[&](AGOIncDonkeyKongRagdollPawn* Pawn)
-					{
-						if (!Pawn)
-						{
-							return;
-						}
-
-						Pawn->InitDefaultComponents();
-						Pawn->SetActorLocation(Location);
-					});
-			}
-			else if (CharacterId == "yellow-mouse")
-			{
-				SpawnedPawn = World->SpawnActorWithInitializer<AGOIncPikachuRagdollPawn>(
-					[&](AGOIncPikachuRagdollPawn* Pawn)
-					{
-						if (!Pawn)
-						{
-							return;
-						}
-
-						Pawn->InitDefaultComponents();
-						Pawn->SetActorLocation(Location);
-					});
-			}
-			else
+			AGOIncRagdollPawn* SpawnedPawn = SpawnGOIncRagdollCharacter(World, CharacterId, Location);
+			if (!SpawnedPawn)
 			{
 				UE_LOG("[GOInc] Unknown ragdoll character id '%s'. Falling back to AGOIncRagdollPawn.", CharacterId.c_str());
 

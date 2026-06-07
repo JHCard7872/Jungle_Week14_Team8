@@ -824,6 +824,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\Viewport\ViewportClient.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp" />
     <ClCompile Include="Source\Game\GameActorPlacements.cpp" />
+    <ClCompile Include="Source\Game\GOIncRagdollCharacterRegistry.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncGameMode.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncGameState.cpp" />
     <ClCompile Include="Source\Game\GameMode\GOIncPlayerController.cpp" />
@@ -1356,6 +1357,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\Viewport\ViewportClient.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTruck.h" />
     <ClInclude Include="Source\Game\GameActorPlacements.h" />
+    <ClInclude Include="Source\Game\GOIncRagdollCharacterRegistry.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncGameMode.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncGameState.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
