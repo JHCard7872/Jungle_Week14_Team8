@@ -14,6 +14,7 @@
 
 local SpawnCfg = require("Data.GameConfig").spawn
 local Score = require("Data.ScoreData")
+local Session = require("GameSession")
 
 local SPAWN_MIN_X = SpawnCfg.areaMinX
 local SPAWN_MAX_X = SpawnCfg.areaMaxX
@@ -34,6 +35,7 @@ local spawnedPawns = {}
 local bPrintedMaxSpawnReached = false
 local bPrintedSpawnCandidateSummary = false
 local loggedUnregisteredCharacterIds = {}
+local bImmediateSpawnPending = false
 
 local function number_or(value, fallback)
     if type(value) == "number" then
@@ -354,13 +356,24 @@ function BeginPlay()
     bPrintedMaxSpawnReached = false
     bPrintedSpawnCandidateSummary = false
     loggedUnregisteredCharacterIds = {}
+    bImmediateSpawnPending = SPAWN_IMMEDIATELY_ON_BEGIN_PLAY
 
-    if SPAWN_IMMEDIATELY_ON_BEGIN_PLAY then
+    if bImmediateSpawnPending and Session.inputEnabled == true then
         spawn_one()
+        bImmediateSpawnPending = false
     end
 end
 
 function Tick(deltaTime)
+    if Session.inputEnabled ~= true then
+        return
+    end
+
+    if bImmediateSpawnPending then
+        spawn_one()
+        bImmediateSpawnPending = false
+    end
+
     prune_dead_pawns()
 
     if not can_spawn_more() then

@@ -48,11 +48,7 @@ local weapon_swap_state = {
     start_angle = 0.0,
     target_angle = 0.0,
     current_angle = 0.0,
-    is_active = false,
-    walk_phase = 0.0,
-    walk_weight = 0.0,
-    sprint_weight = 0.0,
-    is_sprinting = false
+    is_active = false
 }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
@@ -208,14 +204,6 @@ end
 
 local function fire_held()
     return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
-end
-
-local function crosshair_hold_active()
-    -- Weapon2는 짧은 빔 펄스만 쏘므로 hold UI 상태에서 완전히 제외한다.
-    if weapon_swap_state.active_index == 2 then
-        return false
-    end
-    return fire_held()
 end
 
 local function reset_collect_fire_sfx_timer()
@@ -645,10 +633,8 @@ local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_lo
     end
 end
 
-local function update_view_weapon(delta_time)
+local function update_view_weapon()
     local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
-    local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(
-        delta_time, player_velocity, weapon_swap_state, vec, clamp, weapon_swap_state.is_sprinting)
 
     if view_weapon_root ~= nil then
         if camera ~= nil then
@@ -664,12 +650,8 @@ local function update_view_weapon(delta_time)
     end
 
     if weapon_visual_pivot ~= nil then
-        weapon_visual_pivot.RelativeLocation = weapon_offset + walk_offset
-        weapon_visual_pivot.Rotation = vec(
-            base_weapon_visual_rotation.X + walk_rotation.X,
-            base_weapon_visual_rotation.Y + walk_rotation.Y,
-            base_weapon_visual_rotation.Z + walk_rotation.Z
-        )
+        weapon_visual_pivot.RelativeLocation = weapon_offset
+        weapon_visual_pivot.Rotation = copy_vec(base_weapon_visual_rotation)
     end
 
     if weapon_components.swap_pivot ~= nil then
@@ -760,7 +742,6 @@ local function center_physics_raycast(max_distance)
     local primitive_distance = nil
     local physics_distance = distance
     local front_hit_epsilon = C.FRONT_HIT_DISTANCE_EPSILON or 0.05
-    local b_use_grab_raycast = World ~= nil and World.PhysicsGrabRaycast ~= nil
     local hit = nil
 
     if World ~= nil and World.PrimitiveRaycast ~= nil then
@@ -770,26 +751,19 @@ local function center_physics_raycast(max_distance)
             if primitive_distance == nil and primitive_hit.Hit ~= nil then
                 primitive_distance = primitive_hit.Hit.Distance
             end
-            -- Grab raycasts have their own body filter and must be able to pass
-            -- through a same-actor capsule/front primitive to reach the ragdoll body.
-            if not b_use_grab_raycast and primitive_distance ~= nil and primitive_distance > 0.0 then
+            if primitive_distance ~= nil and primitive_distance > 0.0 then
                 physics_distance = math.min(distance, primitive_distance + front_hit_epsilon)
             end
         end
     end
 
-    if World ~= nil then
-        if World.PhysicsGrabRaycast ~= nil then
-            hit = World.PhysicsGrabRaycast(start, direction, physics_distance, obj)
-        elseif World.PhysicsRaycast ~= nil then
-            hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
-        end
+    if World ~= nil and World.PhysicsRaycast ~= nil then
+        hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
     end
 
     if primitive_hit ~= nil and primitive_hit.bHit then
         local physics_hit_distance = nil
         local physics_hit_actor = nil
-        local physics_hit_body = nil
         if hit ~= nil and hit.bHit then
             physics_hit_distance = hit.Distance
             if physics_hit_distance == nil and hit.Hit ~= nil then
@@ -798,10 +772,6 @@ local function center_physics_raycast(max_distance)
             physics_hit_actor = hit.HitActor
             if physics_hit_actor == nil and hit.Hit ~= nil then
                 physics_hit_actor = hit.Hit.HitActor
-            end
-            physics_hit_body = hit.PhysicsBody
-            if physics_hit_body == nil and hit.Hit ~= nil then
-                physics_hit_body = hit.Hit.PhysicsBody
             end
         end
 
@@ -815,9 +785,8 @@ local function center_physics_raycast(max_distance)
             and primitive_distance ~= nil
             and (physics_hit_distance <= primitive_distance
                 or (b_same_front_actor and physics_hit_distance <= primitive_distance + front_hit_epsilon))
-        local b_same_actor_grab_body = b_same_front_actor and physics_hit_body ~= nil
 
-        if hit == nil or not hit.bHit or (not b_physics_hit_is_front and not b_same_actor_grab_body) then
+        if hit == nil or not hit.bHit or not b_physics_hit_is_front then
             hit = primitive_hit
         end
     end
@@ -1473,17 +1442,6 @@ local function update_active_grab(delta_time)
     return true
 end
 
-local function try_begin_beam_grab_while_held(hit, start, direction, fallback_end)
-    if grabbed_body ~= nil or not fire_held() then
-        return false
-    end
-
-    -- Keep the held beam "hot": if nothing is currently grabbed, a later
-    -- pickable body entering the beam should be grabbed without requiring a
-    -- fresh button press.
-    return begin_beam_grab(hit, start, direction, fallback_end)
-end
-
 local function update_beam_fade(delta_time)
     if beam_visible_remaining > 0.0 then
         beam_visible_remaining = beam_visible_remaining - delta_time
@@ -1532,10 +1490,10 @@ local function update_crosshair_hold_rotation(delta_time, is_hold)
     end
 end
 
-local function build_crosshair_state(is_hold)
+local function build_crosshair_state()
     update_viewport_center()
 
-    is_hold = is_hold == true
+    local is_hold = Input.GetKey(C.KEY_LBUTTON)
     return {
         mode = get_current_gun_mode(),
         visible = true,
@@ -1547,9 +1505,8 @@ local function build_crosshair_state(is_hold)
 end
 
 local function publish_crosshair_state(delta_time)
-    local is_hold = crosshair_hold_active()
-    update_crosshair_hold_rotation(delta_time, is_hold)
-    local crosshair_state = build_crosshair_state(is_hold)
+    update_crosshair_hold_rotation(delta_time, Input.GetKey(C.KEY_LBUTTON))
+    local crosshair_state = build_crosshair_state()
 
     if Session ~= nil and Session.gun ~= nil then
         Session.gun.mode = crosshair_state.mode
@@ -2089,11 +2046,9 @@ local function apply_kinematic_movement(delta_time)
 
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
-    weapon_swap_state.is_sprinting = Input.GetKey(C.KEY_SHIFT) and move_dir:Length() > 0.0001
 
     if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized()
-            * (C.MOVE_SPEED * (weapon_swap_state.is_sprinting and C.SPRINT_SPEED_MULTIPLIER or 1.0))
+        horizontal_velocity = move_dir:Normalized() * C.MOVE_SPEED
     end
 
     velocity.X = horizontal_velocity.X
@@ -2170,7 +2125,7 @@ local function apply_fire(delta_time)
     local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
     set_beamed_ragdoll_actor(get_hit_actor(hit))
-    if try_begin_beam_grab_while_held(hit, start, direction, fallback_end) then
+    if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
         return
     end
 
@@ -2211,7 +2166,7 @@ function BeginPlay()
     end
 
     update_camera_view()
-    update_view_weapon(0.0)
+    update_view_weapon()
     set_beam_visible(false)
 
     if camera ~= nil then
@@ -2232,20 +2187,35 @@ function EndPlay()
 end
 
 function PrePhysicsTick(delta_time)
+    if Session.inputEnabled ~= true then
+        return
+    end
+
     apply_look_input(delta_time)
     apply_kinematic_movement(delta_time)
 end
 
 function Tick(delta_time)
+    if Session.inputEnabled ~= true then
+        update_session_gun_state()
+        return
+    end
+
     update_weapon_swap(delta_time)
     update_session_gun_state()
     obj.Rotation = vec(0.0, 0.0, yaw)
     select_active_beam_particle()
     update_camera_view()
-    update_view_weapon(delta_time)
+    update_view_weapon()
 end
 
 function PostCameraTick(delta_time)
+    if Session.inputEnabled ~= true then
+        publish_target_state()
+        publish_crosshair_state(0.0)
+        return
+    end
+
     aim_trace_cache.serial = aim_trace_cache.serial + 1
     apply_fire(delta_time)
     update_crosshair_aim_position(delta_time)

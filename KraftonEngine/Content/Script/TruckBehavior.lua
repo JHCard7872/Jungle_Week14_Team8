@@ -12,6 +12,8 @@
 
 local ScoreMgr   = require("Manager/ScoreManager")
 local MissionMgr = require("Manager/MissionManager")
+local HUD = require("UI/HUDController")
+local Session = require("GameSession")
 local UserSettings = require("Data/UserSettings")
 local ParticleFX = require("ParticleFX")
 
@@ -65,7 +67,11 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
     if not other_actor:HasTag("Ragdoll") then return end
 
     ScoreMgr.AddForRagdoll(other_actor)
-    MissionMgr.NotifyRecovered(other_actor)   -- 태그를 읽으므로 Destroy 전에 호출
+    HUD.QueuePopup("COLLECTED")
+    local mission_completed = MissionMgr.NotifyRecovered(other_actor)   -- 태그를 읽으므로 Destroy 전에 호출
+    if mission_completed then
+        HUD.QueuePopup("MISSION COMPLETE")
+    end
     AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
     local D = require("Data/TruckData")       -- Tick과 동일하게 핫리로드 반영
     ParticleFX.Burst(D.collectFxPath, other_actor.Location, D.collectFxLife) -- 수거 "뾰로롱" — Destroy 전에 위치를 읽는다
@@ -74,6 +80,11 @@ end
 
 function Tick(dt)
     local D = require("Data/TruckData")
+
+    if Session.inputEnabled ~= true then
+        AudioManager.StopLoop("TruckLoop")
+        return
+    end
 
     -- 엔진음은 주행 중에만. 매 Tick 호출해도 싸다 — PlayLoop는 이미 돌고 있으면
     -- 볼륨만 갱신(TruckData 핫리로드 즉시 반영), StopLoop는 없으면 no-op
