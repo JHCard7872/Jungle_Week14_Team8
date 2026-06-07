@@ -1,0 +1,286 @@
+body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+    font-family: ROKAF Sans;
+}
+
+/* Lua에서 SetProperty("display", ...)로 보이기/숨기기를 제어한다 */
+#options_root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+/* 화면 전체를 검은색 30%로 덮는 레이어
+   주의: 이 RCSS는 rgba()/rgb() 함수 문법을 지원하지 않는다 (다른 화면도 전부 8자리 HEX 사용).
+   #RRGGBBAA 에서 AA = 0.30 * 255 ≈ 0x4D */
+#options_dim {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #0000004D;
+    z-index: 10;
+}
+
+/* 옵션 패널: 화면 정중앙에 고정 px 크기 + 음수 margin으로 배치 */
+#options_panel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1200px;
+    height: 760px;
+    margin-left: -600px;
+    margin-top: -380px;
+    z-index: 20;
+}
+
+#options_title {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 600px;
+    height: 64px;
+    color: #ffffff;
+    font-size: 48px;
+    font-weight: bold;
+}
+
+/* 우측 상단 Back 버튼: "Back" 텍스트 + 화살표 아이콘, 텍스트는 흰색 */
+#options_back_button {
+    position: absolute;
+    right: 0px;
+    top: 6px;
+    width: 180px;
+    height: 52px;
+    margin: 0px;
+    padding: 0px;
+    background-color: transparent;
+    border: 0px;
+    transform-origin: center center;
+}
+
+#options_back_button:hover {
+    transform: scale(1.06);
+}
+
+#options_back_label {
+    position: absolute;
+    right: 60px;
+    top: 8px;
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+#options_back_icon {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    width: 48px;
+    height: 48px;
+    pointer-events: none;
+}
+
+#options_body {
+    position: absolute;
+    left: 0px;
+    top: 110px;
+    width: 100%;
+    height: 560px;
+}
+
+.option_group {
+    position: relative;
+    width: 100%;
+    margin-bottom: 48px;
+}
+
+/* 레퍼런스의 연두색 라벨 칩: settings_label.png 위에 텍스트를 얹는다 */
+.option_group_label {
+    position: relative;
+    width: 360px;
+    height: 80px;
+}
+
+.option_group_label_bg {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 360px;
+    height: 80px;
+}
+
+.option_group_label_text {
+    position: absolute;
+    left: 36px;
+    top: 22px;
+    color: #2c4f3a;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.option_group_rows {
+    position: relative;
+    width: 100%;
+    margin-top: 18px;
+}
+
+/* 사운드 볼륨 행 */
+.option_row {
+    position: relative;
+    width: 100%;
+    height: 64px;
+    margin-bottom: 12px;
+    background-color: #ffffff1f;
+    border-radius: 12px;
+}
+
+.option_row_name {
+    position: absolute;
+    left: 36px;
+    top: 16px;
+    color: #ffffff;
+    font-size: 30px;
+}
+
+.option_value {
+    position: absolute;
+    right: 36px;
+    top: 10px;
+    width: 200px;
+    height: 44px;
+}
+
+.value_step_button {
+    width: 44px;
+    height: 44px;
+    margin: 0px;
+    padding: 0px;
+    background-color: #ffffff33;
+    border: 0px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 28px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.value_step_button:hover {
+    background-color: #ffffff55;
+}
+
+.option_value_text {
+    display: inline-block;
+    width: 80px;
+    height: 44px;
+    line-height: 44px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+/* 입력 모드 선택 행: settings_input_* 아이콘을 작게 표시한다 */
+.input_mode_row {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 80px;
+    margin: 0px 0px 12px 0px;
+    padding: 0px;
+    background-color: #ffffff1f;
+    border-radius: 12px;
+    border-width: 2px;
+    border-color: #00000000;
+    text-align: left;
+}
+
+.input_mode_row:hover {
+    background-color: #ffffff33;
+}
+
+.input_mode_row.selected {
+    background-color: #ffd9664d;
+    border-color: #ffd966ff;
+}
+
+.input_mode_icon {
+    position: absolute;
+    left: 22px;
+    top: 14px;
+    width: 52px;
+    height: 52px;
+}
+
+.input_mode_text {
+    position: absolute;
+    left: 92px;
+    top: 24px;
+    color: #ffffff;
+    font-size: 30px;
+}
+
+/* 중앙 하단 Confirm 버튼: ui_horiz_button(_hover) 사용 */
+.horiz_button {
+    position: absolute;
+    left: 50%;
+    bottom: 0px;
+    width: 360px;
+    height: 80px;
+    margin-left: -180px;
+    padding: 0px;
+    background-color: transparent;
+    border: 0px;
+    transform-origin: center center;
+}
+
+.horiz_button:hover {
+    transform: scale(1.04);
+}
+
+.horiz_button:active {
+    transform: scale(0.98);
+}
+
+.horiz_button_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.horiz_button_hover {
+    display: none;
+}
+
+.horiz_button:hover .horiz_button_default {
+    display: none;
+}
+
+.horiz_button:hover .horiz_button_hover {
+    display: block;
+}
+
+.horiz_button_label {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    line-height: 80px;
+    text-align: center;
+    color: #ffffff;
+    font-size: 34px;
+    font-weight: bold;
+    pointer-events: none;
+}

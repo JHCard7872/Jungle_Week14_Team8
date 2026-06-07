@@ -1,0 +1,13 @@
+[
+  {"nickname":"SAMPLE001","totalScore":12800,"collectedCount":32,"savedAt":1765000001},
+  {"nickname":"SAMPLE002","totalScore":9600,"collectedCount":24,"savedAt":1765000002},
+  {"nickname":"SAMPLE003","totalScore":7300,"collectedCount":18,"savedAt":1765000003}
+,
+  {"nickname":"SAMPLE84084_1","totalScore":10720,"collectedCount":18,"savedAt":1780784084}
+,
+  {"nickname":"SAMPLE84475_1","totalScore":10720,"collectedCount":18,"savedAt":1780784475}
+,
+  {"nickname":"SAMPLE84782_1","totalScore":10720,"collectedCount":18,"savedAt":1780784782}
+,
+  {"nickname":"SAMPLE85395_1","totalScore":10720,"collectedCount":18,"savedAt":1780785395}
+]

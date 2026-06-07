@@ -18,20 +18,38 @@ local ScoreMgr   = require("Manager/ScoreManager")
 local LoadMgr    = require("Manager/ServerLoadManager")
 local MissionMgr = require("Manager/MissionManager")
 local HUD        = require("UI/HUDController")
+local PauseUI    = require("UI/PauseUIController")
+local UserSettings = require("Data/UserSettings")
 
 local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프레임 잔여 Tick 가드)
 
--- ESC: 일시정지 토글. 메뉴 입력(ESC)은 pause 중에도 발화한다 (엔진 특성)
-local function togglePause()
-    if Engine.IsPaused() then
-        Engine.ResumeGame()
-        Session.inputEnabled = true
-        -- 2차: PauseUIController.Hide()
-    else
-        Engine.PauseGame()
-        Session.inputEnabled = false
-        -- 2차: PauseUIController.Show()
-    end
+-- P: 일시정지 진입용 보조 키. Key 테이블에 정의가 없어 VK 코드를 직접 사용한다.
+local KEY_P = 0x50
+
+-- PauseUI.Show/Hide가 widget:SetWantsMouse를 토글하면 GameViewportClient가
+-- 자동으로 커서 캡처/중앙 고정을 풀거나 다시 건다 (AnyViewportWidgetWantsMouse 참고).
+-- 거기에 더해 평소 게임플레이에선 OS 커서를 숨겨두므로(크로스헤어 대신),
+-- pause 중엔 보이게/해제 시엔 다시 숨기게 명시적으로 맞춰준다.
+-- ESC/P는 진입 전용이다 — 다시 눌러도 풀리지 않으며, Continue 버튼만이 해제 수단이다.
+local function enterPause()
+    print("[Pause] enterPause() called, IsPaused=" .. tostring(Engine.IsPaused()))
+    if Engine.IsPaused() then return end
+
+    Engine.PauseGame()
+    Session.inputEnabled = false
+    PauseUI.Show()
+    Engine.SetCursorVisible(true)
+end
+
+local function exitPause()
+    print("[Pause] exitPause() called, IsPaused=" .. tostring(Engine.IsPaused())
+        .. " mouse=(" .. tostring(Input.GetMouseX()) .. "," .. tostring(Input.GetMouseY()) .. ")")
+    if not Engine.IsPaused() then return end
+
+    Engine.ResumeGame()
+    Session.inputEnabled = true
+    PauseUI.Hide()
+    Engine.SetCursorVisible(false)
 end
 
 function BeginPlay()
@@ -44,12 +62,13 @@ function BeginPlay()
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("bgm_gameplay_0", 0.1)
+    AudioManager.PlayBGM("bgm_gameplay_0", UserSettings.GetBgmVolumeScalar())
 
     HUD.Create()
     HUD.UpdateFromSession()
+    PauseUI.Create({ onContinue = exitPause })
 
-    Engine.SetOnEscape(togglePause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)
+    Engine.SetOnEscape(enterPause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)
 
     ScoreMgr.Start()
     LoadMgr.Start()
@@ -63,6 +82,15 @@ function Tick(dt)
     UpdateCoroutines(dt)   -- 코루틴 심장 — 반드시 첫 줄
     if ended then return end
 
+    -- P: 일시정지 진입 전용 (pause 중엔 이 Tick 자체가 멈추므로 재입력으로는 못 푼다 — Continue 버튼만 해제 가능)
+    if Input.GetKeyDown(KEY_P) then
+        enterPause()
+    end
+
+    if Engine.IsPaused ~= nil and Engine.IsPaused() then
+        return
+    end
+
     Session.timeRemaining = Session.timeRemaining - dt
     LoadMgr.Update(dt)
 
@@ -73,7 +101,7 @@ function Tick(dt)
         ended = true
         Session.result.gameOverReason =
             Session.timeRemaining <= 0 and "시간 초과" or "서버 과부하"
-        AudioManager.Play("sfx_game_over", 1.0)
+        AudioManager.Play("sfx_game_over", UserSettings.GetSfxVolumeScalar())
         Engine.LoadScene("Result")   -- 이번 프레임 끝(Tick·Render 이후)에 안전 교체
     end
 end
@@ -82,4 +110,5 @@ function EndPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
     HUD.Destroy()
+    PauseUI.Destroy()
 end

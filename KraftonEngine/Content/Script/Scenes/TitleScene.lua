@@ -5,6 +5,7 @@
 -- ============================================================================
 
 local Session = require("GameSession")
+local UserSettings = require("Data/UserSettings")
 
 function BeginPlay()
     StopAllCoroutines()
@@ -14,7 +15,7 @@ function BeginPlay()
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("bgm_title_0", 0.6)
+    AudioManager.PlayBGM("bgm_title_0", UserSettings.GetBgmVolumeScalar())
 
     Engine.SetOnEscape(function()
         Engine.Exit()

@@ -1,0 +1,480 @@
+body {
+    margin: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+    font-family: NanumGothic;
+    font-weight: bold;
+}
+
+/* Lua에서 SetProperty("display", ...)로 보이기/숨기기를 제어한다 */
+#page_root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+/* 화면 전체를 검은색 30%로 덮는 레이어
+   주의: 이 RCSS는 rgba()/rgb() 함수 문법을 지원하지 않는다 (다른 화면도 전부 8자리 HEX 사용).
+   #RRGGBBAA 에서 AA = 0.30 * 255 ≈ 0x4D */
+#page_dim {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #0000004D;
+    z-index: 10;
+}
+
+/* 좌상단 제목: 다른 메뉴 페이지에서도 공통으로 사용 */
+#page_title {
+    position: absolute;
+    left: 5%;
+    top: 6%;
+    width: 700px;
+    height: 96px;
+    color: #ffffff;
+    font-size: 74px;
+    font-weight: bold;
+    line-height: 96px;
+    z-index: 20;
+}
+
+/* 우측 상단 Back 버튼: "Back" 텍스트 + 화살표 아이콘, 텍스트는 흰색 */
+#page_back_button {
+    position: absolute;
+    right: 5%;
+    top: 6%;
+    width: 290px;
+    height: 98px;
+    margin: 0px;
+    padding: 0px;
+    background-color: transparent;
+    border: 0px;
+    transform-origin: center center;
+    z-index: 20;
+}
+
+#page_back_button:hover {
+    transform: scale(1.08);
+}
+
+#page_back_label {
+    position: absolute;
+    right: 96px;
+    top: 22px;
+    color: #ffffff;
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 54px;
+}
+
+#page_back_icon {
+    position: absolute;
+    right: 0px;
+    top: 7px;
+    width: 84px;
+    height: 84px;
+    pointer-events: none;
+}
+
+#page_body {
+    position: absolute;
+    left: 5%;
+    top: 21%;
+    width: 90%;
+    height: 62%;
+    z-index: 20;
+}
+
+.page_body_section {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    display: none;
+}
+
+/* Options: RmlUi의 inline/relative 흐름 차이를 피하려고 전부 절대 좌표로 배치한다 */
+.option_group_label {
+    position: absolute;
+    left: 0px;
+    width: 520px;
+    height: 62px;
+    background-color: #d6f28eff;
+    border-width: 4px;
+    border-color: #ffffffdd;
+    border-radius: 14px;
+}
+
+#sound_volume_label {
+    top: 0px;
+}
+
+#input_mode_label {
+    top: 274px;
+}
+
+.option_group_label_text {
+    position: absolute;
+    left: 34px;
+    top: 9px;
+    color: #214630;
+    font-size: 34px;
+    font-weight: bold;
+    line-height: 42px;
+}
+
+.option_row {
+    position: absolute;
+    left: 0px;
+    width: 100%;
+    height: 76px;
+    background-color: #00000040;
+    border-width: 2px;
+    border-color: #ffffff55;
+    border-radius: 14px;
+}
+
+#sfx_volume_row {
+    top: 82px;
+}
+
+#bgm_volume_row {
+    top: 170px;
+}
+
+.option_row_name {
+    position: absolute;
+    left: 36px;
+    top: 18px;
+    color: #ffffff;
+    font-size: 34px;
+    line-height: 42px;
+}
+
+.value_step_button {
+    position: absolute;
+    top: 12px;
+    width: 52px;
+    height: 52px;
+    margin: 0px;
+    padding: 0px;
+    background-color: #ffffff33;
+    border: 0px;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 34px;
+    text-align: center;
+    line-height: 52px;
+}
+
+.value_step_button:hover {
+    background-color: #ffffff55;
+}
+
+.value_down {
+    right: 220px;
+}
+
+.value_up {
+    right: 36px;
+}
+
+.option_value_text {
+    position: absolute;
+    right: 92px;
+    top: 12px;
+    width: 128px;
+    height: 52px;
+    color: #ffffff;
+    font-size: 34px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 52px;
+}
+
+/* 입력 모드 선택 행: settings_input_* 아이콘을 작게 표시한다 */
+.input_mode_row {
+    position: absolute;
+    left: 0px;
+    width: 100%;
+    height: 86px;
+    margin: 0px;
+    padding: 0px;
+    background-color: #00000040;
+    border-radius: 14px;
+    border-width: 2px;
+    border-color: #00000000;
+    text-align: left;
+}
+
+#input_mode_mouse_key {
+    top: 356px;
+}
+
+#input_mode_gamepad {
+    top: 456px;
+}
+
+.input_mode_row:hover {
+    background-color: #ffffff2c;
+}
+
+.input_mode_row.selected {
+    background-color: #ffd9664d;
+    border-color: #ffd966ff;
+}
+
+.input_mode_icon {
+    position: absolute;
+    left: 24px;
+    top: 14px;
+    width: 58px;
+    height: 58px;
+    pointer-events: none;
+}
+
+.input_mode_text {
+    position: absolute;
+    left: 104px;
+    top: 22px;
+    color: #ffffff;
+    font-size: 34px;
+    line-height: 44px;
+    pointer-events: none;
+}
+
+/* 조작법/스코어보드/크레딧 임시 내용 */
+.simple_card {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 430px;
+    background-color: #00000040;
+    border-width: 3px;
+    border-color: #ffffff55;
+    border-radius: 20px;
+}
+
+.simple_card_title {
+    position: absolute;
+    left: 36px;
+    top: 30px;
+    width: 800px;
+    height: 54px;
+    color: #d6f28eff;
+    font-size: 44px;
+    line-height: 54px;
+}
+
+.simple_line {
+    position: absolute;
+    left: 36px;
+    width: 1400px;
+    height: 52px;
+    color: #ffffff;
+    font-size: 34px;
+    line-height: 52px;
+}
+
+#controls_line_1 {
+    top: 112px;
+}
+
+#controls_line_2 {
+    top: 170px;
+}
+
+#controls_line_3 {
+    top: 228px;
+}
+
+#controls_line_4 {
+    top: 286px;
+}
+
+#credits_line_1 {
+    top: 112px;
+}
+
+#credits_line_2 {
+    top: 170px;
+}
+
+#credits_line_3 {
+    top: 228px;
+}
+
+#credits_line_4 {
+    top: 286px;
+}
+
+/* 스코어보드: scoreboard.json에서 읽은 값을 Lua가 각 row에 채운다 */
+.score_header {
+    position: absolute;
+    top: 94px;
+    height: 42px;
+    color: #d6f28eff;
+    font-size: 24px;
+    line-height: 42px;
+}
+
+.score_header_rank {
+    left: 36px;
+    width: 80px;
+}
+
+.score_header_name {
+    left: 146px;
+    width: 520px;
+}
+
+.score_header_count {
+    right: 290px;
+    width: 180px;
+    text-align: right;
+}
+
+.score_header_score {
+    right: 36px;
+    width: 220px;
+    text-align: right;
+}
+
+.score_row {
+    position: absolute;
+    left: 36px;
+    width: 92%;
+    height: 58px;
+    color: #ffffff;
+    font-size: 32px;
+    line-height: 58px;
+}
+
+#score_row_1 {
+    top: 144px;
+}
+
+#score_row_2 {
+    top: 208px;
+}
+
+#score_row_3 {
+    top: 272px;
+}
+
+#score_row_4 {
+    top: 336px;
+}
+
+#score_row_5 {
+    top: 400px;
+}
+
+.score_rank {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 80px;
+}
+
+.score_name {
+    position: absolute;
+    left: 110px;
+    top: 0px;
+    width: 520px;
+}
+
+.score_count {
+    position: absolute;
+    right: 254px;
+    top: 0px;
+    width: 180px;
+    text-align: right;
+}
+
+.score_value {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    width: 220px;
+    text-align: right;
+}
+
+#score_empty_text {
+    position: absolute;
+    left: 36px;
+    top: 160px;
+    width: 900px;
+    height: 52px;
+    color: #ffffffcc;
+    font-size: 32px;
+    line-height: 52px;
+    display: none;
+}
+
+/* 중앙 하단 Confirm 버튼: ui_horiz_button(_hover) 사용 */
+.horiz_button {
+    position: absolute;
+    left: 50%;
+    bottom: 3%;
+    width: 620px;
+    height: 140px;
+    margin-left: -310px;
+    padding: 0px;
+    background-color: transparent;
+    border: 0px;
+    transform-origin: center center;
+    z-index: 20;
+}
+
+.horiz_button:hover {
+    transform: scale(1.06);
+}
+
+.horiz_button:active {
+    transform: scale(0.98);
+}
+
+.horiz_button_image {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.horiz_button_hover {
+    display: none;
+}
+
+.horiz_button:hover .horiz_button_default {
+    display: none;
+}
+
+.horiz_button:hover .horiz_button_hover {
+    display: block;
+}
+
+.horiz_button_label {
+    position: absolute;
+    left: 0px;
+    top: 36px;
+    width: 100%;
+    height: 68px;
+    color: #ffffff;
+    font-size: 52px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 68px;
+    pointer-events: none;
+}

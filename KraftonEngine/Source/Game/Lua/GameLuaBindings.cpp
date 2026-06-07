@@ -371,6 +371,10 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			Component.AddImpulseToBone(FName(BoneName), Impulse);
 		},
 		"AddRandomImpulseToAllRagdollBodies", &USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies,
+		"BeginRagdollJitterAnchor", &USkeletalMeshComponent::BeginRagdollJitterAnchor,
+		"EndRagdollJitterAnchor", &USkeletalMeshComponent::EndRagdollJitterAnchor,
+		"IsRagdollJitterAnchorEnabled", &USkeletalMeshComponent::IsRagdollJitterAnchorEnabled,
+		"AddJitterImpulseToAllRagdollBodies", &USkeletalMeshComponent::AddJitterImpulseToAllRagdollBodies,
 		"SetAllBodiesPhysicsBlendWeight", &USkeletalMeshComponent::SetAllBodiesPhysicsBlendWeight,
 		"SetAllBodiesBelowPhysicsBlendWeight", [](USkeletalMeshComponent& Component, const FString& BoneName, float Weight, sol::optional<bool> bIncludeSelf)
 		{

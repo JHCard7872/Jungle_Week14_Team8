@@ -11,12 +11,20 @@ void FEditorPlayToolbarWidget::Initialize(UEditorEngine* InEditor, ID3D11Device*
 	Editor = InEditor;
 	if (!InDevice) return;
 
-	const std::wstring IconDir = FPaths::Combine(FPaths::AssetDir(), L"Editor/Icons/");
+	PlayIcon = FEditorTextureManager::Get().GetOrLoadIcon(
+		FPaths::ToUtf8(FPaths::Combine(FPaths::AssetDir(), L"Editor/Icons/icon_playInSelectedViewport_16x.png")));
+	FullscreenPlayIcon = FEditorTextureManager::Get().GetOrLoadIcon(
+		FPaths::ToUtf8(FPaths::Combine(FPaths::AssetDir(), L"Editor/ToolIcons/Record_24x.png")));
+	StopIcon = FEditorTextureManager::Get().GetOrLoadIcon(
+		FPaths::ToUtf8(FPaths::Combine(FPaths::AssetDir(), L"Editor/Icons/generic_stop_16x.png")));
 }
 
 void FEditorPlayToolbarWidget::Release()
 {
 	Editor = nullptr;
+	PlayIcon = nullptr;
+	FullscreenPlayIcon = nullptr;
+	StopIcon = nullptr;
 }
 
 void FEditorPlayToolbarWidget::Render(float Width)
@@ -61,19 +69,38 @@ void FEditorPlayToolbarWidget::Render(float Width)
 		return bClicked;
 	};
 
-	ID3D11ShaderResourceView* PlayIcon = FEditorTextureManager::Get().GetOrLoadIcon(FPaths::ToUtf8(FPaths::Combine(FPaths::AssetDir(), L"Editor/Icons/icon_playInSelectedViewport_16x.png")));
 	if (DrawIconButton("##PIE_Play", PlayIcon, "Play", /*bDisabled=*/bPlaying))
 	{
 		FRequestPlaySessionParams Params;
 		Editor->RequestPlaySession(Params);
 	}
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+	{
+		ImGui::SetTooltip("Play In Viewport");
+	}
 
 	ImGui::SameLine(0.0f, ButtonSpacing);
 
-	ID3D11ShaderResourceView* StopIcon = FEditorTextureManager::Get().GetOrLoadIcon(FPaths::ToUtf8(FPaths::Combine(FPaths::AssetDir(), L"Editor/Icons/generic_stop_16x.png")));
+	if (DrawIconButton("##PIE_PlayFullscreen", FullscreenPlayIcon, "Play Fullscreen", /*bDisabled=*/bPlaying))
+	{
+		FRequestPlaySessionParams Params;
+		Params.bStartInFullscreen = true;
+		Editor->RequestPlaySession(Params);
+	}
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+	{
+		ImGui::SetTooltip("Play In Fullscreen");
+	}
+
+	ImGui::SameLine(0.0f, ButtonSpacing);
+
 	if (DrawIconButton("##PIE_Stop", StopIcon, "Stop", /*bDisabled=*/!bPlaying))
 	{
 		Editor->RequestEndPlayMap();
+	}
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort))
+	{
+		ImGui::SetTooltip("Stop");
 	}
 
 	// 다음 콘텐츠는 툴바 아래로 이어지도록 커서 복원

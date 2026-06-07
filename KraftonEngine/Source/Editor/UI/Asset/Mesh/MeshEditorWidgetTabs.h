@@ -168,6 +168,7 @@ private:
 	bool RenderPhysicsAssetBodyTree(const FSkeletalMesh* Asset, UPhysicsAsset* PhysicsAsset, int32 BoneIndex);
 	bool CanCreateConstraintForBody(UPhysicsAsset* PhysicsAsset, const FSkeletalMesh* Asset, int32 ChildBodyIndex) const;
 	bool CreateConstraintForBody(UPhysicsAsset* PhysicsAsset, const FSkeletalMesh* Asset, int32 ChildBodyIndex);
+	bool RecalculateSelectedConstraintFrameFromChildBone(UPhysicsAsset* PhysicsAsset);
 	int32 PickPhysicsAssetBodyAtMouse(const ImVec2& ViewportPos, const ImVec2& ViewportSize) const;
 	void SyncReflectionDetailTarget(UPhysicsAsset* PhysicsAsset);
 	void ClearReflectionDetailTarget();

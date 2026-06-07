@@ -171,6 +171,7 @@ void FEditorViewportClient::Tick(float DeltaTime)
 			if (UGameViewportClient* GameViewportClient = EditorEngine->GetGameViewportClient())
 			{
 				GameViewportClient->SetViewport(Viewport);
+				GameViewportClient->SetCursorClipRect(ViewportScreenRect);
 				GameViewportClient->ProcessInput(InputSnapshot, DeltaTime);
 			}
 

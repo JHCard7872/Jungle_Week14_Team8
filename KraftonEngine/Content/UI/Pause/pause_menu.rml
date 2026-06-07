@@ -1,0 +1,22 @@
+<rml>
+<head>
+    <title>Pause Menu</title>
+    <link type="text/rcss" href="pause_menu.rcss" />
+</head>
+
+<body>
+    <div id="pause_root">
+        <!-- 화면 전체를 30% 어둡게 덮는 레이어 -->
+        <div id="pause_dim"></div>
+
+        <!-- 중앙에 뜨는 버튼 -->
+        <div id="pause_box">
+            <button id="pause_btn_continue" class="pause_button">
+                <img class="pause_button_image pause_button_default" src="../../Sprite/ui_horiz_button.png" />
+                <img class="pause_button_image pause_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
+                <div class="pause_button_label">Continue</div>
+            </button>
+        </div>
+    </div>
+</body>
+</rml>

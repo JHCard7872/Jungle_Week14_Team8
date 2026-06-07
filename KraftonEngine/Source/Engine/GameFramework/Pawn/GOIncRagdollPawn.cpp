@@ -37,12 +37,44 @@ namespace
 			return;
 		}
 
-		// Dead ragdoll bodies still need to collide with the floor/world and be queryable by the beam,
-		// but AliveFlee movement uses Pawn-channel capsule sweeps.
-		// If dead ragdoll bodies block Pawn, nearby revived ragdolls immediately stop on each other.
+		// Dead ragdoll bodies still need to collide with the floor/world and be queryable by the beam.
+		// AliveFlee movement now uses the Alive Capsule as the physical collision shape,
+		// so dead ragdolls must block Pawn-channel sweeps instead of letting revived NPCs pass through them.
 		Mesh->SetCollisionObjectType(ECollisionChannel::WorldDynamic);
 		Mesh->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
-		Mesh->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
+		Mesh->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Block);
+	}
+
+	void ConfigureAliveCollisionCapsuleCollisionForGOInc(UCapsuleComponent* Capsule)
+	{
+		if (!Capsule)
+		{
+			return;
+		}
+
+		Capsule->SetSimulatePhysics(false);
+		Capsule->SetKinematicPhysics(true);
+		Capsule->SetGenerateOverlapEvents(false);
+		Capsule->SetCollisionObjectType(ECollisionChannel::Pawn);
+		Capsule->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
+		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
+		// Alive Capsule is the moving physical body for AliveFlee, so it should push against
+		// other GOInc ragdolls / alive capsules instead of ghosting through them.
+		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Block);
+	}
+
+	void ConfigureReviveTriggerCapsuleCollisionForGOInc(UCapsuleComponent* TriggerCapsule)
+	{
+		if (!TriggerCapsule)
+		{
+			return;
+		}
+
+		TriggerCapsule->SetSimulatePhysics(false);
+		TriggerCapsule->SetKinematicPhysics(true);
+		TriggerCapsule->SetCollisionObjectType(ECollisionChannel::Trigger);
+		TriggerCapsule->SetCollisionResponseToAllChannels(ECollisionResponse::Ignore);
+		TriggerCapsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Overlap);
 	}
 }
 
@@ -246,14 +278,7 @@ void AGOIncRagdollPawn::ConfigureAliveCollisionCapsuleDefaults()
 	}
 
 	CapsuleComponent->SetCapsuleSize(DefaultAliveCapsuleRadius, DefaultAliveCapsuleHalfHeight);
-	CapsuleComponent->SetSimulatePhysics(false);
-	CapsuleComponent->SetKinematicPhysics(true);
-	CapsuleComponent->SetGenerateOverlapEvents(false);
-	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::Pawn);
-	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
-	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
-	// AliveFlee ragdolls should not physically block each other.
-	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
+	ConfigureAliveCollisionCapsuleCollisionForGOInc(CapsuleComponent);
 	CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -268,22 +293,11 @@ void AGOIncRagdollPawn::ConfigureReviveTriggerCapsuleDefaults()
 		DefaultReviveTriggerCapsuleRadius,
 		DefaultReviveTriggerCapsuleHalfHeight);
 
-	ReviveTriggerCapsuleComponent->SetSimulatePhysics(false);
-	ReviveTriggerCapsuleComponent->SetKinematicPhysics(true);
+	ConfigureReviveTriggerCapsuleCollisionForGOInc(ReviveTriggerCapsuleComponent);
 
 	// Trigger는 물리 충돌이 아니라 Player overlap 감지만 해야 함.
 	ReviveTriggerCapsuleComponent->SetGenerateOverlapEvents(true);
 	ReviveTriggerCapsuleComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	ReviveTriggerCapsuleComponent->SetCollisionObjectType(ECollisionChannel::Trigger);
-
-	// 기본은 전부 무시.
-	ReviveTriggerCapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Ignore);
-
-	// Pawn 채널만 overlap.
-	// 현재 Player도 Pawn 채널일 가능성이 높아서 우선 이렇게 둠.
-	ReviveTriggerCapsuleComponent->SetCollisionResponseToChannel(
-		ECollisionChannel::Pawn,
-		ECollisionResponse::Overlap);
 
 	AttachGOIncSceneComponentsToRoot();
 }
@@ -339,6 +353,10 @@ void AGOIncRagdollPawn::EnsureReviveTriggerCapsuleComponent()
 		ConfigureReviveTriggerCapsuleDefaults();
 		UE_LOG("[GOIncRagdollPawn] Added missing ReviveTriggerCapsuleComponent at runtime.");
 	}
+
+	// Scene-authored capsules may have been saved as a plain CapsuleComponent.
+	// Once we select one as ReviveTrigger, always re-assert its trigger role.
+	ConfigureReviveTriggerCapsuleCollisionForGOInc(ReviveTriggerCapsuleComponent);
 	AttachGOIncSceneComponentsToRoot();
 }
 
@@ -428,14 +446,7 @@ void AGOIncRagdollPawn::SetAliveCollisionCapsuleEnabled(bool bEnabled)
 		return;
 	}
 
-	CapsuleComponent->SetSimulatePhysics(false);
-	CapsuleComponent->SetKinematicPhysics(true);
-	CapsuleComponent->SetGenerateOverlapEvents(false);
-	CapsuleComponent->SetCollisionObjectType(ECollisionChannel::Pawn);
-	CapsuleComponent->SetCollisionResponseToAllChannels(ECollisionResponse::Block);
-	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
-	// Movement sweep should collide with the world, not with other GOInc ragdoll pawns.
-	CapsuleComponent->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
+	ConfigureAliveCollisionCapsuleCollisionForGOInc(CapsuleComponent);
 
 	if (bEnabled)
 	{
@@ -460,8 +471,7 @@ void AGOIncRagdollPawn::SetReviveTriggerCapsuleEnabled(bool bEnabled)
 		return;
 	}
 
-	ReviveTriggerCapsuleComponent->SetSimulatePhysics(false);
-	ReviveTriggerCapsuleComponent->SetKinematicPhysics(true);
+	ConfigureReviveTriggerCapsuleCollisionForGOInc(ReviveTriggerCapsuleComponent);
 	ReviveTriggerCapsuleComponent->SetGenerateOverlapEvents(bEnabled);
 
 	if (bEnabled)
@@ -485,6 +495,44 @@ void AGOIncRagdollPawn::SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorA
 	RagdollMovementComponent->SetMovementEnabled(bEnabled);
 	RagdollMovementComponent->SetFloorRaycastEnabled(bEnabled && bUseFloorAndGravity);
 	RagdollMovementComponent->SetGravityEnabled(bEnabled && bUseFloorAndGravity);
+}
+
+void AGOIncRagdollPawn::ForceDeadRagdollPhysicsEnabled()
+{
+	RefreshGOIncRagdollPawnComponents();
+
+	if (!Mesh)
+	{
+		UE_LOG("[GOIncRagdollPawn] ForceDeadRagdollPhysicsEnabled failed. Missing RagdollMeshComponent.");
+		return;
+	}
+
+	ConfigureDeadRagdollMeshCollisionForGOInc(Mesh);
+	Mesh->SetSimulatePhysics(true);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetRagdollGravityEnabled(true);
+	Mesh->SetRagdollEnabled(true);
+	Mesh->SetAllBodiesSimulatePhysics(true);
+	Mesh->SetAllBodiesPhysicsBlendWeight(1.0f);
+	Mesh->WakeAllRagdollBodies();
+	Mesh->ResyncComponentToRagdollBodiesAfterParentMove();
+}
+
+void AGOIncRagdollPawn::ForceAliveAnimationPhysicsDisabled()
+{
+	RefreshGOIncRagdollPawnComponents();
+
+	if (!Mesh)
+	{
+		return;
+	}
+
+	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Mesh->SetRagdollGravityEnabled(false);
+	Mesh->SetAllBodiesPhysicsBlendWeight(0.0f);
+	Mesh->SetAllBodiesSimulatePhysics(false);
+	Mesh->SetRagdollEnabled(false);
+	// Mesh->SetSimulatePhysics(false);
 }
 
 bool AGOIncRagdollPawn::GetRagdollMeshSyncWorldLocation(FVector& OutLocation) const
@@ -622,21 +670,8 @@ void AGOIncRagdollPawn::EnterDeadRagdollState()
 	SetAliveCollisionCapsuleEnabled(false);
 	SetReviveTriggerCapsuleEnabled(true);
 
-	if (Mesh)
-	{
-		ConfigureDeadRagdollMeshCollisionForGOInc(Mesh);
-		Mesh->SetSimulatePhysics(true);
-		Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		Mesh->SetRagdollGravityEnabled(true);
-
-		// Alive/Flee 중 마지막 animation pose 기준으로 ragdoll body가 시작되게 ragdoll body를 먼저 켠다.
-		Mesh->SetRagdollEnabled(true);
-		Mesh->SetAllBodiesSimulatePhysics(true);
-		Mesh->SetAllBodiesPhysicsBlendWeight(1.0f);
-		Mesh->WakeAllRagdollBodies();
-	}
-
 	StopFleeAnimation();
+	ForceDeadRagdollPhysicsEnabled();
 }
 
 void AGOIncRagdollPawn::EnterRevivingState()
@@ -664,14 +699,10 @@ void AGOIncRagdollPawn::EnterAliveFleeState()
 {
 	RefreshGOIncRagdollPawnComponents();
 
-	if (Mesh)
-	{
-		// Recovery 완료 후 Mesh는 animation only 표현 담당으로 둔다.
-		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
-
 	SetReviveTriggerCapsuleEnabled(false);
 	SetAliveCollisionCapsuleEnabled(true);
+	ForceAliveAnimationPhysicsDisabled();
+	PlayFleeAnimation();
 	SetMovementRuntimeEnabled(true, true);
 }
 
@@ -720,6 +751,10 @@ void AGOIncRagdollPawn::RefreshGOIncRagdollPawnComponents()
 	}
 
 	EnsureGOIncRootComponent();
+	if (CapsuleComponent)
+	{
+		ConfigureAliveCollisionCapsuleCollisionForGOInc(CapsuleComponent);
+	}
 	EnsureReviveTriggerCapsuleComponent();
 	AttachGOIncSceneComponentsToRoot();
 	ConfigureMovementUpdatedComponent();

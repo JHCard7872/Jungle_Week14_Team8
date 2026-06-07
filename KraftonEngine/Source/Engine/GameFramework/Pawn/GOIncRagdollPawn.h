@@ -262,6 +262,8 @@ protected:
 	void SetAliveCollisionCapsuleEnabled(bool bEnabled);
 	void SetReviveTriggerCapsuleEnabled(bool bEnabled);
 	void SetMovementRuntimeEnabled(bool bEnabled, bool bUseFloorAndGravity);
+	void ForceDeadRagdollPhysicsEnabled();
+	void ForceAliveAnimationPhysicsDisabled();
 	bool GetRagdollMeshSyncWorldLocation(FVector& OutLocation) const;
 	bool ProjectAliveCapsuleLocationToGround(const FVector& ActorTargetLocation, float SourceZ, FVector& OutProjectedLocation) const;
 	void ResyncMeshComponentToCurrentRagdollBodies();

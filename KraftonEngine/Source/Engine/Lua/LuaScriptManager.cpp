@@ -608,7 +608,7 @@ void FLuaScriptManager::FireWorldReset()
 void FLuaScriptManager::Initialize()
 {
 	Lua = std::make_unique<sol::state>();
-	Lua->open_libraries(sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::coroutine);
+	Lua->open_libraries(sol::lib::base, sol::lib::package, sol::lib::math, sol::lib::string, sol::lib::table, sol::lib::coroutine, sol::lib::io, sol::lib::os);
 	(*Lua)["package"]["path"] = FPaths::ToUtf8(FPaths::Combine(FPaths::ScriptDir(), L"?.lua").c_str());
 
 	// 한글 경로 호환을 위해 require 의 파일 검색을 wide-aware 로 교체.

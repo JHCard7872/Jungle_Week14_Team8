@@ -6,6 +6,7 @@
 
 <body>
     <div id="menu_root">
+        <div id="scene_bg"></div>
         <div id="menu_content">
             <img id="menu_background" src="../../Sprite/main_menu_background.png" />
 
@@ -13,36 +14,54 @@
                 <img class="menu_image menu_default" src="../../Sprite/main_menu_help.png" />
                 <img class="menu_image menu_hover" src="../../Sprite/main_menu_help_hover.png" />
             </button>
-            <div id="label_help" class="menu_label">조작 방법</div>
+            <div id="label_help" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">조작 방법</div>
+            </div>
 
             <button id="menu_option" class="menu_button">
                 <img class="menu_image menu_default" src="../../Sprite/main_menu_option.png" />
                 <img class="menu_image menu_hover" src="../../Sprite/main_menu_option_hover.png" />
             </button>
-            <div id="label_option" class="menu_label">옵션</div>
+            <div id="label_option" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">옵션</div>
+            </div>
 
             <button id="menu_play" class="menu_button">
                 <img class="menu_image menu_default" src="../../Sprite/main_menu_play.png" />
                 <img class="menu_image menu_hover" src="../../Sprite/main_menu_play_hover.png" />
             </button>
-            <div id="label_play" class="menu_label">플레이</div>
+            <div id="label_play" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">플레이</div>
+            </div>
 
             <button id="menu_scoreboard" class="menu_button">
                 <img class="menu_image menu_default" src="../../Sprite/main_menu_scoreboard.png" />
                 <img class="menu_image menu_hover" src="../../Sprite/main_menu_scoreboard_hover.png" />
             </button>
-            <div id="label_scoreboard" class="menu_label">스코어보드</div>
+            <div id="label_scoreboard" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">스코어보드</div>
+            </div>
 
             <button id="menu_credits" class="menu_button">
                 <img class="menu_image menu_default" src="../../Sprite/main_menu_credits.png" />
                 <img class="menu_image menu_hover" src="../../Sprite/main_menu_credits_hover.png" />
             </button>
-            <div id="label_credits" class="menu_label">크레딧</div>
+            <div id="label_credits" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">크레딧</div>
+            </div>
 
             <button id="menu_back_to_title">
                 <img class="back_button_image" src="../../Sprite/main_menu_backtotitle.png" />
             </button>
-            <div id="label_back_to_title" class="menu_label">타이틀로</div>
+            <div id="label_back_to_title" class="menu_label">
+                <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
+                <div class="menu_label_text">타이틀로</div>
+            </div>
 
             <img id="cursor_normal" class="cursor_image" src="../../Sprite/cursor.png" />
             <img id="cursor_click" class="cursor_image" src="../../Sprite/cursor_click.png" />
