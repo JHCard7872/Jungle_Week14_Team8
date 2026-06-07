@@ -8,7 +8,6 @@
 #include "GameFramework/Pawn/GOIncLaraRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncLinkRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncMarioRagdollPawn.h"
-#include "GameFramework/Pawn/GOIncPeachRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncPikachuRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
 #include "GameFramework/Pawn/GOIncSonicRagdollPawn.h"
@@ -50,7 +49,6 @@ const TArray<FGOIncRagdollCharacterSpawnEntry>& GetGOIncRagdollCharacterSpawnEnt
 		{ "spiked-king", "GOInc Bowser Ragdoll Pawn", &SpawnTypedGOIncRagdollPawn<AGOIncBowserRagdollPawn> },
 		{ "egg-scientist", "GOInc Eggman Ragdoll Pawn", &SpawnTypedGOIncRagdollPawn<AGOIncEggmanRagdollPawn> },
 		{ "green-swordsman", "GOInc Link Ragdoll Pawn", &SpawnTypedGOIncRagdollPawn<AGOIncLinkRagdollPawn> },
-		{ "pink-princess", "GOInc Peach Ragdoll Pawn", &SpawnTypedGOIncRagdollPawn<AGOIncPeachRagdollPawn> },
 		{ "space-chief", "GOInc Chief Ragdoll Pawn", &SpawnTypedGOIncRagdollPawn<AGOIncChiefRagdollPawn> },
 		{ "adventurer", "GOInc Lara Ragdoll Pawn", &SpawnTypedGOIncRagdollPawn<AGOIncLaraRagdollPawn> },
 	};

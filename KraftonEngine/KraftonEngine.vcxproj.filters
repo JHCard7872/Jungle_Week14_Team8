@@ -1481,9 +1481,6 @@
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncLinkRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncPeachRagdollPawn.cpp">
-      <Filter>Source\Engine\GameFramework\Pawn</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncChiefRagdollPawn.cpp">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClCompile>
@@ -2863,9 +2860,6 @@
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncLinkRagdollPawn.h">
-      <Filter>Source\Engine\GameFramework\Pawn</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncPeachRagdollPawn.h">
       <Filter>Source\Engine\GameFramework\Pawn</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncChiefRagdollPawn.h">
