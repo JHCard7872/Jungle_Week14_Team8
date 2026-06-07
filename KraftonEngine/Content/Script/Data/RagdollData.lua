@@ -41,7 +41,7 @@ return {
         referenceImage = "Content/UI/Images/green_slime.png",  -- 파일 입수 전
 
         mass           = 6.0,    -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 80,     -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = false,
         reviveSpeed    = 0,
         attackPower    = 0,      -- placeholder
@@ -76,7 +76,7 @@ return {
         referenceImage = "Content/UI/Images/pink_round.png",
 
         mass           = 6.5,    -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 120,    -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 3.5,
         attackPower    = 8,      -- placeholder
@@ -93,7 +93,7 @@ return {
         referenceImage = "Content/UI/Images/brown_gorilla.png",
 
         mass           = 20.0,   -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 180,    -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 2.0,
         attackPower    = 25,     -- placeholder
@@ -110,7 +110,7 @@ return {
         referenceImage = "Content/UI/Images/yellow_mouse.png",
 
         mass           = 5.5,    -- 카탈로그 표시/밸런스용 무게
-        baseScore      = 140,    -- 임시 밸런스
+        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 4.5,
         attackPower    = 18,     -- placeholder
