@@ -15,6 +15,9 @@ body {
     top: 0px;
     width: 100%;
     height: 100%;
+}
+
+#modal_root.modal_hidden {
     display: none;
 }
 
@@ -28,14 +31,15 @@ body {
     z-index: 10;
 }
 
+/* 팝업 이미지는 여기 크기만 바꾸면 전체 콘텐츠가 같이 자연스럽게 따라온다. */
 #modal_box {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 1000px;
-    height: 500px;
-    margin-left: -500px;
-    margin-top: -250px;
+    width: 920px;
+    height: 420px;
+    margin-left: -460px;
+    margin-top: -210px;
     z-index: 20;
 }
 
@@ -43,40 +47,57 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 1000px;
-    height: 500px;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
+}
+
+/* 실제 배치는 이 영역 안에서만 한다. 테두리 장식 크기와 콘텐츠 위치를 분리하기 위함. */
+#modal_content {
+    position: absolute;
+    left: 11%;
+    top: 26%;
+    width: 78%;
+    height: 52%;
 }
 
 #modal_title {
     position: absolute;
-    left: 90px;
-    top: 110px;
-    width: 780px;
-    height: 64px;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 56px;
     color: #ffffff;
-    font-size: 48px;
-    line-height: 64px;
+    font-size: 40px;
+    line-height: 56px;
     text-align: center;
     font-effect: shadow(3px 3px #000000aa);
 }
 
 #modal_message {
     position: absolute;
-    left: 130px;
-    top: 200px;
-    width: 740px;
-    height: 80px;
+    left: 0px;
+    top: 62px;
+    width: 100%;
+    height: 84px;
     color: #ffffff;
-    font-size: 34px;
+    font-size: 28px;
     line-height: 42px;
     text-align: center;
     font-effect: shadow(2px 2px #000000aa);
 }
 
+#modal_button_row {
+    position: absolute;
+    left: 0px;
+    top: 150px;
+    width: 100%;
+    height: 88px;
+}
+
 .modal_button {
     position: absolute;
-    top: 270px;
+    top: 0px;
     width: 300px;
     height: 104px;
     margin: 0px;
@@ -86,12 +107,25 @@ body {
     transform-origin: center center;
 }
 
-#modal_button_left {
-    left: 40px;
+/* 기본: 이미지 버튼 2개 */
+.modal_two_buttons #modal_button_left {
+    left: 50%;
+    margin-left: -330px;
 }
 
-#modal_button_right {
-    right: 40px;
+.modal_two_buttons #modal_button_right {
+    left: 50%;
+    margin-left: 30px;
+}
+
+/* 기본: 이미지 버튼 1개 */
+.modal_one_button #modal_button_left {
+    left: 50%;
+    margin-left: -150px;
+}
+
+.modal_one_button #modal_button_right {
+    display: none;
 }
 
 .modal_button:hover {
@@ -152,53 +186,57 @@ body {
     font-effect: shadow(2px 2px #000000aa);
 }
 
-.modal_button.text_only .modal_button_image {
-    display: none;
-}
-
+/* YES / NO 같은 질문 팝업용. 위치 계산은 Lua가 아니라 CSS 클래스만으로 처리한다. */
 .modal_button.text_only {
-    top: 300px;
-    width: 250px;
-    height: 60px;
+    top: 0px;
+    width: 160px;
+    height: 64px;
     background-color: transparent;
     box-shadow: none;
-    transform: none;
 }
 
-#modal_button_left.text_only {
-    left: 50%;
-    margin-left: -260px;
-}
-
-#modal_button_right.text_only {
-    left: 50%;
-    margin-left: 60px;
-}
-
-.modal_button.text_only .modal_button_label {
-    position: relative;
-    left: 0px;
-    top: 0px;
-    width: 200px;
-    height: 60px;
-    font-size: 44px;
-    line-height: 60px;
-    letter-spacing: 2px;
-    color: #ffffff;
-    font-effect: shadow(2px 2px #000000aa);
-}
-
+.modal_button.text_only .modal_button_image,
 .modal_button.text_only .modal_button_glow {
     display: none;
 }
 
-.modal_button.text_only:hover {
+.modal_button.text_only .modal_button_label {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 64px;
+    font-size: 36px;
+    line-height: 64px;
+    letter-spacing: 2px;
+    color: #ffffff;
+    text-align: center;
+    font-effect: shadow(2px 2px #000000aa);
+}
+
+.modal_two_buttons #modal_button_left.text_only {
+    left: 50%;
+    margin-left: -190px;
+}
+
+.modal_two_buttons #modal_button_right.text_only {
+    left: 50%;
+    margin-left: 30px;
+}
+
+.modal_one_button #modal_button_left.text_only {
+    left: 50%;
+    margin-left: -80px;
+}
+
+.modal_button.text_only:hover,
+.modal_button.text_only:active {
     transform: none;
 }
 
 .modal_button.text_only:hover .modal_button_label,
 .modal_button.text_only:active .modal_button_label {
-    color: #000000;
+    color: #00f7ff;
 }
 
 /* 커서 스프라이트 — 크기를 바꾸면 ModalDialogUIController.lua의 CURSOR_SIZE도 같이 맞출 것
