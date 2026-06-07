@@ -114,12 +114,12 @@ body {
 
 #menu_help {
     left: 16%;
-    top: 10%;
+    top: 13%;
 }
 
 #menu_option {
     right: 16%;
-    top: 10%;
+    top: 13%;
 }
 
 #menu_play {
@@ -130,12 +130,12 @@ body {
 
 #menu_scoreboard {
     left: 16%;
-    bottom: 10%;
+    bottom: 13%;
 }
 
 #menu_credits {
     right: 16%;
-    bottom: 10%;
+    bottom: 13%;
 }
 
 .menu_label {
