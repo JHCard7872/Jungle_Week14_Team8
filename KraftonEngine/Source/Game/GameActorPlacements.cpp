@@ -3,6 +3,7 @@
 #include "Engine/Runtime/ActorPlacementRegistry.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "Game/Actors/GOIncTruck.h"
+#include "Game/Actors/SummonPortalActor.h"
 #include "Game/GOIncRagdollCharacterRegistry.h"
 #include "GameFramework/Actor/4WVehicleActor.h"
 #include "GameFramework/Actor/PhysicalAnimationActor.h"
@@ -63,6 +64,19 @@ void RegisterGameActorPlacements()
 				return SpawnFn ? SpawnFn(World, Location) : nullptr;
 			});
 	}
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"Summon Portal",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			ASummonPortalActor* Portal = World ? World->SpawnActor<ASummonPortalActor>() : nullptr;
+			if (Portal)
+			{
+				Portal->InitDefaultComponents();
+				Portal->SetActorLocation(Location);
+			}
+			return Portal;
+		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(
 		"GOInc Truck",

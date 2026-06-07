@@ -286,6 +286,12 @@
     <Filter Include="Source\Engine\Particles">
       <UniqueIdentifier>{3d2b49e3-c373-08f7-b06b-addbb798f11a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\Particles\Acceleration">
+      <UniqueIdentifier>{a11ce001-94f7-4b21-9c01-7e55a2d10001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Engine\Particles\Attractor">
+      <UniqueIdentifier>{a11ce002-94f7-4b21-9c01-7e55a2d10002}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\Particles\Beam">
       <UniqueIdentifier>{8d6ab37e-7f85-f5ce-b064-310a911ef785}</UniqueIdentifier>
     </Filter>
@@ -706,6 +712,9 @@
       <Filter>Shaders\Geometry</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Geometry\UberLit.hlsl">
+      <Filter>Shaders\Geometry</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Geometry\UnlitGlow.hlsl">
       <Filter>Shaders\Geometry</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Lighting\ClusterConstructCS.hlsl">
@@ -1670,6 +1679,12 @@
     <ClCompile Include="Source\Engine\Particles\Beam\ParticleModuleBeamTarget.cpp">
       <Filter>Source\Engine\Particles\Beam</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Acceleration\ParticleModuleAcceleration.cpp">
+      <Filter>Source\Engine\Particles\Acceleration</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Attractor\ParticleModuleAttractorPoint.cpp">
+      <Filter>Source\Engine\Particles\Attractor</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Particles\Collision\ParticleModuleCollision.cpp">
       <Filter>Source\Engine\Particles\Collision</Filter>
     </ClCompile>
@@ -1691,6 +1706,9 @@
     <ClCompile Include="Source\Engine\Particles\Location\ParticleModuleLocation.cpp">
       <Filter>Source\Engine\Particles\Location</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Location\ParticleModuleLocationRing.cpp">
+      <Filter>Source\Engine\Particles\Location</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Particles\Material\ParticleModuleMeshMaterial.cpp">
       <Filter>Source\Engine\Particles\Material</Filter>
     </ClCompile>
@@ -1710,6 +1728,9 @@
       <Filter>Source\Engine\Particles\RotationRate</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Particles\Size\ParticleModuleSize.cpp">
+      <Filter>Source\Engine\Particles\Size</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Engine\Particles\Size\ParticleModuleSizeOverLife.cpp">
       <Filter>Source\Engine\Particles\Size</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Particles\Spawn\ParticleModuleSpawn.cpp">
@@ -2111,6 +2132,9 @@
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp">
+      <Filter>Source\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Actors\SummonPortalActor.cpp">
       <Filter>Source\Game</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\GameMode\GOIncGameMode.cpp" />
@@ -3132,6 +3156,12 @@
     <ClInclude Include="Source\Engine\Particles\Beam\ParticleModuleBeamTarget.h">
       <Filter>Source\Engine\Particles\Beam</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Acceleration\ParticleModuleAcceleration.h">
+      <Filter>Source\Engine\Particles\Acceleration</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Attractor\ParticleModuleAttractorPoint.h">
+      <Filter>Source\Engine\Particles\Attractor</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Collision\ParticleModuleCollision.h">
       <Filter>Source\Engine\Particles\Collision</Filter>
     </ClInclude>
@@ -3165,6 +3195,9 @@
     <ClInclude Include="Source\Engine\Particles\Location\ParticleModuleLocation.h">
       <Filter>Source\Engine\Particles\Location</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Location\ParticleModuleLocationRing.h">
+      <Filter>Source\Engine\Particles\Location</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Location\ParticleModuleLocationBase.h">
       <Filter>Source\Engine\Particles\Location</Filter>
     </ClInclude>
@@ -3190,6 +3223,9 @@
       <Filter>Source\Engine\Particles\Size</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Size\ParticleModuleSizeBase.h">
+      <Filter>Source\Engine\Particles\Size</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Particles\Size\ParticleModuleSizeOverLife.h">
       <Filter>Source\Engine\Particles\Size</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Particles\Spawn\ParticleModuleSpawn.h">
@@ -5923,6 +5959,9 @@
     <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTruck.h">
+      <Filter>Source\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Actors\SummonPortalActor.h">
       <Filter>Source\Game</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\GameMode\GOIncGameMode.h" />
