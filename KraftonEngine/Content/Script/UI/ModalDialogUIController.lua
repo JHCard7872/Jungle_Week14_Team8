@@ -23,6 +23,7 @@ local visible = false
 local current_z_order = DEFAULT_Z_ORDER
 local on_left = nil
 local on_right = nil
+local current_button_style = "image"
 -- 커서 스프라이트 사용 여부 (Pause처럼 OS 커서를 숨긴 채 뜨는 모달이 켠다)
 local show_cursor = false
 
@@ -40,6 +41,19 @@ local function set_text(element_id, value)
     end
 
     widget:SetText(element_id, tostring(value or ""))
+end
+
+local function set_button_style(element_id, style_name)
+    if widget == nil then
+        return
+    end
+
+    local class_value = "modal_button"
+    if style_name == "text_only" then
+        class_value = class_value .. " text_only"
+    end
+
+    widget:SetAttribute(element_id, "class", class_value)
 end
 
 local function play_ui_click()
@@ -129,6 +143,7 @@ function M.Create(options)
     current_z_order = options.zOrder or DEFAULT_Z_ORDER
     on_left = options.onLeft
     on_right = options.onRight
+    current_button_style = options.buttonStyle or "image"
     show_cursor = options.showCursor == true
 
     if ensure_widget() == nil then
@@ -140,6 +155,8 @@ function M.Create(options)
     set_text("modal_button_left_label", options.leftText or "OK")
     set_text("modal_button_right_label", options.rightText or "")
 
+    set_button_style("modal_button_left", current_button_style)
+    set_button_style("modal_button_right", current_button_style)
     set_display("modal_button_left", options.leftText ~= nil)
     set_display("modal_button_right", options.rightText ~= nil)
 
@@ -193,6 +210,7 @@ function M.Destroy()
     current_z_order = DEFAULT_Z_ORDER
     on_left = nil
     on_right = nil
+    current_button_style = "image"
     show_cursor = false
 end
 

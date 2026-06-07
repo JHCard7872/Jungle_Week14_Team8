@@ -32,10 +32,10 @@ body {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 920px;
-    height: 430px;
-    margin-left: -460px;
-    margin-top: -215px;
+    width: 1000px;
+    height: 500px;
+    margin-left: -500px;
+    margin-top: -250px;
     z-index: 20;
 }
 
@@ -43,15 +43,15 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 920px;
-    height: 430px;
+    width: 1000px;
+    height: 500px;
     pointer-events: none;
 }
 
 #modal_title {
     position: absolute;
-    left: 70px;
-    top: 58px;
+    left: 90px;
+    top: 110px;
     width: 780px;
     height: 64px;
     color: #ffffff;
@@ -63,8 +63,8 @@ body {
 
 #modal_message {
     position: absolute;
-    left: 90px;
-    top: 140px;
+    left: 130px;
+    top: 200px;
     width: 740px;
     height: 80px;
     color: #ffffff;
@@ -77,7 +77,7 @@ body {
 .modal_button {
     position: absolute;
     top: 270px;
-    width: 440px;
+    width: 300px;
     height: 104px;
     margin: 0px;
     padding: 0px;
@@ -100,6 +100,21 @@ body {
 
 .modal_button:active {
     transform: scale(0.98);
+}
+
+.modal_button_glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 180px;
+    height: 54px;
+    margin-left: -90px;
+    margin-top: -27px;
+    border-radius: 27px;
+    background-color: #1caeff22;
+    box-shadow: 0px 0px 0px #00000000;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .modal_button_image {
@@ -135,6 +150,55 @@ body {
     text-align: center;
     pointer-events: none;
     font-effect: shadow(2px 2px #000000aa);
+}
+
+.modal_button.text_only .modal_button_image {
+    display: none;
+}
+
+.modal_button.text_only {
+    top: 300px;
+    width: 250px;
+    height: 60px;
+    background-color: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+#modal_button_left.text_only {
+    left: 50%;
+    margin-left: -260px;
+}
+
+#modal_button_right.text_only {
+    left: 50%;
+    margin-left: 60px;
+}
+
+.modal_button.text_only .modal_button_label {
+    position: relative;
+    left: 0px;
+    top: 0px;
+    width: 200px;
+    height: 60px;
+    font-size: 44px;
+    line-height: 60px;
+    letter-spacing: 2px;
+    color: #ffffff;
+    font-effect: shadow(2px 2px #000000aa);
+}
+
+.modal_button.text_only .modal_button_glow {
+    display: none;
+}
+
+.modal_button.text_only:hover {
+    transform: none;
+}
+
+.modal_button.text_only:hover .modal_button_label,
+.modal_button.text_only:active .modal_button_label {
+    color: #000000;
 }
 
 /* 커서 스프라이트 — 크기를 바꾸면 ModalDialogUIController.lua의 CURSOR_SIZE도 같이 맞출 것

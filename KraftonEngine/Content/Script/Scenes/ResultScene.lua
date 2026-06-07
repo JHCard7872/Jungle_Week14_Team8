@@ -1,6 +1,6 @@
 local Session = require("GameSession")
 local ResultUI = require("UI/ResultUIController")
-local Modal = require("UI/ModalDialogUIController")
+local QuestionPopup = require("UI/QuestionPopupUIController")
 local ScoreStorage = require("Data/ScoreStorage")
 local UserSettings = require("Data/UserSettings")
 
@@ -27,11 +27,10 @@ local function build_sample_nickname()
 end
 
 local function show_action_prompt()
-    Modal.Destroy()
+    QuestionPopup.Destroy()
     save_prompt_open = false
     action_prompt_open = true
     waiting_for_next = false
-    -- OS 커서는 숨긴 채 ResultUI의 커서 스프라이트(aim 이미지)가 따라다닌다
 
     ResultUI.ShowActionButtons(
         function() Engine.LoadScene("Play") end,
@@ -64,35 +63,28 @@ local function show_save_prompt()
     save_prompt_open = true
     ResultUI.SetWantsMouse(false)
     ResultUI.SetPrePopupShadowVisible(false)
-    -- OS 커서 대신 모달의 커서 스프라이트(showCursor)가 따라다닌다
 
-    Modal.Create({
+    QuestionPopup.ShowConfirm({
         zOrder = 270,
         title = "Score Save",
         message = "점수를 저장하시겠습니까?",
-        leftText = "YES",
-        rightText = "NO",
         showCursor = true,
-        onLeft = function()
+        onYes = function()
             save_current_score()
-            local msg = score_saved and "저장되었습니다." or "저장에 실패했습니다."
-            Modal.Create({
+            QuestionPopup.ShowNotice({
                 zOrder = 270,
                 title = "Score Save",
-                message = msg,
-                leftText = "OK",
+                message = score_saved and "저장되었습니다." or "저장에 실패했습니다.",
                 showCursor = true,
-                onLeft = function()
+                onConfirm = function()
                     show_action_prompt()
                 end,
             })
-            Modal.Show()
         end,
-        onRight = function()
+        onNo = function()
             show_action_prompt()
         end,
     })
-    Modal.Show()
 end
 
 function BeginPlay()
@@ -131,7 +123,6 @@ function Tick(dt)
         Session.inputEnabled = true
     end
 
-    -- 도장 연출과 Next 깜박임까지 끝난 뒤 아무 버튼을 누르면 저장 여부 팝업을 띄운다.
     if waiting_for_next and is_any_button_pressed() then
         show_save_prompt()
     end
@@ -140,7 +131,7 @@ end
 function EndPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
-    Modal.Destroy()
+    QuestionPopup.Destroy()
     ResultUI.Destroy()
     Engine.SetCursorVisible(true)
     waiting_for_next = false

@@ -1,4 +1,5 @@
 local MenuPageUI = require("UI/MenuPageUIController")
+local QuestionPopup = require("UI/QuestionPopupUIController")
 local UserSettings = require("Data/UserSettings")
 local ScoreStorage = require("Data/ScoreStorage")
 
@@ -26,6 +27,7 @@ local press_blink_elapsed = 0.0
 local sub_page_fading_in = false
 local sub_page_fading_out = false
 local sub_page_fade_elapsed = 0.0
+local exit_prompt_open = false
 -- 옵션 화면이 떠 있는 동안에는 메인 메뉴 입력/커스텀 커서를 멈춰둔다
 local options_open = false
 
@@ -242,6 +244,41 @@ local function open_credits()
     open_menu_page("credits", "Credits")
 end
 
+local function close_exit_prompt()
+    exit_prompt_open = false
+    QuestionPopup.Destroy()
+
+    if main_menu_widget == nil or title_screen_active or options_open or fading_to_title then
+        return
+    end
+
+    main_menu_widget:SetWantsMouse(true)
+    update_cursor_position()
+    set_cursor_state(Input.GetKey(VK_LBUTTON))
+end
+
+local function open_exit_prompt()
+    if main_menu_widget == nil or exit_prompt_open or title_screen_active or options_open then
+        return
+    end
+
+    exit_prompt_open = true
+    main_menu_widget:SetWantsMouse(false)
+    set_cursor_hidden()
+
+    QuestionPopup.ShowConfirm({
+        title = "Exit",
+        message = "게임을 종료하시겠습니까?",
+        showCursor = true,
+        onYes = function()
+            Engine.Exit()
+        end,
+        onNo = function()
+            close_exit_prompt()
+        end,
+    })
+end
+
 local function on_menu_button_click(callback)
     return function()
         play_ui_click()
@@ -290,11 +327,7 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_exit_game", on_menu_button_click(function()
-        Engine.Exit()
-    end))
-
-    widget:bind_click("menu_exit_game_text", on_menu_button_click(function()
-        Engine.Exit()
+        open_exit_prompt()
     end))
 
     bind_hover_sound(widget, "menu_help")
@@ -304,7 +337,6 @@ local function bind_menu_actions(widget)
     bind_hover_sound(widget, "menu_credits")
     bind_hover_sound(widget, "menu_back_to_title")
     bind_hover_sound(widget, "menu_exit_game")
-    bind_hover_sound(widget, "menu_exit_game_text")
 
     bindings_initialized = true
 end
@@ -426,6 +458,7 @@ function BeginPlay()
     Engine.SetCursorVisible(false)
     press_blink_elapsed = 0.0
     options_open = false
+    exit_prompt_open = false
     set_title_screen_state()
 end
 
@@ -444,6 +477,11 @@ function Tick(dt)
         if is_any_start_button_pressed() then
             activate_main_menu()
         end
+        return
+    end
+
+    if exit_prompt_open then
+        set_cursor_hidden()
         return
     end
 
@@ -477,6 +515,7 @@ end
 
 function EndPlay()
     MenuPageUI.Destroy()
+    QuestionPopup.Destroy()
 
     if main_menu_widget ~= nil then
         main_menu_widget:RemoveFromParent()
@@ -489,6 +528,7 @@ function EndPlay()
     sub_page_fading_in = false
     sub_page_fading_out = false
     sub_page_fade_elapsed = 0.0
+    exit_prompt_open = false
     title_screen_active = true
     fading_to_title = false
     menu_fade_elapsed = 0.0
