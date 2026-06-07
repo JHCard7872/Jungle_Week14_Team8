@@ -1,5 +1,52 @@
 #include "Engine/Input/InputSystem.h"
 #include <cmath>
+#include <Xinput.h>
+#pragma comment(lib, "xinput9_1_0.lib")
+
+// VK_GAMEPAD_* 는 Windows 10 SDK 매크로 — 구버전 SDK 빌드 환경 대비 가드
+#ifndef VK_GAMEPAD_A
+#define VK_GAMEPAD_A                        0xC3
+#define VK_GAMEPAD_B                        0xC4
+#define VK_GAMEPAD_X                        0xC5
+#define VK_GAMEPAD_Y                        0xC6
+#define VK_GAMEPAD_RIGHT_SHOULDER           0xC7
+#define VK_GAMEPAD_LEFT_SHOULDER            0xC8
+#define VK_GAMEPAD_LEFT_TRIGGER             0xC9
+#define VK_GAMEPAD_RIGHT_TRIGGER            0xCA
+#define VK_GAMEPAD_DPAD_UP                  0xCB
+#define VK_GAMEPAD_DPAD_DOWN                0xCC
+#define VK_GAMEPAD_DPAD_LEFT                0xCD
+#define VK_GAMEPAD_DPAD_RIGHT               0xCE
+#define VK_GAMEPAD_MENU                     0xCF
+#define VK_GAMEPAD_VIEW                     0xD0
+#define VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON   0xD1
+#define VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON  0xD2
+#endif
+
+// 스틱 원시값(-32768~32767)에 데드존을 적용하고 -1~1로 정규화.
+// 데드존 경계에서 0부터 부드럽게 시작하도록 남은 구간을 다시 늘인다.
+static float ApplyStickDeadzone(SHORT Value, int Deadzone)
+{
+    const int Abs = Value >= 0 ? Value : -static_cast<int>(Value);
+    if (Abs <= Deadzone)
+    {
+        return 0.0f;
+    }
+
+    const float Magnitude = static_cast<float>(Abs - Deadzone) / static_cast<float>(32767 - Deadzone);
+    const float Clamped = Magnitude > 1.0f ? 1.0f : Magnitude;
+    return Value >= 0 ? Clamped : -Clamped;
+}
+
+// 트리거 원시값(0~255)에 데드존을 적용하고 0~1로 정규화
+static float ApplyTriggerDeadzone(BYTE Value, int Deadzone)
+{
+    if (Value <= Deadzone)
+    {
+        return 0.0f;
+    }
+    return static_cast<float>(Value - Deadzone) / static_cast<float>(255 - Deadzone);
+}
 
 void InputSystem::Tick()
 {
@@ -7,6 +54,7 @@ void InputSystem::Tick()
     bWindowFocused = !OwnerHWnd || GetForegroundWindow() == OwnerHWnd;
     if (!bWindowFocused)
     {
+        ClearGamepadAxes();
         ResetAllKeyStates();
         ResetTransientState();
         UpdateCurrentSnapshot();
@@ -18,6 +66,9 @@ void InputSystem::Tick()
         PrevStates[i] = CurrentStates[i];
         CurrentStates[i] = (GetAsyncKeyState(i) & 0x8000) != 0;
     }
+
+    // 위 루프가 VK_GAMEPAD_* 슬롯을 false로 깔아둔 뒤 패드 상태로 덮어쓴다
+    PollGamepad();
 
     bLeftDragJustStarted = false;
     bRightDragJustStarted = false;
@@ -210,7 +261,72 @@ void InputSystem::UpdateCurrentSnapshot()
     Snapshot.bGuiUsingKeyboard = GuiState.bUsingKeyboard;
     Snapshot.bGuiUsingTextInput = GuiState.bUsingTextInput;
     Snapshot.bWindowFocused = bWindowFocused;
+
+    for (int Axis = 0; Axis < static_cast<int>(EGamepadAxis::Count); ++Axis)
+    {
+        Snapshot.GamepadAxes[Axis] = GamepadAxes[Axis];
+    }
+    Snapshot.bGamepadConnected = bGamepadConnected;
+
     CurrentSnapshot = Snapshot;
+}
+
+// XInput 패드 0번을 폴링해서 디지털 버튼은 VK_GAMEPAD_* 키 슬롯에,
+// 아날로그 스틱/트리거는 GamepadAxes에 넣는다. Tick의 256키 루프 직후 호출 전제
+// (루프가 Prev 스냅샷을 이미 떠놔서 GetKeyDown/Up 에지가 그대로 동작한다).
+void InputSystem::PollGamepad()
+{
+    // 미연결 상태의 XInputGetState는 내부 장치 열거 때문에 비싸다 — 간격을 두고 재시도
+    if (!bGamepadConnected && GamepadReconnectCooldown > 0)
+    {
+        --GamepadReconnectCooldown;
+        return;
+    }
+
+    XINPUT_STATE State = {};
+    if (XInputGetState(0, &State) != ERROR_SUCCESS)
+    {
+        bGamepadConnected = false;
+        GamepadReconnectCooldown = 120;
+        ClearGamepadAxes();
+        return;
+    }
+    bGamepadConnected = true;
+
+    const WORD Buttons = State.Gamepad.wButtons;
+    CurrentStates[VK_GAMEPAD_A] = (Buttons & XINPUT_GAMEPAD_A) != 0;
+    CurrentStates[VK_GAMEPAD_B] = (Buttons & XINPUT_GAMEPAD_B) != 0;
+    CurrentStates[VK_GAMEPAD_X] = (Buttons & XINPUT_GAMEPAD_X) != 0;
+    CurrentStates[VK_GAMEPAD_Y] = (Buttons & XINPUT_GAMEPAD_Y) != 0;
+    CurrentStates[VK_GAMEPAD_LEFT_SHOULDER] = (Buttons & XINPUT_GAMEPAD_LEFT_SHOULDER) != 0;
+    CurrentStates[VK_GAMEPAD_RIGHT_SHOULDER] = (Buttons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0;
+    CurrentStates[VK_GAMEPAD_DPAD_UP] = (Buttons & XINPUT_GAMEPAD_DPAD_UP) != 0;
+    CurrentStates[VK_GAMEPAD_DPAD_DOWN] = (Buttons & XINPUT_GAMEPAD_DPAD_DOWN) != 0;
+    CurrentStates[VK_GAMEPAD_DPAD_LEFT] = (Buttons & XINPUT_GAMEPAD_DPAD_LEFT) != 0;
+    CurrentStates[VK_GAMEPAD_DPAD_RIGHT] = (Buttons & XINPUT_GAMEPAD_DPAD_RIGHT) != 0;
+    CurrentStates[VK_GAMEPAD_MENU] = (Buttons & XINPUT_GAMEPAD_START) != 0;
+    CurrentStates[VK_GAMEPAD_VIEW] = (Buttons & XINPUT_GAMEPAD_BACK) != 0;
+    CurrentStates[VK_GAMEPAD_LEFT_THUMBSTICK_BUTTON] = (Buttons & XINPUT_GAMEPAD_LEFT_THUMB) != 0;
+    CurrentStates[VK_GAMEPAD_RIGHT_THUMBSTICK_BUTTON] = (Buttons & XINPUT_GAMEPAD_RIGHT_THUMB) != 0;
+
+    // 트리거는 아날로그지만 임계값을 넘으면 디지털 버튼으로도 노출 (Lua GetKey* 호환)
+    CurrentStates[VK_GAMEPAD_LEFT_TRIGGER] = State.Gamepad.bLeftTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+    CurrentStates[VK_GAMEPAD_RIGHT_TRIGGER] = State.Gamepad.bRightTrigger > XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+
+    GamepadAxes[static_cast<int>(EGamepadAxis::LeftX)] = ApplyStickDeadzone(State.Gamepad.sThumbLX, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    GamepadAxes[static_cast<int>(EGamepadAxis::LeftY)] = ApplyStickDeadzone(State.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    GamepadAxes[static_cast<int>(EGamepadAxis::RightX)] = ApplyStickDeadzone(State.Gamepad.sThumbRX, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+    GamepadAxes[static_cast<int>(EGamepadAxis::RightY)] = ApplyStickDeadzone(State.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+    GamepadAxes[static_cast<int>(EGamepadAxis::LeftTrigger)] = ApplyTriggerDeadzone(State.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+    GamepadAxes[static_cast<int>(EGamepadAxis::RightTrigger)] = ApplyTriggerDeadzone(State.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+}
+
+void InputSystem::ClearGamepadAxes()
+{
+    for (int Axis = 0; Axis < static_cast<int>(EGamepadAxis::Count); ++Axis)
+    {
+        GamepadAxes[Axis] = 0.0f;
+    }
 }
 
 void InputSystem::ResetDragState()

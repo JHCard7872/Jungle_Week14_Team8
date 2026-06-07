@@ -189,6 +189,16 @@ local function update_viewport_center()
     end
 end
 
+-- 발사/그랩 입력 합성 — 마우스 왼쪽 버튼과 패드 RT(임계값 디지털)를 OR로 합친다.
+-- 모든 발사 계열 판정은 이 두 함수를 거쳐야 패드가 같이 동작한다.
+local function fire_pressed()
+    return Input.GetKeyDown(C.KEY_LBUTTON) or Input.GetKeyDown(C.PAD_KEY_RT)
+end
+
+local function fire_held()
+    return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
+end
+
 local function setup_crosshair_ui()
     if crosshair_widget == nil then
         if UI == nil or UI.CreateWidget == nil then
@@ -213,7 +223,7 @@ local function update_crosshair_ui()
         return
     end
 
-    local is_hold = Input.GetKey(C.KEY_LBUTTON)
+    local is_hold = fire_held()
     if crosshair_is_hold == is_hold then
         return
     end
@@ -764,7 +774,7 @@ end
 
 local function get_crosshair_target_world()
     local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
-    if Input.GetKey(C.KEY_LBUTTON) and hit ~= nil and hit.bHit then
+    if fire_held() and hit ~= nil and hit.bHit then
         return get_hit_point_or_end(hit, fallback_end)
     end
     return fallback_end
@@ -806,6 +816,13 @@ local function update_grab_distance_from_mouse_wheel()
     end
 
     local wheel_notches = get_mouse_wheel_notches()
+    -- 패드 십자키 위/아래 = 휠 1노치와 동일 (누를 때마다 한 단계)
+    if Input.GetKeyDown(C.PAD_KEY_DPAD_UP) then
+        wheel_notches = wheel_notches + 1.0
+    end
+    if Input.GetKeyDown(C.PAD_KEY_DPAD_DOWN) then
+        wheel_notches = wheel_notches - 1.0
+    end
     if math.abs(wheel_notches) <= 0.0001 then
         return
     end
@@ -1257,7 +1274,7 @@ local function update_active_grab(delta_time)
         return false
     end
 
-    if not Input.GetKey(C.KEY_LBUTTON) then
+    if not fire_held() then
         end_beam_grab(true)
         return true
     end
@@ -1356,7 +1373,7 @@ update_beam_points = function(aim_point)
 end
 
 local function apply_slot2_fire(delta_time)
-    if not Input.GetKeyDown(C.KEY_LBUTTON) then
+    if not fire_pressed() then
         update_beam_fade(delta_time)
         return
     end
@@ -1401,7 +1418,7 @@ local function begin_weapon_swap()
 end
 
 local function update_weapon_swap(delta_time)
-    if Input.GetKeyDown(C.KEY_Q) then
+    if Input.GetKeyDown(C.KEY_Q) or Input.GetKeyDown(C.PAD_KEY_Y) then
         begin_weapon_swap()
     end
 
@@ -1421,12 +1438,18 @@ local function update_weapon_swap(delta_time)
     end
 end
 
-local function apply_look_input()
+local function apply_look_input(delta_time)
     local mouse_x = Input.GetMouseDeltaX()
     local mouse_y = Input.GetMouseDeltaY()
 
-    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY
-    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY, C.MIN_PITCH, C.MAX_PITCH)
+    -- 패드 우스틱 — 마우스(픽셀 델타)와 달리 기울임(-1~1) × 속도(도/초) × dt로 환산해 합산.
+    -- 이 엔진은 음수 Pitch가 위쪽이라 스틱 위(+RY)에서 빼준다.
+    local dt = math.max(delta_time or 0.0, 0.0)
+    local pad_yaw = Input.GetGamepadAxis("RX") * C.PAD_LOOK_YAW_DEG_PER_SEC * dt
+    local pad_pitch = Input.GetGamepadAxis("RY") * C.PAD_LOOK_PITCH_DEG_PER_SEC * dt
+
+    yaw = yaw + mouse_x * C.LOOK_SENSITIVITY + pad_yaw
+    pitch = clamp(pitch + mouse_y * C.LOOK_SENSITIVITY - pad_pitch, C.MIN_PITCH, C.MAX_PITCH)
 
     obj.Rotation = vec(0.0, 0.0, yaw)
 end
@@ -1661,6 +1684,10 @@ local function apply_kinematic_movement(delta_time)
         move_dir = move_dir - right
     end
 
+    -- 패드 좌스틱 합산 (XInput LY는 위가 +라 전진과 부호가 맞다).
+    -- 아래에서 방향을 normalize하므로 스틱 기울임 정도는 속도에 영향 없음 (WASD와 동일 거동)
+    move_dir = move_dir + forward * Input.GetGamepadAxis("LY") + right * Input.GetGamepadAxis("LX")
+
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
 
@@ -1678,7 +1705,7 @@ local function apply_kinematic_movement(delta_time)
     end
 
     local did_jump = false
-    if Input.GetKeyDown(C.KEY_SPACE) and grounded then
+    if (Input.GetKeyDown(C.KEY_SPACE) or Input.GetKeyDown(C.PAD_KEY_A)) and grounded then
         velocity.Z = C.JUMP_VELOCITY
         did_jump = true
     end
@@ -1725,8 +1752,8 @@ local function apply_fire(delta_time)
         return
     end
 
-    local is_fire_pressed = Input.GetKeyDown(C.KEY_LBUTTON)
-    local is_fire_held = Input.GetKey(C.KEY_LBUTTON)
+    local is_fire_pressed = fire_pressed()
+    local is_fire_held = fire_held()
     if not is_fire_held then
         clear_beamed_ragdoll_actor()
         update_beam_fade(delta_time)
@@ -1790,7 +1817,7 @@ function BeginPlay()
 end
 
 function PrePhysicsTick(delta_time)
-    apply_look_input()
+    apply_look_input(delta_time)
     apply_kinematic_movement(delta_time)
 end
 

@@ -25,6 +25,8 @@ local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프
 
 -- P: 일시정지 진입용 보조 키. Key 테이블에 정의가 없어 VK 코드를 직접 사용한다.
 local KEY_P = 0x50
+-- 게임패드 Menu(Start) 버튼 — XInput VK 코드 (ESC와 동일하게 일시정지 진입)
+local PAD_KEY_MENU = 0xCF
 
 -- PauseUI.Show/Hide가 widget:SetWantsMouse를 토글하면 GameViewportClient가
 -- 자동으로 커서 캡처/중앙 고정을 풀거나 다시 건다 (AnyViewportWidgetWantsMouse 참고).
@@ -82,8 +84,8 @@ function Tick(dt)
     UpdateCoroutines(dt)   -- 코루틴 심장 — 반드시 첫 줄
     if ended then return end
 
-    -- P: 일시정지 진입 전용 (pause 중엔 이 Tick 자체가 멈추므로 재입력으로는 못 푼다 — Continue 버튼만 해제 가능)
-    if Input.GetKeyDown(KEY_P) then
+    -- P/패드 Menu: 일시정지 진입 전용 (pause 중엔 이 Tick 자체가 멈추므로 재입력으로는 못 푼다 — Continue 버튼만 해제 가능)
+    if Input.GetKeyDown(KEY_P) or Input.GetKeyDown(PAD_KEY_MENU) then
         enterPause()
     end
 

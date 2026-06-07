@@ -9,6 +9,20 @@ struct FGuiInputState
     bool bUsingTextInput = false;
 };
 
+// XInput 게임패드 아날로그 축 인덱스 (GamepadAxes 배열 첨자).
+// 스틱은 -1~1 (위/오른쪽이 +), 트리거는 0~1. 디지털 버튼은 별도 배열 없이
+// VK_GAMEPAD_*(0xC3~) 코드로 기존 256키 상태 배열에 들어간다.
+enum class EGamepadAxis : int
+{
+    LeftX = 0,
+    LeftY,
+    RightX,
+    RightY,
+    LeftTrigger,
+    RightTrigger,
+    Count,
+};
+
 struct FInputSystemSnapshot
 {
     bool KeyDown[256] = {};
@@ -52,9 +66,13 @@ struct FInputSystemSnapshot
     bool bGuiUsingTextInput = false;
     bool bWindowFocused = true;
 
+    float GamepadAxes[static_cast<int>(EGamepadAxis::Count)] = {};
+    bool bGamepadConnected = false;
+
     bool IsDown(int VK) const { return KeyDown[VK]; }
     bool WasPressed(int VK) const { return KeyPressed[VK]; }
     bool WasReleased(int VK) const { return KeyReleased[VK]; }
+    float GetGamepadAxis(EGamepadAxis Axis) const { return GamepadAxes[static_cast<int>(Axis)]; }
 };
 
 class InputSystem : public TSingleton<InputSystem>
@@ -80,6 +98,10 @@ public:
     bool GetKeyDown(int VK) const { return CurrentStates[VK] && !PrevStates[VK]; }
     bool GetKey(int VK) const { return CurrentStates[VK]; }
     bool GetKeyUp(int VK) const { return !CurrentStates[VK] && PrevStates[VK]; }
+
+    // Gamepad (XInput 패드 0번. 버튼은 GetKey*(VK_GAMEPAD_*)로 읽는다)
+    bool IsGamepadConnected() const { return bGamepadConnected; }
+    float GetGamepadAxis(EGamepadAxis Axis) const { return GamepadAxes[static_cast<int>(Axis)]; }
 
     // Mouse position
     POINT GetMousePos() const { return MousePos; }
@@ -165,6 +187,11 @@ private:
     int ScrollDelta = 0;
     int PrevScrollDelta = 0;
 
+    // Gamepad
+    float GamepadAxes[static_cast<int>(EGamepadAxis::Count)] = {};
+    bool bGamepadConnected = false;
+    int GamepadReconnectCooldown = 0;   // 미연결 패드 폴링은 비싸서 재시도 간격을 둔다 (프레임 단위)
+
     // Window handle for focus check
     HWND OwnerHWnd = nullptr;
 
@@ -181,4 +208,6 @@ private:
         const POINT& MouseDownPos, POINT& DragStartPos);
     void UpdateCurrentSnapshot();
     void ResetDragState();
+    void PollGamepad();
+    void ClearGamepadAxes();
 };
