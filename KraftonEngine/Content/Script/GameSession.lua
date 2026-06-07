@@ -40,7 +40,7 @@ local S = {
         name = "",
         weightText = "",
         scoreText = "",
-        imagePath = "../../Sprite/id_card_sample.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
     },
 
     result = {
@@ -65,7 +65,7 @@ function S.Reset(timeLimit)
         name = "",
         weightText = "",
         scoreText = "",
-        imagePath = "../../Sprite/id_card_sample.png",
+        imagePath = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
     }
     -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
     -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)

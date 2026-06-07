@@ -11,6 +11,7 @@ local STATE_DEAD = "DeadRagdoll"
 local STATE_REVIVING = "Reviving"
 local STATE_ALIVE = "AliveFlee"
 local STATE_FLEE_STOPPING = "FleeStopping"
+local UserSettings = require("Data/UserSettings")
 
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
@@ -185,6 +186,19 @@ local function apply_random_ragdoll_impulse(strength, context)
     if mesh.WakeAllRagdollBodies ~= nil then
         mesh:WakeAllRagdollBodies()
     end
+end
+
+local function play_revive_sfx()
+    if AudioManager == nil or AudioManager.Play == nil then
+        return
+    end
+
+    local volume = 1.0
+    if UserSettings ~= nil and UserSettings.GetSfxVolumeScalar ~= nil then
+        volume = UserSettings.GetSfxVolumeScalar()
+    end
+
+    AudioManager.Play("sfx_revive", volume)
 end
 
 local function apply_beam_shock_impulse()
@@ -960,6 +974,9 @@ function EnterReviving()
         if mesh ~= nil and mesh.SetRagdollRecoveryDuration ~= nil then
             mesh:SetRagdollRecoveryDuration(REVIVE_BLEND_DURATION)
         end
+        -- Reviving 진입이 실제 flee animation / recovery target pose를 거는 시점이다.
+        -- 부활 SFX는 이 타이밍에 맞춰 재생한다.
+        play_revive_sfx()
         pawn:EnterRevivingState()
         set_flee_animation_play_rate(1.0)
         begin_revive_mesh_relative_location_blend()
@@ -984,6 +1001,7 @@ function EnterReviving()
 
     -- 목표 animation pose가 있어야 recovery가 ragdoll pose -> animation pose로 보간된다.
     if pawn ~= nil then
+        play_revive_sfx()
         pawn:PlayFleeAnimation()
     end
     set_flee_animation_play_rate(1.0)

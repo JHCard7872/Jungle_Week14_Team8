@@ -32,7 +32,9 @@ return {
 
     CROSSHAIR_HOLD_ROTATION_INTERVAL = 0.08,
     CROSSHAIR_HOLD_ROTATION_STEP = 18.0,
-    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/id_card_sample.png",
+    COLLECT_FIRE_SFX_INTERVAL = 0.10,
+    COLLECT_FIRE_SFX_VOLUME_SCALE = 1.0,
+    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도

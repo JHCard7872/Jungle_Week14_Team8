@@ -95,7 +95,7 @@ function Tick(dt)
     Session.timeRemaining = Session.timeRemaining - dt
     LoadMgr.Update(dt)
 
-    HUD.UpdateFromSession()
+    HUD.UpdateFromSession(dt)
 
     -- 종료 판정: 시간 초과 또는 서버 과부하
     if Session.timeRemaining <= 0 or Session.load >= Config.maxServerLoad then

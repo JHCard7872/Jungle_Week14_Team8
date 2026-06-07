@@ -2,7 +2,9 @@ local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 
 local Session = require("GameSession")
 local HUD = require("UI/HUDController")
 local RagdollData = require("Data/RagdollData")
+local UserSettings = require("Data/UserSettings")
 
+local COLLECT_FIRE_SFX_CHANNEL = "CollectFireSfx"
 local yaw = 0.0        -- 현재 플레이어 Yaw. Actor Root 회전에 적용
 local pitch = 0.0      -- 현재 카메라 Pitch. CameraPivot 회전에 적용
 local viewport_center_x = 0.0 -- 조준점 기준으로 쓰는 뷰포트 중앙 X
@@ -11,6 +13,7 @@ local crosshair_screen_x = nil
 local crosshair_screen_y = nil
 local crosshair_hold_rotation = 0.0
 local crosshair_hold_rotation_elapsed = 0.0
+local collect_fire_sfx_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
 local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
@@ -199,6 +202,66 @@ end
 
 local function fire_held()
     return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
+end
+
+local function reset_collect_fire_sfx_timer()
+    collect_fire_sfx_elapsed = 0.0
+    if AudioManager ~= nil and AudioManager.StopManaged ~= nil then
+        AudioManager.StopManaged(COLLECT_FIRE_SFX_CHANNEL)
+    end
+end
+
+local function get_sfx_volume(volume_scale)
+    local volume = volume_scale or 1.0
+    if UserSettings ~= nil and UserSettings.GetSfxVolumeScalar ~= nil then
+        volume = volume * UserSettings.GetSfxVolumeScalar()
+    end
+    return volume
+end
+
+local function play_one_shot_sfx(key, volume_scale)
+    if AudioManager == nil or AudioManager.Play == nil then
+        return
+    end
+
+    AudioManager.Play(key, get_sfx_volume(volume_scale))
+end
+
+local function play_collect_fire_sfx()
+    if AudioManager == nil then
+        return
+    end
+
+    local volume = get_sfx_volume(C.COLLECT_FIRE_SFX_VOLUME_SCALE or 1.0)
+
+    if AudioManager.PlayManaged ~= nil then
+        AudioManager.PlayManaged("sfx_gun_shoot", COLLECT_FIRE_SFX_CHANNEL, volume)
+        return
+    end
+
+    if AudioManager.Play ~= nil then
+        AudioManager.Play("sfx_gun_shoot", volume)
+    end
+end
+
+local function update_collect_fire_sfx(delta_time, should_play)
+    if not should_play then
+        reset_collect_fire_sfx_timer()
+        return
+    end
+
+    collect_fire_sfx_elapsed = collect_fire_sfx_elapsed - math.max(delta_time or 0.0, 0.0)
+    if collect_fire_sfx_elapsed > 0.0 then
+        return
+    end
+
+    play_collect_fire_sfx()
+
+    local interval = C.COLLECT_FIRE_SFX_INTERVAL or 0.10
+    if interval <= 0.0 then
+        interval = 0.10
+    end
+    collect_fire_sfx_elapsed = interval
 end
 
 local function bind_components()
@@ -1485,6 +1548,8 @@ local function apply_slot2_fire(delta_time)
         return
     end
 
+    play_one_shot_sfx("sfx_gun_attack_shoot")
+
     local hit, fallback_end = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
     trigger_red_beam_rim_on_ragdoll_mesh(hit)
@@ -1519,6 +1584,7 @@ local function begin_weapon_swap()
     weapon_swap_state.elapsed = 0.0
     weapon_swap_state.start_angle = weapon_swap_state.current_angle
     weapon_swap_state.target_angle = get_next_weapon_swap_angle()
+    play_one_shot_sfx("sfx_gun_mode_change")
     beam_visible_remaining = 0.0
     clear_grab_state()
     set_beam_visible(false)
@@ -1979,6 +2045,7 @@ end
 
 local function apply_fire(delta_time)
     if weapon_swap_state.is_active then
+        reset_collect_fire_sfx_timer()
         beam_visible_remaining = 0.0
         clear_beamed_ragdoll_actor()
         set_beam_visible(false)
@@ -1988,16 +2055,19 @@ local function apply_fire(delta_time)
     select_active_beam_particle()
 
     if weapon_swap_state.active_index == 2 then
+        reset_collect_fire_sfx_timer()
         apply_slot2_fire(delta_time)
         return
     end
 
     if update_active_grab(delta_time) then
+        update_collect_fire_sfx(delta_time, fire_held())
         return
     end
 
     local is_fire_pressed = fire_pressed()
     local is_fire_held = fire_held()
+    update_collect_fire_sfx(delta_time, is_fire_held)
     if not is_fire_held then
         clear_beamed_ragdoll_actor()
         update_beam_fade(delta_time)
