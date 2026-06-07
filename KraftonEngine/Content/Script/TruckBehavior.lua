@@ -13,6 +13,7 @@
 local ScoreMgr   = require("Manager/ScoreManager")
 local MissionMgr = require("Manager/MissionManager")
 local UserSettings = require("Data/UserSettings")
+local ParticleFX = require("ParticleFX")
 
 local state = "wait"        -- "wait" 대기 / "drive" 순회 중
 local waitTimer = 0
@@ -66,6 +67,8 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
     ScoreMgr.AddForRagdoll(other_actor)
     MissionMgr.NotifyRecovered(other_actor)   -- 태그를 읽으므로 Destroy 전에 호출
     AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
+    local D = require("Data/TruckData")       -- Tick과 동일하게 핫리로드 반영
+    ParticleFX.Burst(D.collectFxPath, other_actor.Location, D.collectFxLife) -- 수거 "뾰로롱" — Destroy 전에 위치를 읽는다
     other_actor:Destroy()                     -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)
 end
 
