@@ -20,6 +20,14 @@ local S = {
     load          = 0,     -- 서버 과부하 게이지(%) — GameConfig.maxServerLoad 도달 시 게임오버
     timeRemaining = 0,     -- 남은 시간(초)
     inputEnabled  = true,  -- 게임플레이 입력 허용 여부 (pause 중 false — 입력 콜백 진입부에서 검사)
+    playerName    = "Employee", -- CutScene에서 입력받은 이름. 씬 전환/플레이 리셋 후에도 유지한다.
+
+    employee = {
+        number = "GO-2417",
+        name = "Employee",
+        department = "Operations",
+        rank = "Contract",
+    },
 
     gun = {
         mode   = "collect",  -- "collect" 수거 / "attack" 공격(전기 빔)
