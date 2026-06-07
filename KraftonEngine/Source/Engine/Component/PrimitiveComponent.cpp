@@ -445,6 +445,17 @@ void UPrimitiveComponent::MarkRenderTransformDirty()
 	World->MarkWorldPrimitivePickingBVHDirty();
 }
 
+void UPrimitiveComponent::SetIgnoreSameOwnerCollision(bool bIgnore)
+{
+	if (BodyInstance.bIgnoreSameOwner == bIgnore)
+	{
+		return;
+	}
+
+	BodyInstance.bIgnoreSameOwner = bIgnore;
+	NotifyPhysicsBodyDirty();
+}
+
 void UPrimitiveComponent::MarkRenderVisibilityDirty()
 {
 	MarkProxyDirty(EDirtyFlag::Visibility);
