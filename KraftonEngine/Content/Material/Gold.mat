@@ -1,0 +1,20 @@
+{
+  "BlendState" : "",
+  "DepthStencilState" : "",
+  "Origin" : "Editor",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [1.000000, 0.780000, 0.250000],
+    "EmissiveIntensity" : 0.250000,
+    "HasNormalMap" : 0.000000,
+    "SectionColor" : [1.000000, 0.780000, 0.250000, 1.000000],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Gold.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
+  "Textures" : {
+
+  }
+}

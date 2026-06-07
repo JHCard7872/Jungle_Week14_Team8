@@ -16,6 +16,8 @@
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
 #include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialManager.h"
 #include "Math/Transform.h"
 
 #include <algorithm>
@@ -228,6 +230,39 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			UE_LOG("[GOInc] Spawned ragdoll character. CharacterId=%s ActualRagdollId=%s Location=(%.2f, %.2f, %.2f)",
 				CharacterId.c_str(), SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
 			return SpawnedPawn;
+		});
+
+		// 금/은 래그돌 비주얼 — 스폰 추첨(GOIncRagdollSpawnManager.lua)이 Gold/Silver 태그와
+		// 함께 호출한다. 머티리얼은 FMaterialManager 캐시를 타므로 반복 호출 비용 없음.
+		GOInc.set_function("SetRagdollOverrideMaterial", [](AGOIncRagdollPawn* Pawn, const FString& MatPath) -> bool
+		{
+			if (!Pawn)
+			{
+				UE_LOG("[GOInc] SetRagdollOverrideMaterial failed. Missing pawn.");
+				return false;
+			}
+
+			USkeletalMeshComponent* Mesh = Pawn->GetRagdollMeshComponent();
+			if (!Mesh)
+			{
+				UE_LOG("[GOInc] SetRagdollOverrideMaterial failed. Pawn has no ragdoll mesh. RagdollId=%s",
+					Pawn->GetRagdollId().c_str());
+				return false;
+			}
+
+			UMaterial* Material = FMaterialManager::Get().GetOrCreateMaterial(MatPath);
+			if (!Material)
+			{
+				UE_LOG("[GOInc] SetRagdollOverrideMaterial failed. Material load failed. Path=%s", MatPath.c_str());
+				return false;
+			}
+
+			const int32 SlotCount = static_cast<int32>(Mesh->GetOverrideMaterials().size());
+			for (int32 Index = 0; Index < SlotCount; ++Index)
+			{
+				Mesh->SetMaterial(Index, Material);
+			}
+			return true;
 		});
 	}
 
