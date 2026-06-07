@@ -64,6 +64,7 @@
             </div>
 
             <div id="menu_exit_game">
+                <img id="menu_exit_game_image" src="../../Sprite/ui_horiz_button.png" />
                 <div id="menu_exit_game_text">[ EXIT GAME ]</div>
             </div>
             <div id="label_exit_game" class="menu_label">
