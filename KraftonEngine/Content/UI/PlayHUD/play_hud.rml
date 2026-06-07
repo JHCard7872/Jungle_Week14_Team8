@@ -6,21 +6,26 @@
 
 <body>
     <div id="hud_root">
+        <div id="hud_minimap_container">
+            <img id="hud_minimap_image" src="../../Sprite/play_hud_minimap.png" />
+        </div>
+
+        <div id="hud_mission_container">
+            <img id="hud_mission_bg" src="../../Sprite/play_hud_misson.png" />
+            <div id="hud_mission_text">빨간 배관공 3체 수거</div>
+            <img id="hud_mission_reference_image" src="../../Sprite/ragdoll/ragdoll_sample.png" />
+            <div id="hud_mission_progress_text">목표 3 / 현재 0</div>
+        </div>
+
         <div id="hud_server_load_container">
             <div id="hud_server_load_gauge">
                 <img id="hud_server_load_empty" src="../../Sprite/play_hud_server_load_empty.png" />
-                <div id="hud_server_load_green" class="hud_server_load_fill">
-                    <img class="hud_server_load_fill_image" src="../../Sprite/play_hud_server_load_green.png" />
-                </div>
-                <div id="hud_server_load_yellow" class="hud_server_load_fill">
-                    <img class="hud_server_load_fill_image" src="../../Sprite/play_hud_server_load_yellow.png" />
-                </div>
-                <div id="hud_server_load_red" class="hud_server_load_fill">
-                    <img class="hud_server_load_fill_image" src="../../Sprite/play_hud_server_load_red.png" />
-                </div>
+                <img id="hud_server_load_green" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_green.png" />
+                <img id="hud_server_load_yellow" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_yellow.png" />
+                <img id="hud_server_load_red" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_red.png" />
                 <div id="hud_server_load_value">0%</div>
             </div>
-            <div id="hud_server_load_label">SERVER LOAD</div>
+            <div id="hud_server_load_label">OVERLOAD</div>
         </div>
 
         <div id="hud_time_container">
@@ -40,13 +45,14 @@
 
         <div id="hud_target_info_container">
             <img id="hud_target_info_bg" src="../../Sprite/play_aim_ragdoll_popup.png" />
-            <img id="hud_target_pose_image" src="../../Sprite/ragdoll/ragdoll_mario_normal.png" />
+            <img id="hud_target_pose_image" src="../../Sprite/ragdoll/ragdoll_sample.png" />
             <div id="hud_target_name">Red Plumber</div>
             <div id="hud_target_weight">12.5kg</div>
             <div id="hud_target_score">+100</div>
         </div>
 
         <div id="hud_gun_status_container">
+            <img id="hud_gun_mode_image" src="../../Sprite/play_hud_gun_mode_collect.png" />
             <div id="hud_gun_mode_label">MODE</div>
             <div id="hud_gun_mode_text">COLLECT</div>
             <div id="hud_gun_energy_text">ENERGY 100%</div>
@@ -113,7 +119,7 @@
 
             <div class="hud_debug_row">
                 <div class="hud_debug_label">Pose</div>
-                <input id="debug_target_image_input" class="hud_debug_input" type="text" value="../../Sprite/ragdoll/ragdoll_mario_normal.png" />
+                <input id="debug_target_image_input" class="hud_debug_input" type="text" value="../../Sprite/ragdoll/ragdoll_sample.png" />
                 <button id="debug_target_image_apply" class="hud_debug_button">Apply</button>
             </div>
         </div>

@@ -23,6 +23,8 @@ local visible = false
 local current_z_order = DEFAULT_Z_ORDER
 local on_left = nil
 local on_right = nil
+local current_button_style = "image"
+local current_button_count = 1
 -- 커서 스프라이트 사용 여부 (Pause처럼 OS 커서를 숨긴 채 뜨는 모달이 켠다)
 local show_cursor = false
 
@@ -40,6 +42,35 @@ local function set_text(element_id, value)
     end
 
     widget:SetText(element_id, tostring(value or ""))
+end
+
+local function set_button_style(element_id, style_name)
+    if widget == nil then
+        return
+    end
+
+    local class_value = "modal_button"
+    if style_name == "text_only" then
+        class_value = class_value .. " text_only"
+    end
+
+    widget:SetAttribute(element_id, "class", class_value)
+end
+
+local function set_root_class(button_count)
+    if widget == nil then
+        return
+    end
+
+    local class_value = visible and "" or "modal_hidden"
+
+    if button_count <= 1 then
+        class_value = class_value .. " modal_one_button"
+    else
+        class_value = class_value .. " modal_two_buttons"
+    end
+
+    widget:SetAttribute("modal_root", "class", class_value)
 end
 
 local function play_ui_click()
@@ -129,6 +160,7 @@ function M.Create(options)
     current_z_order = options.zOrder or DEFAULT_Z_ORDER
     on_left = options.onLeft
     on_right = options.onRight
+    current_button_style = options.buttonStyle or "image"
     show_cursor = options.showCursor == true
 
     if ensure_widget() == nil then
@@ -140,16 +172,15 @@ function M.Create(options)
     set_text("modal_button_left_label", options.leftText or "OK")
     set_text("modal_button_right_label", options.rightText or "")
 
-    set_display("modal_button_left", options.leftText ~= nil)
-    set_display("modal_button_right", options.rightText ~= nil)
+    set_button_style("modal_button_left", current_button_style)
+    set_button_style("modal_button_right", current_button_style)
 
-    if options.rightText == nil then
-        widget:SetProperty("modal_button_left", "left", "50%")
-        widget:SetProperty("modal_button_left", "margin-left", "-220px")
-    else
-        widget:SetProperty("modal_button_left", "left", "40px")
-        widget:SetProperty("modal_button_left", "margin-left", "0px")
-    end
+    local has_left_button = options.leftText ~= nil
+    local has_right_button = options.rightText ~= nil
+    set_display("modal_button_left", has_left_button)
+    set_display("modal_button_right", has_right_button)
+    current_button_count = has_right_button and 2 or 1
+    set_root_class(current_button_count)
 
     return widget
 end
@@ -163,6 +194,8 @@ function M.Show()
 
     widget:SetWantsMouse(true)
     set_display("modal_root", true)
+    -- display를 직접 켠 뒤에도 class를 한 번 더 갱신해서 modal_hidden을 제거한다.
+    set_root_class(current_button_count)
     update_cursor_sprite()   -- 마우스가 안 움직여도 첫 위치는 보여야 한다
 end
 
@@ -175,6 +208,7 @@ function M.Hide()
 
     widget:SetWantsMouse(false)
     set_display("modal_root", false)
+    set_root_class(current_button_count)
     hide_cursor_sprite()
 end
 
@@ -193,6 +227,8 @@ function M.Destroy()
     current_z_order = DEFAULT_Z_ORDER
     on_left = nil
     on_right = nil
+    current_button_style = "image"
+    current_button_count = 1
     show_cursor = false
 end
 

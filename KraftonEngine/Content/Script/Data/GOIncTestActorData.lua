@@ -35,7 +35,9 @@ return {
     CROSSHAIR_HOLD_ROTATION_STEP = 18.0,
     COLLECT_FIRE_SFX_INTERVAL = 0.10,
     COLLECT_FIRE_SFX_VOLUME_SCALE = 1.0,
-    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/ragdoll/ragdoll_mario_normal.png",
+    FOOTSTEP_SFX_INTERVAL = 0.35,
+    FOOTSTEP_SFX_VOLUME_SCALE = 1.0,
+    TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/ragdoll/ragdoll_sample.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
     SPRINT_SPEED_MULTIPLIER = 2.0,     -- Shift를 누른 채 이동할 때 수평 속도 배율

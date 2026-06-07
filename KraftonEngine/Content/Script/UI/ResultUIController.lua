@@ -130,7 +130,10 @@ local LAYOUT = {
         slideDuration = 0.72,
         stampAppearDuration = 0.18,
         stampDropDuration = 0.14,
+        stampImpactSoundDelay = -1.2,
         stampSettleDuration = 0.26,
+        resultSoundDelay = 0.8,
+        hintDelay = 0.8,
         hintFadeDuration = 0.35,
         shakeDuration = 0.28,
         shakeOffsetX = 12.0,
@@ -183,10 +186,13 @@ local mouse_enabled = false
 -- 크기는 rcss .result_cursor_image와 같은 값이어야 한다 (중앙 핫스팟 계산용)
 local VK_LBUTTON = 0x01
 local CURSOR_SIZE = 64
+local PRE_POPUP_SHADOW_OPACITY = 0.4
 -- 각 사운드가 이미 재생됐는지 여부 (soundLeadTime 적용으로 phase 전환 전에 트리거)
 local sfx_slide_triggered = false
 local sfx_stamp_triggered = false
 local sfx_result_triggered = false
+local result_sfx_delay_active = false
+local result_sfx_delay_elapsed = 0.0
 
 -- 테이블을 재귀적으로 복사한다. ResetLayoutConfig에서 기본값 복구용으로 사용.
 local function deep_copy(value)
@@ -219,6 +225,7 @@ local state = {
     gradeLetterOpacity = 1.0,
     gradeStampOpacity = 0.0,
     hintOpacity = 0.0,
+    prePopupShadowOpacity = PRE_POPUP_SHADOW_OPACITY,
 }
 
 -- 랭크별 도장 이미지와 결과 사운드 매핑.
@@ -672,6 +679,8 @@ local function apply_visual_state()
     apply_stamp_layout()
     set_opacity("result_grade_letter", state.gradeLetterOpacity)
     set_opacity("result_input_hint", state.hintOpacity)
+    set_opacity("result_pre_popup_shadow", state.prePopupShadowOpacity)
+    set_display("result_pre_popup_shadow", state.prePopupShadowOpacity > 0.01)
 end
 
 -- 현재 LAYOUT 값을 디버그 패널 input들에 동기화한다.
@@ -716,9 +725,12 @@ local function reset_sequence_state()
     state.gradeLetterOpacity = 1.0
     state.gradeStampOpacity = 0.0
     state.hintOpacity = 0.0
+    state.prePopupShadowOpacity = PRE_POPUP_SHADOW_OPACITY
     sfx_slide_triggered = false
     sfx_stamp_triggered = false
     sfx_result_triggered = false
+    result_sfx_delay_active = false
+    result_sfx_delay_elapsed = 0.0
 end
 
 -- 연출 phase를 변경하고, phase 진입 시 필요한 상태를 처리한다.
@@ -727,12 +739,35 @@ local function enter_phase(phase_name)
     current_phase = phase_name
     phase_elapsed = 0.0
 
+    if phase_name == "stamp_reveal" then
+        result_sfx_delay_active = true
+        result_sfx_delay_elapsed = 0.0
+    end
+
     if phase_name == "done" then
         sequence_finished = true
     end
 end
 
 -- 현재 조정된 주요 LAYOUT 값을 콘솔에 복사하기 좋은 문자열로 만든다.
+local function update_result_sfx_timer(delta)
+    if sfx_result_triggered or not result_sfx_delay_active then
+        return
+    end
+
+    result_sfx_delay_elapsed = result_sfx_delay_elapsed + delta
+    if result_sfx_delay_elapsed < LAYOUT.animation.resultSoundDelay then
+        return
+    end
+
+    if current_payload ~= nil and current_payload.resultSfx ~= nil then
+        AudioManager.Play(current_payload.resultSfx, UserSettings.GetSfxVolumeScalar())
+    end
+
+    sfx_result_triggered = true
+    result_sfx_delay_active = false
+end
+
 local function build_layout_dump()
     return table.concat({
         "clipboard = {",
@@ -1035,14 +1070,21 @@ function M.ShowActionButtons(retry_cb, title_cb)
     on_title_cb = title_cb
     base_mouse_enabled = true
     mouse_enabled = true
+    state.prePopupShadowOpacity = 0.0
 
     if widget ~= nil then
         widget:SetWantsMouse(true)
     end
 
+    apply_visual_state()
     set_display("result_action_buttons", true)
     set_display("result_input_hint", false)
     bind_action_buttons()
+end
+
+function M.SetPrePopupShadowVisible(visible)
+    state.prePopupShadowOpacity = visible and PRE_POPUP_SHADOW_OPACITY or 0.0
+    apply_visual_state()
 end
 
 -- 디버그 패널을 켜거나 끈다.
@@ -1095,6 +1137,10 @@ function M.Update(dt)
 
     local lead = LAYOUT.animation.soundLeadTime
 
+    if current_phase == "stamp_reveal" or current_phase == "done" then
+        update_result_sfx_timer(delta)
+    end
+
     if current_phase == "printing" then
         state.clipboardY = LAYOUT.clipboard.startY
         state.clipboardOffsetX = 0.0
@@ -1136,6 +1182,17 @@ function M.Update(dt)
             ease_out_back(t)
         )
 
+        if not sfx_stamp_triggered and LAYOUT.animation.stampImpactSoundDelay < 0.0 then
+            local trigger_time = math.max(
+                0.0,
+                LAYOUT.animation.stampAppearDuration + LAYOUT.animation.stampImpactSoundDelay
+            )
+            if phase_elapsed >= trigger_time then
+                AudioManager.Play(STAMP_IMPACT_SFX, UserSettings.GetSfxVolumeScalar())
+                sfx_stamp_triggered = true
+            end
+        end
+
         if t >= 1.0 then
             enter_phase("stamp_drop")
         end
@@ -1152,7 +1209,8 @@ function M.Update(dt)
             ease_in_cubic(t)
         )
 
-        if not sfx_stamp_triggered and phase_elapsed >= LAYOUT.animation.stampDropDuration - lead then
+        if not sfx_stamp_triggered and LAYOUT.animation.stampImpactSoundDelay >= 0.0
+            and phase_elapsed >= LAYOUT.animation.stampImpactSoundDelay then
             AudioManager.Play(STAMP_IMPACT_SFX, UserSettings.GetSfxVolumeScalar())
             sfx_stamp_triggered = true
         end
@@ -1179,20 +1237,14 @@ function M.Update(dt)
         state.gradeLetterOpacity = 1.0
         state.gradeStampOpacity = t
 
-        if not sfx_result_triggered and phase_elapsed >= LAYOUT.animation.stampSettleDuration - lead then
-            if current_payload ~= nil then
-                AudioManager.Play(current_payload.resultSfx, UserSettings.GetSfxVolumeScalar())
-            end
-            sfx_result_triggered = true
-        end
-
         if t >= 1.0 then
             enter_phase("done")
         end
     elseif current_phase == "done" then
-        local t = clamp(phase_elapsed / LAYOUT.animation.hintFadeDuration, 0.0, 1.0)
+        local hint_time = math.max(0.0, phase_elapsed - LAYOUT.animation.hintDelay)
+        local t = clamp(hint_time / LAYOUT.animation.hintFadeDuration, 0.0, 1.0)
         local blink = 0.5 + 0.5 * math.sin(
-            math.max(0.0, phase_elapsed - LAYOUT.animation.hintFadeDuration) * math.pi * 2.6
+            math.max(0.0, hint_time - LAYOUT.animation.hintFadeDuration) * math.pi * 2.6
         )
 
         state.clipboardY = LAYOUT.clipboard.endY
@@ -1203,7 +1255,9 @@ function M.Update(dt)
         state.gradeLetterOpacity = 1.0
         state.gradeStampOpacity = 1.0
 
-        if t < 1.0 then
+        if phase_elapsed < LAYOUT.animation.hintDelay then
+            state.hintOpacity = 0.0
+        elseif t < 1.0 then
             state.hintOpacity = t
         else
             state.hintOpacity = blink

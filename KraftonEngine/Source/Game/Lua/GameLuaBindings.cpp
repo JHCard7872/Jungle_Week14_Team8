@@ -6,6 +6,7 @@
 #include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Component/PrimitiveComponent.h"
 #include "Component/Script/LuaScriptComponent.h"
+#include "Component/Shape/BoxComponent.h"
 #include "Component/Shape/CapsuleComponent.h"
 #include "Component/ShapeComponent.h"
 #include "Core/Types/CollisionTypes.h"
@@ -13,6 +14,8 @@
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
 #include "Game/GOIncRagdollCharacterRegistry.h"
+#include "GameFramework/AActor.h"
+#include "GameFramework/GameMode/GameplayStatics.h"
 #include "GameFramework/Pawn/GOIncRagdollPawn.h"
 #include "GameFramework/World.h"
 #include "Lua/LuaScriptManager.h"
@@ -22,6 +25,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <random>
 
 // ============================================================
 // 게임-특화 Lua 바인딩 등록 위치 — 현재는 비어 있음.
@@ -130,6 +134,25 @@ namespace
 		}
 		return sol::make_object(State, Vector);
 	}
+
+	float RandomFloatInRange(float MinValue, float MaxValue)
+	{
+		static thread_local std::mt19937 Generator(std::random_device{}());
+		std::uniform_real_distribution<float> Distribution(MinValue, MaxValue);
+		return Distribution(Generator);
+	}
+
+	FVector MakeRandomPointInBoxComponent(const UBoxComponent& BoxComponent)
+	{
+		const FVector Extent = BoxComponent.GetUnscaledBoxExtent();
+		// SpawnArea Box는 XY 범위 마커로 사용한다. Z는 Box 중심 높이를 그대로 쓴다.
+		const FVector LocalPoint(
+			RandomFloatInRange(-Extent.X, Extent.X),
+			RandomFloatInRange(-Extent.Y, Extent.Y),
+			0.0f);
+
+		return BoxComponent.GetWorldMatrix().TransformPositionWithW(LocalPoint);
+	}
 }
 
 void RegisterGameLuaBindings(sol::state& Lua)
@@ -185,6 +208,61 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		GOInc.set_function("IsRagdollCharacterRegistered", [](const FString& CharacterId) -> bool
 		{
 			return IsGOIncRagdollCharacterRegistered(CharacterId);
+		});
+
+		// SpawnArea는 별도 C++ Actor를 만들지 않고, 일반 Actor Tag + 하위 BoxComponent로 찾는다.
+		// SpawnManager Lua가 BeginPlay에서 한 번만 호출해 캐싱하고 Tick에서는 월드 검색하지 않는다.
+		GOInc.set_function("FindSpawnAreaBoxes", [](const FString& TagName, sol::this_state State) -> sol::table
+		{
+			sol::state_view L(State);
+			sol::table Result = L.create_table();
+
+			UWorld* World = GEngine ? GEngine->GetWorld() : nullptr;
+			if (!World)
+			{
+				UE_LOG("[GOInc] FindSpawnAreaBoxes failed. Missing World. Tag=%s", TagName.c_str());
+				return Result;
+			}
+
+			const TArray<AActor*> AreaActors = FGameplayStatics::FindActorsByTag(World, FName(TagName));
+			int32 ResultIndex = 1;
+			int32 BoxCount = 0;
+
+			for (AActor* Actor : AreaActors)
+			{
+				if (!IsValid(Actor))
+				{
+					continue;
+				}
+
+				for (UPrimitiveComponent* PrimitiveComponent : Actor->GetPrimitiveComponents())
+				{
+					UBoxComponent* BoxComponent = Cast<UBoxComponent>(PrimitiveComponent);
+					if (!IsValid(BoxComponent))
+					{
+						continue;
+					}
+
+					Result[ResultIndex++] = BoxComponent;
+					++BoxCount;
+				}
+			}
+
+			UE_LOG("[GOInc] FindSpawnAreaBoxes Tag=%s Actors=%d Boxes=%d",
+				TagName.c_str(),
+				static_cast<int32>(AreaActors.size()),
+				BoxCount);
+			return Result;
+		});
+
+		GOInc.set_function("GetRandomPointInSpawnAreaBox", [](UBoxComponent* BoxComponent, sol::this_state State) -> sol::object
+		{
+			if (!IsValid(BoxComponent))
+			{
+				return MakeNil(State);
+			}
+
+			return sol::make_object(State, MakeRandomPointInBoxComponent(*BoxComponent));
 		});
 
 		GOInc.set_function("SpawnRagdollCharacter", [](const FString& CharacterId, const FVector& Location) -> AGOIncRagdollPawn*
@@ -294,6 +372,13 @@ void RegisterGameLuaBindings(sol::state& Lua)
 	Lua.new_usertype<UShapeComponent>("ShapeComponent",
 		sol::base_classes,
 		sol::bases<UPrimitiveComponent, USceneComponent, UActorComponent, UObject>());
+
+	Lua.new_usertype<UBoxComponent>("BoxComponent",
+		sol::base_classes,
+		sol::bases<UShapeComponent, UPrimitiveComponent, USceneComponent, UActorComponent, UObject>(),
+		"SetBoxExtent", &UBoxComponent::SetBoxExtent,
+		"GetScaledBoxExtent", &UBoxComponent::GetScaledBoxExtent,
+		"GetUnscaledBoxExtent", &UBoxComponent::GetUnscaledBoxExtent);
 
 	Lua.new_usertype<UCapsuleComponent>("CapsuleComponent",
 		sol::base_classes,

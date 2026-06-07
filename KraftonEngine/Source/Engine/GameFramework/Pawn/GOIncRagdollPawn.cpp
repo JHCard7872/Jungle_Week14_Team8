@@ -67,7 +67,7 @@ namespace
 		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Trigger, ECollisionResponse::Ignore);
 		// Alive Capsule is the moving physical body for AliveFlee, so it should push against
 		// other GOInc ragdolls / alive capsules instead of ghosting through them.
-		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Block);
+		Capsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Ignore);
 	}
 
 	void ConfigureReviveTriggerCapsuleCollisionForGOInc(UCapsuleComponent* TriggerCapsule)
@@ -82,6 +82,8 @@ namespace
 		TriggerCapsule->SetCollisionObjectType(ECollisionChannel::Trigger);
 		TriggerCapsule->SetCollisionResponseToAllChannels(ECollisionResponse::Ignore);
 		TriggerCapsule->SetCollisionResponseToChannel(ECollisionChannel::Pawn, ECollisionResponse::Overlap);
+
+		TriggerCapsule->SetIgnoreSameOwnerCollision(true);
 	}
 }
 
@@ -512,36 +514,60 @@ void AGOIncRagdollPawn::UpdateAliveExclamationBillboard(float DeltaTime)
 	}
 
 	AliveExclamationElapsed += DeltaTime;
-	const float Duration = AliveExclamationDuration > 0.0f ? AliveExclamationDuration : DefaultAliveExclamationDuration;
-	const float T = FMath::Clamp(AliveExclamationElapsed / Duration, 0.0f, 1.0f);
+
+	// 전체 표시 시간.
+	// Lua에서 pawn:ShowAliveExclamation(1.5) 이런 식으로 넘기면 이 값이 늘어남.
+	const float RequestedDuration = AliveExclamationDuration > 0.0f
+		? AliveExclamationDuration
+		: DefaultAliveExclamationDuration;
+
+	// 등장/사라짐은 기존 느낌 유지용으로 초 단위 고정.
+	// 더 빠르게 등장시키고 싶으면 0.18f 정도로 줄이고,
+	// 더 천천히 사라지게 하고 싶으면 0.32f를 늘리면 됨.
+	constexpr float AppearSeconds = 0.11f;
+	constexpr float DisappearSeconds = 0.16f;
+
+	// 전체 시간이 너무 짧아도 등장/사라짐은 최소 보장.
+	const float Duration = FMath::Max(RequestedDuration, AppearSeconds + DisappearSeconds + 0.001f);
+
+	const float DisappearStartSeconds = FMath::Max(AppearSeconds, Duration - DisappearSeconds);
+	const float Time = AliveExclamationElapsed;
 
 	const auto SmoothStep = [](float Alpha) -> float
-	{
-		Alpha = FMath::Clamp(Alpha, 0.0f, 1.0f);
-		return Alpha * Alpha * (3.0f - 2.0f * Alpha);
-	};
+		{
+			Alpha = FMath::Clamp(Alpha, 0.0f, 1.0f);
+			return Alpha * Alpha * (3.0f - 2.0f * Alpha);
+		};
 
 	float RollDegrees = 0.0f;
 	float ScaleMul = 1.0f;
 	float Opacity = 1.0f;
 
-	if (T < 0.22f)
+	if (Time < AppearSeconds)
 	{
-		const float A = SmoothStep(T / 0.22f);
+		// 등장 구간: 항상 AppearSeconds 동안만 진행.
+		const float A = SmoothStep(Time / AppearSeconds);
+
 		RollDegrees = FMath::Lerp(-220.0f, 0.0f, A);
 		ScaleMul = FMath::Lerp(0.12f, 1.18f, A);
 		Opacity = A;
 	}
-	else if (T < 0.68f)
+	else if (Time < DisappearStartSeconds)
 	{
-		const float A = SmoothStep((T - 0.22f) / 0.46f);
-		RollDegrees = FMath::Lerp(0.0f, 18.0f, A);
+		// 유지 구간: Duration이 길어질수록 여기만 길어짐.
+		// 회전은 멈추고, 크기만 1.18 -> 1.0으로 안정화.
+		const float HoldSeconds = FMath::Max(DisappearStartSeconds - AppearSeconds, 0.001f);
+		const float A = SmoothStep((Time - AppearSeconds) / HoldSeconds);
+
+		RollDegrees = 0.0f;
 		ScaleMul = FMath::Lerp(1.18f, 1.0f, A);
 		Opacity = 1.0f;
 	}
 	else
 	{
-		const float A = SmoothStep((T - 0.68f) / 0.32f);
+		// 사라짐 구간: 항상 DisappearSeconds 동안만 진행.
+		const float A = SmoothStep((Time - DisappearStartSeconds) / DisappearSeconds);
+
 		RollDegrees = FMath::Lerp(18.0f, 220.0f, A);
 		ScaleMul = FMath::Lerp(1.0f, 0.12f, A);
 		Opacity = 1.0f - A;
@@ -594,6 +620,12 @@ void AGOIncRagdollPawn::ConfigureMovementUpdatedComponent()
 
 void AGOIncRagdollPawn::ApplyInitialRagdollState()
 {
+	RefreshGOIncRagdollPawnComponents();
+
+	SetMovementRuntimeEnabled(false, false);
+	SetAliveCollisionCapsuleEnabled(false);
+	SetReviveTriggerCapsuleEnabled(true);
+
 	if (!Mesh || !Mesh->GetSkeletalMesh())
 	{
 		return;
@@ -602,6 +634,8 @@ void AGOIncRagdollPawn::ApplyInitialRagdollState()
 	ConfigureDeadRagdollMeshCollisionForGOInc(Mesh);
 	Mesh->SetRagdollSelfCollisionMode(ERagdollSelfCollisionMode::DisableParentChild);
 	Mesh->SetRagdollGravityEnabled(true);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetSimulatePhysics(true);
 	Mesh->SetRagdollEnabled(true);
 	Mesh->WakeAllRagdollBodies();
 }
