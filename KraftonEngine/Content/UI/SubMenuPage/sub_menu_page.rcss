@@ -469,7 +469,8 @@ body {
 
 
 .credits_card {
-    height: 760px;
+    height: 730px;
+    top: -20px;
 }
 
 #credits_developers_team {
@@ -481,29 +482,40 @@ body {
 }
 
 #credits_developers_logo {
-    position: absolute;
-    left: 50%;
-    top: 76px;
-    width: 360px;
-    height: 96px;
-    margin-left: -180px;
+    display: inline-block;
+    width: 350px;
+    height: auto;
+    vertical-align: middle;
+    margin-left: 16px;
 }
 
-/* 4장 × 15% + 5구간 × 8% = 100% → 양끝·사이 간격 동일 */
+/*
+ * ID 카드 4장 가로 배치
+ * ─────────────────────────────────────────────────
+ * CARD_W = 13%   ← 카드 표시 너비
+ * GAP    =  5%   ← 카드 사이 실제 간격
+ * STRIDE = 18%   ← CARD_W + GAP
+ * START  = 17%   ← 좌우 여백 대칭: (100 - 4×13 - 3×5) / 2 = 16.5 ≈ 17
+ *
+ * left[n] = START + n × STRIDE
+ *
+ * 카드 수·간격 바꿀 때: CARD_W·GAP 조정 → STRIDE 재계산 → START = (100 - 4×CARD_W - 3×GAP) / 2
+ * ─────────────────────────────────────────────────
+ */
 .credits_id_card {
     position: absolute;
-    top: 188px;
-    width: 15%;
+    top: 150px;
+    width: 13%;   /* CARD_W */
     height: auto;
 }
 
-#credits_id_card_1 { left: 8%; }
-#credits_id_card_2 { left: 31%; }
-#credits_id_card_3 { left: 54%; }
-#credits_id_card_4 { left: 77%; }
+#credits_id_card_1 { left: 17%; }   /* START + 0×STRIDE */
+#credits_id_card_2 { left: 35%; }   /* START + 1×STRIDE */
+#credits_id_card_3 { left: 53%; }   /* START + 2×STRIDE */
+#credits_id_card_4 { left: 71%; }   /* START + 3×STRIDE */
 
 #credits_special_thanks {
-    top: 648px;
+    top: 530px;
     left: 36px;
     right: 36px;
     width: auto;
@@ -511,7 +523,7 @@ body {
 }
 
 #credits_hint {
-    top: 706px;
+    top: 650px;
     left: 36px;
     right: 36px;
     width: auto;
