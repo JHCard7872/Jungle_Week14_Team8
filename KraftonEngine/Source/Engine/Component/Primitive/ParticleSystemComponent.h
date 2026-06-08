@@ -115,9 +115,11 @@ public:
     const TArray<FParticleEmitterInstance*>& GetEmitterInstances() const { return EmitterInstances; }
     const TArray<FDynamicEmitterDataBase*>&  GetEmitterRenderData() const { return EmitterRenderData; }
     void RefreshDynamicData();
+	void PrimeForImmediateRendering();
 
 	void SetCachedDistanceToCamera(float InDist) { CachedDistanceToCamera = InDist; }
 	float GetWorldTimeSeconds() const { return CachedWorldTimeSeconds; }
+	void SetDestroyOwnerOnComplete(bool bInDestroyOwnerOnComplete) { bDestroyOwnerOnComplete = bInDestroyOwnerOnComplete; }
 
 	FParticleCollisionSignature OnParticleCollide;
 	TArray<FParticleEventCollideData> CollisionEvents;
@@ -166,7 +168,9 @@ private:
     UPROPERTY(Transient, Category="Rendering")
     TArray<TObjectPtr<UMaterial>>     EmitterMaterials;
 
-    bool bInitialized = false;
+	bool bInitialized = false;
+	bool bDestroyOwnerOnComplete = false;
+	bool bIsPrimingForImmediateRendering = false;
 	
 	float CachedDistanceToCamera = 0.0f;
 	float CachedWorldTimeSeconds = 0.0f;

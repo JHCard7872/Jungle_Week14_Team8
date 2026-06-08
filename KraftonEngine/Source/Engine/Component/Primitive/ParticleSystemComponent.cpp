@@ -4,8 +4,11 @@
 #include "Particles/ParticleEmitterInstances.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemManager.h"
+#include "Particles/Spawn/ParticleModuleSpawn.h"
 #include "Particles/TypeData/ParticleModuleTypeDataBase.h"
 #include "Render/Proxy/ParticleSystemSceneProxy.h"
+#include "GameFramework/AActor.h"
+#include "GameFramework/World.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialManager.h"
 #include "Particles/TypeData/ParticleModuleTypeDataMesh.h"
@@ -16,6 +19,65 @@
 
 #include "Object/GarbageCollection.h"
 #include "Render/Proxy/PrimitiveSceneProxy.h"
+
+#include <algorithm>
+
+namespace
+{
+	float ResolveImmediatePrimeDeltaTime(const UParticleSystem* ParticleTemplate)
+	{
+		constexpr float MinPrimeDeltaTime = 0.00001f;
+		constexpr float MaxPrimeDeltaTime = 0.1f;
+
+		if (!ParticleTemplate)
+		{
+			return 0.0f;
+		}
+
+		float BestDeltaTime = MaxPrimeDeltaTime;
+		bool bFoundCandidate = false;
+
+		for (const UParticleEmitter* Emitter : ParticleTemplate->GetEmitters())
+		{
+			const UParticleLODLevel* LODLevel = Emitter ? Emitter->GetLODLevel(0) : nullptr;
+			const UParticleModuleSpawn* SpawnModule = LODLevel ? LODLevel->SpawnModule : nullptr;
+			if (!SpawnModule || !SpawnModule->bEnabled)
+			{
+				continue;
+			}
+
+			for (const FParticleBurst& Burst : SpawnModule->BurstList)
+			{
+				if (Burst.Count > 0 && Burst.Time <= 0.0f)
+				{
+					return MinPrimeDeltaTime;
+				}
+			}
+
+			const float SpawnRate =
+				std::max(0.0f, SpawnModule->SpawnRate) *
+				std::max(0.0f, SpawnModule->SpawnRateScale) *
+				std::max(0.0f, Emitter->GetQualityLevelSpawnRateMult());
+			if (SpawnRate <= 0.0f)
+			{
+				continue;
+			}
+
+			const float DeltaForOneParticle = 1.0f / SpawnRate;
+			BestDeltaTime = bFoundCandidate
+				? std::min(BestDeltaTime, DeltaForOneParticle)
+				: DeltaForOneParticle;
+			bFoundCandidate = true;
+		}
+
+		if (!bFoundCandidate)
+		{
+			return 0.0f;
+		}
+
+		return std::clamp(BestDeltaTime, MinPrimeDeltaTime, MaxPrimeDeltaTime);
+	}
+}
 
 UParticleSystemComponent::UParticleSystemComponent()
 {
@@ -246,6 +308,21 @@ void UParticleSystemComponent::RefreshDynamicData()
     MarkProxyDirty(EDirtyFlag::Mesh);
 }
 
+void UParticleSystemComponent::PrimeForImmediateRendering()
+{
+	const float PrimeDeltaTime = ResolveImmediatePrimeDeltaTime(Template.Get());
+	if (PrimeDeltaTime <= 0.0f)
+	{
+		RefreshDynamicData();
+		return;
+	}
+
+	const bool bWasPriming = bIsPrimingForImmediateRendering;
+	bIsPrimingForImmediateRendering = true;
+	TickComponent(PrimeDeltaTime, LEVELTICK_All, PrimaryComponentTick);
+	bIsPrimingForImmediateRendering = bWasPriming;
+}
+
 void UParticleSystemComponent::TickComponent(
     float                        DeltaTime,
     ELevelTick                   TickType,
@@ -287,6 +364,7 @@ void UParticleSystemComponent::TickComponent(
 	}
 
 	int32 TargetLODIndex = CalculatedLODIndex;
+	bool bAllEmittersCompleted = true;
     for (int32 EmitterIndex = 0; EmitterIndex < static_cast<int32>(EmitterInstances.size()); ++EmitterIndex)
     {
         FParticleEmitterInstance* Instance = EmitterInstances[EmitterIndex];
@@ -301,12 +379,29 @@ void UParticleSystemComponent::TickComponent(
 
             Instance->Tick(DeltaTime, false);
             Instance->Tick_MaterialOverrides(EmitterIndex);
+			bAllEmittersCompleted = bAllEmittersCompleted && Instance->HasCompleted();
         }
+		else
+		{
+			bAllEmittersCompleted = false;
+		}
     }
 
     BuildDynamicData();
 
     MarkProxyDirty(EDirtyFlag::Mesh);
+
+	if (!bIsPrimingForImmediateRendering && bDestroyOwnerOnComplete && bAllEmittersCompleted)
+	{
+		if (AActor* Owner = GetOwner())
+		{
+			if (UWorld* World = Owner->GetWorld())
+			{
+				bDestroyOwnerOnComplete = false;
+				World->DestroyActor(Owner);
+			}
+		}
+	}
 }
 
 void UParticleSystemComponent::ClearEmitterInstances()

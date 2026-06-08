@@ -4,6 +4,8 @@
   "Domain" : "ParticleSprite",
   "Origin" : "ParticleEmitter",
   "Parameters" : {
+    "AlignMode" : 0.000000,
+    "CameraPosition" : [0.000000, 0.000000, 0.000000],
     "CameraRight" : [0.000000, 0.000000, 0.000000],
     "CameraUp" : [0.000000, 0.000000, 0.000000],
     "_pad0" : 0.000000,

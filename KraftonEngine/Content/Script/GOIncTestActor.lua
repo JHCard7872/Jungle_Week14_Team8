@@ -69,6 +69,7 @@ local slot2_fire_feedback = {
     fov_duration = 0.0,
     base_fov = nil
 }
+local slot1_gather_fx = { actor = nil, component = nil, active = false }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
 local base_weapon_offset_location = nil    -- 씬에서 읽은 VisualPivot 위치. 화면 고정 offset 기준값
@@ -943,6 +944,9 @@ local function get_hit_point_or_end(hit, fallback_end)
             if hit.Hit ~= nil and hit.Hit.WorldHitLocation ~= nil then
                 return hit.Hit.WorldHitLocation
             end
+            if hit.Hit ~= nil and hit.Hit.Location ~= nil then
+                return hit.Hit.Location
+            end
         end
         if hit.End ~= nil then
             return hit.End
@@ -1070,6 +1074,70 @@ end
 
 local function is_actor_valid(actor)
     return actor ~= nil and (actor.IsValid == nil or actor:IsValid())
+end
+
+slot1_gather_fx.Stop = function()
+    if slot1_gather_fx.component ~= nil and slot1_gather_fx.component.SetVisibility ~= nil then
+        slot1_gather_fx.component:SetVisibility(false)
+    end
+    slot1_gather_fx.active = false
+end
+
+slot1_gather_fx.Update = function(source_point, target_point, is_hold)
+    if not is_hold or source_point == nil then
+        slot1_gather_fx.Stop()
+        return
+    end
+
+    local fx_path = C.SLOT1_GATHER_FX_PATH
+    if fx_path == nil or fx_path == "" or ParticleManager == nil or ParticleManager.SpawnAt == nil then
+        slot1_gather_fx.Stop()
+        return
+    end
+
+    local fx_location = source_point
+    local offset = C.SLOT1_GATHER_FX_SOURCE_OFFSET or 0.0
+    if target_point ~= nil and offset ~= 0.0 then
+        local direction = target_point - source_point
+        if direction:Length() > 0.0001 then
+            fx_location = source_point + direction:Normalized() * offset
+        end
+    end
+
+    if not is_actor_valid(slot1_gather_fx.actor) then
+        if ParticleManager.SpawnAtConfigured ~= nil then
+            slot1_gather_fx.actor = ParticleManager.SpawnAtConfigured(
+                fx_path,
+                fx_location,
+                true,
+                false,
+                C.SLOT1_GATHER_FX_SPAWN_RATE)
+        else
+            slot1_gather_fx.actor = ParticleManager.SpawnAt(fx_path, fx_location)
+        end
+        slot1_gather_fx.component = nil
+        slot1_gather_fx.active = false
+    end
+
+    if is_actor_valid(slot1_gather_fx.actor) then
+        slot1_gather_fx.actor.Location = fx_location
+        if slot1_gather_fx.component == nil and slot1_gather_fx.actor.GetRootPrimitiveComponent ~= nil then
+            slot1_gather_fx.component = slot1_gather_fx.actor:GetRootPrimitiveComponent()
+        end
+        if slot1_gather_fx.component ~= nil then
+            if not slot1_gather_fx.active and slot1_gather_fx.component.ResetParticleSystem ~= nil then
+                slot1_gather_fx.component:ResetParticleSystem()
+            end
+            if slot1_gather_fx.component.SetVisibility ~= nil then
+                slot1_gather_fx.component:SetVisibility(true)
+            end
+        end
+        slot1_gather_fx.active = true
+    else
+        slot1_gather_fx.actor = nil
+        slot1_gather_fx.component = nil
+        slot1_gather_fx.active = false
+    end
 end
 
 local function is_ragdoll_actor(actor)
@@ -1273,6 +1341,31 @@ local function get_hit_location(hit)
         return hit.Hit.Location
     end
     return nil
+end
+
+slot2_fire_feedback.SpawnImpactSpark = function(hit, beam_target_point, beam_direction)
+    if hit == nil or not hit.bHit then
+        return
+    end
+
+    local spark_path = C.SLOT2_HIT_SPARK_FX_PATH
+    if spark_path == nil or spark_path == "" then
+        return
+    end
+
+    local impact_location = beam_target_point
+    if impact_location == nil then
+        return
+    end
+
+    local surface_offset = C.SLOT2_HIT_SPARK_SURFACE_OFFSET or 0.0
+    if surface_offset ~= 0.0 and beam_direction ~= nil and beam_direction:Length() > 0.0001 then
+        impact_location = impact_location - beam_direction:Normalized() * surface_offset
+    else
+        impact_location = copy_vec(impact_location)
+    end
+
+    ParticleManager.SpawnAt(spark_path, impact_location)
 end
 
 local function apply_hit_rim_style(component, style)
@@ -1586,6 +1679,7 @@ local function apply_grab_force(delta_time, start, direction)
         body_mass = math.max(grabbed_body:GetMass(), 0.001)
     end
     local mass_grip_scale = C:ComputeGrabMassGripScale(body_mass, grab_fixed_ray.catalog_mass)
+    local slot1_grab_force_scale = C.SLOT1_GRAB_FORCE_SCALE or 1.0
 
     -- 먼저 목표 가속도를 만들고, 마지막에 body_mass를 곱해 AddForce의 F/m 효과를 보정한다.
     -- mass_grip_scale은 catalog mass가 큰 랙돌일수록 낮아져 "들리긴 하지만 둔한" 느낌을 만든다.
@@ -1614,7 +1708,7 @@ local function apply_grab_force(delta_time, start, direction)
     end
 
     desired_acceleration = clamp_vector_length(desired_acceleration, C.GRAB_MAX_ACCELERATION)
-    local force = desired_acceleration * (body_mass * mass_grip_scale)
+    local force = desired_acceleration * (body_mass * mass_grip_scale * slot1_grab_force_scale)
     grabbed_body:AddForce(force)
 
     local grab_offset = current_grab_world - current_body_center
@@ -1626,7 +1720,7 @@ local function apply_grab_force(delta_time, start, direction)
         local torque = (
             grab_offset:Cross(desired_acceleration) * C.GRAB_TORQUE_SCALE
             - angular_velocity * C.GRAB_ANGULAR_DAMPING
-        ) * (body_mass * mass_grip_scale)
+        ) * (body_mass * mass_grip_scale * slot1_grab_force_scale)
         torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE)
         grabbed_body:AddTorque(torque)
     end
@@ -1806,15 +1900,34 @@ local function get_slot2_beam_visible_time(hit)
 end
 
 set_beam_visible = function(is_visible)
-    if beam_particle == nil then
+    local active_beam = beam_particle
+
+    if weapon_components.beam_particle_a ~= nil and weapon_components.beam_particle_a ~= active_beam then
+        if weapon_components.beam_particle_a.SetVisibility ~= nil then
+            weapon_components.beam_particle_a:SetVisibility(false)
+        end
+        if weapon_components.beam_particle_a.SetActive ~= nil then
+            weapon_components.beam_particle_a:SetActive(false)
+        end
+    end
+    if weapon_components.beam_particle_b ~= nil and weapon_components.beam_particle_b ~= active_beam then
+        if weapon_components.beam_particle_b.SetVisibility ~= nil then
+            weapon_components.beam_particle_b:SetVisibility(false)
+        end
+        if weapon_components.beam_particle_b.SetActive ~= nil then
+            weapon_components.beam_particle_b:SetActive(false)
+        end
+    end
+
+    if active_beam == nil then
         return
     end
 
-    if beam_particle.SetVisibility ~= nil then
-        beam_particle:SetVisibility(is_visible)
+    if active_beam.SetVisibility ~= nil then
+        active_beam:SetVisibility(is_visible)
     end
-    if beam_particle.SetActive ~= nil then
-        beam_particle:SetActive(is_visible)
+    if active_beam.SetActive ~= nil then
+        active_beam:SetActive(is_visible)
     end
 end
 
@@ -1874,15 +1987,16 @@ local function apply_slot2_fire(delta_time)
     local hit, fallback_end, _, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
     trigger_red_beam_rim_on_ragdoll_mesh(hit)
+    last_aim_point = get_hit_point_or_end(hit, fallback_end)
     if not notify_red_beam_hit_ragdoll(hit, direction) then
         apply_slot2_knockback(hit, direction)
     end
-    last_aim_point = get_hit_point_or_end(hit, fallback_end)
 
     if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
         beam_particle:ResetParticleSystem()
     end
     update_beam_points(last_aim_point)
+    slot2_fire_feedback.SpawnImpactSpark(hit, last_aim_point, direction)
     set_beam_visible(true)
     beam_visible_remaining = get_slot2_beam_visible_time(hit)
 end
@@ -2375,6 +2489,7 @@ local function block_fire_while_sprinting()
         return false
     end
 
+    slot1_gather_fx.Stop()
     reset_collect_fire_sfx_timer()
     clear_grab_state()
     beam_visible_remaining = 0.0
@@ -2385,6 +2500,7 @@ end
 
 local function apply_fire(delta_time)
     if weapon_swap_state.is_active then
+        slot1_gather_fx.Stop()
         reset_collect_fire_sfx_timer()
         beam_visible_remaining = 0.0
         clear_beamed_ragdoll_actor()
@@ -2399,24 +2515,30 @@ local function apply_fire(delta_time)
     end
 
     if weapon_swap_state.active_index == 2 then
+        slot1_gather_fx.Stop()
         reset_collect_fire_sfx_timer()
         apply_slot2_fire(delta_time)
         return
     end
 
+    local is_fire_pressed = fire_pressed()
+    local is_fire_held = fire_held()
+
     if update_active_grab(delta_time) then
-        update_collect_fire_sfx(delta_time, fire_held())
+        update_collect_fire_sfx(delta_time, is_fire_held)
+        slot1_gather_fx.Update(get_beam_source_point(), last_aim_point, is_fire_held)
         return
     end
 
-    local is_fire_pressed = fire_pressed()
-    local is_fire_held = fire_held()
     update_collect_fire_sfx(delta_time, is_fire_held)
     if not is_fire_held then
+        slot1_gather_fx.Stop()
         clear_beamed_ragdoll_actor()
         update_beam_fade(delta_time)
         return
     end
+
+    local source_point = get_beam_source_point()
 
     local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
@@ -2426,6 +2548,7 @@ local function apply_fire(delta_time)
     end
 
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
+    slot1_gather_fx.Update(source_point, last_aim_point, true)
 
     if is_fire_pressed and beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
         beam_particle:ResetParticleSystem()
@@ -2484,6 +2607,7 @@ function EndPlay()
     if camera ~= nil and camera.SetFOV ~= nil and slot2_fire_feedback.base_fov ~= nil then
         camera:SetFOV(slot2_fire_feedback.base_fov)
     end
+    slot1_gather_fx.Stop()
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
 end
@@ -2514,6 +2638,7 @@ end
 
 function PostCameraTick(delta_time)
     if Session.inputEnabled ~= true then
+        slot1_gather_fx.Stop()
         publish_target_state()
         publish_crosshair_state(0.0)
         return

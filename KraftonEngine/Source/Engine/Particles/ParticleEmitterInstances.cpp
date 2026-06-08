@@ -1,4 +1,4 @@
-#include "Particles/ParticleEmitterInstances.h"
+﻿#include "Particles/ParticleEmitterInstances.h"
 
 #include "Particles/ParticleMemory.h"
 #include "Particles/ParticleModule.h"
@@ -1911,7 +1911,7 @@ void FParticleEmitterInstance::PreSpawn(
 	Particle->BaseRotationRate = 0.0f;
 	Particle->RotationRate = 0.0f;
 	Particle->RelativeTime = 0.0f;
-	Particle->OneOverMaxLifetime = 1.0f;
+	Particle->OneOverMaxLifetime = 0.0f;
 }
 
 bool FParticleEmitterInstance::HasCompleted() const
