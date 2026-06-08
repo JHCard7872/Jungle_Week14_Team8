@@ -3,6 +3,7 @@
     <title>Pause Menu</title>
     <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="pause_menu.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 
 <body>
@@ -10,16 +11,16 @@
         <div id="pause_action_buttons">
             <div id="pause_action_dim"></div>
 
-            <button id="pause_btn_continue" class="pause_action_button">
-                <img class="pause_action_button_img pause_action_btn_default" src="../../Sprite/ui_horiz_button.png" />
-                <img class="pause_action_button_img pause_action_btn_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                <div id="pause_btn_continue_label" class="pause_action_button_label">Continue</div>
+            <button id="pause_btn_continue" class="pause_action_button ui_horizontal_button">
+                <img class="pause_action_button_img pause_action_btn_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                <img class="pause_action_button_img pause_action_btn_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                <div id="pause_btn_continue_label" class="pause_action_button_label ui_horizontal_button_text">Continue</div>
             </button>
 
-            <button id="pause_btn_title" class="pause_action_button">
-                <img class="pause_action_button_img pause_action_btn_default" src="../../Sprite/ui_horiz_button.png" />
-                <img class="pause_action_button_img pause_action_btn_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                <div id="pause_btn_title_label" class="pause_action_button_label">타이틀로 돌아가기</div>
+            <button id="pause_btn_title" class="pause_action_button ui_horizontal_button">
+                <img class="pause_action_button_img pause_action_btn_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                <img class="pause_action_button_img pause_action_btn_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                <div id="pause_btn_title_label" class="pause_action_button_label ui_horizontal_button_text">타이틀로 돌아가기</div>
             </button>
         </div>
 

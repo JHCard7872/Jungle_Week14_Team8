@@ -3,6 +3,7 @@
     <title>Play HUD</title>
     <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="play_hud.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 
 <body>
@@ -52,11 +53,11 @@
             </div>
         </div>
 
-        <div id="hud_mission_container">
-            <img id="hud_mission_bg" src="../../Sprite/play_hud_misson.png" />
-            <div id="hud_mission_text">빨간 배관공 3체 수거</div>
-            <img id="hud_mission_reference_image" src="../../Sprite/Ragdoll_Image/ragdoll_sample.png" />
-            <div id="hud_mission_progress_text">목표 3 / 현재 0</div>
+        <div id="hud_mission_container" class="ui_hud_mission_frame">
+            <img id="hud_mission_bg" class="ui_hud_mission_background" src="../../Sprite/play_hud_misson.png" />
+            <div id="hud_mission_text" class="ui_hud_mission_text">빨간 배관공 3체 수거</div>
+            <img id="hud_mission_reference_image" class="ui_hud_mission_reference_image" src="../../Sprite/Ragdoll_Image/ragdoll_sample.png" />
+            <div id="hud_mission_progress_text" class="ui_hud_mission_progress_text">목표 3 / 현재 0</div>
         </div>
 
         <div id="hud_server_load_container">
@@ -71,14 +72,14 @@
             <div id="hud_server_load_label">OVERLOAD</div>
         </div>
 
-        <div id="hud_time_container">
-            <img id="hud_time_bg" src="../../Sprite/play_hud_status_time.png" />
-            <div id="hud_time_text">01:30</div>
+        <div id="hud_time_container" class="ui_hud_status_frame">
+            <img id="hud_time_bg" class="ui_hud_status_background" src="../../Sprite/play_hud_status_time.png" />
+            <div id="hud_time_text" class="ui_hud_time_text">01:30</div>
         </div>
 
-        <div id="hud_score_container">
-            <img id="hud_score_bg" src="../../Sprite/play_hud_status_collect_point.png" />
-            <div id="hud_score_text">0</div>
+        <div id="hud_score_container" class="ui_hud_status_frame">
+            <img id="hud_score_bg" class="ui_hud_status_background" src="../../Sprite/play_hud_status_collect_point.png" />
+            <div id="hud_score_text" class="ui_hud_score_text">0</div>
         </div>
 
         <div id="hud_crosshair_container">

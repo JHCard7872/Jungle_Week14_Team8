@@ -3,6 +3,7 @@
     <title>Startup Logo</title>
     <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="startup_logo.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 <body>
     <div id="startup_logo_root">

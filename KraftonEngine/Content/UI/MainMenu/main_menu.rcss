@@ -48,7 +48,7 @@ body {
     left: 0px;
     top: 0px;
     width: 100%;
-    height: 100%;
+    height: 100%; 
     z-index: 1;
     opacity: 0;
 }
@@ -56,28 +56,23 @@ body {
 #menu_header {
     position: absolute;
     left: 48px;
-    top: 36px;
-    width: 420px;
-    height: 150px;
+    top: 28px;
     z-index: 20;
     pointer-events: none;
 }
 
 #menu_header_title {
     position: absolute;
-    left: 18px;
+    left: 22px;
     top: 0px;
-    color: #ffffff;
-
-    font-size: 54px;
-
-    letter-spacing: 2px;
+    width: 600px;
+    height: 86px;
 }
 
 #menu_header_label {
     position: absolute;
     left: 0px;
-    top: 68px;
+    top: 82px;
     width: 100%;
     height: auto;
 }
@@ -118,12 +113,6 @@ body {
     bottom: 15%;
     width: 100%;
     margin-left: -50%;
-    color: #ffffff;
-
-    font-size: 60px;
-
-    text-align: center;
-    letter-spacing: 2px;
 }
 
 .menu_button {
@@ -193,9 +182,7 @@ body {
     position: absolute;
     left: 50%;
     bottom: 5%;
-    width: 360px;
-    height: 78px;
-    margin-left: -180px;
+    margin-left: -220px;
     z-index: 40;
     opacity: 0;
     pointer-events: none;
@@ -205,22 +192,16 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
 }
 
 .menu_label_text {
     position: absolute;
     left: 0px;
-    top: 18px;
+    top: 22px;
     width: 100%;
-    height: 42px;
-    color: #ffffff;
+    height: 52px;
 
-    font-size: 30px;
-    text-align: center;
-    line-height: 42px;
     pointer-events: none;
 }
 

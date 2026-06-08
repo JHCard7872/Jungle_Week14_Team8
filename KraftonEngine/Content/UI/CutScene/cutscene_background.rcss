@@ -22,3 +22,14 @@ body {
     height: 100%;
     pointer-events: none;
 }
+
+/* Cut scene 자막 자리 — 실제 사용 시 Lua에서 display/text만 바꿔 쓰면 된다. */
+#cutscene_caption {
+    position: absolute;
+    left: 10%;
+    bottom: 7%;
+    width: 80%;
+    height: 72px;
+    display: none;
+    z-index: 20;
+}
