@@ -54,6 +54,16 @@ public:
 	void SetSweepMovementEnabled(bool bEnabled) { bSweepMovementEnabled = bEnabled; }
 	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
 	bool IsSweepMovementEnabled() const { return bSweepMovementEnabled; }
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Collision")
+	void SetWallAvoidanceEnabled(bool bEnabled) { bWallAvoidanceEnabled = bEnabled; }
+	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
+	bool IsWallAvoidanceEnabled() const { return bWallAvoidanceEnabled; }
+	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
+	bool HasLastWallAvoidanceDirection() const { return !LastWallAvoidanceDirection.IsNearlyZero(); }
+	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
+	FVector GetLastWallAvoidanceDirection() const { return LastWallAvoidanceDirection; }
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Collision")
+	void ClearLastWallAvoidanceDirection() { LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f); }
 	UFUNCTION(Callable, Category="GOIncRagdollMovement|Step")
 	void SetStepUpEnabled(bool bEnabled) { bStepUpEnabled = bEnabled; }
 	UFUNCTION(Pure, Category="GOIncRagdollMovement|Step")
@@ -100,6 +110,20 @@ public:
 	bool bSweepMovementEnabled = true;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Sweep Skin Width", Min=0.0f, Max=0.5f, Speed=0.005f)
 	float SweepSkinWidth = 0.02f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Use Wall Avoidance")
+	bool bWallAvoidanceEnabled = true;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Avoidance Probe Distance", Min=0.0f, Max=10.0f, Speed=0.01f)
+	float WallAvoidanceProbeDistance = 1.5f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Avoidance Strength", Min=0.0f, Max=1.0f, Speed=0.01f)
+	float WallAvoidanceStrength = 1.0f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Avoidance Side Probe Angle", Min=0.0f, Max=90.0f, Speed=0.5f)
+	float WallAvoidanceSideProbeAngleDegrees = 35.0f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Avoidance Side Bias", Min=0.0f, Max=1.0f, Speed=0.01f)
+	float WallAvoidanceSideBias = 0.25f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Avoidance Normal Push", Min=0.0f, Max=1.0f, Speed=0.01f)
+	float WallAvoidanceNormalPush = 0.65f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Avoidance Smoothing Speed", Min=0.0f, Max=60.0f, Speed=0.1f)
+	float WallAvoidanceSmoothingSpeed = 12.0f;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Use Step Up")
 	bool bStepUpEnabled = true;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Max Step Height", Min=0.0f, Max=2.0f, Speed=0.01f)
@@ -117,6 +141,9 @@ public:
 	FVector ExplicitSweepCapsuleLocalOffset = FVector(0.0f, 0.0f, 0.0f);
 
 private:
+	FVector AdjustInputForWallAvoidance(const FVector& Input, float DeltaTime);
+	bool ProbeWallAvoidance(const FVector& Direction, float ProbeDistance, FHitResult& OutHit) const;
+	float GetWallAvoidanceClearance(const FVector& Direction, float ProbeDistance) const;
 	void ApplyInputToVelocity(const FVector& Input, float DeltaTime);
 	void ApplyBraking(float DeltaTime);
 	void ClampVelocityToMaxSpeed();
@@ -135,5 +162,6 @@ private:
 
 	FVector PendingInputVector = FVector(0.0f, 0.0f, 0.0f);
 	FVector Velocity = FVector(0.0f, 0.0f, 0.0f);
+	FVector LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
 	bool bIsGrounded = false;
 };

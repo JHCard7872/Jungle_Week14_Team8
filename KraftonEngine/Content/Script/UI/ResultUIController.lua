@@ -157,10 +157,10 @@ local RANK_B_SCORE_THRESHOLD = 900
 local RANK_C_SCORE_THRESHOLD = 450
 
 -- 실제 게임 결과가 없을 때 화면 확인용으로 사용하는 기본값
-local FALLBACK_TOTAL_SCORE = 10720
-local FALLBACK_COUNT = 18
-local FALLBACK_BASE_SCORE = 8400
-local FALLBACK_URGENT_SCORE = 2320
+local FALLBACK_TOTAL_SCORE = 0
+local FALLBACK_COUNT = 0
+local FALLBACK_BASE_SCORE = 0
+local FALLBACK_URGENT_SCORE = 0
 
 -- 외부에서 require해서 사용할 Result UI 모듈
 local M = {}
