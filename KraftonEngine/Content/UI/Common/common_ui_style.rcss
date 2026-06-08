@@ -139,11 +139,11 @@
 }
 
 .ui_modal_title {
-    font-family: rokaf;
+    font-family: Galmuri;
     font-weight: bold;
     color: #ffffff;
-    font-size: 52px;
-    line-height: 66px;
+    font-size: 46px;
+    line-height: 58px;
     text-align: center;
     font-effect: shadow(3px 3px #000000aa);
 }

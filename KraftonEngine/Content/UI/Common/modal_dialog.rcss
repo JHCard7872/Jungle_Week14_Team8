@@ -238,7 +238,7 @@ body {
     top: 32px;
     width: 380px;
     height: 52px;
-    margin-left: -190px;
+    margin-left: -206px;
     padding: 0px 16px;
 }
 
