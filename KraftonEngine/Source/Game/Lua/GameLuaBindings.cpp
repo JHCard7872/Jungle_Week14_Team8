@@ -431,6 +431,10 @@ void RegisterGameLuaBindings(sol::state& Lua)
 		"WakeAllRagdollBodies", &USkeletalMeshComponent::WakeAllRagdollBodies,
 		"GetRagdollRecoveryDuration", &USkeletalMeshComponent::GetRagdollRecoveryDuration,
 		"SetRagdollRecoveryDuration", &USkeletalMeshComponent::SetRagdollRecoveryDuration,
+		"SetRagdollMassScale", &USkeletalMeshComponent::SetRagdollMassScale,
+		"GetRagdollMassScale", &USkeletalMeshComponent::GetRagdollMassScale,
+		"SetRagdollTotalMass", &USkeletalMeshComponent::SetRagdollTotalMass,
+		"GetRagdollTotalMass", &USkeletalMeshComponent::GetRagdollTotalMass,
 		"AddImpulseToBone", [](USkeletalMeshComponent& Component, const FString& BoneName, const FVector& Impulse)
 		{
 			Component.AddImpulseToBone(FName(BoneName), Impulse);

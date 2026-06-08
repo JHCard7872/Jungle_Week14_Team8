@@ -17,6 +17,7 @@ return {
     KEY_S = 0x53,       -- 후진 입력 키: S
     KEY_D = 0x44,       -- 우측 이동 입력 키: D
     KEY_SPACE = 0x20,   -- 점프 입력 키: Space
+    KEY_SHIFT = 0x10,   -- 달리기 입력 키: Shift
     KEY_LBUTTON = 0x01, -- 발사 입력 키: 마우스 왼쪽 버튼
     KEY_Q = 0x51,       -- 무기 교체 입력 키: Q
 
@@ -40,6 +41,7 @@ return {
     TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
+    SPRINT_SPEED_MULTIPLIER = 2.0,      -- Shift를 누른 채 이동할 때 수평 속도 배율
     DASH_SPEED_MULTIPLIER = 1.7,        -- L3(왼쪽 스틱 클릭) 누르고 있을 때 이동 속도 배수 (대쉬)
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
     GRAVITY_ACCELERATION = 9.8,         -- PhysX 시뮬레이션 대신 엔진 쪽 이동에서 직접 적용할 중력 가속도
@@ -59,11 +61,22 @@ return {
     FRONT_HIT_DISTANCE_EPSILON = 0.05, -- Extra range so a physics hit on the same front surface still wins
     BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
     SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
-    SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16, -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
-    SLOT2_KNOCKBACK_IMPULSE_PER_MASS = 5.00, -- Slot2 피격 순간에만 주는 넉백. 질량을 곱해 크기 차이와 무관하게 반응이 보이게 한다
+    SLOT2_BEAM_HIT_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2는 hit/miss 모두 플래시처럼 짧게 표시
+    SLOT2_KNOCKBACK_IMPULSE_PER_MASS = 4.00, -- Slot2 피격 순간에만 주는 넉백. 질량을 곱해 크기 차이와 무관하게 반응이 보이게 한다
     SLOT2_KNOCKBACK_UP_BIAS = 2.50, -- 빔 방향에 위쪽을 섞어 뒤로 밀리면서 살짝 뜨는 느낌을 만든다
-    SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS = 18.00, -- Skeletal ragdoll 전용 넉백. Static 수치는 유지하고 ragdoll만 더 확실하게 밀어낸다
-    SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE = 1.60, -- 본 이름 대신 컴포넌트 동기화용 중심 body를 더 강하게 밀어 전체 ragdoll 이동감을 만든다
+    SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS = 8.00, -- Skeletal ragdoll은 중심 body와 전체 body에 분산해서 확실한 반응을 만든다
+    SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE = 0.85, -- 본 이름 대신 컴포넌트 동기화용 중심 body에 적용할 배율
+    SLOT2_RECOIL_PITCH_DEGREES = -0.62, -- 발사 순간 카메라가 위로 짧게 튀는 값. 이 엔진은 음수 Pitch가 위쪽
+    SLOT2_RECOIL_YAW_RANDOM_DEGREES = 0.22, -- 발사마다 좌우로 아주 작게 달라지는 카메라 킥
+    SLOT2_RECOIL_RECOVER_TIME = 0.06, -- 카메라 킥이 원위치로 돌아오는 시간
+    SLOT2_CAMERA_SHAKE_DURATION = 0.065, -- CameraPivot 위치 shake 지속 시간
+    SLOT2_CAMERA_SHAKE_INTENSITY = 0.075, -- CameraPivot 위치 shake 기본 크기. 앞뒤 감각은 유지하고 좌우/상하 체감을 보강
+    SLOT2_CAMERA_SHAKE_FORWARD_SCALE = 0.50, -- 앞뒤 shake 배율
+    SLOT2_CAMERA_SHAKE_RIGHT_SCALE = 1.05, -- 좌우 shake 배율
+    SLOT2_CAMERA_SHAKE_UP_SCALE = 0.55, -- 상하 shake 배율
+    SLOT2_CAMERA_SHAKE_ROTATION_DEGREES = 0.24, -- 위치 shake에 더해 CameraPivot에 아주 짧게 주는 회전 흔들림
+    SLOT2_FOV_PUNCH_DEGREES = 1.50, -- 발사 순간 FOV가 잠깐 넓어지는 정도
+    SLOT2_FOV_PUNCH_DURATION = 0.08, -- FOV punch가 돌아오는 시간
     HIT_RIM_DURATION = 0.50,
     HIT_RIM_FLASH_INTENSITY = 3.5,
     HIT_RIM_SUSTAIN_INTENSITY = 1.6,
@@ -84,23 +97,24 @@ return {
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
-    GRAB_SPRING_ACCELERATION = 0.60,
-    GRAB_DAMPING_ACCELERATION = 0.34,
+    GRAB_SPRING_ACCELERATION = 42.0, -- 목표 위치로 끌어당기는 가속도 계수. 질량 보정 전 단계에서 사용한다
+    GRAB_DAMPING_ACCELERATION = 10.0, -- 현재 속도에 대한 감쇠 가속도 계수. 높을수록 덜 출렁인다
     GRAB_MAX_ERROR = 30.0,
-    GRAB_MAX_ACCELERATION = 75.0,
-    GRAB_TORQUE_SCALE = 0.65,
+    GRAB_MAX_ACCELERATION = 140.0,
+    GRAB_TORQUE_SCALE = 0.25,
     GRAB_ANGULAR_DAMPING = 10.0,
     GRAB_MAX_TORQUE = 100000.0,
-    GRAB_REFERENCE_MASS = 1.0,
-    GRAB_MASS_POWER = 0.35,
-    GRAB_MIN_MASS_SCALE = 0.45,
-    GRAB_MAX_MASS_SCALE = 1.15,
+    GRAB_REFERENCE_MASS = 18.0, -- 이 질량은 grip scale 1.0으로 취급한다
+    GRAB_MASS_POWER = 0.50, -- 질량 차이가 grip 난이도로 반영되는 곡선. 클수록 무거운 랙돌이 더 둔해진다
+    GRAB_MIN_MASS_SCALE = 0.35,
+    GRAB_MAX_MASS_SCALE = 1.35,
     GRAB_MIN_AIM_DISTANCE = 0.35,
     GRAB_MIN_ACTOR_DISTANCE = 5,
     GRAB_MAX_AIM_DISTANCE = MAX_TRACE_DISTANCE,
     GRAB_MOUSE_WHEEL_DISTANCE_STEP = 1.25,
-    GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 1400.0,
-    GRAB_MIN_DISTANCE_GUARD_DAMPING = 120.0,
+    GRAB_MIN_DISTANCE_GUARD_ACCELERATION = 8.0, -- 최소 거리 안쪽으로 들어온 grab point를 부드럽게 밖으로 되돌리는 보정
+    GRAB_MIN_DISTANCE_GUARD_DAMPING = 2.0, -- 안쪽으로 파고드는 속도에만 붙는 추가 보정
+    GRAB_MIN_DISTANCE_GUARD_MAX_ACCELERATION = 14.0, -- guard가 랙돌을 과하게 밀어내지 않도록 별도 상한을 둔다
     THROW_IMPULSE_SCALE = 0.35,
     THROW_MAX_IMPULSE_PER_MASS = 120.0,
     THROW_MIN_SPEED = 0.5,
@@ -114,6 +128,24 @@ return {
     WEAPON_PITCH_PULLBACK = 0.05,  -- 극단 Pitch에서 총을 카메라 쪽으로 살짝 당기는 Forward 보정량
     WEAPON_PITCH_INWARD_OFFSET = 0.00, -- 극단 Pitch에서 총을 화면 안쪽으로 넣는 Right 보정량
     WEAPON_PITCH_UP_OFFSET = 0.04, -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
+    WEAPON_WALK_BOB_MIN_SPEED = 0.2, -- 이 속도보다 느리면 걷기 무기 흔들림을 끈다
+    WEAPON_WALK_BOB_BLEND_SPEED = 2.0, -- 걷기 시작/정지 시 무기 흔들림이 붙고 빠지는 속도
+    WEAPON_WALK_BOB_FREQUENCY = 3.0, -- 걷기 무기 흔들림 위상 속도(rad/sec)
+    WEAPON_WALK_BOB_FORWARD = 0.012, -- 걷기 중 총이 카메라 Forward 축으로 앞뒤 움직이는 폭
+    WEAPON_WALK_BOB_RIGHT = 0.022,   -- 걷기 중 총이 카메라 Right 축으로 좌우 움직이는 폭
+    WEAPON_WALK_BOB_UP = 0.030,      -- 걷기 중 총이 카메라 Up 축으로 상하 움직이는 폭
+    WEAPON_WALK_BOB_ROLL = 0.55,     -- 걷기 중 총 VisualPivot에 더하는 Roll 흔들림(deg)
+    WEAPON_WALK_BOB_PITCH = 0.35,    -- 걷기 중 총 VisualPivot에 더하는 Pitch 흔들림(deg)
+    WEAPON_WALK_BOB_YAW = 0.30,      -- 걷기 중 총 VisualPivot에 더하는 Yaw 흔들림(deg)
+    WEAPON_SPRINT_BLEND_SPEED = 7.0,      -- 달리기 시작/해제 시 총 내림 연출이 섞이는 속도
+    WEAPON_SPRINT_BOB_FREQUENCY_SCALE = 1.45, -- 달릴 때 걷기 Bob 템포 배율
+    WEAPON_SPRINT_BOB_AMPLITUDE_SCALE = 0.55, -- 달릴 때 Bob 폭을 얕게 줄이는 배율
+    WEAPON_SPRINT_LOWER_FORWARD = -0.025, -- 달릴 때 총을 카메라 쪽으로 살짝 당긴다
+    WEAPON_SPRINT_LOWER_RIGHT = 0.0,      -- 달릴 때 총 좌우 기준 위치 보정
+    WEAPON_SPRINT_LOWER_UP = -0.085,      -- 달릴 때 총을 화면 아래로 내리는 양
+    WEAPON_SPRINT_LOWER_ROLL = 0.0,       -- 달릴 때 총 기본 Roll 보정
+    WEAPON_SPRINT_LOWER_PITCH = 1.1,      -- 달릴 때 총을 살짝 아래로 숙이는 Pitch 보정
+    WEAPON_SPRINT_LOWER_YAW = 0.0,        -- 달릴 때 총 기본 Yaw 보정
     WEAPON_SWAP_DURATION = 0.28,
     WEAPON_SWAP_ROTATION_DEGREES = 180.0,
     WEAPON_SWAP_DIRECTION = -1.0,
@@ -133,4 +165,85 @@ return {
     BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
     BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
+
+    UpdateWeaponWalkBob = function(self, delta_time, velocity, state, make_vec, clamp_value, is_sprinting)
+        local dt = math.max(delta_time or 0.0, 0.0)
+        local vx = velocity and velocity.X or 0.0
+        local vy = velocity and velocity.Y or 0.0
+        local horizontal_speed = math.sqrt(vx * vx + vy * vy)
+        local target_weight = 0.0
+        local sprint_target_weight = 0.0
+
+        state.walk_weight = state.walk_weight or 0.0
+        state.walk_phase = state.walk_phase or 0.0
+        state.sprint_weight = state.sprint_weight or 0.0
+
+        if horizontal_speed > self.WEAPON_WALK_BOB_MIN_SPEED then
+            target_weight = clamp_value(horizontal_speed / self.MOVE_SPEED, 0.0, 1.0)
+        end
+        if is_sprinting and target_weight > 0.0 then
+            sprint_target_weight = 1.0
+        end
+
+        local blend_alpha = clamp_value(dt * self.WEAPON_WALK_BOB_BLEND_SPEED, 0.0, 1.0)
+        state.walk_weight = state.walk_weight + (target_weight - state.walk_weight) * blend_alpha
+
+        local sprint_blend_alpha = clamp_value(dt * self.WEAPON_SPRINT_BLEND_SPEED, 0.0, 1.0)
+        state.sprint_weight = state.sprint_weight
+            + (sprint_target_weight - state.sprint_weight) * sprint_blend_alpha
+
+        if state.walk_weight > 0.001 then
+            local sprint_tempo_scale = 1.0
+                + (self.WEAPON_SPRINT_BOB_FREQUENCY_SCALE - 1.0) * state.sprint_weight
+            local stride_scale = (0.75 + target_weight * 0.25) * sprint_tempo_scale
+            state.walk_phase = state.walk_phase + dt * self.WEAPON_WALK_BOB_FREQUENCY * stride_scale
+        else
+            state.walk_phase = 0.0
+            state.walk_weight = 0.0
+        end
+
+        local side = math.sin(state.walk_phase)
+        local step = math.sin(state.walk_phase * 2.0)
+        local sprint_amplitude_scale = 1.0
+            + (self.WEAPON_SPRINT_BOB_AMPLITUDE_SCALE - 1.0) * state.sprint_weight
+        local weight = state.walk_weight * sprint_amplitude_scale
+
+        return make_vec(
+            step * self.WEAPON_WALK_BOB_FORWARD * weight
+                + self.WEAPON_SPRINT_LOWER_FORWARD * state.sprint_weight,
+            side * self.WEAPON_WALK_BOB_RIGHT * weight
+                + self.WEAPON_SPRINT_LOWER_RIGHT * state.sprint_weight,
+            -math.abs(step) * self.WEAPON_WALK_BOB_UP * weight
+                + self.WEAPON_SPRINT_LOWER_UP * state.sprint_weight
+        ), make_vec(
+            -side * self.WEAPON_WALK_BOB_ROLL * weight
+                + self.WEAPON_SPRINT_LOWER_ROLL * state.sprint_weight,
+            step * self.WEAPON_WALK_BOB_PITCH * weight
+                + self.WEAPON_SPRINT_LOWER_PITCH * state.sprint_weight,
+            side * self.WEAPON_WALK_BOB_YAW * weight
+                + self.WEAPON_SPRINT_LOWER_YAW * state.sprint_weight
+        )
+    end,
+
+    ComputeGrabMassGripScale = function(self, body_mass, catalog_mass)
+        local mass = catalog_mass
+        if type(mass) ~= "number" or mass <= 0.001 then
+            mass = body_mass
+        end
+        if type(mass) ~= "number" or mass <= 0.001 then
+            return 1.0
+        end
+
+        local reference_mass = math.max(self.GRAB_REFERENCE_MASS or 18.0, 0.001)
+        local power = self.GRAB_MASS_POWER or 0.5
+        local scale = (reference_mass / math.max(mass, 0.001)) ^ power
+
+        if scale < self.GRAB_MIN_MASS_SCALE then
+            return self.GRAB_MIN_MASS_SCALE
+        end
+        if scale > self.GRAB_MAX_MASS_SCALE then
+            return self.GRAB_MAX_MASS_SCALE
+        end
+        return scale
+    end,
 }

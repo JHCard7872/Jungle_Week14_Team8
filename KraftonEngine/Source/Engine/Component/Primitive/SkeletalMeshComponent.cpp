@@ -802,6 +802,8 @@ void USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies(float Strength)
         return;
     }
 
+    constexpr float MassScaledShockImpulseGain = 1.75f;
+
     for (FBodyInstance* Body : Bodies)
     {
         if (!Body || !Body->IsValidBodyInstance() || !Body->bSimulatePhysics || Body->bKinematic)
@@ -823,8 +825,9 @@ void USkeletalMeshComponent::AddRandomImpulseToAllRagdollBodies(float Strength)
         Direction.Normalize();
 
         const float PerBodyScale = 0.75f + FMath::FRand() * 0.5f;
+        const float BodyMass = std::max(Body->GetMass(), 0.001f);
         Body->WakeUp();
-        Body->AddImpulse(Direction * (Strength * PerBodyScale));
+        Body->AddImpulse(Direction * (BodyMass * Strength * PerBodyScale * MassScaledShockImpulseGain));
     }
 }
 
@@ -953,6 +956,8 @@ void USkeletalMeshComponent::AddJitterImpulseToAllRagdollBodies(
 
     FBodyInstance* SyncBody = FindRagdollComponentSyncBody();
     const float ClampedRootScale = std::clamp(RootScale, 0.0f, 1.0f);
+    constexpr float MassScaledJitterImpulseGain = 2.0f;
+    constexpr float MassScaledJitterTorqueGain = 1.5f;
 
     for (FBodyInstance* Body : Bodies)
     {
@@ -962,6 +967,7 @@ void USkeletalMeshComponent::AddJitterImpulseToAllRagdollBodies(
         }
 
         const float BodyScale = (Body == SyncBody) ? ClampedRootScale : 1.0f;
+        const float BodyMass = std::max(Body->GetMass(), 0.001f);
 
         const float RandomScale = 0.75f + FMath::FRand() * 0.5f;
         const float FinalScale = BodyScale * RandomScale;
@@ -994,12 +1000,12 @@ void USkeletalMeshComponent::AddJitterImpulseToAllRagdollBodies(
 
         if (LinearStrength > 0.0f && FinalScale > 0.0f)
         {
-            Body->AddImpulse(LinearDir * (LinearStrength * FinalScale));
+            Body->AddImpulse(LinearDir * (BodyMass * LinearStrength * FinalScale * MassScaledJitterImpulseGain));
         }
 
         if (TorqueStrength > 0.0f && FinalScale > 0.0f)
         {
-            Body->AddTorque(TorqueDir * (TorqueStrength * FinalScale));
+            Body->AddTorque(TorqueDir * (BodyMass * TorqueStrength * FinalScale * MassScaledJitterTorqueGain));
         }
 
         if (MaxLinearSpeed > 0.0f)

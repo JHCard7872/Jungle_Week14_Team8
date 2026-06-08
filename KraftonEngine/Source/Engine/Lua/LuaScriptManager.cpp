@@ -3452,7 +3452,9 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 
 	Lua.new_usertype<UCameraComponent>("CameraComponent",
 		sol::base_classes,
-		sol::bases<USceneComponent, UActorComponent, UObject>()
+		sol::bases<USceneComponent, UActorComponent, UObject>(),
+		"SetFOV", &UCameraComponent::SetFOV,
+		"GetFOV", &UCameraComponent::GetFOV
 	);
 
 	Lua.new_usertype<AActor>("Actor",
