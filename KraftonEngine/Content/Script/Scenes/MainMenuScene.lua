@@ -321,7 +321,7 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_back_to_title", on_menu_button_click(function()
-        request_scene_load("Title")
+        request_scene_load("StartupLogoScene")
     end))
 
     widget:bind_click("menu_exit_game", on_menu_button_click(function()
