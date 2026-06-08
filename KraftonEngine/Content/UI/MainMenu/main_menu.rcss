@@ -61,21 +61,6 @@ body {
     pointer-events: none;
 }
 
-#menu_header_title {
-    position: absolute;
-    left: 22px;
-    top: 0px;
-    width: 600px;
-    height: 86px;
-}
-
-#menu_header_label {
-    position: absolute;
-    left: 0px;
-    top: 82px;
-    width: 100%;
-    height: auto;
-}
 
 #title_overlay {
     position: absolute;
@@ -117,7 +102,7 @@ body {
 
 .menu_button {
     position: absolute;
-    width: 18%;
+    width: 17%;
     margin: 0px;
     padding: 0px;
     background-color: transparent;
@@ -152,29 +137,29 @@ body {
 }
 
 #menu_help {
-    left: 19%;
-    top: 12%;
+    left: 20%;
+    top: 18%;
 }
 
 #menu_option {
-    right: 19%;
-    top: 12%;
+    right: 20%;
+    top: 18%;
 }
 
 #menu_play {
     left: 50%;
-    top: 33%;
+    top: 34%;
     margin-left: -9.5%;
 }
 
 #menu_scoreboard {
-    left: 19%;
-    bottom: 18%;
+    left: 20%;
+    bottom: 16%;
 }
 
 #menu_credits {
-    right: 19%;
-    bottom: 18%;
+    right: 20%;
+    bottom: 16%;
 }
 
 .menu_label {
