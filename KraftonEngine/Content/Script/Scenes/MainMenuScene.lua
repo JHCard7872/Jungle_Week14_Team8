@@ -208,7 +208,7 @@ local function open_menu_page(page_type, title)
     set_main_menu_controls_visible(false)
     set_cursor_hidden()
     set_element_opacity("menu_background_blur", 0.0)
-    Engine.SetCursorVisible(true)
+    Engine.SetCursorVisible(false)
 
     refresh_menu_settings()
 
@@ -216,7 +216,7 @@ local function open_menu_page(page_type, title)
         pageType = page_type,
         title = title,
         initialSettings = menu_settings,
-        scoreboardEntries = page_type == "scoreboard" and ScoreStorage.ReadTop(5) or nil,
+        scoreboardEntries = page_type == "scoreboard" and ScoreStorage.ReadAll() or nil,
         onSettingsChanged = function(settings, changed_page_type)
             if changed_page_type == "options" then
                 apply_menu_settings(settings)
@@ -345,6 +345,7 @@ local function update_sub_page_fade(dt)
     end
 
     set_cursor_hidden()
+    SubMenuPageUI.UpdateCursor()
     sub_page_fade_elapsed = math.min(sub_page_fade_elapsed + dt, SUB_PAGE_FADE_DURATION)
     local t = sub_page_fade_elapsed / SUB_PAGE_FADE_DURATION
 
