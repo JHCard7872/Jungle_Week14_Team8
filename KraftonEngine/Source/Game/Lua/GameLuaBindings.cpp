@@ -13,6 +13,7 @@
 #include "Core/Logging/Log.h"
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/Actors/SummonPortalActor.h"
 #include "Game/GOIncRagdollCharacterRegistry.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/GameMode/GameplayStatics.h"
@@ -203,6 +204,43 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			UE_LOG("[GOInc] Spawned legacy ragdoll pawn. RagdollId=%s Location=(%.2f, %.2f, %.2f)",
 				SpawnedPawn->GetRagdollId().c_str(), Location.X, Location.Y, Location.Z);
 			return SpawnedPawn;
+		});
+
+		// 소환 포탈 코드 스폰 — 판 시작 시 PlayScene이 1회 호출. 위치는 스폰하지 않고
+		// PortalBehavior.lua BeginPlay가 PortalData 좌표로 잡는다(미션마다 재배치).
+		// InitDefaultComponents가 BeginPlay보다 먼저 돌도록 Initializer 형태로 스폰한다.
+		GOInc.set_function("SpawnSummonPortal", []() -> ASummonPortalActor*
+		{
+			if (!GEngine)
+			{
+				UE_LOG("[GOInc] SpawnSummonPortal failed. Missing GEngine.");
+				return nullptr;
+			}
+
+			UWorld* World = GEngine->GetWorld();
+			if (!World)
+			{
+				UE_LOG("[GOInc] SpawnSummonPortal failed. Missing World.");
+				return nullptr;
+			}
+
+			ASummonPortalActor* Portal = World->SpawnActorWithInitializer<ASummonPortalActor>(
+				[](ASummonPortalActor* P)
+				{
+					if (P)
+					{
+						P->InitDefaultComponents();
+					}
+				});
+
+			if (!Portal)
+			{
+				UE_LOG("[GOInc] SpawnSummonPortal failed.");
+				return nullptr;
+			}
+
+			UE_LOG("[GOInc] Spawned summon portal.");
+			return Portal;
 		});
 
 		GOInc.set_function("IsRagdollCharacterRegistered", [](const FString& CharacterId) -> bool
