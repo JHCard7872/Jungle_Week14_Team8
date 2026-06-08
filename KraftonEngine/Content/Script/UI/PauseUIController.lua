@@ -1,96 +1,214 @@
 -- =============================================================================
 -- PauseUIController — 일시정지 메뉴 UI 컨트롤러
--- [역할] 공통 ModalDialogUIController를 사용해서 화면을 어둡게 덮고
---        Continue 버튼을 띄운다.
--- [주의] pause 중에도 마우스 입력이 살아야 하므로 Show 시점에 WantsMouse를 먼저 켠다.
+-- [역할] Result 화면의 Retry/Title 2버튼 오버레이와 같은 형태를 재사용해서
+--        Continue / 타이틀로 돌아가기 버튼을 띄운다.
+--        타이틀 복귀는 Common Question Modal로 한 번 더 확인한다.
 -- =============================================================================
 
-local Modal = require("UI/ModalDialogUIController")
+local Cursor = require("UI/CursorSpriteUtil")
+local QuestionPopup = require("UI/QuestionPopupUIController")
+local Settings = require("Data/UserSettings")
 
--- 게임플레이 크로스헤어(z=1000)가 pause 중에도 그려지므로 그 위에 떠야 한다
+local UI_DOCUMENT_PATH = "Content/UI/Pause/pause_menu.rml"
+-- 게임플레이 크로스헤어(z=1000)가 pause 중에도 그려지므로 그 위에 떠야 한다.
+-- 확인 모달은 이보다 더 위에 뜬다.
 local PAUSE_Z_ORDER = 1100
+local QUESTION_Z_ORDER = 1110
+local UI_CLICK_KEY = "sfx_ui_click"
+local CURSOR_SIZE = Cursor.GetDefaultSize()
 
 local M = {}
 
+local widget = nil
 local visible = false
--- Continue 버튼 클릭 시 호출할 콜백 (보통 togglePause)
+local confirm_open = false
+local bindings_initialized = false
 local on_continue = nil
--- 타이틀로 돌아가기 확인 후 호출할 콜백
 local on_go_title = nil
 
--- 확인 다이얼로그: 동일 Modal 싱글턴의 내용만 교체해서 재활용
+local function set_display(element_id, is_visible)
+    if widget == nil then
+        return
+    end
+
+    widget:SetProperty(element_id, "display", is_visible and "block" or "none")
+end
+
+local function set_text(element_id, value)
+    if widget == nil then
+        return
+    end
+
+    widget:SetText(element_id, tostring(value or ""))
+end
+
+local function play_ui_click()
+    if AudioManager ~= nil and AudioManager.Play ~= nil then
+        AudioManager.Play(UI_CLICK_KEY, Settings.GetSfxVolumeScalar())
+    end
+end
+
+local function update_cursor_sprite()
+    if widget == nil then
+        return
+    end
+
+    Cursor.Update(widget, "pause_cursor_normal", "pause_cursor_click", {
+        visible = visible and not confirm_open,
+        size = CURSOR_SIZE,
+    })
+end
+
+local function hide_cursor_sprite()
+    if widget == nil then
+        return
+    end
+
+    Cursor.Hide(widget, "pause_cursor_normal", "pause_cursor_click")
+end
+
+local function close_confirm_dialog()
+    confirm_open = false
+    QuestionPopup.Destroy()
+
+    if widget ~= nil and visible then
+        widget:SetWantsMouse(true)
+        set_display("pause_action_buttons", true)
+        update_cursor_sprite()
+    end
+end
+
 local function show_confirm_dialog()
-    Modal.Create({
-        zOrder = PAUSE_Z_ORDER,
+    if confirm_open then
+        return
+    end
+
+    confirm_open = true
+    if widget ~= nil then
+        widget:SetWantsMouse(false)
+        set_display("pause_action_buttons", false)
+        hide_cursor_sprite()
+    end
+
+    QuestionPopup.ShowConfirm({
+        zOrder = QUESTION_Z_ORDER,
         title = "타이틀로 돌아가기",
         message = "플레이 중인 데이터가 사라집니다.\n정말로 돌아가시겠습니까?",
-        leftText = "YES",
-        rightText = "NO",
-        buttonStyle = "text_only",
         showCursor = true,
-        onLeft = function()
+        onYes = function()
             if on_go_title ~= nil then
                 on_go_title()
             end
         end,
-        onRight = function()
-            M.Show()   -- NO → 일시정지 메뉴로 복귀
-        end,
-    })
-    Modal.Show()
-end
-
-local function build_pause_modal()
-    Modal.Create({
-        zOrder = PAUSE_Z_ORDER,
-        title = "Paused",
-        message = "",
-        leftText = "Continue",
-        rightText = "타이틀로 돌아가기",
-        -- pause 중엔 OS 커서를 숨긴 채 모달의 커서 스프라이트(aim 이미지)를 쓴다
-        showCursor = true,
-        onLeft = function()
-            if on_continue ~= nil then
-                on_continue()
-            end
-        end,
-        onRight = function()
-            show_confirm_dialog()
+        onNo = function()
+            close_confirm_dialog()
         end,
     })
 end
 
--- 일시정지 메뉴 UI 생성 진입점
+local function bind_actions()
+    if widget == nil or bindings_initialized or widget.bind_click == nil then
+        return
+    end
+
+    widget:bind_click("pause_btn_continue", function()
+        play_ui_click()
+        if on_continue ~= nil then
+            on_continue()
+        end
+    end)
+
+    widget:bind_click("pause_btn_title", function()
+        play_ui_click()
+        show_confirm_dialog()
+    end)
+
+    if widget.bind_mousemove ~= nil then
+        widget:bind_mousemove("pause_root", update_cursor_sprite)
+    end
+
+    bindings_initialized = true
+end
+
+local function ensure_widget()
+    if UI == nil or UI.CreateWidget == nil then
+        return nil
+    end
+
+    if widget == nil then
+        widget = UI.CreateWidget(UI_DOCUMENT_PATH)
+    end
+
+    if widget == nil then
+        return nil
+    end
+
+    if widget.IsInViewport == nil or not widget:IsInViewport() then
+        widget:AddToViewportZ(PAUSE_Z_ORDER)
+    end
+
+    bind_actions()
+    return widget
+end
+
 function M.Create(options)
     options = options or {}
     on_continue = options.onContinue
     on_go_title = options.onGoTitle
 
-    build_pause_modal()
+    if ensure_widget() == nil then
+        return nil
+    end
+
+    set_text("pause_btn_continue_label", options.continueText or "Continue")
+    set_text("pause_btn_title_label", options.titleText or "타이틀로 돌아가기")
+    set_display("pause_action_buttons", false)
+    hide_cursor_sprite()
+    widget:SetWantsMouse(false)
+
     return true
 end
 
--- 메뉴를 띄운다 (어둡게 덮기 + Continue / 타이틀로 돌아가기 버튼)
 function M.Show()
+    if ensure_widget() == nil then
+        return
+    end
+
     visible = true
-    build_pause_modal()
-    Modal.Show()
+    confirm_open = false
+    QuestionPopup.Destroy()
+    set_display("pause_action_buttons", true)
+    widget:SetWantsMouse(true)
+    update_cursor_sprite()
 end
 
--- 메뉴를 닫는다
 function M.Hide()
     visible = false
-    Modal.Hide()
+    confirm_open = false
+    QuestionPopup.Destroy()
+
+    if widget ~= nil then
+        widget:SetWantsMouse(false)
+        set_display("pause_action_buttons", false)
+        hide_cursor_sprite()
+    end
 end
 
 function M.IsVisible()
     return visible
 end
 
--- UI 제거 및 내부 상태 초기화
 function M.Destroy()
-    Modal.Destroy()
+    QuestionPopup.Destroy()
+
+    if widget ~= nil then
+        widget:RemoveFromParent()
+    end
+
+    widget = nil
     visible = false
+    confirm_open = false
+    bindings_initialized = false
     on_continue = nil
     on_go_title = nil
 end
