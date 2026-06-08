@@ -28,6 +28,7 @@
             <div id="page_body_options" class="page_body_section">
                 <!-- Sound Volume -->
                 <div id="sound_volume_label" class="option_group_label">
+                    <img class="option_group_label_icon" src="../../Sprite/option-sound.png" />
                     <div class="option_group_label_text">Sound Volume</div>
                 </div>
 
@@ -64,7 +65,38 @@
 
                 <!-- 게임 진행 탭 내용 -->
                 <div id="controls_body_game" class="controls_body">
-                    <img id="controls_image_process" class="controls_how_to_play" src="../../Sprite/how_to_play_process.png" />
+                    <!-- 1페이지: 스토리 -->
+                    <div id="controls_game_page_1" class="controls_game_page">
+                        <img class="controls_game_bg_img" src="../../Sprite/how_to_play_progress.png" />
+                        <div class="controls_game_title">업무 개요</div>
+                        <div class="controls_game_text">
+                            <p>'게임오버 주식회사'의 신입 사원이 된 플레이어는</p>
+                            <p>제한 시간 안에 센터 곳곳에 발생한 래그돌들을 회수해야 합니다.</p>
+                            <p>수거 장비로 대상을 제압하고 운반해 점수를 얻으며,</p>
+                            <p>중간중간 발급되는 긴급 요청을 처리하면 추가 보너스를 받을 수 있습니다.</p>
+                            <p class="controls_game_spacer"> </p>
+                            <p>단, 래그돌을 오래 방치할수록 서버 부하가 상승하고,</p>
+                            <p>부하가 한계에 도달하면 업무는 즉시 종료됩니다.</p>
+                            <p>더 많이 수거하고, 더 빠르게 처리해 높은 사원 평가를 노려보세요!</p>
+                        </div>
+                    </div>
+                    <!-- 2페이지: 규칙 -->
+                    <div id="controls_game_page_2" class="controls_game_page">
+                        <img class="controls_game_bg_img" src="../../Sprite/how_to_play_progress.png" />
+                        <div class="controls_game_title">업무 매뉴얼</div>
+                        <div class="controls_game_text">
+                            <p>1. 래그돌을 잡아 수거함에 넣으면 점수를 얻습니다.</p>
+                            <p>2. 긴급 요청을 완료하면 추가 점수를 획득합니다.</p>
+                            <p>3. 래그돌이 쌓일수록 서버 부하가 증가합니다.</p>
+                            <p>4. 시간이 끝나기 전까지 최대한 높은 점수를 노리세요.</p>
+                        </div>
+                    </div>
+                    <!-- 페이지 이동 -->
+                    <div id="controls_game_pagination">
+                        <button id="controls_game_prev_button" class="controls_game_nav_button">&lt;</button>
+                        <div id="controls_game_page_label">1/2</div>
+                        <button id="controls_game_next_button" class="controls_game_nav_button">&gt;</button>
+                    </div>
                     <button id="controls_close_button_game" class="controls_close_button ui_horizontal_button">
                         <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button_mini.png" />
                         <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover_mini.png" />
@@ -97,7 +129,10 @@
             <!-- Scoreboard -->
             <div id="page_body_scoreboard" class="page_body_section simple_page_body">
                 <div class="simple_card scoreboard_card">
-                    <div id="scoreboard_month_title" class="ui_scoreboard_month_title">이달의 우수사원</div>
+                    <div id="scoreboard_month_title">
+                        <img id="scoreboard_title_logo" src="../../Sprite/logo/kor_ver2.png" />
+                        <div id="scoreboard_title_text">이달의 우수사원</div>
+                    </div>
                     <div id="score_table">
                         <div class="score_col_line score_col_line_1"></div>
                         <div class="score_col_line score_col_line_2"></div>
@@ -115,6 +150,11 @@
                         <div id="score_row_5" class="score_row"><div id="score_rank_5" class="score_rank">5</div><div id="score_name_5" class="score_name">김정글</div><div id="score_count_5" class="score_count">0</div><div id="score_value_5" class="score_value">0</div><div id="score_date_5" class="score_date">-</div></div>
                     </div>
                     <div id="score_empty_text">저장된 기록이 없습니다.</div>
+                    <div id="scoreboard_pagination">
+                        <button id="scoreboard_prev_button" class="scoreboard_nav_button">&lt;</button>
+                        <div id="scoreboard_page_label">1/1</div>
+                        <button id="scoreboard_next_button" class="scoreboard_nav_button">&gt;</button>
+                    </div>
                 </div>
             </div>
 
@@ -127,8 +167,8 @@
                     <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_강건우_with_holder.png" />
                     <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_박준혁_with_holder.png" />
                     <img id="credits_id_card_4" class="credits_id_card" src="../../Sprite/id_card_jungle_오준혁_with_holder.png" />
-                    <div id="credits_special_thanks" class="simple_line">Special Thanks : Jungle GameTechLab 3기의 모두들<br/>백승현 & 임창근 코치님</div>
-                    <div id="credits_hint" class="simple_line">Hint: 플레이 중 반짝이는 무언가를 찾아보세요</div>
+                    <div id="credits_special_thanks" class="simple_line">Special Thanks to Jungle GameTechLab 3기의 모두들<br/>백승현 & 임창근 코치님</div>
+                    <div id="credits_hint" class="simple_line">Hint: 플레이 중 반짝이는 무언가를 찾아보세요!</div>
                 </div>
             </div>
         </div>
@@ -139,6 +179,9 @@
             <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
             <div id="page_confirm_label" class="horiz_button_label ui_horizontal_button_text_large">결정</div>
         </button>
+
+        <img id="submenu_cursor_normal" class="submenu_cursor_image" src="../../Sprite/cursor.png" />
+        <img id="submenu_cursor_click" class="submenu_cursor_image" src="../../Sprite/cursor_click.png" />
     </div>
 </body>
 </rml>
