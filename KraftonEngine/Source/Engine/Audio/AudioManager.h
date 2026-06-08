@@ -2,6 +2,7 @@
 
 #include "Core/Singleton.h"
 #include "Core/Types/CoreTypes.h"
+#include "Math/Vector.h"
 #include <fmod.hpp>
 
 class FAudioManager : public TSingleton<FAudioManager>
@@ -15,6 +16,7 @@ public:
 
 	bool LoadAudio(const FString& Key, const FString& Path, bool bLoop = false);
 	void PlayAudio(const FString& Key, float Volume = 1.0f);
+	void PlayAudioAt(const FString& Key, const FVector& Location, float Volume = 1.0f, float MinDistance = 300.0f, float MaxDistance = 3000.0f);
 	void PlayManagedAudio(const FString& Key, const FString& ChannelName, float Volume = 1.0f);
 	void PlayBGM(const FString& Key, float Volume = 1.0f);
 	void SetBGMVolume(float Volume);
@@ -32,6 +34,7 @@ public:
 
 private:
 	void LoadDefaultAudios();
+	void Update3DListener();
 	FMOD::Channel* FindPlayingManagedChannel(const FString& ChannelName);
 	FMOD::Channel* FindPlayingLoopChannel(const FString& LoopName);
 

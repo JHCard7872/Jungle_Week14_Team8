@@ -15,17 +15,38 @@ local M = {}
 local visible = false
 -- Continue 버튼 클릭 시 호출할 콜백 (보통 togglePause)
 local on_continue = nil
+-- 타이틀로 돌아가기 확인 후 호출할 콜백
+local on_go_title = nil
 
--- 일시정지 메뉴 UI 생성 진입점
-function M.Create(options)
-    options = options or {}
-    on_continue = options.onContinue
+-- 확인 다이얼로그: 동일 Modal 싱글턴의 내용만 교체해서 재활용
+local function show_confirm_dialog()
+    Modal.Create({
+        zOrder = PAUSE_Z_ORDER,
+        title = "타이틀로 돌아가기",
+        message = "플레이 중인 데이터가 사라집니다.\n정말로 돌아가시겠습니까?",
+        leftText = "YES",
+        rightText = "NO",
+        buttonStyle = "text_only",
+        showCursor = true,
+        onLeft = function()
+            if on_go_title ~= nil then
+                on_go_title()
+            end
+        end,
+        onRight = function()
+            M.Show()   -- NO → 일시정지 메뉴로 복귀
+        end,
+    })
+    Modal.Show()
+end
 
+local function build_pause_modal()
     Modal.Create({
         zOrder = PAUSE_Z_ORDER,
         title = "Paused",
         message = "",
         leftText = "Continue",
+        rightText = "타이틀로 돌아가기",
         -- pause 중엔 OS 커서를 숨긴 채 모달의 커서 스프라이트(aim 이미지)를 쓴다
         showCursor = true,
         onLeft = function()
@@ -33,28 +54,26 @@ function M.Create(options)
                 on_continue()
             end
         end,
+        onRight = function()
+            show_confirm_dialog()
+        end,
     })
+end
 
+-- 일시정지 메뉴 UI 생성 진입점
+function M.Create(options)
+    options = options or {}
+    on_continue = options.onContinue
+    on_go_title = options.onGoTitle
+
+    build_pause_modal()
     return true
 end
 
--- 메뉴를 띄운다 (어둡게 덮기 + Continue 버튼)
+-- 메뉴를 띄운다 (어둡게 덮기 + Continue / 타이틀로 돌아가기 버튼)
 function M.Show()
     visible = true
-
-    Modal.Create({
-        zOrder = PAUSE_Z_ORDER,
-        title = "Paused",
-        message = "",
-        leftText = "Continue",
-        showCursor = true,
-        onLeft = function()
-            if on_continue ~= nil then
-                on_continue()
-            end
-        end,
-    })
-
+    build_pause_modal()
     Modal.Show()
 end
 
@@ -73,6 +92,7 @@ function M.Destroy()
     Modal.Destroy()
     visible = false
     on_continue = nil
+    on_go_title = nil
 end
 
 return M
