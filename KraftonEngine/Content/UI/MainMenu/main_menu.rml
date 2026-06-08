@@ -14,7 +14,7 @@
             <img id="menu_background_blur" src="../../Sprite/main_menu_background_blur.png" />
             <div id="menu_header" class="ui_menu_title_frame">
                 <img id="page_title_label" class="ui_menu_title_label_image" src="../../Sprite/ui_title_label.png" />
-                <div id="page_title" class="ui_menu_page_title">Main Menu</div>
+                <div id="page_title" class="ui_menu_page_title">메인 메뉴</div>
             </div>
 
             <button id="menu_help" class="menu_button">

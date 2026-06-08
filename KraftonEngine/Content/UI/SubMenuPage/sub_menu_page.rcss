@@ -337,11 +337,20 @@ body {
 /* how to play 이미지 */
 .controls_how_to_play {
     position: absolute;
-    left: 0px;
     top: 88px;
-    width: 100%;
-    height: 460px;
+    left: 50%;
+    height: auto;
     display: none;
+}
+
+#controls_image_km {
+    width: 90%;
+    margin-left: -45%;
+}
+
+#controls_image_gp {
+    width: 50%;
+    margin-left: -25%;
 }
 
 /* 스코어보드/크레딧 공통 카드 */
