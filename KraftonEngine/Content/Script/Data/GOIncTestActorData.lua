@@ -115,6 +115,7 @@ return {
     GRAB_TORQUE_SCALE = 0.25,
     GRAB_ANGULAR_DAMPING = 10.0,
     GRAB_MAX_TORQUE = 100000.0,
+    STATIC_GRAB_MAX_TORQUE = 500.0, -- StaticMesh single-body grab torque cap. Keeps small props from over-spinning.
     GRAB_REFERENCE_MASS = 18.0, -- 이 질량은 grip scale 1.0으로 취급한다
     GRAB_MASS_POWER = 0.50, -- 질량 차이가 grip 난이도로 반영되는 곡선. 클수록 무거운 랙돌이 더 둔해진다
     GRAB_MIN_MASS_SCALE = 0.35,
@@ -171,14 +172,18 @@ return {
     MUZZLE_FORWARD_OFFSET = 0.95,    -- MuzzlePoint 기본 Forward 위치. 씬에 MuzzlePoint가 없을 때 fallback
     MUZZLE_RIGHT_OFFSET = 0.0,       -- MuzzlePoint 기본 Right 위치. 씬에 MuzzlePoint가 없을 때 fallback
     MUZZLE_UP_OFFSET = 0.05,         -- MuzzlePoint 기본 Up 위치. 씬에 MuzzlePoint가 없을 때 fallback
-    BEAM_SOURCE_FORWARD_BIAS = 0.0, -- Beam 시작점을 총구 기준 앞/뒤로 미세 보정. 음수면 카메라 쪽
-    BEAM_SOURCE_RIGHT_BIAS = -0.1,     -- Beam 시작점 좌우 미세 보정
-    BEAM_SOURCE_UP_BIAS = 0.0,        -- Beam 시작점 상하 미세 보정
-    BEAM_SOURCE_PITCH_INFLUENCE = 0.9, -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
-    BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45, -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
-    BEAM_SOURCE_PITCH_BLEND_DEGREES = 15.0, -- 위 두 influence를 잇는 보간 구간(도). 수평(pitch 0)에서 즉시 점프하면 빔이 꺾여 보인다
+    BEAM_SOURCE_FORWARD_BIAS = -0.1, -- Beam 시작점을 총구 기준 앞/뒤로 미세 보정. 음수면 카메라 쪽
+    BEAM_SOURCE_RIGHT_BIAS = -0.12,     -- Beam 시작점 좌우 미세 보정
+    BEAM_SOURCE_UP_BIAS = 0.1,        -- Beam 시작점 상하 미세 보정
+    BEAM_SOURCE_PITCH_INFLUENCE = 0.6, -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
+    BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.06, -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
+    BEAM_SOURCE_PITCH_BLEND_DEGREES = 0.0, -- 위 두 influence를 잇는 보간 구간(도). 수평(pitch 0)에서 즉시 점프하면 빔이 꺾여 보인다
+    BEAM_SOURCE_PITCH_DRIVER_MIN = -45.0, -- Src가 카메라 Pitch를 따라가는 최소 각도. 총 ViewModel보다 조금 더 열어둔다
+    BEAM_SOURCE_PITCH_DRIVER_MAX = 150.0, -- Src가 카메라 Pitch를 따라가는 최대 각도. 이 각도 이후에는 Src 위치/방향이 멈춘다
+    BEAM_SOURCE_EXTRA_LOOK_DRIVER_MAX = 35.0, -- Src 전용 아래 Z 보정이 시작되는 Pitch 한계. 이 값 이후에만 아래 보정이 들어간다
+    BEAM_SOURCE_EXTRA_LOOK_DOWN_Z_OFFSET = -0.18, -- 카메라가 Src Z 보정 한계보다 더 아래를 볼 때 Src를 내리는 보정량
     BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
-    BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
+    BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.12, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
 
     UpdateWeaponWalkBob = function(self, delta_time, velocity, state, make_vec, clamp_value, is_sprinting)

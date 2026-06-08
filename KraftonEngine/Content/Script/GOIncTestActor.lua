@@ -600,16 +600,44 @@ local function update_camera_view()
     end
 end
 
-local function get_weapon_offset_for_pitch()
-    if base_weapon_offset_location == nil then
-        cache_view_weapon_base_transforms()
-    end
-
-    local weapon_pitch = clamp(
+local function get_weapon_driver_pitch()
+    return clamp(
         pitch,
         C.WEAPON_PITCH_DRIVER_MIN or C.MIN_PITCH,
         C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
     )
+end
+
+local function get_beam_source_driver_pitch()
+    return clamp(
+        pitch,
+        C.BEAM_SOURCE_PITCH_DRIVER_MIN or C.WEAPON_PITCH_DRIVER_MIN or C.MIN_PITCH,
+        C.BEAM_SOURCE_PITCH_DRIVER_MAX or C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
+    )
+end
+
+local function get_extra_pitch_z_for_driver(driver_pitch, up_z_offset, down_z_offset)
+    if pitch < driver_pitch then
+        local extra_range = math.max(driver_pitch - (C.MIN_PITCH or driver_pitch), 0.001)
+        local extra_alpha = ease_in_out(clamp((driver_pitch - pitch) / extra_range, 0.0, 1.0))
+        return extra_alpha * (up_z_offset or 0.0)
+    end
+
+    if pitch > driver_pitch then
+        local extra_range = math.max((C.MAX_PITCH or driver_pitch) - driver_pitch, 0.001)
+        local extra_alpha = ease_in_out(clamp((pitch - driver_pitch) / extra_range, 0.0, 1.0))
+        return extra_alpha * (down_z_offset or 0.0)
+    end
+
+    return 0.0
+end
+
+local function get_weapon_offset_for_pitch(include_extra_pitch_z, driver_pitch_override)
+    if base_weapon_offset_location == nil then
+        cache_view_weapon_base_transforms()
+    end
+
+    local weapon_pitch = driver_pitch_override or get_weapon_driver_pitch()
 
     local pitch_alpha = clamp(weapon_pitch / C.WEAPON_PITCH_NORMALIZE, -1.0, 1.0)
     local pitch_abs = math.abs(pitch_alpha)
@@ -622,14 +650,12 @@ local function get_weapon_offset_for_pitch()
 
     local visual_pitch = clamp(weapon_pitch * C.WEAPON_PITCH_SCALE, -C.WEAPON_MAX_VISUAL_PITCH, C.WEAPON_MAX_VISUAL_PITCH)
     local extra_pitch_z = 0.0
-    if pitch < weapon_pitch then
-        local extra_range = math.max(weapon_pitch - (C.MIN_PITCH or weapon_pitch), 0.001)
-        local extra_alpha = ease_in_out(clamp((weapon_pitch - pitch) / extra_range, 0.0, 1.0))
-        extra_pitch_z = extra_alpha * (C.WEAPON_EXTRA_LOOK_UP_Z_OFFSET or 0.0)
-    elseif pitch > weapon_pitch then
-        local extra_range = math.max((C.MAX_PITCH or weapon_pitch) - weapon_pitch, 0.001)
-        local extra_alpha = ease_in_out(clamp((pitch - weapon_pitch) / extra_range, 0.0, 1.0))
-        extra_pitch_z = extra_alpha * (C.WEAPON_EXTRA_LOOK_DOWN_Z_OFFSET or 0.0)
+    if include_extra_pitch_z ~= false then
+        extra_pitch_z = get_extra_pitch_z_for_driver(
+            weapon_pitch,
+            C.WEAPON_EXTRA_LOOK_UP_Z_OFFSET,
+            C.WEAPON_EXTRA_LOOK_DOWN_Z_OFFSET
+        )
     end
     local weapon_offset = vec(
         base_weapon_offset_location.X - pitch_curve * C.WEAPON_PITCH_PULLBACK,
@@ -640,25 +666,50 @@ local function get_weapon_offset_for_pitch()
     return weapon_offset, visual_pitch, weapon_pitch
 end
 
-local function get_beam_source_pitch_influence()
+local function get_beam_source_pitch_influence_for_pitch(source_pitch)
     -- pitch 0 경계에서 0.9↔0.45로 즉시 점프하면 빔 소스 위치/탄젠트가 꺾여 보인다
     -- (수평 부근 조준에서 간헐적으로 빔이 휘던 원인) — 경계 구간을 보간으로 잇는다
-    local blend = ease_in_out(clamp(pitch / C.BEAM_SOURCE_PITCH_BLEND_DEGREES, 0.0, 1.0))
+    local blend = ease_in_out(clamp(source_pitch / C.BEAM_SOURCE_PITCH_BLEND_DEGREES, 0.0, 1.0))
     return C.BEAM_SOURCE_PITCH_INFLUENCE
         + (C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE - C.BEAM_SOURCE_PITCH_INFLUENCE) * blend
 end
 
+local function get_beam_source_pitch_influence()
+    local influence = get_beam_source_pitch_influence_for_pitch(pitch)
+
+    -- 카메라는 ±75도까지 돌 수 있지만, 총과 Src는 ViewModel pitch 한계를 넘지 않게 묶는다.
+    local pitch_abs = math.abs(pitch)
+    if pitch_abs > 0.001 then
+        local driver_pitch = get_beam_source_driver_pitch()
+        local locked_source_pitch = math.abs(driver_pitch) * get_beam_source_pitch_influence_for_pitch(driver_pitch)
+        influence = math.min(influence, clamp(locked_source_pitch / pitch_abs, 0.0, 1.0))
+    end
+
+    return influence
+end
+
 local function get_beam_source_offset_for_pitch()
-    local weapon_offset = get_weapon_offset_for_pitch()
+    local source_driver_pitch = get_beam_source_driver_pitch()
+    local weapon_offset = get_weapon_offset_for_pitch(false, source_driver_pitch)
     if base_weapon_offset_location == nil then
         return weapon_offset
     end
 
     local pitch_influence = get_beam_source_pitch_influence()
+    local source_extra_down_pitch = C.BEAM_SOURCE_EXTRA_LOOK_DRIVER_MAX or C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
+    local source_extra_pitch_z = 0.0
+    if pitch > source_extra_down_pitch then
+        source_extra_pitch_z = get_extra_pitch_z_for_driver(
+            source_extra_down_pitch,
+            0.0,
+            C.BEAM_SOURCE_EXTRA_LOOK_DOWN_Z_OFFSET
+        )
+    end
+
     return vec(
         base_weapon_offset_location.X + (weapon_offset.X - base_weapon_offset_location.X) * pitch_influence,
         base_weapon_offset_location.Y + (weapon_offset.Y - base_weapon_offset_location.Y) * pitch_influence,
-        base_weapon_offset_location.Z + (weapon_offset.Z - base_weapon_offset_location.Z) * pitch_influence
+        base_weapon_offset_location.Z + (weapon_offset.Z - base_weapon_offset_location.Z) * pitch_influence + source_extra_pitch_z
     )
 end
 
@@ -1910,7 +1961,20 @@ local function apply_grab_force(delta_time, start, direction)
             grab_offset:Cross(desired_acceleration) * C.GRAB_TORQUE_SCALE
             - angular_velocity * C.GRAB_ANGULAR_DAMPING
         ) * (body_mass * mass_grip_scale * slot1_grab_force_scale)
-        torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE)
+
+        local torque_max = C.GRAB_MAX_TORQUE
+        local torque_component = grabbed_hit_component
+        if torque_component == nil and grabbed_body.GetOwnerComponent ~= nil then
+            torque_component = grabbed_body:GetOwnerComponent()
+        end
+        if torque_component ~= nil and torque_component.GetClassName ~= nil then
+            local class_name = torque_component:GetClassName()
+            if type(class_name) == "string" and string.find(class_name, "StaticMeshComponent", 1, true) ~= nil then
+                torque_max = C.STATIC_GRAB_MAX_TORQUE or torque_max
+            end
+        end
+
+        torque = clamp_vector_length(torque, torque_max)
         grabbed_body:AddTorque(torque)
     end
 
