@@ -54,6 +54,21 @@ local weapon_swap_state = {
     sprint_weight = 0.0,
     is_sprinting = false
 }
+local slot2_fire_feedback = {
+    recoil_elapsed = 0.0,
+    recoil_duration = 0.0,
+    recoil_pitch_start = 0.0,
+    recoil_yaw_start = 0.0,
+    recoil_pitch = 0.0,
+    recoil_yaw = 0.0,
+    shake_elapsed = 0.0,
+    shake_duration = 0.0,
+    shake_offset = Vector.Zero(),
+    shake_rotation = Vector.Zero(),
+    fov_elapsed = 0.0,
+    fov_duration = 0.0,
+    base_fov = nil
+}
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
 local base_weapon_offset_location = nil    -- 씬에서 읽은 VisualPivot 위치. 화면 고정 offset 기준값
@@ -168,6 +183,79 @@ end
 local function ease_in_out(t)
     local clamped = clamp(t, 0.0, 1.0)
     return clamped * clamped * (3.0 - 2.0 * clamped)
+end
+
+slot2_fire_feedback.random_signed = function()
+    return math.random() * 2.0 - 1.0
+end
+
+slot2_fire_feedback.Refresh = function(delta_time)
+    local dt = math.max(delta_time or 0.0, 0.0)
+
+    if slot2_fire_feedback.recoil_duration > 0.0
+        and slot2_fire_feedback.recoil_elapsed < slot2_fire_feedback.recoil_duration then
+        slot2_fire_feedback.recoil_elapsed = slot2_fire_feedback.recoil_elapsed + dt
+        local alpha = ease_in_out(slot2_fire_feedback.recoil_elapsed / slot2_fire_feedback.recoil_duration)
+        local remain = 1.0 - alpha
+        slot2_fire_feedback.recoil_pitch = slot2_fire_feedback.recoil_pitch_start * remain
+        slot2_fire_feedback.recoil_yaw = slot2_fire_feedback.recoil_yaw_start * remain
+    else
+        slot2_fire_feedback.recoil_pitch = 0.0
+        slot2_fire_feedback.recoil_yaw = 0.0
+    end
+
+    if slot2_fire_feedback.shake_duration > 0.0
+        and slot2_fire_feedback.shake_elapsed < slot2_fire_feedback.shake_duration then
+        slot2_fire_feedback.shake_elapsed = slot2_fire_feedback.shake_elapsed + dt
+        local alpha = ease_in_out(slot2_fire_feedback.shake_elapsed / slot2_fire_feedback.shake_duration)
+        local intensity = (C.SLOT2_CAMERA_SHAKE_INTENSITY or 0.04) * (1.0 - alpha)
+        local rotation_intensity = (C.SLOT2_CAMERA_SHAKE_ROTATION_DEGREES or 0.0) * (1.0 - alpha)
+        slot2_fire_feedback.shake_offset = vec(
+            slot2_fire_feedback.random_signed() * (C.SLOT2_CAMERA_SHAKE_FORWARD_SCALE or 0.5) * intensity,
+            slot2_fire_feedback.random_signed() * (C.SLOT2_CAMERA_SHAKE_RIGHT_SCALE or 0.5) * intensity,
+            slot2_fire_feedback.random_signed() * (C.SLOT2_CAMERA_SHAKE_UP_SCALE or 0.2) * intensity)
+        slot2_fire_feedback.shake_rotation = vec(
+            slot2_fire_feedback.random_signed() * rotation_intensity * 0.35,
+            slot2_fire_feedback.random_signed() * rotation_intensity * 0.55,
+            slot2_fire_feedback.random_signed() * rotation_intensity)
+    else
+        slot2_fire_feedback.shake_offset = Vector.Zero()
+        slot2_fire_feedback.shake_rotation = Vector.Zero()
+    end
+
+    if camera ~= nil and camera.SetFOV ~= nil then
+        if slot2_fire_feedback.base_fov == nil and camera.GetFOV ~= nil then
+            slot2_fire_feedback.base_fov = camera:GetFOV()
+        end
+
+        if slot2_fire_feedback.base_fov ~= nil
+            and slot2_fire_feedback.fov_duration > 0.0
+            and slot2_fire_feedback.fov_elapsed < slot2_fire_feedback.fov_duration then
+            slot2_fire_feedback.fov_elapsed = slot2_fire_feedback.fov_elapsed + dt
+            local alpha = clamp(slot2_fire_feedback.fov_elapsed / slot2_fire_feedback.fov_duration, 0.0, 1.0)
+            local punch = math.sin(alpha * math.pi) * ((C.SLOT2_FOV_PUNCH_DEGREES or 1.5) * 0.0174532925199433)
+            camera:SetFOV(slot2_fire_feedback.base_fov + punch)
+        elseif slot2_fire_feedback.base_fov ~= nil then
+            camera:SetFOV(slot2_fire_feedback.base_fov)
+        end
+    end
+end
+
+slot2_fire_feedback.Trigger = function()
+    slot2_fire_feedback.recoil_elapsed = 0.0
+    slot2_fire_feedback.recoil_duration = C.SLOT2_RECOIL_RECOVER_TIME or 0.05
+    slot2_fire_feedback.recoil_pitch_start = C.SLOT2_RECOIL_PITCH_DEGREES or -0.4
+    slot2_fire_feedback.recoil_yaw_start = slot2_fire_feedback.random_signed() * (C.SLOT2_RECOIL_YAW_RANDOM_DEGREES or 0.15)
+    slot2_fire_feedback.recoil_pitch = slot2_fire_feedback.recoil_pitch_start
+    slot2_fire_feedback.recoil_yaw = slot2_fire_feedback.recoil_yaw_start
+    slot2_fire_feedback.shake_elapsed = 0.0
+    slot2_fire_feedback.shake_duration = C.SLOT2_CAMERA_SHAKE_DURATION or 0.045
+    slot2_fire_feedback.fov_elapsed = 0.0
+    slot2_fire_feedback.fov_duration = C.SLOT2_FOV_PUNCH_DURATION or 0.08
+
+    if slot2_fire_feedback.base_fov == nil and camera ~= nil and camera.GetFOV ~= nil then
+        slot2_fire_feedback.base_fov = camera:GetFOV()
+    end
 end
 
 local function get_next_weapon_swap_angle()
@@ -466,8 +554,13 @@ local function update_camera_view()
     obj.Rotation = vec(0.0, 0.0, yaw)
 
     if camera_pivot ~= nil then
-        camera_pivot.RelativeLocation = vec(0.0, 0.0, C.CAMERA_HEIGHT)
-        camera_pivot.Rotation = vec(0.0, pitch, 0.0)
+        local shake_offset = slot2_fire_feedback.shake_offset or Vector.Zero()
+        local shake_rotation = slot2_fire_feedback.shake_rotation or Vector.Zero()
+        camera_pivot.RelativeLocation = vec(shake_offset.X, shake_offset.Y, C.CAMERA_HEIGHT + shake_offset.Z)
+        camera_pivot.Rotation = vec(
+            shake_rotation.X,
+            pitch + slot2_fire_feedback.recoil_pitch + shake_rotation.Y,
+            slot2_fire_feedback.recoil_yaw + shake_rotation.Z)
     end
 
     if camera ~= nil then
@@ -661,8 +754,8 @@ local function update_view_weapon(delta_time)
         end
         view_weapon_root.Rotation = vec(
             base_view_weapon_root_rotation.X,
-            base_view_weapon_root_rotation.Y + pitch,
-            base_view_weapon_root_rotation.Z
+            base_view_weapon_root_rotation.Y + pitch + slot2_fire_feedback.recoil_pitch,
+            base_view_weapon_root_rotation.Z + slot2_fire_feedback.recoil_yaw
         )
     end
 
@@ -1749,6 +1842,7 @@ local function apply_slot2_fire(delta_time)
     end
 
     play_one_shot_sfx("sfx_gun_attack_shoot")
+    slot2_fire_feedback.Trigger()
 
     local hit, fallback_end, _, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
@@ -2324,6 +2418,9 @@ function BeginPlay()
 
     bind_components()
     cache_view_weapon_base_transforms()
+    if camera ~= nil and camera.GetFOV ~= nil then
+        slot2_fire_feedback.base_fov = camera:GetFOV()
+    end
     player_velocity = Vector.Zero()
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
@@ -2357,6 +2454,9 @@ function BeginPlay()
 end
 
 function EndPlay()
+    if camera ~= nil and camera.SetFOV ~= nil and slot2_fire_feedback.base_fov ~= nil then
+        camera:SetFOV(slot2_fire_feedback.base_fov)
+    end
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
 end
@@ -2371,6 +2471,7 @@ function Tick(delta_time)
     update_session_gun_state()
     obj.Rotation = vec(0.0, 0.0, yaw)
     select_active_beam_particle()
+    slot2_fire_feedback.Refresh(delta_time)
     update_camera_view()
     update_view_weapon(delta_time)
 end
