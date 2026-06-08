@@ -1301,7 +1301,7 @@ function EnterAliveFlee()
     end
 
     finish_revive_mesh_relative_location_blend()
-    set_flee_animation_play_rate(1.0)
+    set_flee_animation_play_rate(FLEE_STOP_START_PLAY_RATE)
 
     -- 부활 완료(AliveFlee 진입) 순간 머리 위 ! 빌보드를 띄운다. main쪽 6a5b7ce5가 지웠던 호출 복원.
     if pawn ~= nil and pawn.ShowAliveExclamation ~= nil then

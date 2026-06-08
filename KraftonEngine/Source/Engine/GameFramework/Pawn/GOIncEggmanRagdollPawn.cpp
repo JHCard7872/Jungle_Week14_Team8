@@ -17,16 +17,16 @@ FGOIncRagdollCharacterConfig AGOIncEggmanRagdollPawn::MakeCharacterConfig() cons
 
 	Config.AliveCapsuleRadius = 0.4f;
 	Config.AliveCapsuleHalfHeight = 1.0f;
-	Config.ReviveTriggerCapsuleRadius = 5.0f;
-	Config.ReviveTriggerCapsuleHalfHeight = 5.0f;
+	Config.ReviveTriggerCapsuleRadius = 15.0f;
+	Config.ReviveTriggerCapsuleHalfHeight = 15.0f;
 
 	Config.bCanRevive = true;
 	Config.ReviveBlendDuration = 0.5f;
 
-	Config.FleeSpeed = 3.0f;
+	Config.FleeSpeed = 4.0f;
 	Config.FleeAcceleration = 11.0f;
 	Config.FleeBrakingDeceleration = 8.0f;
-	Config.FleeEndDistance = 8.0f;
+	Config.FleeEndDistance = 25.0f;
 	Config.FleeStopDuration = 1.0f;
 	Config.FleeStopMinBrakingDeceleration = 0.1f;
 	Config.FleeRotationYawOffsetDegrees = 0.0f;
