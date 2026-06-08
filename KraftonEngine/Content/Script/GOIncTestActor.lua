@@ -15,6 +15,7 @@ local crosshair_screen_y = nil
 local crosshair_hold_rotation = 0.0
 local crosshair_hold_rotation_elapsed = 0.0
 local collect_fire_sfx_elapsed = 0.0
+local collect_fire_sfx_phase = 0.0  -- 반복 재생 시 볼륨 자연스럽게 변동시키는 사인파 위상
 local footstep_sfx_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
@@ -219,6 +220,7 @@ end
 
 local function reset_collect_fire_sfx_timer()
     collect_fire_sfx_elapsed = 0.0
+    collect_fire_sfx_phase = 0.0
     if AudioManager ~= nil and AudioManager.StopManaged ~= nil then
         AudioManager.StopManaged(COLLECT_FIRE_SFX_CHANNEL)
     end
@@ -252,7 +254,10 @@ local function play_collect_fire_sfx()
         return
     end
 
-    local volume = get_sfx_volume(C.COLLECT_FIRE_SFX_VOLUME_SCALE or 1.0)
+    -- 사인파(주기 ~1.5초, 폭 ±25%) + 소량 랜덤 지터로 자연스러운 볼륨 변동
+    local sine_mod = 1.0 + 0.12 * math.sin(collect_fire_sfx_phase)
+    local jitter   = 1.0 + (math.random() - 0.5) * 0.06
+    local volume = get_sfx_volume(C.COLLECT_FIRE_SFX_VOLUME_SCALE or 1.0) * sine_mod * jitter
 
     if AudioManager.PlayManaged ~= nil then
         AudioManager.PlayManaged("sfx_gun_shoot", COLLECT_FIRE_SFX_CHANNEL, volume)
@@ -287,7 +292,11 @@ local function update_collect_fire_sfx(delta_time, should_play)
         return
     end
 
-    collect_fire_sfx_elapsed = collect_fire_sfx_elapsed - math.max(delta_time or 0.0, 0.0)
+    local dt = math.max(delta_time or 0.0, 0.0)
+    -- 사인파 위상 누적 (주기 ~1.5초 = 2π / 1.5 ≈ 4.19 rad/s)
+    collect_fire_sfx_phase = collect_fire_sfx_phase + dt * 8.19
+
+    collect_fire_sfx_elapsed = collect_fire_sfx_elapsed - dt
     if collect_fire_sfx_elapsed > 0.0 then
         return
     end
