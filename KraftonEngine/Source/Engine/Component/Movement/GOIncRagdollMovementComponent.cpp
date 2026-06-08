@@ -4,7 +4,6 @@
 #include "Component/Shape/CapsuleComponent.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/World.h"
-#include "Core/Logging/Log.h"
 #include "Math/MathUtils.h"
 #include "Math/Quat.h"
 #include "Serialization/Archive.h"
@@ -274,16 +273,6 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 
 		if (Hit.bStartPenetrating)
 		{
-			if (bStepUpDebugLogEnabled)
-			{
-				const FVector HitNormal = GetBestHitNormal(Hit);
-				UE_LOG("[GOIncStepUp] Fail=StartPenetratingAfterStepAttempt hitDist=%.3f remainingLen=%.3f hitNormal=(%.3f, %.3f, %.3f)",
-					Hit.Distance,
-					RemainingDistance,
-					HitNormal.X,
-					HitNormal.Y,
-					HitNormal.Z);
-			}
 			Velocity.Z = std::max(0.0f, Velocity.Z);
 			return true;
 		}
@@ -323,57 +312,22 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 	USceneComponent* Updated = GetUpdatedComponent();
 	if (!Updated || !bStepUpEnabled || MaxStepHeight <= 0.0f)
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] Fail=DisabledOrNoUpdated commit=%d updated=%d enabled=%d maxStep=%.3f moveLen=%.3f",
-				bCommitMove ? 1 : 0,
-				Updated ? 1 : 0,
-				bStepUpEnabled ? 1 : 0,
-				MaxStepHeight,
-				MoveDelta.Length());
-		}
 		return false;
 	}
 
 	if (!bFloorRaycastEnabled || !bIsGrounded)
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] Fail=NotGrounded commit=%d floorRaycast=%d grounded=%d moveLen=%.3f",
-				bCommitMove ? 1 : 0,
-				bFloorRaycastEnabled ? 1 : 0,
-				bIsGrounded ? 1 : 0,
-				MoveDelta.Length());
-		}
 		return false;
 	}
 
 	if (IsWalkableFloorHit(BlockingHit))
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			const FVector HitNormal = GetBestHitNormal(BlockingHit);
-			UE_LOG("[GOIncStepUp] Fail=BlockingHitIsFloor commit=%d hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f)",
-				bCommitMove ? 1 : 0,
-				BlockingHit.Distance,
-				HitNormal.X,
-				HitNormal.Y,
-				HitNormal.Z);
-		}
 		return false;
 	}
 
 	const FVector HorizontalDelta(MoveDelta.X, MoveDelta.Y, 0.0f);
 	if (HorizontalDelta.Length() <= SmallMoveThreshold)
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] Fail=NoHorizontalDelta commit=%d move=(%.3f, %.3f, %.3f)",
-				bCommitMove ? 1 : 0,
-				MoveDelta.X,
-				MoveDelta.Y,
-				MoveDelta.Z);
-		}
 		return false;
 	}
 
@@ -404,36 +358,9 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 			(BlockingHit.bStartPenetrating || BlockingHit.Distance <= SweepSkinWidth + SmallMoveThreshold);
 		if (!bCanIgnoreInitialUpBlock)
 		{
-			if (bStepUpDebugLogEnabled)
-			{
-				UE_LOG("[GOIncStepUp] Fail=UpBlocked commit=%d upDist=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f) startNudge=(%.3f, %.3f, %.3f)",
-					bCommitMove ? 1 : 0,
-					MaxStepHeight,
-					UpHit.Distance,
-					HitNormal.X,
-					HitNormal.Y,
-					HitNormal.Z,
-					StepStartNudge.X,
-					StepStartNudge.Y,
-					StepStartNudge.Z);
-			}
 			Updated->SetWorldLocation(OriginalLocation);
 			bIsGrounded = bWasGrounded;
 			return false;
-		}
-
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] IgnoredInitialUpBlock commit=%d upDist=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f) startNudge=(%.3f, %.3f, %.3f)",
-				bCommitMove ? 1 : 0,
-				MaxStepHeight,
-				UpHit.Distance,
-				HitNormal.X,
-				HitNormal.Y,
-				HitNormal.Z,
-				StepStartNudge.X,
-				StepStartNudge.Y,
-				StepStartNudge.Z);
 		}
 	}
 
@@ -442,17 +369,6 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 	FHitResult ForwardHit;
 	if (SweepCapsuleMove(HorizontalDelta, ForwardHit))
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			const FVector HitNormal = GetBestHitNormal(ForwardHit);
-			UE_LOG("[GOIncStepUp] Fail=ForwardBlocked commit=%d horizontalLen=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f)",
-				bCommitMove ? 1 : 0,
-				HorizontalDelta.Length(),
-				ForwardHit.Distance,
-				HitNormal.X,
-				HitNormal.Y,
-				HitNormal.Z);
-		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return false;
@@ -492,17 +408,6 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 
 	if (!bFoundStepFloor)
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] Fail=NoStepFloor commit=%d horizontalLen=%.3f maxStep=%.3f floorProbe=%.3f capsuleRadius=%.3f forwardProbe=%.3f forwardPadding=%.3f",
-				bCommitMove ? 1 : 0,
-				HorizontalDelta.Length(),
-				MaxStepHeight,
-				FloorProbeDistance,
-				CapsuleRadius,
-				ForwardProbeDistance,
-				StepForwardProbeDistance);
-		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return false;
@@ -512,16 +417,6 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 	const float StepHeight = DesiredCapsuleZ - OriginalCapsuleZ;
 	if (StepHeight < -MaxStepHeight - FloorSnapClearance || StepHeight > MaxStepHeight + FloorSnapClearance)
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] Fail=InvalidStepHeight commit=%d stepHeight=%.3f maxStep=%.3f desiredCapsuleZ=%.3f originalCapsuleZ=%.3f floorZ=%.3f",
-				bCommitMove ? 1 : 0,
-				StepHeight,
-				MaxStepHeight,
-				DesiredCapsuleZ,
-				OriginalCapsuleZ,
-				StepFloorHit.WorldHitLocation.Z);
-		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return false;
@@ -533,31 +428,9 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 
 	if (!bCommitMove)
 	{
-		if (bStepUpDebugLogEnabled)
-		{
-			UE_LOG("[GOIncStepUp] Success=Simulation stepHeight=%.3f horizontalLen=%.3f maxStep=%.3f floorZ=%.3f capsuleRadius=%.3f forwardProbe=%.3f",
-				StepHeight,
-				HorizontalDelta.Length(),
-				MaxStepHeight,
-				StepFloorHit.WorldHitLocation.Z,
-				CapsuleRadius,
-				ForwardProbeDistance);
-		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return true;
-	}
-
-	if (bStepUpDebugLogEnabled)
-	{
-		UE_LOG("[GOIncStepUp] Success=Commit stepHeight=%.3f horizontalLen=%.3f maxStep=%.3f finalZ=%.3f floorZ=%.3f capsuleRadius=%.3f forwardProbe=%.3f",
-			StepHeight,
-			HorizontalDelta.Length(),
-			MaxStepHeight,
-			FinalLocation.Z,
-			StepFloorHit.WorldHitLocation.Z,
-			CapsuleRadius,
-			ForwardProbeDistance);
 	}
 
 	Velocity.Z = 0.0f;
@@ -609,7 +482,7 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 	const float InputLength = Input.Length();
 	if (InputLength <= SmallInputThreshold)
 	{
-		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		ClearLastWallAvoidanceDirection();
 		return Input;
 	}
 
@@ -618,7 +491,7 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 	if (!bWallAvoidanceEnabled || !bSweepMovementEnabled || Strength <= SmallInputThreshold ||
 		ProbeDistance <= SmallMoveThreshold || !CanUseCapsuleSweep())
 	{
-		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		ClearLastWallAvoidanceDirection();
 		return Input;
 	}
 
@@ -626,14 +499,104 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 	DesiredDir = DesiredDir.GetSafeNormal();
 	if (DesiredDir.IsNearlyZero())
 	{
-		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		ClearLastWallAvoidanceDirection();
 		return Input;
+	}
+
+	if (CornerEscapeTimer > 0.0f && !CornerEscapeDirection.IsNearlyZero())
+	{
+		CornerEscapeTimer = std::max(0.0f, CornerEscapeTimer - DeltaTime);
+		LastWallAvoidanceDirection = CornerEscapeDirection;
+		return CornerEscapeDirection * InputLength;
+	}
+
+	auto RemoveVelocityIntoNormal = [this](const FVector& Normal)
+	{
+		if (Normal.IsNearlyZero())
+		{
+			return;
+		}
+
+		FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
+		const float VelocityIntoWall = HorizontalVelocity.Dot(Normal);
+		if (VelocityIntoWall < 0.0f)
+		{
+			HorizontalVelocity = HorizontalVelocity - Normal * VelocityIntoWall;
+			Velocity.X = HorizontalVelocity.X;
+			Velocity.Y = HorizontalVelocity.Y;
+		}
+	};
+
+	auto TryBeginCornerEscape = [&](const FVector& CurrentWallNormal, const FHitResult& Hit)
+	{
+		if (LockedWallNormal.IsNearlyZero() || CurrentWallNormal.IsNearlyZero())
+		{
+			return false;
+		}
+
+		const float NormalDotThreshold = FMath::Clamp(CornerNormalDotThreshold, -1.0f, 1.0f);
+		if (CurrentWallNormal.Dot(LockedWallNormal) >= NormalDotThreshold)
+		{
+			return false;
+		}
+
+		if (Hit.Distance > SweepSkinWidth + SmallMoveThreshold)
+		{
+			return false;
+		}
+
+		FVector EscapeDir = CurrentWallNormal + LockedWallNormal;
+		EscapeDir.Z = 0.0f;
+		EscapeDir = EscapeDir.GetSafeNormal(1.0e-6f, LockedWallAvoidanceDirection);
+		if (EscapeDir.IsNearlyZero())
+		{
+			EscapeDir = CurrentWallNormal;
+		}
+
+		CornerEscapeDirection = EscapeDir;
+		CornerEscapeTimer = std::max(0.0f, CornerEscapeDuration);
+		LastWallAvoidanceDirection = CornerEscapeDirection;
+		LockedWallAvoidanceDirection = CornerEscapeDirection;
+		WallAvoidanceLockTimer = 0.0f;
+
+		RemoveVelocityIntoNormal(CurrentWallNormal);
+		RemoveVelocityIntoNormal(LockedWallNormal);
+
+		if (USceneComponent* Updated = GetUpdatedComponent())
+		{
+			const float NudgeDistance = std::max(CornerNudgeDistance, SweepSkinWidth);
+			if (NudgeDistance > 0.0f)
+			{
+				Updated->SetWorldLocation(Updated->GetWorldLocation() + CornerEscapeDirection * NudgeDistance);
+			}
+		}
+
+		return true;
+	};
+
+	if (WallAvoidanceLockTimer > 0.0f && !LockedWallAvoidanceDirection.IsNearlyZero())
+	{
+		FHitResult LockedForwardHit;
+		if (ProbeWallAvoidance(LockedWallAvoidanceDirection, ProbeDistance, LockedForwardHit))
+		{
+			FVector LockedHitNormal = GetBestHitNormal(LockedForwardHit);
+			LockedHitNormal.Z = 0.0f;
+			LockedHitNormal = LockedHitNormal.GetSafeNormal();
+			if (TryBeginCornerEscape(LockedHitNormal, LockedForwardHit))
+			{
+				return CornerEscapeDirection * InputLength;
+			}
+		}
+
+		WallAvoidanceLockTimer = std::max(0.0f, WallAvoidanceLockTimer - DeltaTime);
+		LastWallAvoidanceDirection = LockedWallAvoidanceDirection;
+		return LockedWallAvoidanceDirection * InputLength;
 	}
 
 	FHitResult ForwardHit;
 	if (!ProbeWallAvoidance(DesiredDir, ProbeDistance, ForwardHit))
 	{
-		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		ClearLastWallAvoidanceDirection();
 		return Input;
 	}
 
@@ -657,15 +620,7 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 
 		if (bCanStepUp)
 		{
-			if (bStepUpDebugLogEnabled)
-			{
-				UE_LOG("[GOIncStepUp] WallAvoidance=SkippedBecauseStepUpPossible probeDist=%.3f safeDist=%.3f remainingProbe=%.3f hitDist=%.3f",
-					ProbeDistance,
-					ClampedSafeDistance,
-					RemainingProbeDistance,
-					ForwardHit.Distance);
-			}
-			LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+			ClearLastWallAvoidanceDirection();
 			return Input;
 		}
 	}
@@ -675,38 +630,31 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 	WallNormal = WallNormal.GetSafeNormal();
 	if (WallNormal.IsNearlyZero())
 	{
-		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		ClearLastWallAvoidanceDirection();
 		return Input;
 	}
 
-	if (bStepUpDebugLogEnabled)
+	if (TryBeginCornerEscape(WallNormal, ForwardHit))
 	{
-		UE_LOG("[GOIncStepUp] WallAvoidance=Active hitDist=%.3f wallNormal=(%.3f, %.3f, %.3f) inputDir=(%.3f, %.3f, %.3f) maxStep=%.3f",
-			ForwardHit.Distance,
-			WallNormal.X,
-			WallNormal.Y,
-			WallNormal.Z,
-			DesiredDir.X,
-			DesiredDir.Y,
-			DesiredDir.Z,
-			MaxStepHeight);
+		return CornerEscapeDirection * InputLength;
 	}
 
 	const float IntoWall = DesiredDir.Dot(WallNormal);
 	if (IntoWall >= -SmallInputThreshold)
 	{
-		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		ClearLastWallAvoidanceDirection();
 		return Input;
 	}
 
-	FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
-	const float VelocityIntoWall = HorizontalVelocity.Dot(WallNormal);
-	if (VelocityIntoWall < 0.0f)
+	USceneComponent* UpdatedForWallNudge = GetUpdatedComponent();
+	if (UpdatedForWallNudge && ForwardHit.Distance <= SweepSkinWidth + SmallMoveThreshold && WallContactNudgeDistance > 0.0f)
 	{
-		HorizontalVelocity = HorizontalVelocity - WallNormal * VelocityIntoWall;
-		Velocity.X = HorizontalVelocity.X;
-		Velocity.Y = HorizontalVelocity.Y;
+		UpdatedForWallNudge->SetWorldLocation(
+			UpdatedForWallNudge->GetWorldLocation() +
+			WallNormal * std::max(WallContactNudgeDistance, SweepSkinWidth));
 	}
+
+	RemoveVelocityIntoNormal(WallNormal);
 
 	const float SideAngle = FMath::Clamp(WallAvoidanceSideProbeAngleDegrees, 0.0f, 90.0f);
 	const FVector LeftDir = RotateDirection2D(DesiredDir, SideAngle).GetSafeNormal();
@@ -765,6 +713,14 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 	FVector AdjustedDir = FVector::Lerp(DesiredDir, LastWallAvoidanceDirection, AvoidanceWeight);
 	AdjustedDir.Z = 0.0f;
 	AdjustedDir = AdjustedDir.GetSafeNormal(1.0e-6f, LastWallAvoidanceDirection);
+
+	const float LockDuration = std::max(0.0f, WallAvoidanceLockDuration);
+	if (LockDuration > 0.0f)
+	{
+		LockedWallAvoidanceDirection = AdjustedDir;
+		LockedWallNormal = WallNormal;
+		WallAvoidanceLockTimer = LockDuration;
+	}
 
 	return AdjustedDir * InputLength;
 }

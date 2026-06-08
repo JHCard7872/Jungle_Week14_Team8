@@ -1,0 +1,9 @@
+{
+  "PathFileName": "Content/Material/IDCard/id_card_dev_KKW.mat",
+  "ShaderPath": "Shaders/UI/Billboard.hlsl",
+  "RenderPass": "AlphaBlend",
+  "Textures": {
+    "DiffuseTexture": "Content/Sprite/id_card_dev_KKW.png"
+  },
+  "Origin": "Editor"
+}

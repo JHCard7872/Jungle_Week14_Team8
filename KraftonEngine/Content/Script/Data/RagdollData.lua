@@ -24,7 +24,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sonic.png",
 
         mass           = 35.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 4.0,
         attackPower    = 10,     -- placeholder
@@ -40,8 +40,8 @@ return {
         displayName    = "분홍 동글이",
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_kirby.png",
 
-        mass           = 18.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
+        mass           = 40.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
+        baseScore      = 300,    -- 수거당 300점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 3.5,
         attackPower    = 8,      -- placeholder
@@ -57,8 +57,8 @@ return {
         displayName    = "노란 전기쥐",
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Pikachu.png",
 
-        mass           = 12.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
+        mass           = 40.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
+        baseScore      = 300,    -- 수거당 300점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 4.5,
         attackPower    = 18,     -- placeholder
@@ -75,7 +75,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Mario.png",  -- 파일 입수 전
 
         mass           = 65.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 2.5,    -- 카탈로그 표시/밸런스용 부활 속도
         attackPower    = 15,     -- placeholder — 적용 규칙 미정
@@ -92,7 +92,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_bowser.png",  -- 파일 입수 전
 
         mass           = 200.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 2.2,
         attackPower    = 30,     -- placeholder
@@ -109,7 +109,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Eggman.png",  -- 파일 입수 전
 
         mass           = 120.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 2.8,
         attackPower    = 12,     -- placeholder
@@ -126,7 +126,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Link.png",  -- 파일 입수 전
 
         mass           = 60.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 3.8,
         attackPower    = 20,     -- placeholder
@@ -143,7 +143,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_chief.png",  -- 파일 입수 전
 
         mass           = 170.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 3.0,
         attackPower    = 22,     -- placeholder
@@ -157,10 +157,10 @@ return {
     ["adventurer"] = {
         id             = "adventurer",
         displayName    = "모험가",
-        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Lara.png",  -- 파일 입수 전
 
         mass           = 55.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 임시 밸런스
+        baseScore      = 300,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 3.7,
         attackPower    = 16,     -- placeholder
@@ -177,7 +177,7 @@ return {
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
 
         mass           = 25.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
+        baseScore      = 300,    -- 수거당 300점 통일 (임시 밸런스)
         canRevive      = false,
         reviveSpeed    = 0,
         attackPower    = 0,      -- placeholder

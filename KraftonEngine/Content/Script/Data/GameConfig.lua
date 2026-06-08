@@ -7,14 +7,14 @@
 -- ==========================================================================
 
 return {
-    timeLimit      = 90,   -- 한 판 제한시간(초)                       -- 임시 밸런스
+    timeLimit      = 180,  -- 한 판 제한시간(초)                       -- 임시 밸런스
     maxServerLoad  = 100,  -- 게임오버가 되는 서버 부하 한계치           -- 임시 밸런스
-    loadPerRagdoll = 0.5,  -- 방치 래그돌 1마리가 1초당 올리는 부하(%)   -- 임시 밸런스
+    loadPerRagdoll = 0.25,  -- 방치 래그돌 1마리가 1초당 올리는 부하(%)   -- 임시 밸런스
     loadRecoverPerPortalCollect = 25.0, -- 포탈 미션 수거 1회당 낮추는 서버 부하(%) -- 임시 밸런스
 
     spawn = {              -- GOIncRagdollSpawnManager가 사용
         interval       = 10.0,   -- 스폰 간격(초)                         -- 임시 밸런스
-        maxCount       = 15,    -- 최대 동시 스폰 수 (0 이하 = 무제한)     -- 임시 밸런스
+        maxCount       = 10,    -- 최대 동시 스폰 수 (0 이하 = 무제한)     -- 임시 밸런스
         immediateFirst = true,  -- BeginPlay 직후 1마리 즉시 스폰 여부
         areaMinX = -10.0,       -- 스폰 영역(XY 박스) — 맵 확정 시 조정
         areaMaxX =  10.0,
