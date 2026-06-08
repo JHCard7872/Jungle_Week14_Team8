@@ -14,7 +14,7 @@
 namespace
 {
 	const FString IdCardMaterialPath = "Content/Material/IDCard/id_card_dev_KKW.mat";
-	const FString PortalTemplatePath = "Content/Particle/FX_StrangePortal.uasset";
+	const FString PortalTemplatePath = "Content/Particle/FX_RedCard.uasset";
 
 	// Default.Scene의 AActor_0 진자 튜닝값을 구운 것
 	constexpr float BobAmplitude = 1.0f;
