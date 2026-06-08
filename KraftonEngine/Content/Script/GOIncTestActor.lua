@@ -97,6 +97,7 @@ local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
 local beamed_ragdoll_actor = nil
+local id_card_fade_entries = {}
 local grab_fixed_ray = { start = nil, direction = nil, catalog_mass = nil, is_static_mesh = false }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
 
 local RAGDOLL_TAG = "Ragdoll"
@@ -1620,8 +1621,166 @@ local function trigger_hit_rim_on_component(hit_component, should_flash, hit_loc
     end
 end
 
+local function get_id_card_actor_name(actor)
+    if not is_actor_valid(actor) then
+        return ""
+    end
+
+    local actor_name = actor.Name
+    if (actor_name == nil or actor_name == "") and actor.GetName ~= nil then
+        actor_name = actor:GetName()
+    end
+    return actor_name or ""
+end
+
+local function ensure_id_card_session_names()
+    if type(Session.result) ~= "table" then
+        Session.result = {}
+    end
+
+    local names = Session.idCardNames
+    if type(names) ~= "table" then
+        names = Session.result.idCardNames
+    end
+    if type(names) ~= "table" then
+        names = {}
+    end
+
+    Session.idCardNames = names
+    Session.result.idCardNames = names
+    return names
+end
+
+local function record_id_card_name(actor_name)
+    if actor_name == nil or actor_name == "" then
+        return
+    end
+
+    local names = ensure_id_card_session_names()
+    for _, existing_name in ipairs(names) do
+        if existing_name == actor_name then
+            return
+        end
+    end
+    names[#names + 1] = actor_name
+end
+
+local function begin_id_card_fade(actor, hit_component)
+    if not is_actor_valid(actor) or id_card_fade_entries[actor] ~= nil then
+        return
+    end
+
+    local start_scale = actor.Scale
+    if start_scale == nil then
+        start_scale = vec(1.0, 1.0, 1.0)
+    else
+        start_scale = copy_vec(start_scale)
+    end
+
+    id_card_fade_entries[actor] = {
+        actor = actor,
+        actor_name = get_id_card_actor_name(actor),
+        component = hit_component,
+        elapsed = 0.0,
+        start_scale = start_scale,
+    }
+end
+
+local function trigger_id_card_rim(hit, should_flash)
+    local actor = get_hit_actor(hit)
+    local id_card_tag = C.ID_CARD_TAG or "IDCard"
+    if not (is_actor_valid(actor) and actor.HasTag ~= nil and actor:HasTag(id_card_tag)) then
+        return false
+    end
+
+    local hit_component = get_hit_component(hit)
+    if hit_component == nil and actor.GetRootPrimitiveComponent ~= nil then
+        hit_component = actor:GetRootPrimitiveComponent()
+    end
+    if hit_component == nil then
+        begin_id_card_fade(actor, hit_component)
+        return true
+    end
+
+    apply_hit_rim_style(hit_component, C.ID_CARD_HIT_RIM_STYLE or C.HIT_RIM_STYLE_SCAN_LINES)
+    set_hit_rim_color(
+        hit_component,
+        C.ID_CARD_HIT_RIM_COLOR_R or 1.0,
+        C.ID_CARD_HIT_RIM_COLOR_G or 0.95,
+        C.ID_CARD_HIT_RIM_COLOR_B or 0.08,
+        C.ID_CARD_HIT_RIM_COLOR_A or 1.0)
+
+    local duration = C.ID_CARD_HIT_RIM_DURATION or C.HIT_RIM_DURATION
+    local flash_intensity = C.ID_CARD_HIT_RIM_FLASH_INTENSITY or C.HIT_RIM_FLASH_INTENSITY
+    local sustain_intensity = C.ID_CARD_HIT_RIM_SUSTAIN_INTENSITY or C.HIT_RIM_SUSTAIN_INTENSITY
+    local rim_power = C.ID_CARD_HIT_RIM_POWER or C.HIT_RIM_POWER
+    local impact_intensity = C.ID_CARD_HIT_IMPACT_INTENSITY or C.HIT_IMPACT_INTENSITY
+    local hit_location = get_hit_location(hit)
+
+    begin_id_card_fade(actor, hit_component)
+
+    if hit_location ~= nil then
+        if should_flash and hit_component.TriggerHitRimAt ~= nil then
+            hit_component:TriggerHitRimAt(hit_location, duration, flash_intensity, rim_power, sustain_intensity, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
+            return true
+        elseif hit_component.RefreshHitRimAt ~= nil then
+            hit_component:RefreshHitRimAt(hit_location, sustain_intensity, rim_power, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
+            return true
+        end
+    end
+
+    if should_flash and hit_component.TriggerHitRim ~= nil then
+        hit_component:TriggerHitRim(duration, flash_intensity, rim_power, sustain_intensity)
+        if hit_location ~= nil and hit_component.SetHitImpactGlow ~= nil then
+            hit_component:SetHitImpactGlow(hit_location, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
+        end
+    elseif hit_component.RefreshHitRim ~= nil then
+        hit_component:RefreshHitRim(sustain_intensity, rim_power)
+    end
+
+    return true
+end
+
+local function update_id_card_fades(delta_time)
+    local dt = math.max(delta_time or 0.0, 0.0)
+    local delay = math.max(C.ID_CARD_FADE_DELAY or 0.0, 0.0)
+    local fade_duration = math.max(C.ID_CARD_FADE_DURATION or 0.01, 0.01)
+    local min_scale = math.max(C.ID_CARD_FADE_MIN_SCALE or 0.02, 0.0)
+
+    for actor, entry in pairs(id_card_fade_entries) do
+        if not is_actor_valid(actor) then
+            id_card_fade_entries[actor] = nil
+        else
+            entry.elapsed = (entry.elapsed or 0.0) + dt
+            local fade_elapsed = math.max(entry.elapsed - delay, 0.0)
+            local alpha = clamp(fade_elapsed / fade_duration, 0.0, 1.0)
+            local scale_alpha = 1.0 - ease_in_out(alpha)
+            local scale = min_scale + (1.0 - min_scale) * scale_alpha
+            actor.Scale = vec(
+                (entry.start_scale.X or 1.0) * scale,
+                (entry.start_scale.Y or 1.0) * scale,
+                (entry.start_scale.Z or 1.0) * scale)
+
+            if alpha >= 1.0 then
+                record_id_card_name(entry.actor_name)
+                if entry.component ~= nil and entry.component.SetVisibility ~= nil then
+                    entry.component:SetVisibility(false)
+                end
+                if actor.Destroy ~= nil then
+                    actor:Destroy()
+                end
+                id_card_fade_entries[actor] = nil
+            end
+        end
+    end
+end
+
 local function trigger_hit_rim(hit, should_flash)
     if hit == nil or not hit.bHit then
+        return
+    end
+
+    if trigger_id_card_rim(hit, should_flash) then
         return
     end
 
@@ -2860,6 +3019,8 @@ function PrePhysicsTick(delta_time)
 end
 
 function Tick(delta_time)
+    update_id_card_fades(delta_time)
+
     if Session.inputEnabled ~= true then
         slot2_muzzle_fx.Stop()
         update_session_gun_state()
