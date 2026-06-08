@@ -121,7 +121,7 @@
                 <div class="simple_card credits_card">
                     <div id="credits_title" class="simple_card_title">Credits</div>
                     <div id="credits_developers_team" class="simple_line">Developers Team</div>
-                    <img id="credits_developers_logo" src="../../Sprite/logo/dev_concepters.png" />
+                    <img id="credits_developers_logo" src="../../Sprite/logo/devteam_concepters.png" />
                     <img id="credits_id_card_1" class="credits_id_card" src="../../Sprite/id_card_jungle_김연하_with_holder.png" />
                     <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_강건우_with_holder.png" />
                     <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_박준혁_with_holder.png" />

@@ -19,7 +19,7 @@
             <img id="logo_eng_ver2" class="startup_logo_image" src="../../Sprite/logo/eng_ver2.png" />
         </div>
         <div id="logo_dev_concepters_slot" class="startup_logo_slot">
-            <img id="logo_dev_concepters" class="startup_logo_image" src="../../Sprite/logo/dev_concepters.png" />
+            <img id="logo_dev_concepters" class="startup_logo_image" src="../../Sprite/logo/devteam_concepters.png" />
         </div>
 
         <div id="startup_fade_overlay"></div>
