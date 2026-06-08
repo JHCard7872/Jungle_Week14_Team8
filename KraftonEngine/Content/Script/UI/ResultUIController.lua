@@ -152,9 +152,9 @@ local SLIDE_SFX = "sfx_clipboard_sliding"
 local STAMP_IMPACT_SFX = "sfx_stamp_impact"
 
 -- 점수에 따른 랭크 기준
-local RANK_A_SCORE_THRESHOLD = 1400
-local RANK_B_SCORE_THRESHOLD = 900
-local RANK_C_SCORE_THRESHOLD = 450
+local RANK_A_SCORE_THRESHOLD = 2500
+local RANK_B_SCORE_THRESHOLD = 1500
+local RANK_C_SCORE_THRESHOLD = 1000
 
 -- 실제 게임 결과가 없을 때 화면 확인용으로 사용하는 기본값
 local FALLBACK_TOTAL_SCORE = 0
