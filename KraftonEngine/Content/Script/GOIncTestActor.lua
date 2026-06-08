@@ -1684,6 +1684,11 @@ local function begin_id_card_remove_timer(actor, hit_component)
         elapsed = 0.0,
         start_scale = start_scale,
     }
+
+    local popup_sfx_key = C.ID_CARD_POPUP_SFX_KEY or "sfx_popup_info_0"
+    if popup_sfx_key ~= nil and popup_sfx_key ~= "" then
+        play_one_shot_sfx(popup_sfx_key, C.ID_CARD_POPUP_SFX_VOLUME_SCALE or 1.0)
+    end
 end
 
 local function is_id_card_actor(actor)
@@ -1772,6 +1777,7 @@ local function update_id_card_removals(delta_time)
             id_card_remove_entries[actor] = nil
         else
             entry.elapsed = (entry.elapsed or 0.0) + dt
+
             local shrink_elapsed = math.max(entry.elapsed - remove_delay, 0.0)
             local alpha = clamp(shrink_elapsed / shrink_duration, 0.0, 1.0)
 
