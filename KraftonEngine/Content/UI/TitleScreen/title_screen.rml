@@ -1,6 +1,7 @@
 <rml>
 <head>
     <title>Title Screen</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="title_screen.rcss" />
 </head>
 <body>

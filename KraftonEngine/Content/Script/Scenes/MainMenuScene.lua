@@ -9,12 +9,12 @@ local QuestionPopup = require("UI/QuestionPopupUIController")
 local UserSettings = require("Data/UserSettings")
 local ScoreStorage = require("Data/ScoreStorage")
 local Session = require("GameSession")
+local Cursor = require("UI/CursorSpriteUtil")
 
 local UI_ROOT_PATH = "Content/UI/"
 local MAIN_MENU_RELATIVE_PATH = "MainMenu/main_menu.rml"
 local MAIN_MENU_Z_ORDER = 100
-local CURSOR_SIZE = 150
-local VK_LBUTTON = 0x01
+local CURSOR_SIZE = Cursor.GetDefaultSize()
 
 local MAIN_BGM_KEY = "bgm_main_0"
 local UI_CLICK_KEY = "sfx_ui_click"
@@ -93,8 +93,7 @@ local function set_cursor_hidden()
         return
     end
 
-    set_element_display("cursor_normal", false)
-    set_element_display("cursor_click", false)
+    Cursor.Hide(main_menu_widget, "cursor_normal", "cursor_click")
 end
 
 local function start_main_menu_fade_in(duration)
@@ -110,34 +109,12 @@ local function start_main_menu_fade_in(duration)
     set_cursor_hidden()
 end
 
-local function set_cursor_state(is_click)
+local function update_cursor_sprite()
     if main_menu_widget == nil then
         return
     end
 
-    if is_click then
-        main_menu_widget:SetProperty("cursor_normal", "display", "none")
-        main_menu_widget:SetProperty("cursor_click", "display", "block")
-    else
-        main_menu_widget:SetProperty("cursor_normal", "display", "block")
-        main_menu_widget:SetProperty("cursor_click", "display", "none")
-    end
-end
-
-local function update_cursor_position()
-    if main_menu_widget == nil then
-        return
-    end
-
-    local mouse_x = Input.GetMouseX()
-    local mouse_y = Input.GetMouseY()
-    local left = string.format("%dpx", mouse_x - CURSOR_SIZE / 2)
-    local top = string.format("%dpx", mouse_y - CURSOR_SIZE / 2)
-
-    main_menu_widget:SetProperty("cursor_normal", "left", left)
-    main_menu_widget:SetProperty("cursor_normal", "top", top)
-    main_menu_widget:SetProperty("cursor_click", "left", left)
-    main_menu_widget:SetProperty("cursor_click", "top", top)
+    Cursor.Update(main_menu_widget, "cursor_normal", "cursor_click", { size = CURSOR_SIZE })
 end
 
 local function ensure_widget()
@@ -162,8 +139,7 @@ local function ensure_widget()
     set_element_opacity("menu_content", 1.0)
     set_element_display("title_overlay", false)
     set_element_opacity("menu_fade_overlay", 0.0)
-    update_cursor_position()
-    set_cursor_state(Input.GetKey(VK_LBUTTON))
+    update_cursor_sprite()
 
     return main_menu_widget
 end
@@ -264,8 +240,7 @@ local function close_exit_prompt()
     end
 
     main_menu_widget:SetWantsMouse(true)
-    update_cursor_position()
-    set_cursor_state(Input.GetKey(VK_LBUTTON))
+    update_cursor_sprite()
 end
 
 local function open_exit_prompt()
@@ -396,8 +371,7 @@ local function update_main_menu_fade_in(dt)
         main_menu_fade_elapsed = 0.0
         main_menu_fade_duration = 0.0
         main_menu_widget:SetWantsMouse(true)
-        update_cursor_position()
-        set_cursor_state(Input.GetKey(VK_LBUTTON))
+        update_cursor_sprite()
     end
 
     return true
@@ -467,8 +441,7 @@ function Tick(dt)
         return
     end
 
-    update_cursor_position()
-    set_cursor_state(Input.GetKey(VK_LBUTTON))
+    update_cursor_sprite()
 end
 
 function EndPlay()

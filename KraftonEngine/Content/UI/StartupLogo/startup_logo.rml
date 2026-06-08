@@ -1,6 +1,7 @@
 <rml>
 <head>
     <title>Startup Logo</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="startup_logo.rcss" />
 </head>
 <body>

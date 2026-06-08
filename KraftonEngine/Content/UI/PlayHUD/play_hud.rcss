@@ -4,7 +4,7 @@ body {
     height: 100%;
     overflow: hidden;
     background-color: transparent;
-    font-family: NanumGothic;
+
     color: #ffffff;
 }
 
@@ -102,8 +102,7 @@ body {
     width: 116px;
     height: 27px;
     line-height: 27px;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 18px;
     color: #eafaff;
     font-effect: shadow(2px 2px #000000aa);
@@ -134,8 +133,7 @@ body {
     top: 40px;
     width: 170px;
     height: 50px;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 24px;
     line-height: 26px;
     color: #f2fbff;
@@ -156,8 +154,7 @@ body {
     bottom: 0px;
     width: 250px;
     height: 22px;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 19px;
     color: #d7faff;
     font-effect: shadow(2px 2px #000000aa);
@@ -182,8 +179,7 @@ body {
     width: 100%;
     height: 28px;
     line-height: 28px;
-    font-family: ROKAF Sans;
-    font-weight: bold;
+
     font-size: 22px;
     letter-spacing: 3px;
     text-align: center;
@@ -223,8 +219,7 @@ body {
     width: 100%;
     height: 100%;
     line-height: 48px;
-    font-family: ROKAF Sans;
-    font-weight: bold;
+
     font-size: 40px;
     text-align: center;
     color: #ffffff;
@@ -256,8 +251,7 @@ body {
     top: 33px;
     width: 150px;
     height: 42px;
-    font-family: ROKAF sans;
-    font-weight: bold;
+
     font-size: 50px;
     text-align: center;
      letter-spacing: 5px;
@@ -288,8 +282,7 @@ body {
     top: 40px;
     width: 220px;
     height: 40px;
-    font-family: ROKAF sans;
-    font-weight: bold;
+
     font-size: 38px;
     text-align: right;
      letter-spacing: 2px;
@@ -356,8 +349,7 @@ body {
     top: 50px;
     width: 200px;
     height: 24px;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 25px;
     border: 0px;
     font-effect: shadow(2px 2px #000000aa);
@@ -375,8 +367,7 @@ body {
 #hud_target_score {
     top: 125px;
     color: #8cff79;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 25px;
 }
 
@@ -487,8 +478,7 @@ body {
     width: 100%;
     height: 40px;
     margin-bottom: 12px;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 30px;
     color: #efffff;
 }
@@ -542,8 +532,7 @@ body {
     border-color: #9fe7f4;
     border-radius: 10px;
     color: #ffffff;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     font-size: 18px;
     text-align: center;
 }

@@ -1,6 +1,7 @@
 <rml>
 <head>
     <title>Menu Page</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="sub_menu_page.rcss" />
 </head>
 
