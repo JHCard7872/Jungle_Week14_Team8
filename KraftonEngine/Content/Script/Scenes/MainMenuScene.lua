@@ -317,7 +317,7 @@ local function bind_menu_actions(widget)
     end
 
     widget:bind_click("menu_help", on_menu_button_click(function()
-        open_menu_page("controls", "Controls")
+        open_menu_page("controls", "플레이 방법")
     end))
 
     widget:bind_click("menu_option", on_menu_button_click(function()

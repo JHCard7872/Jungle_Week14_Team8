@@ -251,7 +251,108 @@ body {
     pointer-events: none;
 }
 
-/* 조작법/스코어보드/크레딧 임시 내용 */
+/* Controls (플레이 방법) 탭 레이아웃 */
+.controls_tab {
+    position: absolute;
+    top: 0px;
+    width: 48%;
+    height: 80px;
+    margin: 0px;
+    padding: 0px;
+    background-color: #00000060;
+    border-width: 2px;
+    border-color: #ffffff44;
+    border-radius: 14px;
+    text-align: left;
+}
+
+.controls_tab:hover {
+    background-color: #ffffff20;
+}
+
+#controls_tab_game {
+    left: 0px;
+}
+
+#controls_tab_input {
+    right: 0px;
+}
+
+.controls_tab_icon {
+    position: absolute;
+    left: 18px;
+    top: 14px;
+    width: 52px;
+    height: 52px;
+    pointer-events: none;
+}
+
+.controls_tab_label {
+    position: absolute;
+    left: 84px;
+    top: 22px;
+    color: #ffffff;
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 40px;
+    pointer-events: none;
+}
+
+.controls_body {
+    position: absolute;
+    left: 0px;
+    top: 92px;
+    width: 100%;
+    height: 560px;
+    display: none;
+}
+
+/* 입력 장치 선택 버튼 (아이콘만) */
+.controls_device_button {
+    position: absolute;
+    top: 0px;
+    width: 76px;
+    height: 76px;
+    margin: 0px;
+    padding: 0px;
+    background-color: #00000060;
+    border-width: 2px;
+    border-color: #ffffff44;
+    border-radius: 12px;
+}
+
+.controls_device_button:hover {
+    background-color: #ffffff20;
+}
+
+#controls_device_km {
+    left: 0px;
+}
+
+#controls_device_gp {
+    left: 88px;
+}
+
+.controls_device_icon {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 56px;
+    height: 56px;
+    pointer-events: none;
+}
+
+/* how to play 이미지 */
+.controls_how_to_play {
+    position: absolute;
+    left: 0px;
+    top: 88px;
+    width: 100%;
+    height: 460px;
+    display: none;
+}
+
+/* 스코어보드/크레딧 공통 카드 */
 .simple_card {
     position: absolute;
     left: 0px;
@@ -285,21 +386,6 @@ body {
     line-height: 52px;
 }
 
-#controls_line_1 {
-    top: 112px;
-}
-
-#controls_line_2 {
-    top: 170px;
-}
-
-#controls_line_3 {
-    top: 228px;
-}
-
-#controls_line_4 {
-    top: 286px;
-}
 
 .credits_card {
     height: 650px;
@@ -309,7 +395,7 @@ body {
 .credits_id_card {
     position: absolute;
     top: 100px;
-    width: 15\%;
+    width: 15%;
     height: 390px;
 }
 

@@ -15,6 +15,7 @@ local crosshair_screen_y = nil
 local crosshair_hold_rotation = 0.0
 local crosshair_hold_rotation_elapsed = 0.0
 local collect_fire_sfx_elapsed = 0.0
+local collect_fire_sfx_phase = 0.0  -- 반복 재생 시 볼륨 자연스럽게 변동시키는 사인파 위상
 local footstep_sfx_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
@@ -320,6 +321,7 @@ end
 
 local function reset_collect_fire_sfx_timer()
     collect_fire_sfx_elapsed = 0.0
+    collect_fire_sfx_phase = 0.0
     if AudioManager ~= nil and AudioManager.StopManaged ~= nil then
         AudioManager.StopManaged(COLLECT_FIRE_SFX_CHANNEL)
     end
@@ -353,7 +355,10 @@ local function play_collect_fire_sfx()
         return
     end
 
-    local volume = get_sfx_volume(C.COLLECT_FIRE_SFX_VOLUME_SCALE or 1.0)
+    -- 사인파(주기 ~1.5초, 폭 ±25%) + 소량 랜덤 지터로 자연스러운 볼륨 변동
+    local sine_mod = 1.0 + 0.12 * math.sin(collect_fire_sfx_phase)
+    local jitter   = 1.0 + (math.random() - 0.5) * 0.06
+    local volume = get_sfx_volume(C.COLLECT_FIRE_SFX_VOLUME_SCALE or 1.0) * sine_mod * jitter
 
     if AudioManager.PlayManaged ~= nil then
         AudioManager.PlayManaged("sfx_gun_shoot", COLLECT_FIRE_SFX_CHANNEL, volume)
@@ -388,7 +393,11 @@ local function update_collect_fire_sfx(delta_time, should_play)
         return
     end
 
-    collect_fire_sfx_elapsed = collect_fire_sfx_elapsed - math.max(delta_time or 0.0, 0.0)
+    local dt = math.max(delta_time or 0.0, 0.0)
+    -- 사인파 위상 누적 (주기 ~1.5초 = 2π / 1.5 ≈ 4.19 rad/s)
+    collect_fire_sfx_phase = collect_fire_sfx_phase + dt * 8.19
+
+    collect_fire_sfx_elapsed = collect_fire_sfx_elapsed - dt
     if collect_fire_sfx_elapsed > 0.0 then
         return
     end
@@ -2508,11 +2517,23 @@ local function apply_kinematic_movement(delta_time)
 
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
-    weapon_swap_state.is_sprinting = Input.GetKey(C.KEY_SHIFT) and move_dir:Length() > 0.0001
+    -- 총 숙임 이펙트(is_sprinting)는 SHIFT 스프린트와 L3(패드) 대쉬 둘 다에서 동작해야 한다.
+    -- 속도 배수와 분리한다 — L3 대쉬 속도(1.7)는 그대로 두고 숙임 연출만 공유한다.
+    local is_moving = move_dir:Length() > 0.0001
+    local shift_held = Input.GetKey(C.KEY_SHIFT)
+    local dash_held = Input.GetKey(C.PAD_KEY_L3)
+    weapon_swap_state.is_sprinting = (shift_held or dash_held) and is_moving
 
-    if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized()
-            * (C.MOVE_SPEED * (weapon_swap_state.is_sprinting and C.SPRINT_SPEED_MULTIPLIER or 1.0))
+    if is_moving then
+        -- 속도 배수는 입력별로 따로: SHIFT=스프린트, L3=대쉬. 둘 다면 더 큰 쪽만 적용.
+        local speed_multiplier = 1.0
+        if shift_held then
+            speed_multiplier = C.SPRINT_SPEED_MULTIPLIER
+        end
+        if dash_held then
+            speed_multiplier = math.max(speed_multiplier, C.DASH_SPEED_MULTIPLIER)
+        end
+        horizontal_velocity = move_dir:Normalized() * (C.MOVE_SPEED * speed_multiplier)
     end
 
     velocity.X = horizontal_velocity.X

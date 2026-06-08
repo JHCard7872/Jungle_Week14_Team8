@@ -24,6 +24,7 @@
 #include "Editor/UI/Asset/Curve/FloatCurveEditorWidget.h"
 #include "Editor/UI/Asset/CameraShake/CameraShakeEditorWidget.h"
 #include "Editor/UI/Asset/Mesh/MeshEditorWidget.h"
+#include "Editor/UI/Asset/PhysicsAsset/PhysicsAssetViewerWidget.h"
 #include "Editor/UI/Asset/Mesh/StaticMeshEditorWidget.h"
 #include "Editor/UI/Asset/Animation/AnimGraphEditorWidget.h"
 #include "Editor/UI/Asset/Material/MaterialEditorWidget.h"
@@ -100,6 +101,7 @@ void FEditorMainPanel::Create(FWindowsWindow* InWindow, FRenderer& InRenderer, U
 	AssetEditorManager.RegisterEditor<FCameraShakeEditorWidget>();
 	AssetEditorManager.RegisterEditor<FMeshEditorWidget>();
 	AssetEditorManager.RegisterEditor<FStaticMeshEditorWidget>();
+	AssetEditorManager.RegisterEditor<FPhysicsAssetViewerWidget>();
 	AssetEditorManager.RegisterEditor<FAnimGraphEditorWidget>();
 	AssetEditorManager.RegisterEditor<FLuaBlueprintEditorWidget>();
 	AssetEditorManager.RegisterEditor<FMaterialEditorWidget>();

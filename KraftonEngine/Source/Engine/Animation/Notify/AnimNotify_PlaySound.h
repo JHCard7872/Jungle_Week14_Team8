@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Animation/Notify/AnimNotify.h"
 #include "Core/Types/CoreTypes.h"
@@ -24,6 +24,15 @@ public:
 
 	UPROPERTY(Edit, Save, Category="PlaySound", DisplayName="Volume")
 	float Volume = 1.0f;
+
+	UPROPERTY(Edit, Save, Category="PlaySound", DisplayName="Spatialized")
+	bool bSpatialized = false;
+
+	UPROPERTY(Edit, Save, Category="PlaySound", DisplayName="Min Distance")
+	float MinDistance = 3.0f;
+
+	UPROPERTY(Edit, Save, Category="PlaySound", DisplayName="Max Distance")
+	float MaxDistance = 15.0f;
 
 	void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Anim) override;
 };
