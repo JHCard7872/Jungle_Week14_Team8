@@ -17,9 +17,6 @@ return {
         { x = 18.0,  y = -2.0,  z = 0.0 },
     },
 
-    shrinkDuration    = 1.0,  -- 흡수 시 래그돌이 줄어드는 시간(초)
-    shrinkTargetRatio = 0.1,  -- 흡수 끝 스케일 비율 (1.0 → 0.1)
-
     collectFxPath = "Content/Particle/FX_CollectPop.uasset", -- 흡수 파티클(뾰로롱 팍)
     collectFxLife = 1.0,                                     -- 파티클 자동 정리 수명(초)
 }
