@@ -157,7 +157,7 @@ return {
     ["adventurer"] = {
         id             = "adventurer",
         displayName    = "모험가",
-        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Lara.png",  -- 파일 입수 전
 
         mass           = 55.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 300,    -- 임시 밸런스
