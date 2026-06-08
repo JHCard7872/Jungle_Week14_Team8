@@ -48,7 +48,11 @@ local weapon_swap_state = {
     start_angle = 0.0,
     target_angle = 0.0,
     current_angle = 0.0,
-    is_active = false
+    is_active = false,
+    walk_phase = 0.0,
+    walk_weight = 0.0,
+    sprint_weight = 0.0,
+    is_sprinting = false
 }
 local slot2_fire_feedback = {
     recoil_elapsed = 0.0,
@@ -86,7 +90,7 @@ local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
 local beamed_ragdoll_actor = nil
-local grab_fixed_ray = { start = nil, direction = nil }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
+local grab_fixed_ray = { start = nil, direction = nil, catalog_mass = nil }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
 
 local RAGDOLL_TAG = "Ragdoll"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
@@ -737,8 +741,10 @@ local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_lo
     end
 end
 
-local function update_view_weapon()
+local function update_view_weapon(delta_time)
     local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
+    local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(
+        delta_time, player_velocity, weapon_swap_state, vec, clamp, weapon_swap_state.is_sprinting)
 
     if view_weapon_root ~= nil then
         if camera ~= nil then
@@ -754,8 +760,12 @@ local function update_view_weapon()
     end
 
     if weapon_visual_pivot ~= nil then
-        weapon_visual_pivot.RelativeLocation = weapon_offset
-        weapon_visual_pivot.Rotation = copy_vec(base_weapon_visual_rotation)
+        weapon_visual_pivot.RelativeLocation = weapon_offset + walk_offset
+        weapon_visual_pivot.Rotation = vec(
+            base_weapon_visual_rotation.X + walk_rotation.X,
+            base_weapon_visual_rotation.Y + walk_rotation.Y,
+            base_weapon_visual_rotation.Z + walk_rotation.Z
+        )
     end
 
     if weapon_components.swap_pivot ~= nil then
@@ -846,6 +856,8 @@ local function center_physics_raycast(max_distance)
     local primitive_distance = nil
     local physics_distance = distance
     local front_hit_epsilon = C.FRONT_HIT_DISTANCE_EPSILON or 0.05
+    local b_use_grab_raycast = World ~= nil
+        and (World.PhysicsGrabRaycast ~= nil or World.GrabRaycast ~= nil)
     local hit = nil
 
     if World ~= nil and World.PrimitiveRaycast ~= nil then
@@ -855,19 +867,28 @@ local function center_physics_raycast(max_distance)
             if primitive_distance == nil and primitive_hit.Hit ~= nil then
                 primitive_distance = primitive_hit.Hit.Distance
             end
-            if primitive_distance ~= nil and primitive_distance > 0.0 then
+            -- Grab raycasts have their own body filter and must be able to pass
+            -- through a same-actor capsule/front primitive to reach the ragdoll body.
+            if not b_use_grab_raycast and primitive_distance ~= nil and primitive_distance > 0.0 then
                 physics_distance = math.min(distance, primitive_distance + front_hit_epsilon)
             end
         end
     end
 
-    if World ~= nil and World.PhysicsRaycast ~= nil then
-        hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+    if World ~= nil then
+        if World.PhysicsGrabRaycast ~= nil then
+            hit = World.PhysicsGrabRaycast(start, direction, physics_distance, obj)
+        elseif World.GrabRaycast ~= nil then
+            hit = World.GrabRaycast(start, direction, physics_distance, obj)
+        elseif World.PhysicsRaycast ~= nil then
+            hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+        end
     end
 
     if primitive_hit ~= nil and primitive_hit.bHit then
         local physics_hit_distance = nil
         local physics_hit_actor = nil
+        local physics_hit_body = nil
         if hit ~= nil and hit.bHit then
             physics_hit_distance = hit.Distance
             if physics_hit_distance == nil and hit.Hit ~= nil then
@@ -876,6 +897,10 @@ local function center_physics_raycast(max_distance)
             physics_hit_actor = hit.HitActor
             if physics_hit_actor == nil and hit.Hit ~= nil then
                 physics_hit_actor = hit.Hit.HitActor
+            end
+            physics_hit_body = hit.PhysicsBody
+            if physics_hit_body == nil and hit.Hit ~= nil then
+                physics_hit_body = hit.Hit.PhysicsBody
             end
         end
 
@@ -889,8 +914,9 @@ local function center_physics_raycast(max_distance)
             and primitive_distance ~= nil
             and (physics_hit_distance <= primitive_distance
                 or (b_same_front_actor and physics_hit_distance <= primitive_distance + front_hit_epsilon))
+        local b_same_actor_grab_body = b_same_front_actor and physics_hit_body ~= nil
 
-        if hit == nil or not hit.bHit or not b_physics_hit_is_front then
+        if hit == nil or not hit.bHit or (not b_physics_hit_is_front and not b_same_actor_grab_body) then
             hit = primitive_hit
         end
     end
@@ -1090,6 +1116,7 @@ local function clear_grab_state()
     -- 레이 캐시도 반드시 비운다 — 안 비우면 다음 grab의 첫 물리 스텝이 이전 조준으로 당긴다
     grab_fixed_ray.start = nil
     grab_fixed_ray.direction = nil
+    grab_fixed_ray.catalog_mass = nil
 end
 
 local function compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
@@ -1448,6 +1475,18 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
         return false
     end
 
+    local catalog_mass = nil
+    if owner.AsGOIncRagdollPawn ~= nil then
+        local ragdoll_pawn = owner:AsGOIncRagdollPawn()
+        if ragdoll_pawn ~= nil and ragdoll_pawn.GetRagdollId ~= nil then
+            local ragdoll_id = ragdoll_pawn:GetRagdollId()
+            local catalog_entry = type(ragdoll_id) == "string" and RagdollData[ragdoll_id] or nil
+            if catalog_entry ~= nil and type(catalog_entry.mass) == "number" then
+                catalog_mass = catalog_entry.mass
+            end
+        end
+    end
+
     local grab_point = get_hit_point_or_end(hit, fallback_end)
     local grab_distance = compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
     local target_point, resolved_grab_distance = compute_grab_target(start, direction, grab_distance)
@@ -1466,6 +1505,7 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     grabbed_target_velocity = Vector.Zero()
     grab_fixed_ray.start = copy_vec(start)
     grab_fixed_ray.direction = copy_vec(direction)
+    grab_fixed_ray.catalog_mass = catalog_mass
     set_beamed_ragdoll_actor(owner)
 
     body:WakeUp()
@@ -1541,34 +1581,52 @@ local function apply_grab_force(delta_time, start, direction)
         end
     end
 
-    -- 질량 보정 제거: AddForce는 PhysX에서 F = m*a로 처리되므로,
-    -- 여기서 force에 mass를 다시 곱하면 RagdollMassScale 차이가 상쇄된다.
-    -- 따라서 같은 빔 힘을 넣고, 무거운 body는 자연스럽게 덜 가속되게 둔다.
-    local force = error * C.GRAB_SPRING_ACCELERATION
+    local body_mass = 1.0
+    if grabbed_body.GetMass ~= nil then
+        body_mass = math.max(grabbed_body:GetMass(), 0.001)
+    end
+    local mass_grip_scale = C:ComputeGrabMassGripScale(body_mass, grab_fixed_ray.catalog_mass)
+
+    -- 먼저 목표 가속도를 만들고, 마지막에 body_mass를 곱해 AddForce의 F/m 효과를 보정한다.
+    -- mass_grip_scale은 catalog mass가 큰 랙돌일수록 낮아져 "들리긴 하지만 둔한" 느낌을 만든다.
+    local desired_acceleration = error * C.GRAB_SPRING_ACCELERATION
         - linear_velocity * C.GRAB_DAMPING_ACCELERATION
 
     if min_distance_penetration > 0.0 and actor_outward_direction ~= nil then
-        local guard_force = actor_outward_direction * (
+        local guard_strength = (
             min_distance_penetration * C.GRAB_MIN_DISTANCE_GUARD_ACCELERATION
             + blocked_inward_speed * C.GRAB_MIN_DISTANCE_GUARD_DAMPING
         )
-        force = force + guard_force
+        local guard_max = C.GRAB_MIN_DISTANCE_GUARD_MAX_ACCELERATION or 0.0
+        if guard_max > 0.0 then
+            guard_strength = clamp(guard_strength, 0.0, guard_max)
+        else
+            guard_strength = math.max(guard_strength, 0.0)
+        end
+        desired_acceleration = desired_acceleration + actor_outward_direction * guard_strength
     end
 
     if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance <= min_actor_distance then
-        local inward_force = force:Dot(actor_outward_direction)
-        if inward_force < 0.0 then
-            force = force - actor_outward_direction * inward_force
+        local inward_acceleration = desired_acceleration:Dot(actor_outward_direction)
+        if inward_acceleration < 0.0 then
+            desired_acceleration = desired_acceleration - actor_outward_direction * inward_acceleration
         end
     end
 
-    force = clamp_vector_length(force, C.GRAB_MAX_ACCELERATION)
+    desired_acceleration = clamp_vector_length(desired_acceleration, C.GRAB_MAX_ACCELERATION)
+    local force = desired_acceleration * (body_mass * mass_grip_scale)
     grabbed_body:AddForce(force)
 
     local grab_offset = current_grab_world - current_body_center
     if grab_offset:Length() > 1.0 then
-        local torque = grab_offset:Cross(force) * C.GRAB_TORQUE_SCALE
-            - grabbed_body:GetAngularVelocity() * C.GRAB_ANGULAR_DAMPING
+        local angular_velocity = grabbed_body:GetAngularVelocity()
+        if angular_velocity == nil then
+            angular_velocity = Vector.Zero()
+        end
+        local torque = (
+            grab_offset:Cross(desired_acceleration) * C.GRAB_TORQUE_SCALE
+            - angular_velocity * C.GRAB_ANGULAR_DAMPING
+        ) * (body_mass * mass_grip_scale)
         torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE)
         grabbed_body:AddTorque(torque)
     end
@@ -1646,6 +1704,16 @@ local function update_active_grab(delta_time)
     grab_fixed_ray.direction = copy_vec(direction)
     update_grab_visuals()
     return true
+end
+
+local function try_begin_beam_grab_while_held(hit, start, direction, fallback_end)
+    if grabbed_body ~= nil or not fire_held() then
+        return false
+    end
+
+    -- Keep the held beam hot: if a pickable body enters the beam after the
+    -- initial press frame, grab it without requiring the player to click again.
+    return begin_beam_grab(hit, start, direction, fallback_end)
 end
 
 local function update_beam_fade(delta_time)
@@ -2255,9 +2323,11 @@ local function apply_kinematic_movement(delta_time)
 
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
+    weapon_swap_state.is_sprinting = Input.GetKey(C.KEY_SHIFT) and move_dir:Length() > 0.0001
 
     if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized() * C.MOVE_SPEED
+        horizontal_velocity = move_dir:Normalized()
+            * (C.MOVE_SPEED * (weapon_swap_state.is_sprinting and C.SPRINT_SPEED_MULTIPLIER or 1.0))
     end
 
     velocity.X = horizontal_velocity.X
@@ -2351,7 +2421,7 @@ local function apply_fire(delta_time)
     local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
     set_beamed_ragdoll_actor(get_hit_actor(hit))
-    if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
+    if try_begin_beam_grab_while_held(hit, start, direction, fallback_end) then
         return
     end
 
@@ -2395,7 +2465,7 @@ function BeginPlay()
     end
 
     update_camera_view()
-    update_view_weapon()
+    update_view_weapon(0.0)
     set_beam_visible(false)
 
     if camera ~= nil then
@@ -2439,7 +2509,7 @@ function Tick(delta_time)
     select_active_beam_particle()
     slot2_fire_feedback.Refresh(delta_time)
     update_camera_view()
-    update_view_weapon()
+    update_view_weapon(delta_time)
 end
 
 function PostCameraTick(delta_time)

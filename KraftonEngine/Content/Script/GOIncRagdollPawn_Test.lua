@@ -23,13 +23,13 @@ local BEAM_SHOCK_INTERVAL = 0.05
 local BEAM_SHOCK_IMPULSE_STRENGTH = 0.00
 local RED_BEAM_SHOCK_DURATION = 1.0
 local RED_BEAM_SHOCK_INTERVAL = 0.05
-local RED_BEAM_SHOCK_IMPULSE_STRENGTH = 0.08
-local RED_BEAM_JITTER_LINEAR_STRENGTH = 0.015
-local RED_BEAM_JITTER_TORQUE_STRENGTH = 0.55
-local RED_BEAM_JITTER_ROOT_SCALE = 0.08
-local RED_BEAM_JITTER_MAX_LINEAR_SPEED = 0.30
-local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS = 18.00
-local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE = 1.60
+local RED_BEAM_SHOCK_IMPULSE_STRENGTH = 1.40
+local RED_BEAM_JITTER_LINEAR_STRENGTH = 0.40
+local RED_BEAM_JITTER_TORQUE_STRENGTH = 13.00
+local RED_BEAM_JITTER_ROOT_SCALE = 0.75
+local RED_BEAM_JITTER_MAX_LINEAR_SPEED = 7.00
+local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS = 14.00
+local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE = 1.20
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -373,6 +373,7 @@ local function tick_red_beam_shock(dt)
     end
 
     redBeamShockElapsed = 0.0
+    apply_red_beam_shock_impulse()
     apply_red_beam_jitter_impulse()
 
     if redBeamShockRemaining <= 0.0 then
@@ -1087,6 +1088,7 @@ function OnRedBeamHit(reason)
     set_revive_trigger_enabled(false)
 
     start_red_beam_shock()
+    apply_red_beam_shock_impulse()
     apply_red_beam_jitter_impulse()
     return true
 end
