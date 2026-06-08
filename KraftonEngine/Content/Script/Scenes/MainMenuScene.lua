@@ -414,15 +414,8 @@ function BeginPlay()
         start_main_menu_fade_in(fade_in_duration)
     end
 
-    Engine.SetOnEscape(function()
-        if sub_page_open then
-            close_menu_page()
-        elseif exit_prompt_open then
-            close_exit_prompt()
-        else
-            open_exit_prompt()
-        end
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응. 게임 종료는 '게임 종료하기' 버튼으로만.
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)

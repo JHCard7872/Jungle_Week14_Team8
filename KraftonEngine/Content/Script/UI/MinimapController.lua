@@ -26,7 +26,7 @@ local MINIMAP_PX_PER_WORLD = 5.5    -- ★튜닝: world 1유닛당 미니맵 원
 local IMG_W, IMG_H = 1190, 1322     -- play_hud_minimap.png 원본 해상도
 local MAP_W, MAP_H = 225, 250       -- #hud_minimap_container 크기(px). ★종횡비를 이미지(1190:1322≈0.90)에 맞춰야 왜곡·넘침이 없다. rcss 값과 일치 필수
 local RAGDOLL_POOL = 15             -- 미리 깔아둔 래그돌 마커 개수. play_hud.rml 마커 수와 반드시 일치
-local TRASHBOX_POOL = 5            -- 미리 깔아둔 수거함 마커 개수. play_hud.rml 마커 수와 반드시 일치
+local TRASHBOX_POOL = 4            -- 미리 깔아둔 수거함 마커 개수. play_hud.rml 마커 수와 반드시 일치
 
 -- 엔티티 식별용 태그/이름. 실제 스폰되면 이 태그로 찾는다(다르면 여기만 고치면 됨).
 local TAG_PLAYER = "Player"
