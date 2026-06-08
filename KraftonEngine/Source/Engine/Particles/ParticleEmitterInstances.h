@@ -37,6 +37,10 @@ struct FParticleEmitterInstance
     UParticleEmitter* SpriteTemplate = nullptr;
     UParticleSystemComponent* Component = nullptr;
 
+    // EventGenerator 모듈 캐시 — InitParameters에서 LOD0 모듈을 스캔해 채운다 (없으면 nullptr).
+    // 스폰 루프/자연사 스윕이 매 입자마다 모듈 리스트를 뒤지지 않게 하기 위한 캐시.
+    class UParticleModuleEventGenerator* EventGeneratorModule = nullptr;
+
     UParticleLODLevel* CurrentLODLevel = nullptr;
     int32 CurrentLODLevelIndex = 0;
 

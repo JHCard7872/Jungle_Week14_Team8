@@ -16,6 +16,7 @@
 #include "Particles/Beam/ParticleModuleBeamNoise.h"
 #include "Particles/Beam/ParticleModuleBeamModifier.h"
 #include "Particles/Trail/ParticleModuleTrailSource.h"
+#include "Particles/Event/ParticleModuleEventGenerator.h"
 #include "Particles/Lifetime/ParticleModuleLifetime.h"
 #include "Particles/Material/ParticleModuleMeshMaterial.h"
 
@@ -191,6 +192,18 @@ void FParticleEmitterInstance::InitParameters(
 	CurrentLODLevel = SpriteTemplate->GetLODLevel(0);
 	assert(CurrentLODLevel != nullptr);
 	assert(CurrentLODLevel->RequiredModule != nullptr);
+
+	// EventGenerator 캐시 — 스폰/자연사 발화 지점이 매 입자마다 모듈 리스트를 뒤지지 않게 한다
+	EventGeneratorModule = nullptr;
+	for (UParticleModule* Module : CurrentLODLevel->Modules)
+	{
+		UParticleModuleEventGenerator* Generator = Cast<UParticleModuleEventGenerator>(Module);
+		if (Generator && Generator->bEnabled)
+		{
+			EventGeneratorModule = Generator;
+			break;
+		}
+	}
 
 	TypeDataOffset = SpriteTemplate->TypeDataOffset;
 	TypeDataInstanceOffset = SpriteTemplate->TypeDataInstanceOffset;
@@ -1740,7 +1753,18 @@ void FParticleEmitterInstance::SpawnParticles(
 					continue;
 				}
 
-				// KraftonEngine does not currently have UE's EventGenerator dispatch path.
+				// EventGenerator 스폰 이벤트 — 같은 컴포넌트의 EventReceiverSpawn이 소비한다
+				if (EventGeneratorModule && EventGeneratorModule->bGenerateSpawnEvents && Component)
+				{
+					FParticleEventData SpawnEvent;
+					SpawnEvent.Type = static_cast<int32>(EParticleEventType::Spawn);
+					SpawnEvent.EventName = FName(EventGeneratorModule->EventName);
+					SpawnEvent.EmitterTime = EmitterTime;
+					SpawnEvent.Location = Particle->Location;
+					SpawnEvent.Velocity = Particle->Velocity;
+					Component->ReportParticleEvent(SpawnEvent);
+				}
+
 				if (EventPayload && EventPayload->bSpawnEventsPresent)
 				{
 					++EventPayload->SpawnTrackingCount;
@@ -1979,6 +2003,18 @@ void FParticleEmitterInstance::KillParticles()
 
 		if (Particle.RelativeTime > 1.0f)
 		{
+			// EventGenerator 자연사 이벤트 — 입자가 사라지는 위치에서 발화
+			if (EventGeneratorModule && EventGeneratorModule->bGenerateDeathEvents && Component)
+			{
+				FParticleEventData DeathEvent;
+				DeathEvent.Type = static_cast<int32>(EParticleEventType::Death);
+				DeathEvent.EventName = FName(EventGeneratorModule->EventName);
+				DeathEvent.EmitterTime = EmitterTime;
+				DeathEvent.Location = Particle.Location;
+				DeathEvent.Velocity = Particle.Velocity;
+				Component->ReportParticleEvent(DeathEvent);
+			}
+
 			ParticleIndices[i] = ParticleIndices[ActiveParticles - 1];
 			ParticleIndices[ActiveParticles - 1] = static_cast<uint16>(CurrentIndex);
 			--ActiveParticles;

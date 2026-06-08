@@ -1,0 +1,14 @@
+<rml>
+<head>
+    <title>Title Screen</title>
+    <link type="text/rcss" href="title_screen.rcss" />
+</head>
+<body>
+    <div id="title_root">
+        <img id="title_background" src="../../Sprite/title_background.png" />
+        <div id="press_any_button">PRESS ANY BUTTON TO START</div>
+        <button id="title_click_area"></button>
+        <div id="title_fade_overlay"></div>
+    </div>
+</body>
+</rml>

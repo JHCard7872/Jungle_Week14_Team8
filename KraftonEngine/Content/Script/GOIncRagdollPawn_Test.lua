@@ -11,7 +11,9 @@ local STATE_DEAD = "DeadRagdoll"
 local STATE_REVIVING = "Reviving"
 local STATE_ALIVE = "AliveFlee"
 local STATE_FLEE_STOPPING = "FleeStopping"
+local HUD = require("UI/HUDController")
 local UserSettings = require("Data/UserSettings")
+local RagdollData = require("Data/RagdollData")
 
 local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
@@ -94,6 +96,7 @@ local bRuntimeConfigCached = false
 local bCanRevive = true
 local canReviveHere = true
 local aliveCapsuleHalfHeight = 1.0
+local bRagdollCatalogMassApplied = false
 
 local GROUND_TRACE_UP = 50.0
 local GROUND_TRACE_DOWN = 300.0
@@ -204,6 +207,7 @@ local function play_revive_sfx()
     end
 
     AudioManager.Play("sfx_revive", volume)
+    HUD.QueuePopup("REVIVED")
 end
 
 local function apply_beam_shock_impulse()
@@ -482,6 +486,70 @@ local function get_pawn_bool(getterName, fallback)
     return fallback
 end
 
+local function get_catalog_mass_for_ragdoll_id(ragdollId)
+    if RagdollData == nil or ragdollId == nil then
+        return nil
+    end
+
+    local data = RagdollData[ragdollId]
+    if data == nil or type(data.mass) ~= "number" then
+        return nil
+    end
+
+    if data.mass <= 0.001 then
+        return nil
+    end
+
+    return data.mass
+end
+
+local function apply_ragdoll_catalog_mass()
+    if bRagdollCatalogMassApplied then
+        return
+    end
+
+    if mesh == nil then
+        return
+    end
+
+    local catalogMass = get_catalog_mass_for_ragdoll_id(RAGDOLL_ID)
+    if catalogMass == nil then
+        print("[GOIncRagdollPawn_Test] Missing Data/RagdollData mass for " .. tostring(RAGDOLL_ID) .. ". Using PhysicsAsset default mass.")
+        bRagdollCatalogMassApplied = true
+        return
+    end
+
+    if mesh.SetRagdollTotalMass ~= nil then
+        mesh:SetRagdollTotalMass(catalogMass)
+        bRagdollCatalogMassApplied = true
+
+        if mesh.GetRagdollTotalMass ~= nil then
+            print(
+                "[GOIncRagdollPawn_Test] Applied catalog ragdoll mass. id=" .. tostring(RAGDOLL_ID) ..
+                " / requested=" .. tostring(catalogMass) ..
+                " / actual=" .. tostring(mesh:GetRagdollTotalMass())
+            )
+        else
+            print(
+                "[GOIncRagdollPawn_Test] Applied catalog ragdoll mass. id=" .. tostring(RAGDOLL_ID) ..
+                " / requested=" .. tostring(catalogMass)
+            )
+        end
+        return
+    end
+
+    -- Old-engine fallback: this is not exact kg. It only scales the PhysicsAsset mass.
+    if mesh.SetRagdollMassScale ~= nil then
+        mesh:SetRagdollMassScale(catalogMass)
+        bRagdollCatalogMassApplied = true
+        print("[GOIncRagdollPawn_Test] SetRagdollTotalMass binding missing. Applied catalog mass as MassScale fallback. id=" .. tostring(RAGDOLL_ID))
+        return
+    end
+
+    print("[GOIncRagdollPawn_Test] Missing ragdoll mass binding. Data/RagdollData mass not applied. id=" .. tostring(RAGDOLL_ID))
+    bRagdollCatalogMassApplied = true
+end
+
 local function cache_runtime_config_from_pawn()
     if bRuntimeConfigCached then
         return
@@ -489,9 +557,11 @@ local function cache_runtime_config_from_pawn()
 
     RAGDOLL_ID = resolve_ragdoll_id()
 
-    -- Runtime behavior values used by this Lua state machine.
-    -- Do not read Data.RagdollData here. That file is now a UI / spawn / score catalog.
-    -- The runtime owner is the C++ GOIncRagdollPawn CharacterConfig.
+    -- Most runtime behavior values still come from the C++ GOIncRagdollPawn CharacterConfig.
+    -- Mass is the exception: GOInc catalog balancing owns it so every spawned character
+    -- can get the same total ragdoll mass regardless of PhysicsAsset body-count/shape differences.
+    apply_ragdoll_catalog_mass()
+
     bCanRevive = get_pawn_bool("CanRevive", bCanRevive)
     aliveCapsuleHalfHeight = get_pawn_number("GetAliveCapsuleHalfHeight", aliveCapsuleHalfHeight)
 
@@ -1158,10 +1228,6 @@ function EnterAliveFlee()
 
     finish_revive_mesh_relative_location_blend()
     set_flee_animation_play_rate(1.0)
-
-    if pawn ~= nil and pawn.ShowAliveExclamation ~= nil then
-        pawn:ShowAliveExclamation(1.5)
-    end
 
     -- Reviving yaw blend의 마지막 값을 확정해 첫 AliveFlee Tick에서 회전이 튀지 않게 한다.
     obj.Rotation = Vector.new(0.0, 0.0, reviveTargetYaw)

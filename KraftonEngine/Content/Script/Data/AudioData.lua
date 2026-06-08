@@ -38,6 +38,14 @@ return {
     sfx_hit = "SfxHit.mp3",
     sfx_ui_click = "SfxUiClick.mp3",
     sfx_ui_hover = "SfxUiHover.mp3",
-    sfx_game_over = "SfxTitleGameOver.mp3",    -- TODO: 임시 매핑 — SfxGameOver.mp3 입수 시 교체
+    sfx_game_start = "SfxGameStart.mp3",
+    sfx_countdown_321_go = "SfxCountdown321Go.mp3",
+    sfx_game_over = "SfxGameOver.mp3",
     sfx_revive = "SfxRevivedRagdoll.mp3",
+    sfx_popup_alert = "SfxPlayPopupAlert.mp3",
+    sfx_popup_info = "SfxPlayPopupInfo.mp3",
+    sfx_popup_success = "SfxPlayPopupSuccess.mp3",
+    sfx_popup_warning = "SfxPlayPopupWarning.mp3",
+    sfx_time_passing = "SfxTimePassing.mp3",
+    sfx_10_seconds = "Sfx10seconds.mp3",
 }

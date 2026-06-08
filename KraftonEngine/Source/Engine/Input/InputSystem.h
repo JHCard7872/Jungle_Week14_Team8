@@ -1,5 +1,6 @@
 #pragma once
 #include <windows.h>
+#include <string>
 #include "Core/Singleton.h"
 
 struct FGuiInputState
@@ -157,6 +158,11 @@ public:
     bool IsGuiUsingKeyboard() const { return GuiState.bUsingKeyboard; }
     bool IsGuiUsingTextInput() const { return GuiState.bUsingTextInput; }
 
+    // WM_CHAR 로 들어온 문자 — UIManager::ProcessInput 이 매 프레임 소비 후 Clear.
+    void AddTextChar(wchar_t ch) { if (ch >= 0x20 || ch == 0x08) PendingTextInput += ch; }
+    const std::wstring& GetPendingTextInput() const { return PendingTextInput; }
+    void ClearPendingTextInput() { PendingTextInput.clear(); }
+
 private:
     bool CurrentStates[256] = { false };
     bool PrevStates[256] = { false };
@@ -198,6 +204,8 @@ private:
 
     // Window handle for focus check
     HWND OwnerHWnd = nullptr;
+
+    std::wstring PendingTextInput;
 
     // GUI InputState
     FGuiInputState GuiState{};

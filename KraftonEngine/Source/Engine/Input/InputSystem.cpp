@@ -179,6 +179,7 @@ void InputSystem::ResetTransientState()
     ResetDragState();
     ResetMouseDelta();
     ResetWheelDelta();
+    PendingTextInput.clear();
     UpdateCurrentSnapshot();
 }
 

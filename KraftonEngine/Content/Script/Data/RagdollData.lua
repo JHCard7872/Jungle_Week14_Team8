@@ -1,15 +1,16 @@
 -- ============================================================================
--- GOInc RagdollData — UI / spawn / score catalog only
+-- GOInc RagdollData — UI / spawn / score / ragdoll mass catalog
 --
 -- [역할]
 --   - UI 표시용 이름, Reference Pose 이미지, 무게, 점수, 부활 가능 여부를 제공한다.
+--   - mass는 GOIncRagdollPawn_Test.lua가 SkeletalMesh ragdoll 전체 질량으로 적용한다.
 --   - GOIncRagdollSpawnManager가 스폰 후보(id / pawnClass / spawnWeight)를 읽는다.
 --
 -- [중요]
 --   - SkeletalMesh, PhysicsAsset, Animation, Capsule, Movement, Flee 세부값은 여기서 관리하지 않는다.
 --   - 실제 런타임 Actor 구성값은 각 GOInc Ragdoll Pawn C++ 클래스가 가진다.
---   - 이 파일의 mass / reviveSpeed는 카탈로그 표시·밸런스용 값이며,
---     현재 물리 Body mass나 C++ movement speed를 직접 덮어쓰지 않는다.
+--   - mass는 실제 ragdoll 전체 질량으로도 쓰인다.
+--   - reviveSpeed는 아직 카탈로그 표시·밸런스용 값이며 C++ movement speed를 직접 덮어쓰지 않는다.
 --
 -- [사용법]
 --   local Ragdolls = require("Data.RagdollData")
@@ -20,9 +21,9 @@ return {
     ["blue-speedster"] = {
         id             = "blue-speedster",
         displayName    = "파란 고슴도치",
-        referenceImage = "Content/UI/Images/blue_speedster.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sonic.png",
 
-        mass           = 8.0,    -- 카탈로그 표시/밸런스용 무게
+        mass           = 35.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 4.0,
@@ -37,9 +38,9 @@ return {
     ["pink-round"] = {
         id             = "pink-round",
         displayName    = "분홍 동글이",
-        referenceImage = "Content/UI/Images/pink_round.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_kirby.png",
 
-        mass           = 6.5,    -- 카탈로그 표시/밸런스용 무게
+        mass           = 18.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 3.5,
@@ -54,16 +55,16 @@ return {
     ["brown-gorilla"] = {
         id             = "brown-gorilla",
         displayName    = "갈색 고릴라",
-        referenceImage = "Content/UI/Images/brown_gorilla.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
 
-        mass           = 20.0,   -- 카탈로그 표시/밸런스용 무게
+        mass           = 160.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 2.0,
         attackPower    = 25,     -- placeholder
 
         pawnClass      = "AGOIncDonkeyKongRagdollPawn",
-        canSpawn       = false,
+        canSpawn       = true,
         spawnWeight    = 1,
         uiOrder        = 30,
     },
@@ -71,9 +72,9 @@ return {
     ["yellow-mouse"] = {
         id             = "yellow-mouse",
         displayName    = "노란 전기쥐",
-        referenceImage = "Content/UI/Images/yellow_mouse.png",
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Pikachu.png",
 
-        mass           = 5.5,    -- 카탈로그 표시/밸런스용 무게
+        mass           = 12.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 4.5,
@@ -88,9 +89,9 @@ return {
     ["red-plumber"] = {
         id             = "red-plumber",
         displayName    = "빨간 배관공",
-        referenceImage = "Content/UI/Images/red_plumber.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Mario.png",  -- 파일 입수 전
 
-        mass           = 12.5,   -- 카탈로그 표시/밸런스용 무게
+        mass           = 65.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 2.5,    -- 카탈로그 표시/밸런스용 부활 속도
@@ -105,11 +106,11 @@ return {
     ["spiked-king"] = {
         id             = "spiked-king",
         displayName    = "가시 대왕",
-        referenceImage = "Content/UI/Images/spiked_king.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_bowser.png",  -- 파일 입수 전
 
-        mass           = 24.0,   -- 카탈로그 표시/밸런스용 무게
+        mass           = 200.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
-        canRevive      = false,
+        canRevive      = true,
         reviveSpeed    = 2.2,
         attackPower    = 30,     -- placeholder
 
@@ -122,9 +123,9 @@ return {
     ["egg-scientist"] = {
         id             = "egg-scientist",
         displayName    = "에그 과학자",
-        referenceImage = "Content/UI/Images/egg_scientist.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Eggman.png",  -- 파일 입수 전
 
-        mass           = 14.0,   -- 카탈로그 표시/밸런스용 무게
+        mass           = 120.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 2.8,
@@ -139,9 +140,9 @@ return {
     ["green-swordsman"] = {
         id             = "green-swordsman",
         displayName    = "초록 검사",
-        referenceImage = "Content/UI/Images/green_swordsman.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Link.png",  -- 파일 입수 전
 
-        mass           = 11.5,   -- 카탈로그 표시/밸런스용 무게
+        mass           = 60.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 3.8,
@@ -156,9 +157,9 @@ return {
     ["space-chief"] = {
         id             = "space-chief",
         displayName    = "스페이스 치프",
-        referenceImage = "Content/UI/Images/space_chief.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_chief.png",  -- 파일 입수 전
 
-        mass           = 16.5,   -- 카탈로그 표시/밸런스용 무게
+        mass           = 170.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 3.0,
@@ -173,9 +174,9 @@ return {
     ["adventurer"] = {
         id             = "adventurer",
         displayName    = "모험가",
-        referenceImage = "Content/UI/Images/adventurer.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
 
-        mass           = 9.5,    -- 카탈로그 표시/밸런스용 무게
+        mass           = 55.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 임시 밸런스
         canRevive      = true,
         reviveSpeed    = 3.7,
@@ -190,9 +191,9 @@ return {
     ["green-slime"] = {
         id             = "green-slime",
         displayName    = "초록 슬라임",
-        referenceImage = "Content/UI/Images/green_slime.png",  -- 파일 입수 전
+        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",  -- 파일 입수 전
 
-        mass           = 6.0,    -- 카탈로그 표시/밸런스용 무게
+        mass           = 25.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
         canRevive      = false,
         reviveSpeed    = 0,

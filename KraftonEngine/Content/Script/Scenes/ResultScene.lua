@@ -9,6 +9,22 @@ local save_prompt_open = false
 local action_prompt_open = false
 local score_saved = false
 local sample_name_index = 0
+local pending_scene_name = nil
+
+local function request_scene_load(scene_name)
+    if pending_scene_name ~= nil then
+        return
+    end
+
+    Session.sceneTransition = Session.sceneTransition or {}
+    if scene_name == "Title" then
+        Session.sceneTransition.titleFadeInDuration = 1.5
+    else
+        Session.sceneTransition.titleFadeInDuration = 0.0
+    end
+
+    pending_scene_name = scene_name
+end
 
 local function is_any_button_pressed()
     for vk = 1, 255 do
@@ -20,7 +36,14 @@ local function is_any_button_pressed()
     return false
 end
 
-local function build_sample_nickname()
+local function build_score_nickname()
+    local employee = Session.employee or {}
+    local name = tostring(employee.name or Session.playerName or _G.PlayerName or "")
+
+    if name ~= "" and name ~= "Employee" then
+        return name
+    end
+
     sample_name_index = sample_name_index + 1
     local seed = os.time ~= nil and os.time() or 0
     return "SAMPLE" .. tostring(seed % 100000) .. "_" .. tostring(sample_name_index)
@@ -33,8 +56,8 @@ local function show_action_prompt()
     waiting_for_next = false
 
     ResultUI.ShowActionButtons(
-        function() Engine.LoadScene("Play") end,
-        function() Engine.LoadScene("Title") end
+        function() request_scene_load("Play") end,
+        function() request_scene_load("Title") end
     )
 end
 
@@ -45,7 +68,7 @@ local function save_current_score()
 
     local result = ResultUI.GetResultData()
     local ok = ScoreStorage.Append({
-        nickname = build_sample_nickname(),
+        nickname = build_score_nickname(),
         totalScore = result.totalScore,
         collectedCount = result.collectedCount,
         savedAt = os.time ~= nil and os.time() or 0,
@@ -95,6 +118,7 @@ function BeginPlay()
     save_prompt_open = false
     action_prompt_open = false
     score_saved = false
+    pending_scene_name = nil
 
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
@@ -110,12 +134,19 @@ function BeginPlay()
         if ResultUI.IsSequenceFinished() and not save_prompt_open and not action_prompt_open then
             show_save_prompt()
         elseif action_prompt_open then
-            Engine.LoadScene("Title")
+            request_scene_load("Title")
         end
     end)
 end
 
 function Tick(dt)
+    if pending_scene_name ~= nil then
+        local scene_name = pending_scene_name
+        pending_scene_name = nil
+        Engine.LoadScene(scene_name)
+        return
+    end
+
     ResultUI.Update(dt)
 
     if ResultUI.IsSequenceFinished() and not waiting_for_next and not save_prompt_open and not action_prompt_open then
@@ -137,4 +168,5 @@ function EndPlay()
     waiting_for_next = false
     save_prompt_open = false
     action_prompt_open = false
+    pending_scene_name = nil
 end

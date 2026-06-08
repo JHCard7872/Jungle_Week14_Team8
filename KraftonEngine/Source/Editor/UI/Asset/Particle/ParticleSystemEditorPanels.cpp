@@ -1312,6 +1312,124 @@ void FParticleSystemEditorWidget::RenderEmittersPanel(float Width, float Height)
                             }
                         );
                         AddItem(
+                            "Rotation (Sprite)",
+                            !bMeshType && !bBeamType && !bRibbonType,
+                            HasModuleOfType<UParticleModuleRotation>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleRotation>(L);
+                                N->bEnabled     = true;
+                                N->RotationMin  = 0.0f;
+                                N->RotationMax  = 1.0f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Rotation Rate (Sprite)",
+                            !bMeshType && !bBeamType && !bRibbonType,
+                            HasModuleOfType<UParticleModuleRotationRate>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleRotationRate>(L);
+                                N->bEnabled         = true;
+                                N->RotationRateMin  = 0.1f;
+                                N->RotationRateMax  = 0.5f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Vortex Rotation",
+                            !bBeamType && !bRibbonType,
+                            HasModuleOfType<UParticleModuleVortexRotation>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleVortexRotation>(L);
+                                N->bEnabled          = true;
+                                N->TurnsPerSecondMin = 0.5f;
+                                N->TurnsPerSecondMax = 1.0f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Location Ring",
+                            true,
+                            HasModuleOfType<UParticleModuleLocationRing>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleLocationRing>(L);
+                                N->bEnabled   = true;
+                                N->RadiusMin  = 0.9f;
+                                N->RadiusMax  = 1.1f;
+                                N->AxisNormal = 0;
+                                N->Thickness  = 0.05f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Acceleration",
+                            true,
+                            HasModuleOfType<UParticleModuleAcceleration>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleAcceleration>(L);
+                                N->bEnabled     = true;
+                                N->Acceleration = FVector(0.0f, 0.0f, -9.8f);
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Attractor Point",
+                            true,
+                            HasModuleOfType<UParticleModuleAttractorPoint>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleAttractorPoint>(L);
+                                N->bEnabled   = true;
+                                N->Strength   = 10.0f;
+                                N->KillRadius = 0.05f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Size Over Life",
+                            true,
+                            HasModuleOfType<UParticleModuleSizeOverLife>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleSizeOverLife>(L);
+                                N->bEnabled   = true;
+                                N->ScaleStart = 1.0f;
+                                N->ScaleEnd   = 0.1f;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Event Generator",
+                            true,
+                            HasModuleOfType<UParticleModuleEventGenerator>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleEventGenerator>(L);
+                                N->bEnabled             = true;
+                                N->bGenerateDeathEvents = true;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
+                            "Event Receiver Spawn",
+                            true,
+                            HasModuleOfType<UParticleModuleEventReceiverSpawn>(LOD0),
+                            [](UParticleLODLevel* L)
+                            {
+                                auto* N = UObjectManager::Get().CreateObject<UParticleModuleEventReceiverSpawn>(L);
+                                N->bEnabled          = true;
+                                N->bAcceptDeathEvents = true;
+                                N->SpawnCountMin     = 1;
+                                N->SpawnCountMax     = 2;
+                                return static_cast<UParticleModule*>(N);
+                            }
+                        );
+                        AddItem(
                             "Collision",
                             true,
                             HasModuleOfType<UParticleModuleCollision>(LOD0),
@@ -1920,6 +2038,16 @@ void FParticleSystemEditorWidget::RenderModuleProperties(UParticleModule* Module
             DuplicateMaterialForRequired(Required);
             bMaterialDirty = true;
         }
+
+        // 실린드리컬(빛기둥)만 노출 — 나머지 정렬 모드는 렌더러 미구현이라 기본 빌보드로 묶는다
+        {
+            int32 Align = (Required->ScreenAlignment == PSA_CylindricalZ) ? 1 : 0;
+            if (ImGui::Combo("Screen Alignment", &Align, "Camera Facing (Default)\0Cylindrical Z (Pillar)\0"))
+            {
+                Required->ScreenAlignment = (Align == 1) ? PSA_CylindricalZ : PSA_FacingCameraPosition;
+                bChanged = true;
+            }
+        }
         UParticleEmitter* OwnerEmitter = nullptr;
         if (UParticleSystem* ParticleSystem = GetParticleSystem())
         {
@@ -2091,11 +2219,178 @@ void FParticleSystemEditorWidget::RenderModuleProperties(UParticleModule* Module
     }
     else if (UParticleModuleEventGenerator* Generator = Cast<UParticleModuleEventGenerator>(Module))
     {
-        (void)Generator;
         ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-        if (ImGui::CollapsingHeader("Event"))
+        if (ImGui::CollapsingHeader("Event Generator"))
         {
-            ImGui::TextDisabled("Event Generator UI is hidden until dispatch path is fully connected.");
+            bool bSpawnEv = Generator->bGenerateSpawnEvents;
+            if (ImGui::Checkbox("Generate Spawn Events", &bSpawnEv)) { Generator->bGenerateSpawnEvents = bSpawnEv; bChanged = true; }
+            bool bDeathEv = Generator->bGenerateDeathEvents;
+            if (ImGui::Checkbox("Generate Death Events", &bDeathEv)) { Generator->bGenerateDeathEvents = bDeathEv; bChanged = true; }
+
+            // 이름 버퍼는 선택 모듈이 바뀔 때만 동기화 (EmitterName 패턴)
+            static UParticleModule* GenBufOwner = nullptr;
+            static char GenNameBuf[64] = {};
+            if (GenBufOwner != Module)
+            {
+                const size_t Len = (std::min)(Generator->EventName.size(), sizeof(GenNameBuf) - 1);
+                std::memcpy(GenNameBuf, Generator->EventName.c_str(), Len);
+                GenNameBuf[Len] = '\0';
+                GenBufOwner = Module;
+            }
+            if (ImGui::InputText("Event Name", GenNameBuf, sizeof(GenNameBuf)))
+            {
+                Generator->EventName = GenNameBuf;
+                bChanged = true;
+            }
+        }
+    }
+    else if (UParticleModuleEventReceiverSpawn* Receiver = Cast<UParticleModuleEventReceiverSpawn>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Event Receiver Spawn"))
+        {
+            bool bSpawnEv = Receiver->bAcceptSpawnEvents;
+            if (ImGui::Checkbox("Accept Spawn Events", &bSpawnEv)) { Receiver->bAcceptSpawnEvents = bSpawnEv; bChanged = true; }
+            bool bDeathEv = Receiver->bAcceptDeathEvents;
+            if (ImGui::Checkbox("Accept Death Events", &bDeathEv)) { Receiver->bAcceptDeathEvents = bDeathEv; bChanged = true; }
+
+            static UParticleModule* RcvBufOwner = nullptr;
+            static char RcvNameBuf[64] = {};
+            if (RcvBufOwner != Module)
+            {
+                const size_t Len = (std::min)(Receiver->EventNameFilter.size(), sizeof(RcvNameBuf) - 1);
+                std::memcpy(RcvNameBuf, Receiver->EventNameFilter.c_str(), Len);
+                RcvNameBuf[Len] = '\0';
+                RcvBufOwner = Module;
+            }
+            if (ImGui::InputText("Event Name Filter", RcvNameBuf, sizeof(RcvNameBuf)))
+            {
+                Receiver->EventNameFilter = RcvNameBuf;
+                bChanged = true;
+            }
+
+            bChanged |= ImGui::DragInt("Spawn Count Min", &Receiver->SpawnCountMin, 1.0f, 0, 1000);
+            bChanged |= ImGui::DragInt("Spawn Count Max", &Receiver->SpawnCountMax, 1.0f, 0, 1000);
+            if (Receiver->SpawnCountMax < Receiver->SpawnCountMin)
+            {
+                Receiver->SpawnCountMax = Receiver->SpawnCountMin;
+                bChanged = true;
+            }
+            bChanged |= ImGui::DragFloat("Inherit Velocity Scale", &Receiver->InheritVelocityScale, 0.01f, 0.0f, 10.0f);
+        }
+    }
+    else if (UParticleModuleRotation* SpriteRotation = Cast<UParticleModuleRotation>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Rotation (Sprite)"))
+        {
+            ImGui::TextDisabled("Units: turns (1 = 360 deg)");
+            bChanged |= ImGui::DragFloat("Min", &SpriteRotation->RotationMin, 0.01f, -10.0f, 10.0f);
+            bChanged |= ImGui::DragFloat("Max", &SpriteRotation->RotationMax, 0.01f, -10.0f, 10.0f);
+            if (SpriteRotation->RotationMax < SpriteRotation->RotationMin)
+            {
+                SpriteRotation->RotationMax = SpriteRotation->RotationMin;
+                bChanged = true;
+            }
+        }
+    }
+    else if (UParticleModuleRotationRate* SpriteRotationRate = Cast<UParticleModuleRotationRate>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Rotation Rate (Sprite)"))
+        {
+            ImGui::TextDisabled("Units: turns/sec (1 = 360 deg/s)");
+            bChanged |= ImGui::DragFloat("Min", &SpriteRotationRate->RotationRateMin, 0.01f, -20.0f, 20.0f);
+            bChanged |= ImGui::DragFloat("Max", &SpriteRotationRate->RotationRateMax, 0.01f, -20.0f, 20.0f);
+            if (SpriteRotationRate->RotationRateMax < SpriteRotationRate->RotationRateMin)
+            {
+                SpriteRotationRate->RotationRateMax = SpriteRotationRate->RotationRateMin;
+                bChanged = true;
+            }
+        }
+    }
+    else if (UParticleModuleVortexRotation* Vortex = Cast<UParticleModuleVortexRotation>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Vortex Rotation"))
+        {
+            ImGui::TextDisabled("Units: turns/sec around emitter axis");
+            bChanged |= ImGui::DragFloat("Min", &Vortex->TurnsPerSecondMin, 0.01f, -20.0f, 20.0f);
+            bChanged |= ImGui::DragFloat("Max", &Vortex->TurnsPerSecondMax, 0.01f, -20.0f, 20.0f);
+            if (Vortex->TurnsPerSecondMax < Vortex->TurnsPerSecondMin)
+            {
+                Vortex->TurnsPerSecondMax = Vortex->TurnsPerSecondMin;
+                bChanged = true;
+            }
+            int32 Axis = Vortex->RotationAxis;
+            if (ImGui::Combo("Rotation Axis", &Axis, "X (Roll)\0Y (Pitch)\0Z (Yaw)\0"))
+            {
+                Vortex->RotationAxis = Axis;
+                bChanged = true;
+            }
+        }
+    }
+    else if (UParticleModuleLocationRing* Ring = Cast<UParticleModuleLocationRing>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Location Ring"))
+        {
+            bChanged |= ImGui::DragFloat("Radius Min", &Ring->RadiusMin, 0.01f, 0.0f, 1000.0f);
+            bChanged |= ImGui::DragFloat("Radius Max", &Ring->RadiusMax, 0.01f, 0.0f, 1000.0f);
+            if (Ring->RadiusMax < Ring->RadiusMin)
+            {
+                Ring->RadiusMax = Ring->RadiusMin;
+                bChanged = true;
+            }
+            int32 Axis = Ring->AxisNormal;
+            if (ImGui::Combo("Axis Normal", &Axis, "X (Roll)\0Y (Pitch)\0Z (Yaw)\0"))
+            {
+                Ring->AxisNormal = Axis;
+                bChanged = true;
+            }
+            bChanged |= ImGui::DragFloat("Thickness", &Ring->Thickness, 0.005f, 0.0f, 100.0f);
+
+            bool bSequential = Ring->bSequentialAngle;
+            if (ImGui::Checkbox("Sequential Angle (Comet Head)", &bSequential))
+            {
+                Ring->bSequentialAngle = bSequential;
+                bChanged = true;
+            }
+            if (Ring->bSequentialAngle)
+            {
+                bChanged |= ImGui::DragFloat("Head Turns Per Second", &Ring->AngleTurnsPerSecond, 0.01f, -20.0f, 20.0f);
+            }
+        }
+    }
+    else if (UParticleModuleSizeOverLife* SizeOL = Cast<UParticleModuleSizeOverLife>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Size Over Life"))
+        {
+            bChanged |= ImGui::DragFloat("Scale Start", &SizeOL->ScaleStart, 0.01f, 0.0f, 10.0f);
+            bChanged |= ImGui::DragFloat("Scale End", &SizeOL->ScaleEnd, 0.01f, 0.0f, 10.0f);
+        }
+    }
+    else if (UParticleModuleAcceleration* Accel = Cast<UParticleModuleAcceleration>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Acceleration"))
+        {
+            float Acc[3] = { Accel->Acceleration.X, Accel->Acceleration.Y, Accel->Acceleration.Z };
+            if (ImGui::DragFloat3("Acceleration", Acc, 0.05f, -1000.0f, 1000.0f))
+            {
+                Accel->Acceleration = FVector(Acc[0], Acc[1], Acc[2]);
+                bChanged = true;
+            }
+        }
+    }
+    else if (UParticleModuleAttractorPoint* Attractor = Cast<UParticleModuleAttractorPoint>(Module))
+    {
+        ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+        if (ImGui::CollapsingHeader("Attractor Point"))
+        {
+            bChanged |= ImGui::DragFloat("Strength", &Attractor->Strength, 0.05f, -1000.0f, 1000.0f);
+            bChanged |= ImGui::DragFloat("Kill Radius", &Attractor->KillRadius, 0.005f, 0.0f, 100.0f);
         }
     }
     else if (UParticleModuleCollision* Collision = Cast<UParticleModuleCollision>(Module))

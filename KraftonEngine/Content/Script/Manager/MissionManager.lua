@@ -95,20 +95,23 @@ end
 function M.NotifyRecovered(actor)
     if not current then
         M.IssueNext()   -- 보류 상태였다면 재시도 — 이번 수거는 새 미션에 세지 않는다
-        return
+        return false
     end
 
     local id = ScoreMgr.FindType(actor)
-    if id ~= current.target then return end
+    if id ~= current.target then
+        return false
+    end
 
     current.got = current.got + 1
     if current.got >= current.need then
         ScoreMgr.AddBonus(current.need * Mission.rewardPerBody)
         -- TODO: 미션 달성 사운드 키가 AudioData에 추가되면 여기서 재생
         M.IssueNext()   -- 내부에서 publish됨
-        return
+        return true
     end
     publish()
+    return false
 end
 
 -- HUD 전용 읽기 getter (쓰지 말 것)

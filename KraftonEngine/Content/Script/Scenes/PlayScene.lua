@@ -13,6 +13,7 @@
 -- =============================================================================
 
 local Session    = require("GameSession")
+local AudioData  = require("Data/AudioData")
 local Config     = require("Data/GameConfig")
 local ScoreMgr   = require("Manager/ScoreManager")
 local LoadMgr    = require("Manager/ServerLoadManager")
@@ -27,6 +28,90 @@ local ended = false   -- 종료 판정 1회 보장 (전환 요청 후 같은 프
 local KEY_P = 0x50
 -- 게임패드 Menu(Start) 버튼 — XInput VK 코드 (ESC와 동일하게 일시정지 진입)
 local PAD_KEY_MENU = 0xCF
+local COUNTDOWN_DIM_OPACITY = 0.3
+local COUNTDOWN_FADE_DURATION = 0.3
+local COUNTDOWN_GO_HOLD_DURATION = 0.7
+local intro_active = false
+local gameplay_started = false
+
+local function is_looping_audio_key(key)
+    return key:find("^bgm_") ~= nil or key == "sfx_time_passing"
+end
+
+local function stop_gameplay_bgm()
+    if AudioManager == nil then
+        return
+    end
+
+    if AudioManager.StopBGM ~= nil then
+        AudioManager.StopBGM()
+        return
+    end
+
+    if AudioManager.Stop ~= nil then
+        AudioManager.Stop("bgm_gameplay_0")
+        return
+    end
+
+    if AudioManager.StopManaged ~= nil then
+        AudioManager.StopManaged("bgm_gameplay_0")
+    end
+end
+
+local function start_gameplay()
+    if gameplay_started then
+        return
+    end
+
+    gameplay_started = true
+    intro_active = false
+    Session.inputEnabled = true
+
+    AudioManager.PlayBGM("bgm_gameplay_0", UserSettings.GetBgmVolumeScalar())
+
+    ScoreMgr.Start()
+    LoadMgr.Start()
+    MissionMgr.Start()
+    HUD.SetGameplayHudVisible(true)
+    HUD.UpdateFromSession(0.0)
+end
+
+local function begin_start_countdown()
+    intro_active = true
+    gameplay_started = false
+    Session.inputEnabled = false
+    Session.load = 0
+    HUD.SetServerLoad(0)
+    HUD.SetGameplayHudVisible(false)
+
+    HUD.SetStartCountdownStep("3", COUNTDOWN_DIM_OPACITY)
+
+    StartCoroutine(function()
+        AudioManager.Play("sfx_countdown_321_go", UserSettings.GetSfxVolumeScalar())
+
+        HUD.SetStartCountdownStep("3", COUNTDOWN_DIM_OPACITY)
+        Wait(1.0)
+
+        HUD.SetStartCountdownStep("2", COUNTDOWN_DIM_OPACITY)
+        Wait(1.0)
+
+        HUD.SetStartCountdownStep("1", COUNTDOWN_DIM_OPACITY)
+        Wait(1.0)
+
+        HUD.SetStartCountdownStep("GO", COUNTDOWN_DIM_OPACITY)
+        start_gameplay()
+
+        local fade_elapsed = 0.0
+        while fade_elapsed < COUNTDOWN_FADE_DURATION do
+            local frame_dt = WaitFrame()
+            fade_elapsed = math.min(fade_elapsed + (frame_dt or 0.0), COUNTDOWN_FADE_DURATION)
+            HUD.SetStartCountdownStep("GO", COUNTDOWN_DIM_OPACITY * (1.0 - (fade_elapsed / COUNTDOWN_FADE_DURATION)))
+        end
+
+        Wait(COUNTDOWN_GO_HOLD_DURATION)
+        HUD.SetStartCountdownVisible(false)
+    end)
+end
 
 -- PauseUI.Show/Hide가 widget:SetWantsMouse를 토글하면 GameViewportClient가
 -- 자동으로 커서 캡처/중앙 고정을 풀거나 다시 건다 (AnyViewportWidgetWantsMouse 참고).
@@ -57,23 +142,25 @@ function BeginPlay()
     StopAllCoroutines()           -- 엔진의 씬 전환 코루틴 정리가 현재 동작 안 해서 직접 청소
     AudioManager.StopAllLoops()   -- 루프음(빔/차량)은 씬과 함께 꺼지지 않음
     ended = false
+    intro_active = false
+    gameplay_started = false
 
     Session.Reset(Config.timeLimit)   -- 이전 판 값 청소 (inputEnabled=true 포함)
+    Session.inputEnabled = false
 
-    for key, path in pairs(require("Data/AudioData")) do
-        AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
+    for key, path in pairs(AudioData) do
+        AudioManager.Load(key, path, is_looping_audio_key(key))
     end
-    AudioManager.PlayBGM("bgm_gameplay_0", UserSettings.GetBgmVolumeScalar())
-
     HUD.Create()
+    HUD.SetGameplayHudVisible(false)
+    HUD.SetServerLoad(0)
     HUD.UpdateFromSession()
     PauseUI.Create({ onContinue = exitPause })
+    HUD.SetStartCountdownVisible(false)
 
     Engine.SetOnEscape(enterPause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)
 
-    ScoreMgr.Start()
-    LoadMgr.Start()
-    MissionMgr.Start()
+    begin_start_countdown()
     -- 스폰은 Play.Scene의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가,
     -- 수거는 AGOIncTruck 액터(TruckBehavior.lua)가 자체 Tick으로 담당 —
     -- pause 시 액터 Tick이 멈추므로 스폰/주행도 같이 멈춘다
@@ -82,6 +169,11 @@ end
 function Tick(dt)
     UpdateCoroutines(dt)   -- 코루틴 심장 — 반드시 첫 줄
     if ended then return end
+
+    if intro_active then
+        HUD.Update(dt)
+        return
+    end
 
     -- P/패드 Menu: 일시정지 진입 전용 (pause 중엔 이 Tick 자체가 멈추므로 재입력으로는 못 푼다 — Continue 버튼만 해제 가능)
     if Input.GetKeyDown(KEY_P) or Input.GetKeyDown(PAD_KEY_MENU) then
@@ -102,13 +194,17 @@ function Tick(dt)
         ended = true
         Session.result.gameOverReason =
             Session.timeRemaining <= 0 and "시간 초과" or "서버 과부하"
+        stop_gameplay_bgm()
         AudioManager.Play("sfx_game_over", UserSettings.GetSfxVolumeScalar())
-        Engine.LoadScene("Result")   -- 이번 프레임 끝(Tick·Render 이후)에 안전 교체
+        HUD.ShowGameOverOverlay(function()
+            Engine.LoadScene("Result")
+        end)
     end
 end
 
 function EndPlay()
     StopAllCoroutines()
+    stop_gameplay_bgm()
     AudioManager.StopAllLoops()
     HUD.Destroy()
     PauseUI.Destroy()

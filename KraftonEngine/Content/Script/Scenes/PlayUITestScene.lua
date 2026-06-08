@@ -1,8 +1,18 @@
-local HUD = require("UI/HUDController")
+local AudioData    = require("Data/AudioData")
+local HUD          = require("UI/HUDController")
+local RagdollData  = require("Data/RagdollData")
+
+local function is_looping_audio_key(key)
+    return key:find("^bgm_") ~= nil or key == "sfx_time_passing"
+end
 
 function BeginPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
+
+    for key, path in pairs(AudioData) do
+        AudioManager.Load(key, path, is_looping_audio_key(key))
+    end
 
     HUD.Create({
         showDebugPanel = true,
@@ -14,11 +24,13 @@ function BeginPlay()
     HUD.SetServerLoad(67)
     HUD.SetGunMode("collect")
     HUD.SetGunEnergy(100)
+    local testRagdollId = "red-plumber"
+    local testRagdoll   = RagdollData[testRagdollId]
     HUD.ShowTargetInfo({
-        name = "Red Plumber",
-        weightText = "12.5kg",
-        scoreText = "+300",
-        imagePath = "../../Sprite/ragdoll/ragdoll_sample.png",
+        ragdollId = testRagdollId,
+        name      = testRagdoll.displayName,
+        weight    = testRagdoll.mass,
+        score     = testRagdoll.baseScore,
     })
     HUD.SetMissionState({
         active = true,

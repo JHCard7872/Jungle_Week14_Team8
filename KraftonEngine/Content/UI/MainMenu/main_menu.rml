@@ -9,6 +9,7 @@
         <div id="scene_bg"></div>
         <div id="menu_content">
             <img id="menu_background" src="../../Sprite/main_menu_background.png" />
+            <img id="menu_background_blur" src="../../Sprite/main_menu_background_blur.png" />
             <div id="menu_header">
                 <div id="menu_header_title">Main Menu</div>
                 <img id="menu_header_label" src="../../Sprite/ui_label.png" />
@@ -82,6 +83,7 @@
             <img id="title_background" src="../../Sprite/title_background.png" />
             <div id="press_any_button">PRESS ANY BUTTON TO START</div>
         </div>
+        <div id="menu_fade_overlay"></div>
     </div>
 </body>
 </rml>

@@ -24,6 +24,8 @@
 #undef GetFirstChild
 #endif
 #include <RmlUi/Core.h>
+#include <RmlUi/Core/Input.h>
+#include <utility>
 #include <RmlUi/Core/Factory.h>
 
 #include <algorithm>
@@ -1143,6 +1145,32 @@ void UUIManager::ProcessInput(const FFrameContext& Frame)
 		}
 	}
 
+	// 키보드 모디파이어 상태
+	int KeyMod = 0;
+	if (Input.GetKey(VK_SHIFT) || Input.GetKey(VK_LSHIFT) || Input.GetKey(VK_RSHIFT))
+		KeyMod |= 2; // Rml::Input::KM_SHIFT
+	if (Input.GetKey(VK_CONTROL) || Input.GetKey(VK_LCONTROL) || Input.GetKey(VK_RCONTROL))
+		KeyMod |= 1; // Rml::Input::KM_CTRL
+
+	// VK → Rml::Input::KeyIdentifier 매핑 (텍스트 편집에 필요한 키만)
+	static const std::pair<int, int> VKToRml[] = {
+		{VK_BACK,    69}, // KI_BACK
+		{VK_RETURN,  72}, // KI_RETURN
+		{VK_LEFT,    90}, // KI_LEFT
+		{VK_RIGHT,   92}, // KI_RIGHT
+		{VK_UP,      91}, // KI_UP
+		{VK_DOWN,    93}, // KI_DOWN
+		{VK_HOME,    89}, // KI_HOME
+		{VK_END,     88}, // KI_END
+		{VK_DELETE,  99}, // KI_DELETE
+		{VK_INSERT,  98}, // KI_INSERT
+		{VK_LSHIFT,  138}, // KI_LSHIFT
+		{VK_RSHIFT,  139}, // KI_RSHIFT
+		{VK_LCONTROL,140}, // KI_LCONTROL
+		{VK_RCONTROL,141}, // KI_RCONTROL
+		{'A', 12}, {'C', 14}, {'V', 33}, {'X', 35}, {'Z', 37}, // Ctrl+단축키
+	};
+
 	bDispatchingRmlEvents = true;
 	RmlContext->ProcessMouseMove(MouseX, MouseY, KeyModifierState);
 	if (Input.GetKeyDown(VK_LBUTTON))
@@ -1153,6 +1181,24 @@ void UUIManager::ProcessInput(const FFrameContext& Frame)
 	{
 		RmlContext->ProcessMouseButtonUp(0, KeyModifierState);
 	}
+
+	// 키 다운/업 이벤트
+	for (const auto& [VK, RmlKey] : VKToRml)
+	{
+		if (Input.GetKeyDown(VK))
+			RmlContext->ProcessKeyDown(static_cast<Rml::Input::KeyIdentifier>(RmlKey), KeyMod);
+		if (Input.GetKeyUp(VK))
+			RmlContext->ProcessKeyUp(static_cast<Rml::Input::KeyIdentifier>(RmlKey), KeyMod);
+	}
+
+	// WM_CHAR 로 들어온 문자 → RmlUI 텍스트 입력
+	const std::wstring& PendingText = Input.GetPendingTextInput();
+	for (wchar_t wc : PendingText)
+	{
+		RmlContext->ProcessTextInput(static_cast<Rml::Character>(wc));
+	}
+	Input.ClearPendingTextInput();
+
 	bDispatchingRmlEvents = false;
 }
 

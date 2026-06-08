@@ -46,26 +46,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Input Mode -->
-                <div class="option_group">
-                    <div class="option_group_label">
-                        <img class="option_group_label_bg" src="../../Sprite/settings_label.png" />
-                        <span class="option_group_label_text">Input Mode</span>
-                    </div>
-
-                    <div class="option_group_rows">
-                        <button id="input_mode_mouse_key" class="input_mode_row selected">
-                            <img class="input_mode_icon" src="../../Sprite/settings_input_mousekeyboard.png" />
-                            <span class="input_mode_text">Mouse &amp; Key</span>
-                        </button>
-
-                        <button id="input_mode_gamepad" class="input_mode_row">
-                            <img class="input_mode_icon" src="../../Sprite/settings_input_gamepad.png" />
-                            <span class="input_mode_text">GamePad</span>
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <!-- 중앙 하단 Confirm -->

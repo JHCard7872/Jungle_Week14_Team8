@@ -1,4 +1,4 @@
-﻿#include "ParticleModuleEventGenerator.h"
+#include "ParticleModuleEventGenerator.h"
 #include "Serialization/Archive.h"
 
 void UParticleModuleEventGenerator::Serialize(FArchive& Ar)
@@ -8,5 +8,5 @@ void UParticleModuleEventGenerator::Serialize(FArchive& Ar)
 	Ar << bGenerateCollisionEvents;
 	Ar << bGenerateDeathEvents;
 	Ar << bGenerateSpawnEvents;
-
+	Ar << EventName;
 }
