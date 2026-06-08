@@ -1,4 +1,5 @@
 #include "AudioManager.h"
+#include "Component/Camera/CameraComponent.h"
 #include "Core/Logging/Log.h"
 #include "GameFramework/Camera/PlayerCameraManager.h"
 #include "GameFramework/GameMode/PlayerController.h"
@@ -357,16 +358,30 @@ void FAudioManager::Update3DListener()
 		return;
 	}
 
-	FMinimalViewInfo POV;
-	if (!CameraManager->GetCameraCachePOV(POV) && !CameraManager->GetCameraView(POV))
+	FVector ListenerLocation;
+	FVector Forward;
+	FVector Up;
+
+	if (UCameraComponent* ActiveCamera = CameraManager->GetActiveCamera())
 	{
-		return;
+		ListenerLocation = ActiveCamera->GetWorldLocation();
+		Forward = ActiveCamera->GetForwardVector().GetSafeNormal(1.0e-6f, FVector::ForwardVector);
+		Up = ActiveCamera->GetUpVector().GetSafeNormal(1.0e-6f, FVector::UpVector);
+	}
+	else
+	{
+		FMinimalViewInfo POV;
+		if (!CameraManager->GetCameraCachePOV(POV) && !CameraManager->GetCameraView(POV))
+		{
+			return;
+		}
+
+		ListenerLocation = POV.Location;
+		Forward = POV.Rotation.GetForwardVector().GetSafeNormal(1.0e-6f, FVector::ForwardVector);
+		Up = POV.Rotation.GetUpVector().GetSafeNormal(1.0e-6f, FVector::UpVector);
 	}
 
-	const FVector Forward = POV.Rotation.GetForwardVector().GetSafeNormal(1.0e-6f, FVector::ForwardVector);
-	const FVector Up = POV.Rotation.GetUpVector().GetSafeNormal(1.0e-6f, FVector::UpVector);
-
-	FMOD_VECTOR Pos{ POV.Location.X, POV.Location.Y, POV.Location.Z };
+	FMOD_VECTOR Pos{ ListenerLocation.X, ListenerLocation.Y, ListenerLocation.Z };
 	FMOD_VECTOR Vel{ 0.0f, 0.0f, 0.0f };
 	FMOD_VECTOR Fwd{ Forward.X, Forward.Y, Forward.Z };
 	FMOD_VECTOR UpVec{ Up.X, Up.Y, Up.Z };
