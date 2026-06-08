@@ -9,8 +9,10 @@
 
 local UI_DOCUMENT_PATH = "Content/UI/SubMenuPage/sub_menu_page.rml"
 local UserSettings = require("Data/UserSettings")
+local Cursor = require("UI/CursorSpriteUtil")
 -- Pause(220)보다 위에 뜨도록
 local PAGE_Z_ORDER = 230
+local CURSOR_SIZE = Cursor.GetDefaultSize()
 
 local UI_CLICK_KEY = "sfx_ui_click"
 local UI_HOVER_KEY = "sfx_ui_hover"
@@ -446,6 +448,19 @@ function M.Hide()
 
     widget:SetWantsMouse(false)
     set_display("page_root", false)
+    Cursor.Hide(widget, "submenu_cursor_normal", "submenu_cursor_click")
+end
+
+-- 매 프레임 커서 위치/상태 갱신 (MainMenuScene.Tick에서 호출)
+function M.UpdateCursor()
+    if widget == nil then
+        return
+    end
+
+    Cursor.Update(widget, "submenu_cursor_normal", "submenu_cursor_click", {
+        visible = visible,
+        size = CURSOR_SIZE,
+    })
 end
 
 function M.IsVisible()
@@ -482,6 +497,7 @@ end
 -- 하위 페이지 UI 제거 및 내부 상태 초기화
 function M.Destroy()
     if widget ~= nil then
+        Cursor.Hide(widget, "submenu_cursor_normal", "submenu_cursor_click")
         widget:RemoveFromParent()
     end
 
