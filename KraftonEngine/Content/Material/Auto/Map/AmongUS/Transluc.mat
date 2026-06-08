@@ -1,0 +1,17 @@
+{
+  "BlendState" : "AlphaBlend",
+  "DepthStencilState" : "DepthReadOnly",
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [0.000000, 0.000000, 0.000000],
+    "EmissiveIntensity" : 0.000000,
+    "HasNormalMap" : 0.000000,
+    "SectionColor" : [0.423529, 0.886275, 0.862745, 0.370000],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Auto/Map/AmongUS/Transluc.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl"
+}

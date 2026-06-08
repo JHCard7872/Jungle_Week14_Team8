@@ -1,0 +1,17 @@
+{
+  "BlendState" : "",
+  "DepthStencilState" : "",
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [0.000000, 0.000000, 0.000000],
+    "EmissiveIntensity" : 0.000000,
+    "HasNormalMap" : 0.000000,
+    "SectionColor" : [0.341176, 0.658824, 0.862745, 1.000000],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Auto/Map/AmongUS/Color_05.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl"
+}

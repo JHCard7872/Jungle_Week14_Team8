@@ -1,0 +1,21 @@
+{
+  "BlendState" : "",
+  "DepthStencilState" : "",
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [0.000000, 0.000000, 0.000000],
+    "EmissiveIntensity" : 0.000000,
+    "HasNormalMap" : 1.000000,
+    "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Auto/Industry/realistic_cone/Cone.002.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Texture/Auto/Industry/realistic_cone/Image_0",
+    "NormalTexture" : "Content/Texture/Auto/Industry/realistic_cone/Image_2"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "BlendState" : "",
+  "DepthStencilState" : "",
+  "Origin" : "FbxImport",
+  "Parameters" : {
+    "AlphaCutoff" : 0.000000,
+    "EmissiveColor" : [0.000000, 0.000000, 0.000000],
+    "EmissiveIntensity" : 0.000000,
+    "HasNormalMap" : 1.000000,
+    "SectionColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+    "_pad" : null
+  },
+  "PathFileName" : "Content/Material/Auto/Map/GOInc_ServerRacks/ServerRoomAtlasA_NODIFFUSE.001.mat",
+  "RasterizerState" : "",
+  "RenderPass" : "Opaque",
+  "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Texture/Auto/Map/GOInc_ServerRacks/ServerRoomSet_AtlasA_emissive.png",
+    "NormalTexture" : "C:/Users/jungle/Desktop/ServerMap/GOInc_ServerRacks.fbm/ServerRoomSet_AtlasA_normal.png"
+  }
+}
