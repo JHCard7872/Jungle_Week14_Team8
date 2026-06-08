@@ -71,7 +71,10 @@ local slot2_fire_feedback = {
     fov_duration = 0.0,
     base_fov = nil
 }
-local slot1_gather_fx = { actor = nil, component = nil, active = false }
+local slot1_gather_fx = {
+    source = { actor = nil, component = nil, active = false },
+    target = { actor = nil, component = nil, active = false }
+}
 local slot2_muzzle_fx = { actor = nil, component = nil, active = false, visible_remaining = 0.0 }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
@@ -164,14 +167,6 @@ local function flat_normalized(v)
         return flat:Normalized()
     end
     return Vector.Zero()
-end
-
-local function blend_normalized(a, b, alpha)
-    local blended = a * (1.0 - alpha) + b * alpha
-    if blended:Length() > 0.0001 then
-        return blended:Normalized()
-    end
-    return copy_vec(a)
 end
 
 local function clamp(value, min_value, max_value)
@@ -562,6 +557,14 @@ local function cache_view_weapon_base_transforms()
     weapon_base.muzzle_b_location, weapon_base.muzzle_b_rotation =
         cache_component_transform(weapon_components.muzzle_point_b, weapon_base.muzzle_a_location, weapon_base.muzzle_a_rotation)
 
+    local muzzle_forward_extra = C.MUZZLE_FORWARD_EXTRA_OFFSET or 0.0
+    if muzzle_forward_extra ~= 0.0 then
+        weapon_base.muzzle_a_location = copy_vec(weapon_base.muzzle_a_location)
+        weapon_base.muzzle_b_location = copy_vec(weapon_base.muzzle_b_location)
+        weapon_base.muzzle_a_location.X = weapon_base.muzzle_a_location.X + muzzle_forward_extra
+        weapon_base.muzzle_b_location.X = weapon_base.muzzle_b_location.X + muzzle_forward_extra
+    end
+
     if weapon_components.beam_particle_a ~= nil then
         weapon_base.beam_a_location = copy_vec(weapon_components.beam_particle_a.RelativeLocation)
         weapon_base.beam_a_rotation = copy_vec(weapon_components.beam_particle_a.Rotation)
@@ -605,14 +608,6 @@ local function get_weapon_driver_pitch()
         pitch,
         C.WEAPON_PITCH_DRIVER_MIN or C.MIN_PITCH,
         C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
-    )
-end
-
-local function get_beam_source_driver_pitch()
-    return clamp(
-        pitch,
-        C.BEAM_SOURCE_PITCH_DRIVER_MIN or C.WEAPON_PITCH_DRIVER_MIN or C.MIN_PITCH,
-        C.BEAM_SOURCE_PITCH_DRIVER_MAX or C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
     )
 end
 
@@ -666,62 +661,17 @@ local function get_weapon_offset_for_pitch(include_extra_pitch_z, driver_pitch_o
     return weapon_offset, visual_pitch, weapon_pitch
 end
 
-local function get_beam_source_pitch_influence_for_pitch(source_pitch)
-    -- pitch 0 경계에서 0.9↔0.45로 즉시 점프하면 빔 소스 위치/탄젠트가 꺾여 보인다
-    -- (수평 부근 조준에서 간헐적으로 빔이 휘던 원인) — 경계 구간을 보간으로 잇는다
-    local blend = ease_in_out(clamp(source_pitch / C.BEAM_SOURCE_PITCH_BLEND_DEGREES, 0.0, 1.0))
-    return C.BEAM_SOURCE_PITCH_INFLUENCE
-        + (C.BEAM_SOURCE_DOWN_PITCH_INFLUENCE - C.BEAM_SOURCE_PITCH_INFLUENCE) * blend
-end
-
-local function get_beam_source_pitch_influence()
-    local influence = get_beam_source_pitch_influence_for_pitch(pitch)
-
-    -- 카메라는 ±75도까지 돌 수 있지만, 총과 Src는 ViewModel pitch 한계를 넘지 않게 묶는다.
-    local pitch_abs = math.abs(pitch)
-    if pitch_abs > 0.001 then
-        local driver_pitch = get_beam_source_driver_pitch()
-        local locked_source_pitch = math.abs(driver_pitch) * get_beam_source_pitch_influence_for_pitch(driver_pitch)
-        influence = math.min(influence, clamp(locked_source_pitch / pitch_abs, 0.0, 1.0))
-    end
-
-    return influence
-end
-
-local function get_beam_source_offset_for_pitch()
-    local source_driver_pitch = get_beam_source_driver_pitch()
-    local weapon_offset = get_weapon_offset_for_pitch(false, source_driver_pitch)
-    if base_weapon_offset_location == nil then
-        return weapon_offset
-    end
-
-    local pitch_influence = get_beam_source_pitch_influence()
-    local source_extra_down_pitch = C.BEAM_SOURCE_EXTRA_LOOK_DRIVER_MAX or C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
-    local source_extra_pitch_z = 0.0
-    if pitch > source_extra_down_pitch then
-        source_extra_pitch_z = get_extra_pitch_z_for_driver(
-            source_extra_down_pitch,
-            0.0,
-            C.BEAM_SOURCE_EXTRA_LOOK_DOWN_Z_OFFSET
-        )
-    end
-
-    return vec(
-        base_weapon_offset_location.X + (weapon_offset.X - base_weapon_offset_location.X) * pitch_influence,
-        base_weapon_offset_location.Y + (weapon_offset.Y - base_weapon_offset_location.Y) * pitch_influence,
-        base_weapon_offset_location.Z + (weapon_offset.Z - base_weapon_offset_location.Z) * pitch_influence + source_extra_pitch_z
-    )
-end
-
 local function get_beam_source_point()
     if base_muzzle_location == nil or base_weapon_offset_location == nil then
         cache_view_weapon_base_transforms()
     end
 
+    if muzzle_point ~= nil and muzzle_point.Location ~= nil then
+        return copy_vec(muzzle_point.Location)
+    end
+
     if camera ~= nil then
-        local weapon_offset = get_beam_source_offset_for_pitch()
         local muzzle_offset = base_muzzle_location or vec(C.MUZZLE_FORWARD_OFFSET, C.MUZZLE_RIGHT_OFFSET, C.MUZZLE_UP_OFFSET)
-        local pitch_influence = get_beam_source_pitch_influence()
         local camera_forward = camera.Forward
         local camera_right = camera.Right
         local camera_up = camera.Up
@@ -736,38 +686,13 @@ local function get_beam_source_point()
             camera_up = Vector.Up()
         end
 
-        local flat_forward = flat_normalized(camera_forward)
-        if flat_forward:Length() <= 0.0001 then
-            flat_forward = flat_normalized(obj.Forward)
-        end
-        if flat_forward:Length() <= 0.0001 then
-            flat_forward = camera_forward:Normalized()
-        end
-
-        local forward = blend_normalized(flat_forward, camera_forward:Normalized(), pitch_influence)
-        local right = flat_normalized(camera_right)
-        if right:Length() <= 0.0001 then
-            right = camera_right:Normalized()
-        end
-
-        local up = forward:Cross(right)
-        if up:Length() > 0.0001 then
-            up = up:Normalized()
-        else
-            up = blend_normalized(Vector.Up(), camera_up:Normalized(), pitch_influence)
-        end
-
         return camera.Location
-            + forward * (weapon_offset.X + muzzle_offset.X + C.BEAM_SOURCE_FORWARD_BIAS)
-            + right * (weapon_offset.Y + muzzle_offset.Y + C.BEAM_SOURCE_RIGHT_BIAS)
-            + up * (weapon_offset.Z + muzzle_offset.Z + C.BEAM_SOURCE_UP_BIAS)
+            + camera_forward:Normalized() * muzzle_offset.X
+            + camera_right:Normalized() * muzzle_offset.Y
+            + camera_up:Normalized() * muzzle_offset.Z
     end
 
-    if muzzle_point ~= nil then
-        return muzzle_point.Location
-    end
-
-    return obj.Location + obj.Forward * (C.WEAPON_FORWARD_OFFSET + C.MUZZLE_FORWARD_OFFSET + C.BEAM_SOURCE_FORWARD_BIAS)
+    return obj.Location + obj.Forward * (C.WEAPON_FORWARD_OFFSET + C.MUZZLE_FORWARD_OFFSET)
 end
 
 local function get_beam_source_forward()
@@ -779,21 +704,12 @@ local function get_beam_source_forward()
     end
 
     if camera ~= nil then
-        local pitch_influence = get_beam_source_pitch_influence()
         local camera_forward = camera.Forward
         if camera_forward == nil or camera_forward:Length() <= 0.0001 then
             camera_forward = obj.Forward
         end
 
-        local flat_forward = flat_normalized(camera_forward)
-        if flat_forward:Length() <= 0.0001 then
-            flat_forward = flat_normalized(obj.Forward)
-        end
-        if flat_forward:Length() <= 0.0001 then
-            return camera_forward:Normalized()
-        end
-
-        return blend_normalized(flat_forward, camera_forward:Normalized(), pitch_influence)
+        return camera_forward:Normalized()
     end
 
     if obj.Forward ~= nil and obj.Forward:Length() > 0.0001 then
@@ -1174,22 +1090,81 @@ local function is_actor_valid(actor)
     return actor ~= nil and (actor.IsValid == nil or actor:IsValid())
 end
 
-slot1_gather_fx.Stop = function()
-    if slot1_gather_fx.component ~= nil and slot1_gather_fx.component.SetVisibility ~= nil then
-        slot1_gather_fx.component:SetVisibility(false)
+slot1_gather_fx.StopInstance = function(fx)
+    if fx.component ~= nil and fx.component.SetVisibility ~= nil then
+        fx.component:SetVisibility(false)
     end
-    slot1_gather_fx.active = false
+    fx.active = false
+end
+
+slot1_gather_fx.Stop = function()
+    slot1_gather_fx.StopInstance(slot1_gather_fx.source)
+    slot1_gather_fx.StopInstance(slot1_gather_fx.target)
+end
+
+slot1_gather_fx.UpdateInstance = function(fx, fx_path, fx_location, should_show, spawn_rate)
+    if not should_show or fx_location == nil then
+        slot1_gather_fx.StopInstance(fx)
+        return
+    end
+
+    if fx_path == nil or fx_path == "" or ParticleManager == nil
+        or (ParticleManager.SpawnAt == nil and ParticleManager.SpawnAtConfigured == nil) then
+        slot1_gather_fx.StopInstance(fx)
+        return
+    end
+
+    if not is_actor_valid(fx.actor) then
+        if ParticleManager.SpawnAtConfigured ~= nil then
+            fx.actor = ParticleManager.SpawnAtConfigured(
+                fx_path,
+                fx_location,
+                true,
+                false,
+                spawn_rate)
+        else
+            fx.actor = ParticleManager.SpawnAt(fx_path, fx_location)
+        end
+        fx.component = nil
+        fx.active = false
+    end
+
+    if is_actor_valid(fx.actor) then
+        fx.actor.Location = fx_location
+        if fx.component == nil and fx.actor.GetRootPrimitiveComponent ~= nil then
+            fx.component = fx.actor:GetRootPrimitiveComponent()
+        end
+        if fx.component ~= nil then
+            if fx.component.MoveParticleSystemTo ~= nil then
+                fx.component:MoveParticleSystemTo(fx_location)
+            elseif fx.component.SetLocation ~= nil then
+                fx.component:SetLocation(fx_location)
+            else
+                fx.component.Location = fx_location
+            end
+
+            local did_reset = false
+            if not fx.active and fx.component.ResetParticleSystem ~= nil then
+                fx.component:ResetParticleSystem()
+                did_reset = true
+            end
+            if fx.component.SetVisibility ~= nil then
+                fx.component:SetVisibility(true)
+            end
+            if did_reset and fx.component.PrimeForImmediateRendering ~= nil then
+                fx.component:PrimeForImmediateRendering()
+            end
+        end
+        fx.active = true
+    else
+        fx.actor = nil
+        fx.component = nil
+        fx.active = false
+    end
 end
 
 slot1_gather_fx.Update = function(source_point, target_point, is_hold)
     if not is_hold or source_point == nil then
-        slot1_gather_fx.Stop()
-        return
-    end
-
-    local fx_path = C.SLOT1_GATHER_FX_PATH
-    if fx_path == nil or fx_path == "" or ParticleManager == nil
-        or (ParticleManager.SpawnAt == nil and ParticleManager.SpawnAtConfigured == nil) then
         slot1_gather_fx.Stop()
         return
     end
@@ -1203,53 +1178,18 @@ slot1_gather_fx.Update = function(source_point, target_point, is_hold)
         end
     end
 
-    if not is_actor_valid(slot1_gather_fx.actor) then
-        if ParticleManager.SpawnAtConfigured ~= nil then
-            slot1_gather_fx.actor = ParticleManager.SpawnAtConfigured(
-                fx_path,
-                fx_location,
-                true,
-                false,
-                C.SLOT1_GATHER_FX_SPAWN_RATE)
-        else
-            slot1_gather_fx.actor = ParticleManager.SpawnAt(fx_path, fx_location)
-        end
-        slot1_gather_fx.component = nil
-        slot1_gather_fx.active = false
-    end
-
-    if is_actor_valid(slot1_gather_fx.actor) then
-        slot1_gather_fx.actor.Location = fx_location
-        if slot1_gather_fx.component == nil and slot1_gather_fx.actor.GetRootPrimitiveComponent ~= nil then
-            slot1_gather_fx.component = slot1_gather_fx.actor:GetRootPrimitiveComponent()
-        end
-        if slot1_gather_fx.component ~= nil then
-            if slot1_gather_fx.component.MoveParticleSystemTo ~= nil then
-                slot1_gather_fx.component:MoveParticleSystemTo(fx_location)
-            elseif slot1_gather_fx.component.SetLocation ~= nil then
-                slot1_gather_fx.component:SetLocation(fx_location)
-            else
-                slot1_gather_fx.component.Location = fx_location
-            end
-
-            local did_reset = false
-            if not slot1_gather_fx.active and slot1_gather_fx.component.ResetParticleSystem ~= nil then
-                slot1_gather_fx.component:ResetParticleSystem()
-                did_reset = true
-            end
-            if slot1_gather_fx.component.SetVisibility ~= nil then
-                slot1_gather_fx.component:SetVisibility(true)
-            end
-            if did_reset and slot1_gather_fx.component.PrimeForImmediateRendering ~= nil then
-                slot1_gather_fx.component:PrimeForImmediateRendering()
-            end
-        end
-        slot1_gather_fx.active = true
-    else
-        slot1_gather_fx.actor = nil
-        slot1_gather_fx.component = nil
-        slot1_gather_fx.active = false
-    end
+    slot1_gather_fx.UpdateInstance(
+        slot1_gather_fx.source,
+        C.SLOT1_GATHER_FX_PATH,
+        fx_location,
+        true,
+        C.SLOT1_GATHER_FX_SPAWN_RATE)
+    slot1_gather_fx.UpdateInstance(
+        slot1_gather_fx.target,
+        C.SLOT1_TARGET_GATHER_FX_PATH,
+        target_point,
+        target_point ~= nil,
+        C.SLOT1_TARGET_GATHER_FX_SPAWN_RATE or C.SLOT1_GATHER_FX_SPAWN_RATE)
 end
 
 slot2_muzzle_fx.Stop = function()
@@ -2232,19 +2172,12 @@ update_beam_points = function(aim_point)
     return source_point
 end
 
-local function get_resolved_beam_source_point()
-    if beam_particle ~= nil and beam_particle.GetBeamSourcePoint ~= nil then
-        local ok, source_point = beam_particle:GetBeamSourcePoint(0)
-        if ok and source_point ~= nil then
-            return source_point
-        end
-    end
-
-    return last_beam_source_point
-end
-
 update_slot1_glow_at_beam_source = function(target_point, is_hold)
-    slot1_gather_fx.Update(get_resolved_beam_source_point(), target_point, is_hold)
+    local source_point = last_beam_source_point
+    if source_point == nil then
+        source_point = get_beam_source_point()
+    end
+    slot1_gather_fx.Update(source_point, target_point, is_hold)
 end
 
 local function apply_slot2_fire(delta_time)
