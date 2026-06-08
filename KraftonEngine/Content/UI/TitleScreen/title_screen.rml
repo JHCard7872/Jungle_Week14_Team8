@@ -8,8 +8,55 @@
 <body>
     <div id="title_root">
         <img id="title_background" src="../../Sprite/title_background.png" />
+        <div id="title_logo_container">
+            <img id="title_logo" src="../../Sprite/logo/title_logo.png" />
+        </div>
+        <div id="logo_particles">
+            <img class="logo_particle" id="logo_particle_1" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_2" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_3" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_4" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_5" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_6" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_7" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_8" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_9" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_10" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_11" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_12" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_13" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_14" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_15" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_16" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_17" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_18" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_19" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_20" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_21" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_22" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_23" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_24" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_25" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_26" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_27" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_28" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_29" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_30" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_31" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_32" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_33" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_34" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_35" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_36" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_37" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_38" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_39" src="../../Sprite/particle_glow_red.png" />
+            <img class="logo_particle" id="logo_particle_40" src="../../Sprite/particle_glow_red.png" />
+        </div>
         <div id="press_any_button" class="ui_title_message">PRESS ANY BUTTON TO START</div>
         <button id="title_click_area"></button>
+        <div id="letterbox_top"></div>
+        <div id="letterbox_bottom"></div>
         <div id="title_fade_overlay"></div>
     </div>
 </body>
