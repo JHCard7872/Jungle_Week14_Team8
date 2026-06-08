@@ -40,7 +40,7 @@ return {
         displayName    = "분홍 동글이",
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_kirby.png",
 
-        mass           = 18.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
+        mass           = 40.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 300,    -- 수거당 300점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 3.5,
