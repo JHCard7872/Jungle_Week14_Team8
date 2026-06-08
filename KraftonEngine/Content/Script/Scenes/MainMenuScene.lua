@@ -9,12 +9,12 @@ local QuestionPopup = require("UI/QuestionPopupUIController")
 local UserSettings = require("Data/UserSettings")
 local ScoreStorage = require("Data/ScoreStorage")
 local Session = require("GameSession")
+local Cursor = require("UI/CursorSpriteUtil")
 
 local UI_ROOT_PATH = "Content/UI/"
 local MAIN_MENU_RELATIVE_PATH = "MainMenu/main_menu.rml"
 local MAIN_MENU_Z_ORDER = 100
-local CURSOR_SIZE = 150
-local VK_LBUTTON = 0x01
+local CURSOR_SIZE = Cursor.GetDefaultSize()
 
 local MAIN_BGM_KEY = "bgm_main_0"
 local UI_CLICK_KEY = "sfx_ui_click"
@@ -93,8 +93,7 @@ local function set_cursor_hidden()
         return
     end
 
-    set_element_display("cursor_normal", false)
-    set_element_display("cursor_click", false)
+    Cursor.Hide(main_menu_widget, "cursor_normal", "cursor_click")
 end
 
 local function start_main_menu_fade_in(duration)
@@ -110,34 +109,12 @@ local function start_main_menu_fade_in(duration)
     set_cursor_hidden()
 end
 
-local function set_cursor_state(is_click)
+local function update_cursor_sprite()
     if main_menu_widget == nil then
         return
     end
 
-    if is_click then
-        main_menu_widget:SetProperty("cursor_normal", "display", "none")
-        main_menu_widget:SetProperty("cursor_click", "display", "block")
-    else
-        main_menu_widget:SetProperty("cursor_normal", "display", "block")
-        main_menu_widget:SetProperty("cursor_click", "display", "none")
-    end
-end
-
-local function update_cursor_position()
-    if main_menu_widget == nil then
-        return
-    end
-
-    local mouse_x = Input.GetMouseX()
-    local mouse_y = Input.GetMouseY()
-    local left = string.format("%dpx", mouse_x - CURSOR_SIZE / 2)
-    local top = string.format("%dpx", mouse_y - CURSOR_SIZE / 2)
-
-    main_menu_widget:SetProperty("cursor_normal", "left", left)
-    main_menu_widget:SetProperty("cursor_normal", "top", top)
-    main_menu_widget:SetProperty("cursor_click", "left", left)
-    main_menu_widget:SetProperty("cursor_click", "top", top)
+    Cursor.Update(main_menu_widget, "cursor_normal", "cursor_click", { size = CURSOR_SIZE })
 end
 
 local function ensure_widget()
@@ -162,8 +139,7 @@ local function ensure_widget()
     set_element_opacity("menu_content", 1.0)
     set_element_display("title_overlay", false)
     set_element_opacity("menu_fade_overlay", 0.0)
-    update_cursor_position()
-    set_cursor_state(Input.GetKey(VK_LBUTTON))
+    update_cursor_sprite()
 
     return main_menu_widget
 end
@@ -177,6 +153,7 @@ local function play_ui_hover()
 end
 
 local function set_main_menu_controls_visible(is_visible)
+    set_element_display("menu_header", is_visible)
     set_element_display("menu_help", is_visible)
     set_element_display("menu_option", is_visible)
     set_element_display("menu_play", is_visible)
@@ -184,6 +161,14 @@ local function set_main_menu_controls_visible(is_visible)
     set_element_display("menu_credits", is_visible)
     set_element_display("menu_back_to_title", is_visible)
     set_element_display("menu_exit_game", is_visible)
+
+    set_element_display("label_help", is_visible)
+    set_element_display("label_option", is_visible)
+    set_element_display("label_play", is_visible)
+    set_element_display("label_scoreboard", is_visible)
+    set_element_display("label_credits", is_visible)
+    set_element_display("label_back_to_title", is_visible)
+    set_element_display("label_exit_game", is_visible)
 
     if not is_visible then
         set_cursor_hidden()
@@ -264,8 +249,7 @@ local function close_exit_prompt()
     end
 
     main_menu_widget:SetWantsMouse(true)
-    update_cursor_position()
-    set_cursor_state(Input.GetKey(VK_LBUTTON))
+    update_cursor_sprite()
 end
 
 local function open_exit_prompt()
@@ -321,7 +305,7 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_option", on_menu_button_click(function()
-        open_menu_page("options", "Options")
+        open_menu_page("options", "옵션")
     end))
 
     widget:bind_click("menu_play", on_menu_button_click(function()
@@ -329,15 +313,15 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_scoreboard", on_menu_button_click(function()
-        open_menu_page("scoreboard", "Scoreboard")
+        open_menu_page("scoreboard", "스코어보드")
     end))
 
     widget:bind_click("menu_credits", on_menu_button_click(function()
-        open_menu_page("credits", "Credits")
+        open_menu_page("credits", "크레딧")
     end))
 
     widget:bind_click("menu_back_to_title", on_menu_button_click(function()
-        request_scene_load("Title")
+        request_scene_load("StartupLogoScene")
     end))
 
     widget:bind_click("menu_exit_game", on_menu_button_click(function()
@@ -396,8 +380,7 @@ local function update_main_menu_fade_in(dt)
         main_menu_fade_elapsed = 0.0
         main_menu_fade_duration = 0.0
         main_menu_widget:SetWantsMouse(true)
-        update_cursor_position()
-        set_cursor_state(Input.GetKey(VK_LBUTTON))
+        update_cursor_sprite()
     end
 
     return true
@@ -431,15 +414,8 @@ function BeginPlay()
         start_main_menu_fade_in(fade_in_duration)
     end
 
-    Engine.SetOnEscape(function()
-        if sub_page_open then
-            close_menu_page()
-        elseif exit_prompt_open then
-            close_exit_prompt()
-        else
-            open_exit_prompt()
-        end
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응. 게임 종료는 '게임 종료하기' 버튼으로만.
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)
@@ -467,8 +443,7 @@ function Tick(dt)
         return
     end
 
-    update_cursor_position()
-    set_cursor_state(Input.GetKey(VK_LBUTTON))
+    update_cursor_sprite()
 end
 
 function EndPlay()

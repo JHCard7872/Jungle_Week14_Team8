@@ -21,9 +21,11 @@ local Ragdolls = require("Data/RagdollData")
 local Mission  = require("Data/MissionData")
 local ScoreMgr = require("Manager/ScoreManager")
 local Session  = require("GameSession")
+local Timer    = require("Manager/TimerManager")
 
 local M = {}
 local current = nil   -- { target, need, got, text } / 발급 보류면 nil
+local seq     = 0     -- 발급 시퀀스(단조 증가) — 새 미션이 실제로 만들어질 때만 +1, 포탈이 재배치 트리거로 읽는다
 
 -- current가 바뀔 때마다 호출 — HUD가 직독하는 Session.mission 캐시를 갱신한다
 local function publish()
@@ -33,6 +35,7 @@ local function publish()
         need   = current ~= nil and current.need or 0,
         got    = current ~= nil and current.got or 0,
         text   = current ~= nil and current.text or "",
+        seq    = seq,
     }
 end
 
@@ -52,6 +55,11 @@ end
 function M.Start()
     current = nil
     M.IssueNext()
+    -- 재발급은 미션이 비었을 때(클리어/보류)만 1초 주기로 시도 — 활성 중엔 싼 nil 체크만 돈다.
+    -- 수거마다 돌던 countAlive() 전체 스캔을 이 스로틀이 대체한다.
+    Timer.Every(Mission.reissueInterval, function()
+        if not current then M.IssueNext() end
+    end)
 end
 
 function M.IssueNext()
@@ -83,6 +91,7 @@ function M.IssueNext()
         target, need = bestId, bestN
     end
 
+    seq = seq + 1   -- 새 미션 발급 — 보류(nil) 분기는 위에서 이미 return하므로 여기까지 오면 실발급
     current = {
         target = target,
         need   = need,
@@ -94,8 +103,7 @@ end
 
 function M.NotifyRecovered(actor)
     if not current then
-        M.IssueNext()   -- 보류 상태였다면 재시도 — 이번 수거는 새 미션에 세지 않는다
-        return false
+        return false   -- 보류 상태 — 재발급은 Start의 1초 주기 타이머가 맡는다(이번 수거는 미션 미집계)
     end
 
     local id = ScoreMgr.FindType(actor)
@@ -107,7 +115,8 @@ function M.NotifyRecovered(actor)
     if current.got >= current.need then
         ScoreMgr.AddBonus(current.need * Mission.rewardPerBody)
         -- TODO: 미션 달성 사운드 키가 AudioData에 추가되면 여기서 재생
-        M.IssueNext()   -- 내부에서 publish됨
+        current = nil   -- 클리어 — 즉시 재발급하지 않고 1초 주기 타이머에 맡긴다
+        publish()
         return true
     end
     publish()

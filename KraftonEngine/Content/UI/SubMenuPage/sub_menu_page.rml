@@ -1,7 +1,9 @@
 <rml>
 <head>
     <title>Menu Page</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="sub_menu_page.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 
 <body>
@@ -10,7 +12,10 @@
         <div id="page_dim"></div>
 
         <!-- 좌상단 제목 -->
-        <div id="page_title">Options</div>
+        <div id="page_title_frame" class="ui_menu_title_frame">
+            <img id="page_title_label" class="ui_menu_title_label_image" src="../../Sprite/ui_title_label.png" />
+            <div id="page_title" class="ui_menu_page_title">Options</div>
+        </div>
 
         <!-- 우측 상단 뒤로가기: "Back" 텍스트 + 화살표 아이콘 -->
         <button id="page_back_button">
@@ -43,18 +48,28 @@
 
             <!-- Controls (플레이 방법) -->
             <div id="page_body_controls" class="page_body_section">
-                <!-- 상단 탭 버튼 2개 -->
-                <button id="controls_tab_game" class="controls_tab">
-                    <img class="controls_tab_icon" src="../../Sprite/question_mark.png" />
-                    <div class="controls_tab_label">게임 진행</div>
-                </button>
-                <button id="controls_tab_input" class="controls_tab">
-                    <img class="controls_tab_icon" src="../../Sprite/input.png" />
-                    <div class="controls_tab_label">조작 방법</div>
-                </button>
+                <!-- 최초 선택 화면: Pause의 2버튼 UI를 좌/우 배치로 재사용 -->
+                <div id="controls_choice_buttons">
+                    <button id="controls_tab_game" class="controls_choice_button ui_horizontal_button">
+                        <img class="controls_choice_button_img controls_choice_btn_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="controls_choice_button_img controls_choice_btn_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="controls_choice_button_label ui_horizontal_button_text">게임 진행</div>
+                    </button>
+                    <button id="controls_tab_input" class="controls_choice_button ui_horizontal_button">
+                        <img class="controls_choice_button_img controls_choice_btn_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="controls_choice_button_img controls_choice_btn_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="controls_choice_button_label ui_horizontal_button_text">조작 방법</div>
+                    </button>
+                </div>
 
                 <!-- 게임 진행 탭 내용 -->
                 <div id="controls_body_game" class="controls_body">
+                    <img id="controls_image_process" class="controls_how_to_play" src="../../Sprite/how_to_play_process.png" />
+                    <button id="controls_close_button_game" class="controls_close_button ui_horizontal_button">
+                        <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="horiz_button_label ui_horizontal_button_text_large">닫기</div>
+                    </button>
                 </div>
 
                 <!-- 조작 방법 탭 내용 -->
@@ -69,23 +84,35 @@
                     <!-- how to play 이미지 -->
                     <img id="controls_image_km" class="controls_how_to_play" src="../../Sprite/how_to_play_keyboardmouse.png" />
                     <img id="controls_image_gp" class="controls_how_to_play" src="../../Sprite/how_to_play_gamepad.png" />
+                    <button id="controls_close_button_input" class="controls_close_button ui_horizontal_button">
+                        <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="horiz_button_label ui_horizontal_button_text_large">닫기</div>
+                    </button>
                 </div>
             </div>
 
             <!-- Scoreboard -->
             <div id="page_body_scoreboard" class="page_body_section simple_page_body">
                 <div class="simple_card scoreboard_card">
-                    <div id="scoreboard_title" class="simple_card_title">Scoreboard</div>
-                    <div id="score_header_rank" class="score_header score_header_rank">#</div>
-                    <div id="score_header_name" class="score_header score_header_name">Nickname</div>
-                    <div id="score_header_count" class="score_header score_header_count">Recovered</div>
-                    <div id="score_header_score" class="score_header score_header_score">Score</div>
-                    <div id="score_row_1" class="score_row"><div id="score_rank_1" class="score_rank">1</div><div id="score_name_1" class="score_name">SAMPLE1</div><div id="score_count_1" class="score_count">0</div><div id="score_value_1" class="score_value">0</div></div>
-                    <div id="score_row_2" class="score_row"><div id="score_rank_2" class="score_rank">2</div><div id="score_name_2" class="score_name">SAMPLE2</div><div id="score_count_2" class="score_count">0</div><div id="score_value_2" class="score_value">0</div></div>
-                    <div id="score_row_3" class="score_row"><div id="score_rank_3" class="score_rank">3</div><div id="score_name_3" class="score_name">SAMPLE3</div><div id="score_count_3" class="score_count">0</div><div id="score_value_3" class="score_value">0</div></div>
-                    <div id="score_row_4" class="score_row"><div id="score_rank_4" class="score_rank">4</div><div id="score_name_4" class="score_name">SAMPLE4</div><div id="score_count_4" class="score_count">0</div><div id="score_value_4" class="score_value">0</div></div>
-                    <div id="score_row_5" class="score_row"><div id="score_rank_5" class="score_rank">5</div><div id="score_name_5" class="score_name">SAMPLE5</div><div id="score_count_5" class="score_count">0</div><div id="score_value_5" class="score_value">0</div></div>
-                    <div id="score_empty_text">No saved score yet.</div>
+                    <div id="scoreboard_month_title" class="ui_scoreboard_month_title">이달의 우수사원</div>
+                    <div id="score_table">
+                        <div class="score_col_line score_col_line_1"></div>
+                        <div class="score_col_line score_col_line_2"></div>
+                        <div class="score_col_line score_col_line_3"></div>
+                        <div class="score_col_line score_col_line_4"></div>
+                        <div id="score_header_rank" class="score_header score_rank">순위</div>
+                        <div id="score_header_name" class="score_header score_name">사원 이름</div>
+                        <div id="score_header_count" class="score_header score_count">수거 개수</div>
+                        <div id="score_header_score" class="score_header score_value">총 실적</div>
+                        <div id="score_header_date" class="score_header score_date">기록일자</div>
+                        <div id="score_row_1" class="score_row"><div id="score_rank_1" class="score_rank">1</div><div id="score_name_1" class="score_name">김사원</div><div id="score_count_1" class="score_count">0</div><div id="score_value_1" class="score_value">0</div><div id="score_date_1" class="score_date">-</div></div>
+                        <div id="score_row_2" class="score_row"><div id="score_rank_2" class="score_rank">2</div><div id="score_name_2" class="score_name">김사원</div><div id="score_count_2" class="score_count">0</div><div id="score_value_2" class="score_value">0</div><div id="score_date_2" class="score_date">-</div></div>
+                        <div id="score_row_3" class="score_row"><div id="score_rank_3" class="score_rank">3</div><div id="score_name_3" class="score_name">김사원</div><div id="score_count_3" class="score_count">0</div><div id="score_value_3" class="score_value">0</div><div id="score_date_3" class="score_date">-</div></div>
+                        <div id="score_row_4" class="score_row"><div id="score_rank_4" class="score_rank">4</div><div id="score_name_4" class="score_name">김사원</div><div id="score_count_4" class="score_count">0</div><div id="score_value_4" class="score_value">0</div><div id="score_date_4" class="score_date">-</div></div>
+                        <div id="score_row_5" class="score_row"><div id="score_rank_5" class="score_rank">5</div><div id="score_name_5" class="score_name">김사원</div><div id="score_count_5" class="score_count">0</div><div id="score_value_5" class="score_value">0</div><div id="score_date_5" class="score_date">-</div></div>
+                    </div>
+                    <div id="score_empty_text">저장된 기록이 없습니다.</div>
                 </div>
             </div>
 
@@ -93,20 +120,23 @@
             <div id="page_body_credits" class="page_body_section simple_page_body">
                 <div class="simple_card credits_card">
                     <div id="credits_title" class="simple_card_title">Credits</div>
+                    <div id="credits_developers_team" class="simple_line">Developers Team</div>
+                    <img id="credits_developers_logo" src="../../Sprite/logo/dev_concepters.png" />
                     <img id="credits_id_card_1" class="credits_id_card" src="../../Sprite/id_card_jungle_김연하.png" />
                     <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_강건우.png" />
                     <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_박준혁.png" />
                     <img id="credits_id_card_4" class="credits_id_card" src="../../Sprite/id_card_jungle_오준혁.png" />
                     <div id="credits_special_thanks" class="simple_line">Special Thanks : Jungle GameTechlab 3기의 모두들 그리고 코치님들</div>
+                    <div id="credits_hint" class="simple_line">Hint: 플레이 중 반짝이는 무언가를 찾아보세요</div>
                 </div>
             </div>
         </div>
 
         <!-- 중앙 하단 Confirm -->
-        <button id="page_confirm_button" class="horiz_button">
-            <img class="horiz_button_image horiz_button_default" src="../../Sprite/ui_horiz_button.png" />
-            <img class="horiz_button_image horiz_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-            <div id="page_confirm_label" class="horiz_button_label">Confirm</div>
+        <button id="page_confirm_button" class="horiz_button ui_horizontal_button">
+            <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+            <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+            <div id="page_confirm_label" class="horiz_button_label ui_horizontal_button_text_large">결정</div>
         </button>
     </div>
 </body>

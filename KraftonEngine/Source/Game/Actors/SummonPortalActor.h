@@ -11,7 +11,7 @@
 // RotatingMovementComponent가 Root를 Z축으로 돌린다.
 // (회전은 PIE/게임에서만 — 에디터 배치 상태는 정지)
 // 바닥은 FX_StrangePortal 파티클이 담당.
-// 수거(점수/소멸)는 링 안쪽 CollectTrigger + CollectorBehavior.lua가 담당.
+// 수거(점수/소멸)는 링 안쪽 CollectTrigger + PortalBehavior.lua가 담당.
 // ======================================================
 UCLASS()
 class ASummonPortalActor : public AActor

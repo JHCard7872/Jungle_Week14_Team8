@@ -17,8 +17,8 @@ FGOIncRagdollCharacterConfig AGOIncMarioRagdollPawn::MakeCharacterConfig() const
 
 	Config.AliveCapsuleRadius = 0.4f;
 	Config.AliveCapsuleHalfHeight = 0.8f;
-	Config.ReviveTriggerCapsuleRadius = 4.0f;
-	Config.ReviveTriggerCapsuleHalfHeight = 4.0f;
+	Config.ReviveTriggerCapsuleRadius = 10.0f;
+	Config.ReviveTriggerCapsuleHalfHeight = 10.0f;
 
 	Config.bCanRevive = true;
 	Config.ReviveBlendDuration = 0.5f;
@@ -26,7 +26,7 @@ FGOIncRagdollCharacterConfig AGOIncMarioRagdollPawn::MakeCharacterConfig() const
 	Config.FleeSpeed = 3.6f;
 	Config.FleeAcceleration = 13.0f;
 	Config.FleeBrakingDeceleration = 8.5f;
-	Config.FleeEndDistance = 8.5f;
+	Config.FleeEndDistance = 20.0f;
 	Config.FleeStopDuration = 0.9f;
 	Config.FleeStopMinBrakingDeceleration = 0.1f;
 	Config.FleeRotationYawOffsetDegrees = 0.0f;

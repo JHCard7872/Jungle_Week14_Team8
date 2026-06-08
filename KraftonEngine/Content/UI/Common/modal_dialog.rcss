@@ -4,8 +4,7 @@ body {
     height: 100%;
     overflow: hidden;
     background-color: transparent;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     color: #ffffff;
 }
 
@@ -36,8 +35,6 @@ body {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 920px;
-    height: 420px;
     margin-left: -460px;
     margin-top: -210px;
     z-index: 20;
@@ -47,8 +44,6 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
 }
 
@@ -56,35 +51,26 @@ body {
 #modal_content {
     position: absolute;
     left: 11%;
-    top: 26%;
+    top: 22%;
     width: 78%;
-    height: 52%;
+    height: 58%;
+    overflow: visible;
 }
 
 #modal_title {
     position: absolute;
     left: 0px;
-    top: 0px;
+    top: -22px;
     width: 100%;
-    height: 56px;
-    color: #ffffff;
-    font-size: 40px;
-    line-height: 56px;
-    text-align: center;
-    font-effect: shadow(3px 3px #000000aa);
+    height: 64px;
 }
 
 #modal_message {
     position: absolute;
     left: 0px;
-    top: 62px;
+    top: 58px;
     width: 100%;
-    height: 84px;
-    color: #ffffff;
-    font-size: 28px;
-    line-height: 42px;
-    text-align: center;
-    font-effect: shadow(2px 2px #000000aa);
+    height: 100px;
 }
 
 #modal_button_row {
@@ -92,19 +78,23 @@ body {
     left: 0px;
     top: 150px;
     width: 100%;
-    height: 88px;
+    height: 104px;
+    z-index: 50;
 }
 
 .modal_button {
+    display: block;
     position: absolute;
+    left: 0px;
     top: 0px;
     width: 300px;
     height: 104px;
     margin: 0px;
     padding: 0px;
-    border: 0px;
+    border-width: 0px;
     background-color: transparent;
     transform-origin: center center;
+    z-index: 60;
 }
 
 /* 기본: 이미지 버튼 2개 */
@@ -155,8 +145,6 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
 }
 
@@ -178,12 +166,7 @@ body {
     top: 26px;
     width: 100%;
     height: 52px;
-    color: #ffffff;
-    font-size: 40px;
-    line-height: 52px;
-    text-align: center;
     pointer-events: none;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 /* YES / NO 같은 질문 팝업용. 위치 계산은 Lua가 아니라 CSS 클래스만으로 처리한다. */
@@ -206,12 +189,6 @@ body {
     top: 0px;
     width: 100%;
     height: 64px;
-    font-size: 36px;
-    line-height: 64px;
-    letter-spacing: 2px;
-    color: #ffffff;
-    text-align: center;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 .modal_two_buttons #modal_button_left.text_only {
@@ -239,14 +216,77 @@ body {
     color: #00f7ff;
 }
 
+
+/* 입력형 공통 모달: 사원 이름 입력처럼 텍스트 입력 + 텍스트 버튼 1개가 필요한 경우 사용 */
+/*
+   기본 모달은 제목/본문/버튼만 있어서 content 영역을 작게 잡아도 되지만,
+   input 모달은 name_entry.rml 시절과 같은 세로 배치가 필요하다.
+   기존에는 #modal_content height: 52% 인 상태에서 button_row top: 224px 이라
+   버튼 행이 부모 영역 밖으로 나가 RmlUi에서 클리핑될 수 있었다.
+*/
+.modal_with_input #modal_content {
+    top: 10%;
+    height: 84%;
+    overflow: visible;
+}
+
+#modal_input_area {
+    position: absolute;
+    left: 0px;
+    top: 106px;
+    width: 100%;
+    height: 116px;
+    display: none;
+}
+
+.modal_with_input #modal_input_area {
+    display: block;
+}
+
+.modal_with_input #modal_message {
+    top: 54px;
+    height: 46px;
+}
+
+.modal_with_input #modal_button_row {
+    top: 232px;
+    height: 104px;
+}
+
+#modal_input_rule {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 26px;
+}
+
+#modal_text_input {
+    position: absolute;
+    left: 50%;
+    top: 32px;
+    width: 380px;
+    height: 52px;
+    margin-left: -190px;
+    padding: 0px 16px;
+}
+
+#modal_input_error {
+    position: absolute;
+    left: 0px;
+    top: 90px;
+    width: 100%;
+    height: 26px;
+}
+
 /* 커서 스프라이트 — 크기를 바꾸면 ModalDialogUIController.lua의 CURSOR_SIZE도 같이 맞출 것
-   (중앙 핫스팟 계산에 쓰인다). Play 씬 크로스헤어(64px)와 동일 크기. */
+   (중앙 핫스팟 계산에 쓰인다). MainMenu 커서와 동일 크기. */
 .modal_cursor_image {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 64px;
-    height: 64px;
+    width: 150px;
+    height: 150px;
     display: none;
     z-index: 1000;
     pointer-events: none;

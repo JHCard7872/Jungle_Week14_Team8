@@ -1,28 +1,30 @@
 <rml>
 <head>
     <title>Name Entry</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="name_entry.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 
 <body>
     <div id="cutscene_root">
         <div id="cutscene_dim"></div>
 
-        <div id="name_popup">
-            <img id="name_popup_image" src="../../Sprite/ui_question_popup.png" />
+        <div id="name_popup" class="ui_modal_frame">
+            <img id="name_popup_image" class="ui_modal_background" src="../../Sprite/ui_modal.png" />
 
             <div id="name_content">
-                <div id="name_popup_title">Employee Registration</div>
-                <div id="name_popup_message">사원 이름을 입력해주세요.</div>
-                <div id="name_popup_rule">한글 / Alphabet 6글자 이내</div>
+                <div id="name_popup_title" class="ui_modal_title">Employee Registration</div>
+                <div id="name_popup_message" class="ui_modal_description">사원 이름을 입력해주세요.</div>
+                <div id="name_popup_rule" class="ui_modal_input_rule">한글 / Alphabet 6글자 이내</div>
 
-                <input id="player_name_input" type="text" value="" />
-                <div id="name_error_text"></div>
+                <input id="player_name_input" class="ui_modal_input_field" type="text" value="김사원" />
+                <div id="name_error_text" class="ui_modal_error_text"></div>
 
-                <button id="name_confirm_button" class="name_button">
-                    <img class="name_button_image name_button_default" src="../../Sprite/ui_horiz_button.png" />
-                    <img class="name_button_image name_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                    <div class="name_button_label">Confirm</div>
+                <button id="name_confirm_button" class="name_button ui_horizontal_button_small">
+                    <img class="name_button_image name_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                    <img class="name_button_image name_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                    <div class="name_button_label ui_horizontal_button_text">결정</div>
                 </button>
             </div>
         </div>

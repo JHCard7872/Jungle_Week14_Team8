@@ -1,7 +1,9 @@
 <rml>
 <head>
     <title>Options</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="options.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 
 <body>
@@ -49,10 +51,10 @@
             </div>
 
             <!-- 중앙 하단 Confirm -->
-            <button id="options_confirm_button" class="horiz_button">
-                <img class="horiz_button_image horiz_button_default" src="../../Sprite/ui_horiz_button.png" />
-                <img class="horiz_button_image horiz_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                <span class="horiz_button_label">Confirm</span>
+            <button id="options_confirm_button" class="horiz_button ui_horizontal_button_small">
+                <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                <span class="horiz_button_label ui_horizontal_button_text">결정</span>
             </button>
         </div>
     </div>

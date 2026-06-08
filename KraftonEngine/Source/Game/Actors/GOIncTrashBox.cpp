@@ -14,7 +14,7 @@ namespace
 {
 	const FString TrashBoxStaticMeshPath = "Content/Data/Box/TrashBox_StaticMesh.uasset";
 	const FString TrashBoxMaterialPath = "Content/Material/Auto/Material.013.mat";
-	const FString CollectorLuaScriptFile = "CollectorBehavior.lua";
+	const FString CollectorLuaScriptFile = "TrashBoxBehavior.lua";
 	const FString LogoDecalMaterialPath = "Content/Material/Decal/Decal_game_over_inc_icon.mat";
 }
 

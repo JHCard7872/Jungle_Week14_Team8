@@ -4,7 +4,7 @@ body {
     height: 100%;
     overflow: hidden;
     background-color: transparent;
-    font-family: malgun;
+
     color: #111111;
 }
 
@@ -79,7 +79,9 @@ body {
 .result_employee_value {
     width: 230px;
     height: 26px;
-    font-family: malgun;
+
+    font-family: YoonGothic;
+    font-weight: normal;
     font-size: 20px;
     line-height: 26px;
     text-align: left;
@@ -89,7 +91,9 @@ body {
 .result_metric_value {
     width: 190px;
     height: 28px;
-    font-family: malgun;
+
+    font-family: YoonGothic;
+    font-weight: normal;
     font-size: 20px;
     line-height: 28px;
     text-align: left;
@@ -100,7 +104,8 @@ body {
     width: 250px;
     height: 88px;
     color: #000000;
-    font-family: Arial;
+
+    font-family: Arial Black;
     font-weight: 900;
     font-size: 76px;
     line-height: 88px;
@@ -111,7 +116,8 @@ body {
     width: 150px;
     height: 150px;
     color: #000000;
-    font-family: Arial;
+
+    font-family: Arial Black;
     font-weight: 900;
     font-size: 116px;
     line-height: 150px;
@@ -149,13 +155,13 @@ body {
 }
 
 /* 커서 스프라이트 — 크기를 바꾸면 ResultUIController.lua의 CURSOR_SIZE도 같이 맞출 것
-   (중앙 핫스팟 계산용). Play 씬 크로스헤어(64px)와 동일 크기. */
+   (중앙 핫스팟 계산용). MainMenu 커서와 동일 크기. */
 .result_cursor_image {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 64px;
-    height: 64px;
+    width: 150px;
+    height: 150px;
     display: none;
     z-index: 1000;
     pointer-events: none;
@@ -173,9 +179,9 @@ body {
     bottom: 32px;
     width: 240px;
     height: 72px;
-    font-family: ROKAF Sans;
+
     font-size: 80px;
-    font-weight: bold;
+
     line-height: 56px;
     letter-spacing: 1.5px;
     text-align: right;
@@ -213,8 +219,6 @@ body {
 .result_action_button {
     position: absolute;
     left: 50%;
-    width: 440px;
-    height: 104px;
     margin-left: -220px;
     padding: 0px;
     border: 0px;
@@ -243,8 +247,6 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
 }
 
@@ -267,14 +269,8 @@ body {
     top: 26px;
     width: 100%;
     height: 52px;
-    color: #ffffff;
-    font-family: NanumGothic;
-    font-weight: bold;
-    font-size: 36px;
-    line-height: 52px;
-    text-align: center;
+
     pointer-events: none;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 #result_debug_panel {
@@ -297,7 +293,7 @@ body {
     width: 100%;
     height: 34px;
     margin-bottom: 8px;
-    font-family: Arial;
+
     font-size: 28px;
     font-weight: 900;
     color: #ffffff;
@@ -353,7 +349,7 @@ body {
     border-color: #a9d6ea;
     border-radius: 8px;
     color: #ffffff;
-    font-family: Arial;
+
     font-size: 16px;
     font-weight: 900;
     text-align: center;

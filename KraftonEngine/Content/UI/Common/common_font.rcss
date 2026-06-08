@@ -1,0 +1,19 @@
+/* =============================================================================
+   Common Font Tokens
+   -----------------------------------------------------------------------------
+   엔진의 실제 font key가 다르면 이 파일의 font-family 값만 바꾸면 된다.
+   UI 타입별 크기/배경/색상은 common_ui_style.rcss에서 관리한다.
+   ============================================================================= */
+
+body {
+    font-family: Galmuri;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+button,
+input,
+textarea {
+    font-family: Galmuri;
+    font-weight: bold;
+}

@@ -1,12 +1,14 @@
 <rml>
 <head>
     <title>Title Screen</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="title_screen.rcss" />
+    <link type="text/rcss" href="../Common/common_ui_style.rcss" />
 </head>
 <body>
     <div id="title_root">
         <img id="title_background" src="../../Sprite/title_background.png" />
-        <div id="press_any_button">PRESS ANY BUTTON TO START</div>
+        <div id="press_any_button" class="ui_title_message">PRESS ANY BUTTON TO START</div>
         <button id="title_click_area"></button>
         <div id="title_fade_overlay"></div>
     </div>

@@ -1,21 +1,26 @@
 -- =============================================================================
--- CutScene - 임시 스토리/등록 씬.
--- 현재는 플레이어 이름 입력만 받고 Play.Scene으로 넘긴다.
+-- CutScene - 스토리/사원 등록 씬.
+-- BgmCutScene.mp3와 cutscene_player.png 배경을 깔고,
+-- common question modal의 입력형 variant로 사원 이름을 입력받는다.
 -- =============================================================================
 
 local Session = require("GameSession")
 local UserSettings = require("Data/UserSettings")
+local QuestionPopup = require("UI/QuestionPopupUIController")
 
-local UI_DOCUMENT_PATH = "Content/UI/CutScene/name_entry.rml"
-local CUTSCENE_Z_ORDER = 180
+local BG_DOCUMENT_PATH = "Content/UI/CutScene/cutscene_background.rml"
+local BG_Z_ORDER = 10
+local MODAL_Z_ORDER = 180
 local UI_CLICK_KEY = "sfx_ui_click"
-local UI_HOVER_KEY = "sfx_ui_hover"
 local KEY_ENTER = 0x0D
+local DEFAULT_EMPLOYEE_NAME = "김사원"
+local INVALID_NAME_MESSAGE = "잘못된 형식의 이름입니다. 다시 입력해주세요"
 
-local widget = nil
-local bindings_initialized = false
+local background_widget = nil
 local loading_play = false
 local pending_scene_name = nil
+local last_input_name = DEFAULT_EMPLOYEE_NAME
+local input_modal_open = false
 
 local function request_scene_load(scene_name)
     if pending_scene_name ~= nil then
@@ -23,22 +28,6 @@ local function request_scene_load(scene_name)
     end
 
     pending_scene_name = scene_name
-end
-
-local function set_text(element_id, value)
-    if widget == nil or widget.SetValue == nil then
-        return
-    end
-
-    widget:SetValue(element_id, tostring(value or ""))
-end
-
-local function get_text(element_id)
-    if widget == nil or widget.GetValue == nil then
-        return ""
-    end
-
-    return tostring(widget:GetValue(element_id) or "")
 end
 
 local function trim(value)
@@ -82,7 +71,7 @@ local function validate_name(name)
     name = trim(name)
 
     if name == "" then
-        return false, "이름을 입력해주세요."
+        return false
     end
 
     local count = 0
@@ -92,20 +81,16 @@ local function validate_name(name)
         cp, i = next_codepoint(name, i)
 
         if cp == nil or not is_allowed_name_codepoint(cp) then
-            return false, "한글 또는 알파벳만 사용할 수 있습니다."
+            return false
         end
 
         count = count + 1
         if count > 6 then
-            return false, "이름은 6글자 이내여야 합니다."
+            return false
         end
     end
 
-    return true, ""
-end
-
-local function show_error(message)
-    set_text("name_error_text", message or "")
+    return true
 end
 
 local function save_player_name(name)
@@ -120,63 +105,80 @@ local function save_player_name(name)
     _G.PlayerName = name
 end
 
-local function confirm_name()
+local show_name_input
+
+local function show_invalid_name_notice(name)
+    input_modal_open = false
+    last_input_name = trim(name)
+    if last_input_name == "" then
+        last_input_name = DEFAULT_EMPLOYEE_NAME
+    end
+
+    QuestionPopup.ShowNotice({
+        zOrder = MODAL_Z_ORDER,
+        title = "입력 오류",
+        message = INVALID_NAME_MESSAGE,
+        buttonText = "확인",
+        showCursor = true,
+        onConfirm = function()
+            show_name_input(last_input_name)
+        end,
+    })
+end
+
+local function confirm_name(name)
     if loading_play then
         return
     end
 
-    local name = trim(get_text("player_name_input"))
-    local ok, error_message = validate_name(name)
-    if not ok then
-        show_error(error_message)
+    name = trim(name)
+    last_input_name = name
+
+    if not validate_name(name) then
+        show_invalid_name_notice(name)
         return
     end
 
     loading_play = true
     AudioManager.Play(UI_CLICK_KEY, UserSettings.GetSfxVolumeScalar())
     save_player_name(name)
+    QuestionPopup.Destroy()
     request_scene_load("Play")
 end
 
-local function bind_actions()
-    if widget == nil or bindings_initialized or widget.bind_click == nil then
-        return
-    end
-
-    widget:bind_click("name_confirm_button", function()
-        confirm_name()
-    end)
-
-    if widget.bind_hover ~= nil then
-        widget:bind_hover("name_confirm_button", function()
-            AudioManager.Play(UI_HOVER_KEY, UserSettings.GetSfxVolumeScalar())
-        end)
-    end
-
-    bindings_initialized = true
+show_name_input = function(default_name)
+    input_modal_open = true
+    QuestionPopup.ShowInput({
+        zOrder = MODAL_Z_ORDER,
+        title = "Employee Registration",
+        message = "사원 이름을 입력해주세요.",
+        ruleText = "한글 / Alphabet 6글자 이내",
+        defaultValue = default_name or DEFAULT_EMPLOYEE_NAME,
+        confirmText = "결정",
+        showCursor = true,
+        onConfirm = confirm_name,
+    })
 end
 
-local function ensure_widget()
+local function ensure_background_widget()
     if UI == nil or UI.CreateWidget == nil then
         return nil
     end
 
-    if widget == nil then
-        widget = UI.CreateWidget(UI_DOCUMENT_PATH)
+    if background_widget == nil then
+        background_widget = UI.CreateWidget(BG_DOCUMENT_PATH)
     end
 
-    if widget == nil then
+    if background_widget == nil then
         return nil
     end
 
-    if widget.IsInViewport == nil or not widget:IsInViewport() then
-        widget:AddToViewportZ(CUTSCENE_Z_ORDER)
+    if background_widget.IsInViewport == nil or not background_widget:IsInViewport() then
+        background_widget:AddToViewportZ(BG_Z_ORDER)
     end
 
-    widget:SetWantsMouse(true)
-    set_text("name_error_text", "")
-    bind_actions()
-    return widget
+    background_widget:SetWantsMouse(false)
+    return background_widget
 end
 
 function BeginPlay()
@@ -184,18 +186,20 @@ function BeginPlay()
     AudioManager.StopAllLoops()
     loading_play = false
     pending_scene_name = nil
+    last_input_name = DEFAULT_EMPLOYEE_NAME
+    input_modal_open = false
 
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
     end
-    AudioManager.PlayBGM("bgm_main_0", UserSettings.GetBgmVolumeScalar())
+    AudioManager.PlayBGM("bgm_cutscene", UserSettings.GetBgmVolumeScalar())
 
-    Engine.SetCursorVisible(true)
-    ensure_widget()
+    Engine.SetCursorVisible(false)
+    ensure_background_widget()
+    show_name_input(DEFAULT_EMPLOYEE_NAME)
 
-    Engine.SetOnEscape(function()
-        request_scene_load("MainMenu")
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응. (진행은 Enter/결정 버튼)
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)
@@ -206,22 +210,24 @@ function Tick(dt)
         return
     end
 
-    if Input.GetKeyDown(KEY_ENTER) then
-        confirm_name()
+    if input_modal_open and Input.GetKeyDown(KEY_ENTER) then
+        confirm_name(QuestionPopup.GetInputText())
     end
 end
 
 function EndPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
+    QuestionPopup.Destroy()
 
-    if widget ~= nil then
-        widget:RemoveFromParent()
+    if background_widget ~= nil then
+        background_widget:RemoveFromParent()
     end
 
     Engine.SetCursorVisible(true)
-    widget = nil
-    bindings_initialized = false
+    background_widget = nil
     loading_play = false
     pending_scene_name = nil
+    last_input_name = DEFAULT_EMPLOYEE_NAME
+    input_modal_open = false
 end

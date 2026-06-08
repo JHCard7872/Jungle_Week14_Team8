@@ -72,6 +72,7 @@ local function start_gameplay()
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
+    GOInc.SpawnSummonPortal()   -- 포탈 1개 코드 스폰 — 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로
     HUD.SetGameplayHudVisible(true)
     HUD.UpdateFromSession(0.0)
 end
@@ -87,6 +88,21 @@ local function begin_start_countdown()
     HUD.SetStartCountdownStep("3", COUNTDOWN_DIM_OPACITY)
 
     StartCoroutine(function()
+        -- 씬 로드 직후 첫 프레임은 큰 맵 로딩으로 dt가 튄다. 이 히치 위에서 카운트다운을
+        -- 시작하면 실시간 재생되는 오디오와 dt 누적(Wait) 비주얼이 어긋난다.
+        -- dt가 작아지는 안정 프레임까지 흘려보낸 뒤 오디오+비주얼을 함께 시작한다
+        -- (guard로 최대 대기 프레임 수를 막아 저프레임에서도 멈추지 않게 한다).
+        local stable_frames, guard_frames = 0, 0
+        while stable_frames < 2 and guard_frames < 30 do
+            local frame_dt = WaitFrame()
+            guard_frames = guard_frames + 1
+            if frame_dt ~= nil and frame_dt < 0.05 then
+                stable_frames = stable_frames + 1
+            else
+                stable_frames = 0
+            end
+        end
+
         AudioManager.Play("sfx_countdown_321_go", UserSettings.GetSfxVolumeScalar())
 
         HUD.SetStartCountdownStep("3", COUNTDOWN_DIM_OPACITY)
@@ -168,9 +184,9 @@ function BeginPlay()
     Engine.SetOnEscape(enterPause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)
 
     begin_start_countdown()
-    -- 스폰은 Play.Scene의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가,
-    -- 수거는 AGOIncTruck 액터(TruckBehavior.lua)가 자체 Tick으로 담당 —
-    -- pause 시 액터 Tick이 멈추므로 스폰/주행도 같이 멈춘다
+    -- 스폰은 씬의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가,
+    -- 수거는 코드 스폰 포탈(PortalBehavior.lua)과 TrashBox 액터(TrashBoxBehavior.lua)가
+    -- 자체 Tick/오버랩으로 담당 — pause 시 액터 Tick이 멈추므로 스폰도 같이 멈춘다
 end
 
 function Tick(dt)

@@ -1,6 +1,7 @@
 -- 게임 결과 데이터가 저장된 세션 모듈
 local Session = require("GameSession")
 local UserSettings = require("Data/UserSettings")
+local Cursor = require("UI/CursorSpriteUtil")
 
 -- Result 화면에서 사용할 RML 문서 경로
 local UI_DOCUMENT_PATH = "Content/UI/Result/result_screen.rml"
@@ -184,8 +185,7 @@ local base_mouse_enabled = false
 local mouse_enabled = false
 -- 커서 스프라이트 (OS 커서 대신 aim 이미지 — Title 메뉴와 같은 방식).
 -- 크기는 rcss .result_cursor_image와 같은 값이어야 한다 (중앙 핫스팟 계산용)
-local VK_LBUTTON = 0x01
-local CURSOR_SIZE = 64
+local CURSOR_SIZE = Cursor.GetDefaultSize()
 local PRE_POPUP_SHADOW_OPACITY = 0.4
 -- 각 사운드가 이미 재생됐는지 여부 (soundLeadTime 적용으로 phase 전환 전에 트리거)
 local sfx_slide_triggered = false
@@ -1106,22 +1106,10 @@ local function update_cursor_sprite()
         return
     end
 
-    if not mouse_enabled then
-        set_display("result_cursor_normal", false)
-        set_display("result_cursor_click", false)
-        return
-    end
-
-    local left = string.format("%dpx", Input.GetMouseX() - CURSOR_SIZE / 2)
-    local top = string.format("%dpx", Input.GetMouseY() - CURSOR_SIZE / 2)
-    set_property("result_cursor_normal", "left", left)
-    set_property("result_cursor_normal", "top", top)
-    set_property("result_cursor_click", "left", left)
-    set_property("result_cursor_click", "top", top)
-
-    local is_click = Input.GetKey(VK_LBUTTON)
-    set_display("result_cursor_normal", not is_click)
-    set_display("result_cursor_click", is_click)
+    Cursor.Update(widget, "result_cursor_normal", "result_cursor_click", {
+        visible = mouse_enabled,
+        size = CURSOR_SIZE,
+    })
 end
 
 -- 매 프레임 호출해서 현재 phase에 맞는 애니메이션을 진행한다.
