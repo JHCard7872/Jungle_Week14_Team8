@@ -21,6 +21,7 @@ local S = {
     timeRemaining = 0,     -- 남은 시간(초)
     inputEnabled  = true,  -- 게임플레이 입력 허용 여부 (pause 중 false — 입력 콜백 진입부에서 검사)
     playerName    = "Employee", -- CutScene에서 입력받은 이름. 씬 전환/플레이 리셋 후에도 유지한다.
+    idCardNames   = {},
 
     employee = {
         number = "GO-2417",
@@ -66,12 +67,16 @@ local S = {
         urgentScore    = 0,   -- 긴급 요청 처리 실적 — 미션 보너스 누계 (결과 화면 표시용)
         gameOverReason = "",  -- "시간 초과" / "서버 과부하"
         gradeText      = "",  -- 평가 문구 ("정규직 전환 실패" 등) — 3차 폴리시
+        idCardNames    = {},
     },
 }
+
+S.result.idCardNames = S.idCardNames
 
 -- 매 판 시작(PlayScene.BeginPlay)에서 호출. 이전 판 값 잔류 방지.
 function S.Reset(timeLimit)
     S.score, S.load, S.timeRemaining, S.inputEnabled = 0, 0, timeLimit, true
+    S.idCardNames = {}
     S.gun    = { mode = "collect", energy = 100, crosshair = { visible = true, hold = false, rotation = 0.0 } }
     S.target = {
         visible = false,
@@ -87,7 +92,7 @@ function S.Reset(timeLimit)
     S.mission = { active = false, target = "", need = 0, got = 0, text = "", seq = 0 }
     -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
     -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)
-    S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "" }
+    S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "", idCardNames = S.idCardNames }
 end
 
 return S

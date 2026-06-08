@@ -101,5 +101,6 @@ void FBillboardSceneProxy::UpdatePerViewport(const FFrameContext& Frame)
 
 	PerObjectConstants = FPerObjectConstants::FromWorldMatrix(BillboardMatrix);
 	PerObjectConstants.Color = CachedTintColor;
+	RefreshHitRimFromOwner();
 	MarkPerObjectCBDirty();
 }
