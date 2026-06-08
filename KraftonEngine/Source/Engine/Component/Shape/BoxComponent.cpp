@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 #include "BoxComponent.h"
+#include "Collision/Ray/RayUtils.h"
 #include "Object/Reflection/ObjectFactory.h"
 #include "Serialization/Archive.h"
 #include "Render/Scene/FScene.h"
@@ -8,6 +9,26 @@
 
 #include <cstring>
 #include <cmath>
+
+namespace
+{
+	FVector ComputeBoxLocalNormal(const FVector& LocalHit, const FVector& Extent)
+	{
+		const float DX = std::abs(std::abs(LocalHit.X) - Extent.X);
+		const float DY = std::abs(std::abs(LocalHit.Y) - Extent.Y);
+		const float DZ = std::abs(std::abs(LocalHit.Z) - Extent.Z);
+
+		if (DX <= DY && DX <= DZ)
+		{
+			return FVector(LocalHit.X >= 0.0f ? 1.0f : -1.0f, 0.0f, 0.0f);
+		}
+		if (DY <= DX && DY <= DZ)
+		{
+			return FVector(0.0f, LocalHit.Y >= 0.0f ? 1.0f : -1.0f, 0.0f);
+		}
+		return FVector(0.0f, 0.0f, LocalHit.Z >= 0.0f ? 1.0f : -1.0f);
+	}
+}
 
 void UBoxComponent::SetBoxExtent(const FVector& InExtent)
 {
@@ -25,6 +46,57 @@ FVector UBoxComponent::GetScaledBoxExtent() const
 {
 	FVector Scale = GetWorldScale();
 	return FVector(BoxExtent.X * Scale.X, BoxExtent.Y * Scale.Y, BoxExtent.Z * Scale.Z);
+}
+
+bool UBoxComponent::LineTraceComponent(const FRay& Ray, FHitResult& OutHitResult)
+{
+	const FVector Extent(
+		std::abs(BoxExtent.X),
+		std::abs(BoxExtent.Y),
+		std::abs(BoxExtent.Z)
+	);
+	if (Extent.X <= 0.0f || Extent.Y <= 0.0f || Extent.Z <= 0.0f)
+	{
+		return false;
+	}
+
+	const FMatrix& WorldMatrix = GetWorldMatrix();
+	const FMatrix& WorldInverse = GetWorldInverseMatrix();
+
+	FRay LocalRay;
+	LocalRay.Origin = WorldInverse.TransformPositionWithW(Ray.Origin);
+	LocalRay.Direction = WorldInverse.TransformVector(Ray.Direction).GetSafeNormal();
+	if (LocalRay.Direction.IsNearlyZero())
+	{
+		return false;
+	}
+
+	float TMin = 0.0f;
+	float TMax = 0.0f;
+	if (!FRayUtils::IntersectRayAABB(LocalRay, -Extent, Extent, TMin, TMax))
+	{
+		return false;
+	}
+
+	const float LocalDistance = TMin >= 0.0f ? TMin : TMax;
+	if (LocalDistance < 0.0f)
+	{
+		return false;
+	}
+
+	const FVector LocalHit = LocalRay.Origin + LocalRay.Direction * LocalDistance;
+	const FVector WorldHit = WorldMatrix.TransformPositionWithW(LocalHit);
+	const FVector LocalNormal = ComputeBoxLocalNormal(LocalHit, Extent);
+	const FVector WorldNormal = WorldMatrix.TransformVector(LocalNormal).GetSafeNormal();
+
+	OutHitResult = {};
+	OutHitResult.bHit = true;
+	OutHitResult.Distance = FVector::Distance(Ray.Origin, WorldHit);
+	OutHitResult.WorldHitLocation = WorldHit;
+	OutHitResult.WorldNormal = WorldNormal;
+	OutHitResult.ImpactNormal = WorldNormal;
+	OutHitResult.HitComponent = this;
+	return true;
 }
 
 void UBoxComponent::ContributeSelectedVisuals(FScene& Scene) const

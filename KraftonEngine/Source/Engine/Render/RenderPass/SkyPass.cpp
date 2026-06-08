@@ -33,6 +33,11 @@ FSkyPass::~FSkyPass()
 bool FSkyPass::BeginPass(const FPassContext& Ctx)
 {
 	const FFrameContext& Frame = Ctx.Frame;
+	if (!Frame.RenderOptions.ShowFlags.bSkySphere)
+	{
+		return false;
+	}
+
 	if (Frame.bIsLightView || Frame.bIsOrtho)
 	{
 		return false;

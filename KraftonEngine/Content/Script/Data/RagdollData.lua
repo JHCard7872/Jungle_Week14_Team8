@@ -57,7 +57,7 @@ return {
         displayName    = "노란 전기쥐",
         referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_Pikachu.png",
 
-        mass           = 12.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
+        mass           = 40.0,    -- 실제 ragdoll 전체 질량 / UI 표시용 무게
         baseScore      = 300,    -- 수거당 300점 통일 (임시 밸런스)
         canRevive      = true,
         reviveSpeed    = 4.5,

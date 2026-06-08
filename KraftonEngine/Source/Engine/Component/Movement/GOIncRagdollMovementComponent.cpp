@@ -503,8 +503,91 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 		return Input;
 	}
 
+	if (CornerEscapeTimer > 0.0f && !CornerEscapeDirection.IsNearlyZero())
+	{
+		CornerEscapeTimer = std::max(0.0f, CornerEscapeTimer - DeltaTime);
+		LastWallAvoidanceDirection = CornerEscapeDirection;
+		return CornerEscapeDirection * InputLength;
+	}
+
+	auto RemoveVelocityIntoNormal = [this](const FVector& Normal)
+	{
+		if (Normal.IsNearlyZero())
+		{
+			return;
+		}
+
+		FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
+		const float VelocityIntoWall = HorizontalVelocity.Dot(Normal);
+		if (VelocityIntoWall < 0.0f)
+		{
+			HorizontalVelocity = HorizontalVelocity - Normal * VelocityIntoWall;
+			Velocity.X = HorizontalVelocity.X;
+			Velocity.Y = HorizontalVelocity.Y;
+		}
+	};
+
+	auto TryBeginCornerEscape = [&](const FVector& CurrentWallNormal, const FHitResult& Hit)
+	{
+		if (LockedWallNormal.IsNearlyZero() || CurrentWallNormal.IsNearlyZero())
+		{
+			return false;
+		}
+
+		const float NormalDotThreshold = FMath::Clamp(CornerNormalDotThreshold, -1.0f, 1.0f);
+		if (CurrentWallNormal.Dot(LockedWallNormal) >= NormalDotThreshold)
+		{
+			return false;
+		}
+
+		if (Hit.Distance > SweepSkinWidth + SmallMoveThreshold)
+		{
+			return false;
+		}
+
+		FVector EscapeDir = CurrentWallNormal + LockedWallNormal;
+		EscapeDir.Z = 0.0f;
+		EscapeDir = EscapeDir.GetSafeNormal(1.0e-6f, LockedWallAvoidanceDirection);
+		if (EscapeDir.IsNearlyZero())
+		{
+			EscapeDir = CurrentWallNormal;
+		}
+
+		CornerEscapeDirection = EscapeDir;
+		CornerEscapeTimer = std::max(0.0f, CornerEscapeDuration);
+		LastWallAvoidanceDirection = CornerEscapeDirection;
+		LockedWallAvoidanceDirection = CornerEscapeDirection;
+		WallAvoidanceLockTimer = 0.0f;
+
+		RemoveVelocityIntoNormal(CurrentWallNormal);
+		RemoveVelocityIntoNormal(LockedWallNormal);
+
+		if (USceneComponent* Updated = GetUpdatedComponent())
+		{
+			const float NudgeDistance = std::max(CornerNudgeDistance, SweepSkinWidth);
+			if (NudgeDistance > 0.0f)
+			{
+				Updated->SetWorldLocation(Updated->GetWorldLocation() + CornerEscapeDirection * NudgeDistance);
+			}
+		}
+
+		return true;
+	};
+
 	if (WallAvoidanceLockTimer > 0.0f && !LockedWallAvoidanceDirection.IsNearlyZero())
 	{
+		FHitResult LockedForwardHit;
+		if (ProbeWallAvoidance(LockedWallAvoidanceDirection, ProbeDistance, LockedForwardHit))
+		{
+			FVector LockedHitNormal = GetBestHitNormal(LockedForwardHit);
+			LockedHitNormal.Z = 0.0f;
+			LockedHitNormal = LockedHitNormal.GetSafeNormal();
+			if (TryBeginCornerEscape(LockedHitNormal, LockedForwardHit))
+			{
+				return CornerEscapeDirection * InputLength;
+			}
+		}
+
 		WallAvoidanceLockTimer = std::max(0.0f, WallAvoidanceLockTimer - DeltaTime);
 		LastWallAvoidanceDirection = LockedWallAvoidanceDirection;
 		return LockedWallAvoidanceDirection * InputLength;
@@ -551,6 +634,11 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 		return Input;
 	}
 
+	if (TryBeginCornerEscape(WallNormal, ForwardHit))
+	{
+		return CornerEscapeDirection * InputLength;
+	}
+
 	const float IntoWall = DesiredDir.Dot(WallNormal);
 	if (IntoWall >= -SmallInputThreshold)
 	{
@@ -566,14 +654,7 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 			WallNormal * std::max(WallContactNudgeDistance, SweepSkinWidth));
 	}
 
-	FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
-	const float VelocityIntoWall = HorizontalVelocity.Dot(WallNormal);
-	if (VelocityIntoWall < 0.0f)
-	{
-		HorizontalVelocity = HorizontalVelocity - WallNormal * VelocityIntoWall;
-		Velocity.X = HorizontalVelocity.X;
-		Velocity.Y = HorizontalVelocity.Y;
-	}
+	RemoveVelocityIntoNormal(WallNormal);
 
 	const float SideAngle = FMath::Clamp(WallAvoidanceSideProbeAngleDegrees, 0.0f, 90.0f);
 	const FVector LeftDir = RotateDirection2D(DesiredDir, SideAngle).GetSafeNormal();

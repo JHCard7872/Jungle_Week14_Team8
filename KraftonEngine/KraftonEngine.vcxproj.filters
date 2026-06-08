@@ -1247,6 +1247,9 @@
     <ClCompile Include="Source\Engine\Component\Movement\MovementComponent.cpp">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Engine\Component\Movement\BobbingMovementComponent.cpp">
+      <Filter>Source\Engine\Component\Movement</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Engine\Component\Movement\PendulumMovementComponent.cpp">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClCompile>
@@ -2134,6 +2137,9 @@
       <Filter>Intermediate\Generated</Filter>
     </ClCompile>
     <ClCompile Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.cpp" />
+    <ClCompile Include="Source\Game\Actors\GOIncIdCard.cpp">
+      <Filter>Source\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Actors\GOIncTrashBox.cpp">
       <Filter>Source\Game</Filter>
     </ClCompile>
@@ -2620,6 +2626,9 @@
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Component\Movement\MovementComponent.h">
+      <Filter>Source\Engine\Component\Movement</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Component\Movement\BobbingMovementComponent.h">
       <Filter>Source\Engine\Component\Movement</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Component\Movement\PendulumMovementComponent.h">
@@ -5964,6 +5973,9 @@
     <ClInclude Include="Source\Engine\Component\Physics\PhysicalAnimationComponent.h" />
     <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
+    <ClInclude Include="Source\Game\Actors\GOIncIdCard.h">
+      <Filter>Source\Game</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Actors\GOIncTrashBox.h">
       <Filter>Source\Game</Filter>
     </ClInclude>

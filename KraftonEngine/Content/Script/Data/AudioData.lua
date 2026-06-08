@@ -44,6 +44,7 @@ return {
     sfx_revive = "SfxRevivedRagdoll.mp3",
     sfx_popup_alert = "SfxPlayPopupAlert.mp3",
     sfx_popup_info = "SfxPlayPopupInfo.mp3",
+    sfx_popup_info_0 = "SfxPlayPopupInfo_0.mp3",
     sfx_popup_success = "SfxPlayPopupSuccess.mp3",
     sfx_popup_warning = "SfxPlayPopupWarning.mp3",
     sfx_time_passing = "SfxTimePassing.mp3",
