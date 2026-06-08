@@ -48,4 +48,10 @@ return {
     sfx_popup_warning = "SfxPlayPopupWarning.mp3",
     sfx_time_passing = "SfxTimePassing.mp3",
     sfx_10_seconds = "Sfx10seconds.mp3",
+    sfx_spotlight = "SfxSpotlight.mp3",
+    sfx_falling = "SfxFalling.mp3",
+    sfx_falled = "SfxFalled.mp3",
+    sfx_scary = "SfxScary.mp3",
+    sfx_logo_impact = "SfxLogoImpact.mp3",
+    sfx_bbing = "SfxBbbing.mp3",
 }
