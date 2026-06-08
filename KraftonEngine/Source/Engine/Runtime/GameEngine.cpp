@@ -15,6 +15,17 @@
 #include "Core/ProjectSettings.h"
 #include "Core/Logging/Log.h"
 
+namespace
+{
+	// 로드 히치·warm-up 스터터·GC·저사양 stall 로 한 frame dt 가 폭증하면, 캐릭터 이동
+	// (GOIncRagdollMovement)이 그 dt 를 그대로 적분해 한 프레임에 수 미터를 내려가 바닥 snap
+	// 레이캐스트(HalfHeight + 약 0.23m) 를 지나쳐 tunneling 한다. 이 경로는 PhysX 의 0.25s
+	// clamp 를 안 거치는 수동 raycast+teleport 라 별도 상한이 필요하다.
+	// 0.1 < 0.153(정지낙하 tunneling 한계) 이고 0.05(PlayScene 안정프레임 판정) 보다 커서
+	// 카운트다운 싱크도 유지된다.
+	constexpr float GMaxGameDeltaTime = 0.1f;
+}
+
 void UGameEngine::Init(FWindowsWindow* InWindow)
 {
 	UEngine::Init(InWindow);
@@ -65,6 +76,13 @@ void UGameEngine::Shutdown()
 
 void UGameEngine::Tick(float DeltaTime)
 {
+	// 시뮬레이션에 들어가는 frame dt 상한 — GMaxGameDeltaTime 주석 참고.
+	// (std::min 은 windows.h 의 min 매크로와 충돌할 수 있어 삼항으로 자른다.)
+	if (DeltaTime > GMaxGameDeltaTime)
+	{
+		DeltaTime = GMaxGameDeltaTime;
+	}
+
 	UEngine::Tick(DeltaTime);
 
 	InputSystem& Input = InputSystem::Get();
