@@ -1231,6 +1231,12 @@ void UUIManager::ProcessInput(const FFrameContext& Frame)
 	const std::wstring& PendingText = Input.GetPendingTextInput();
 	for (wchar_t wc : PendingText)
 	{
+		// 백스페이스(0x08)·DEL(0x7F) 등 제어문자는 ProcessTextInput으로 넘기면 RmlUi가 값에 그대로 삽입한다.
+		// 삭제는 위의 KI_BACK / KI_DELETE 키 이벤트가 처리하므로, 여기선 출력 가능한 문자만 입력한다.
+		if (wc < 0x20 || wc == 0x7F)
+		{
+			continue;
+		}
 		RmlContext->ProcessTextInput(static_cast<Rml::Character>(wc));
 	}
 	Input.ClearPendingTextInput();
