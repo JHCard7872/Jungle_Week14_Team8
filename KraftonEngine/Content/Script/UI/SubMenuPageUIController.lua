@@ -9,6 +9,7 @@
 
 local UI_DOCUMENT_PATH = "Content/UI/SubMenuPage/sub_menu_page.rml"
 local UserSettings = require("Data/UserSettings")
+local IdCardCollection = require("Data/IdCardCollection")
 local Cursor = require("UI/CursorSpriteUtil")
 -- Pause(220)보다 위에 뜨도록
 local PAGE_Z_ORDER = 230
@@ -165,6 +166,21 @@ local function apply_scoreboard_to_view()
     set_text("scoreboard_page_label", tostring(scoreboard_current_page) .. "/" .. tostring(total_pages))
 end
 
+-- 크레딧 ID 카드 컬렉션 반영: 저장된 바이너리 파일을 읽어, 습득한 사람은
+-- id_card_dev_ 이미지로, 미습득은 id_card_jungle_ 이미지로 src를 갈아끼운다.
+-- (RmlUi img src는 스타일로 못 바꾸지만 SetAttribute("src", ...)는 가능 — HUD와 동일 방식)
+local function apply_credits_collection()
+    if widget == nil or widget.SetAttribute == nil then
+        return
+    end
+
+    local collected = IdCardCollection.LoadCollectedSet()
+    for _, person in ipairs(IdCardCollection.GetPeople()) do
+        local src = collected[person.key] and person.devImage or person.jungleImage
+        widget:SetAttribute(person.creditsElementId, "src", src)
+    end
+end
+
 local function set_sfx_volume(value)
     settings.sfxVolume = clamp(value, MIN_VOLUME, MAX_VOLUME)
     apply_settings_to_view()
@@ -246,6 +262,11 @@ local function set_current_page(page_type, title)
         controls_active_tab = "none"
         controls_active_device = "km"
         set_controls_tab("none")
+    end
+
+    -- 크레딧 진입 시마다 컬렉션 파일을 다시 읽어 ID 카드 이미지를 갱신한다.
+    if current_page_type == "credits" then
+        apply_credits_collection()
     end
 
     -- Confirm은 Options에서만 노출, controls는 body 내 닫기 버튼으로 대체

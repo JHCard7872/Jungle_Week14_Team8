@@ -163,10 +163,10 @@
                 <div class="simple_card credits_card">
                     <div id="credits_title" class="simple_card_title">Credits</div>
                     <div id="credits_developers_team" class="simple_line">Team<img id="credits_developers_logo" src="../../Sprite/logo/dev_concepters.png" /></div>
-                    <img id="credits_id_card_1" class="credits_id_card" src="../../Sprite/id_card_jungle_김연하_with_holder.png" />
-                    <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_강건우_with_holder.png" />
-                    <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_박준혁_with_holder.png" />
-                    <img id="credits_id_card_4" class="credits_id_card" src="../../Sprite/id_card_jungle_오준혁_with_holder.png" />
+                    <img id="credits_id_card_1" class="credits_id_card" src="../../Sprite/id_card_jungle_KYH_with_holder.png" />
+                    <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_KKW_with_holder.png" />
+                    <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_PJH_with_holder.png" />
+                    <img id="credits_id_card_4" class="credits_id_card" src="../../Sprite/id_card_jungle_OJH_with_holder.png" />
                     <div id="credits_special_thanks" class="simple_line">Special Thanks to Jungle GameTechLab 3기의 모두들<br/>백승현 & 임창근 코치님</div>
                     <div id="credits_hint" class="simple_line">Hint: 플레이 중 반짝이는 무언가를 찾아보세요!</div>
                 </div>

@@ -67,6 +67,10 @@ local S = {
         gameOverReason = "",  -- "시간 초과" / "서버 과부하"
         gradeText      = "",  -- 평가 문구 ("정규직 전환 실패" 등) — 3차 폴리시
     },
+
+    -- 이번 판에서 습득한 개발자 ID 카드 집합 { [key]=true }. 쓰기 담당 = IdCardCollection.MarkCollected.
+    -- Result 진입 시 IdCardCollection.PersistSessionCollection이 JSON 파일(해시)에 누적 저장한다.
+    collectedIdCards = {},
 }
 
 -- 매 판 시작(PlayScene.BeginPlay)에서 호출. 이전 판 값 잔류 방지.
@@ -88,6 +92,7 @@ function S.Reset(timeLimit)
     -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
     -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)
     S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "" }
+    S.collectedIdCards = {}
 end
 
 return S

@@ -2,6 +2,7 @@ local Session = require("GameSession")
 local ResultUI = require("UI/ResultUIController")
 local QuestionPopup = require("UI/QuestionPopupUIController")
 local ScoreStorage = require("Data/ScoreStorage")
+local IdCardCollection = require("Data/IdCardCollection")
 local UserSettings = require("Data/UserSettings")
 
 local waiting_for_next = false
@@ -119,6 +120,9 @@ function BeginPlay()
     action_prompt_open = false
     score_saved = false
     pending_scene_name = nil
+
+    -- 이번 판에서 습득한 ID 카드를 컬렉션 JSON 파일(해시)에 누적 저장한다.
+    IdCardCollection.PersistSessionCollection()
 
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
