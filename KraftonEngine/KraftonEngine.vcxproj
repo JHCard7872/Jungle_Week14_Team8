@@ -637,7 +637,6 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncLinkRagdollPawn.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncChiefRagdollPawn.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncLaraRagdollPawn.cpp" />
-    <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncDonkeyKongRagdollPawn.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncKirbyRagdollPawn.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncPikachuRagdollPawn.cpp" />
     <ClCompile Include="Source\Engine\GameFramework\Pawn\GOIncSonicRagdollPawn.cpp" />
@@ -1113,7 +1112,6 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncLinkRagdollPawn.h" />
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncChiefRagdollPawn.h" />
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncLaraRagdollPawn.h" />
-    <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncDonkeyKongRagdollPawn.h" />
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncKirbyRagdollPawn.h" />
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncPikachuRagdollPawn.h" />
     <ClInclude Include="Source\Engine\GameFramework\Pawn\GOIncSonicRagdollPawn.h" />
