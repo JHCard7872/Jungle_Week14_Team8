@@ -72,6 +72,7 @@ local slot2_fire_feedback = {
     base_fov = nil
 }
 local slot1_gather_fx = { actor = nil, component = nil, active = false }
+local slot2_muzzle_fx = { actor = nil, component = nil, active = false, visible_remaining = 0.0 }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
 local base_weapon_offset_location = nil    -- 씬에서 읽은 VisualPivot 위치. 화면 고정 offset 기준값
@@ -283,6 +284,17 @@ local function set_weapon_mesh_visible(component, is_visible)
     end
 end
 
+local function apply_slot2_beam_material()
+    local material_path = C.SLOT2_BEAM_MATERIAL_PATH
+    if material_path == nil or material_path == ""
+        or weapon_components.beam_particle_b == nil
+        or weapon_components.beam_particle_b.SetParticleMaterialByPath == nil then
+        return
+    end
+
+    weapon_components.beam_particle_b:SetParticleMaterialByPath(0, material_path)
+end
+
 local function update_viewport_center()
     local size = Engine.GetViewportSize()
     if size ~= nil then
@@ -461,6 +473,7 @@ local function bind_components()
     muzzle_point = weapon_components.muzzle_point_a
     weapon_components.beam_particle_a = find_beam_particle()
     weapon_components.beam_particle_b = obj:GetPrimitiveComponentByName("GOIncRedBeamParticle")
+    apply_slot2_beam_material()
     beam_particle = weapon_components.beam_particle_a
 end
 
@@ -592,7 +605,13 @@ local function get_weapon_offset_for_pitch()
         cache_view_weapon_base_transforms()
     end
 
-    local pitch_alpha = clamp(pitch / C.WEAPON_PITCH_NORMALIZE, -1.0, 1.0)
+    local weapon_pitch = clamp(
+        pitch,
+        C.WEAPON_PITCH_DRIVER_MIN or C.MIN_PITCH,
+        C.WEAPON_PITCH_DRIVER_MAX or C.MAX_PITCH
+    )
+
+    local pitch_alpha = clamp(weapon_pitch / C.WEAPON_PITCH_NORMALIZE, -1.0, 1.0)
     local pitch_abs = math.abs(pitch_alpha)
     local pitch_curve = pitch_abs * pitch_abs
     local pitch_signed_curve = pitch_curve
@@ -601,14 +620,24 @@ local function get_weapon_offset_for_pitch()
     end
     local look_up_curve = -pitch_signed_curve
 
-    local visual_pitch = clamp(pitch * C.WEAPON_PITCH_SCALE, -C.WEAPON_MAX_VISUAL_PITCH, C.WEAPON_MAX_VISUAL_PITCH)
+    local visual_pitch = clamp(weapon_pitch * C.WEAPON_PITCH_SCALE, -C.WEAPON_MAX_VISUAL_PITCH, C.WEAPON_MAX_VISUAL_PITCH)
+    local extra_pitch_z = 0.0
+    if pitch < weapon_pitch then
+        local extra_range = math.max(weapon_pitch - (C.MIN_PITCH or weapon_pitch), 0.001)
+        local extra_alpha = ease_in_out(clamp((weapon_pitch - pitch) / extra_range, 0.0, 1.0))
+        extra_pitch_z = extra_alpha * (C.WEAPON_EXTRA_LOOK_UP_Z_OFFSET or 0.0)
+    elseif pitch > weapon_pitch then
+        local extra_range = math.max((C.MAX_PITCH or weapon_pitch) - weapon_pitch, 0.001)
+        local extra_alpha = ease_in_out(clamp((pitch - weapon_pitch) / extra_range, 0.0, 1.0))
+        extra_pitch_z = extra_alpha * (C.WEAPON_EXTRA_LOOK_DOWN_Z_OFFSET or 0.0)
+    end
     local weapon_offset = vec(
         base_weapon_offset_location.X - pitch_curve * C.WEAPON_PITCH_PULLBACK,
         base_weapon_offset_location.Y - pitch_curve * C.WEAPON_PITCH_INWARD_OFFSET,
-        base_weapon_offset_location.Z + look_up_curve * C.WEAPON_PITCH_UP_OFFSET
+        base_weapon_offset_location.Z + look_up_curve * C.WEAPON_PITCH_UP_OFFSET + extra_pitch_z
     )
 
-    return weapon_offset, visual_pitch
+    return weapon_offset, visual_pitch, weapon_pitch
 end
 
 local function get_beam_source_pitch_influence()
@@ -760,7 +789,7 @@ local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_lo
 end
 
 local function update_view_weapon(delta_time)
-    local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
+    local weapon_offset, visual_pitch, weapon_pitch = get_weapon_offset_for_pitch()
     local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(
         delta_time, player_velocity, weapon_swap_state, vec, clamp, weapon_swap_state.is_sprinting)
 
@@ -772,7 +801,7 @@ local function update_view_weapon(delta_time)
         end
         view_weapon_root.Rotation = vec(
             base_view_weapon_root_rotation.X,
-            base_view_weapon_root_rotation.Y + pitch + slot2_fire_feedback.recoil_pitch,
+            base_view_weapon_root_rotation.Y + weapon_pitch + slot2_fire_feedback.recoil_pitch,
             base_view_weapon_root_rotation.Z + slot2_fire_feedback.recoil_yaw
         )
     end
@@ -1169,6 +1198,105 @@ slot1_gather_fx.Update = function(source_point, target_point, is_hold)
         slot1_gather_fx.actor = nil
         slot1_gather_fx.component = nil
         slot1_gather_fx.active = false
+    end
+end
+
+slot2_muzzle_fx.Stop = function()
+    if slot2_muzzle_fx.component ~= nil and slot2_muzzle_fx.component.SetVisibility ~= nil then
+        slot2_muzzle_fx.component:SetVisibility(false)
+    end
+    slot2_muzzle_fx.visible_remaining = 0.0
+    slot2_muzzle_fx.active = false
+end
+
+slot2_muzzle_fx.MoveTo = function(fx_location)
+    if fx_location == nil or not is_actor_valid(slot2_muzzle_fx.actor) then
+        return false
+    end
+
+    if slot2_muzzle_fx.component == nil and slot2_muzzle_fx.actor.GetRootPrimitiveComponent ~= nil then
+        slot2_muzzle_fx.component = slot2_muzzle_fx.actor:GetRootPrimitiveComponent()
+    end
+
+    if slot2_muzzle_fx.component ~= nil then
+        if slot2_muzzle_fx.component.MoveParticleSystemTo ~= nil then
+            slot2_muzzle_fx.component:MoveParticleSystemTo(fx_location)
+        elseif slot2_muzzle_fx.component.SetLocation ~= nil then
+            slot2_muzzle_fx.component:SetLocation(fx_location)
+        else
+            slot2_muzzle_fx.component.Location = fx_location
+        end
+    end
+    slot2_muzzle_fx.actor.Location = fx_location
+
+    return true
+end
+
+slot2_muzzle_fx.Update = function(source_point, target_point, should_show)
+    if not should_show or source_point == nil then
+        slot2_muzzle_fx.Stop()
+        return
+    end
+
+    local fx_path = C.SLOT2_MUZZLE_FX_PATH
+    if fx_path == nil or fx_path == "" or ParticleManager == nil
+        or (ParticleManager.SpawnAt == nil and ParticleManager.SpawnAtConfigured == nil) then
+        slot2_muzzle_fx.Stop()
+        return false
+    end
+
+    local fx_location = source_point
+
+    if not is_actor_valid(slot2_muzzle_fx.actor) then
+        if ParticleManager.SpawnAtConfigured ~= nil then
+            slot2_muzzle_fx.actor = ParticleManager.SpawnAtConfigured(fx_path, fx_location, true, false)
+        else
+            slot2_muzzle_fx.actor = ParticleManager.SpawnAt(fx_path, fx_location)
+        end
+        slot2_muzzle_fx.component = nil
+        slot2_muzzle_fx.active = false
+    end
+
+    if is_actor_valid(slot2_muzzle_fx.actor) then
+        slot2_muzzle_fx.MoveTo(fx_location)
+        if slot2_muzzle_fx.component ~= nil then
+            if slot2_muzzle_fx.component.ResetParticleSystem ~= nil then
+                slot2_muzzle_fx.component:ResetParticleSystem()
+            end
+            if slot2_muzzle_fx.component.SetVisibility ~= nil then
+                slot2_muzzle_fx.component:SetVisibility(true)
+            end
+            if slot2_muzzle_fx.component.PrimeForImmediateRendering ~= nil then
+                slot2_muzzle_fx.component:PrimeForImmediateRendering()
+            end
+        end
+        slot2_muzzle_fx.visible_remaining = C.SLOT2_MUZZLE_FX_VISIBLE_TIME or C.BEAM_VISIBLE_TIME or 0.1
+        slot2_muzzle_fx.active = true
+    else
+        slot2_muzzle_fx.actor = nil
+        slot2_muzzle_fx.component = nil
+        slot2_muzzle_fx.active = false
+    end
+end
+
+slot2_muzzle_fx.Refresh = function(delta_time)
+    if not slot2_muzzle_fx.active then
+        return
+    end
+    if weapon_swap_state.active_index ~= 2 then
+        slot2_muzzle_fx.Stop()
+        return
+    end
+
+    local source_point = get_beam_source_point()
+    if source_point == nil or not slot2_muzzle_fx.MoveTo(source_point) then
+        slot2_muzzle_fx.Stop()
+        return
+    end
+
+    slot2_muzzle_fx.visible_remaining = slot2_muzzle_fx.visible_remaining - math.max(delta_time or 0.0, 0.0)
+    if slot2_muzzle_fx.visible_remaining <= 0.0 then
+        slot2_muzzle_fx.Stop()
     end
 end
 
@@ -2075,7 +2203,8 @@ local function apply_slot2_fire(delta_time)
     if beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
         beam_particle:ResetParticleSystem()
     end
-    update_beam_points(last_aim_point)
+    local source_point = update_beam_points(last_aim_point)
+    slot2_muzzle_fx.Update(source_point, last_aim_point, true)
     slot2_fire_feedback.SpawnImpactSpark(hit, last_aim_point, direction)
     set_beam_visible(true)
     beam_visible_remaining = get_slot2_beam_visible_time(hit)
@@ -2582,6 +2711,7 @@ local function block_fire_while_sprinting()
     end
 
     slot1_gather_fx.Stop()
+    slot2_muzzle_fx.Stop()
     reset_collect_fire_sfx_timer()
     clear_grab_state()
     beam_visible_remaining = 0.0
@@ -2593,6 +2723,7 @@ end
 local function apply_fire(delta_time)
     if weapon_swap_state.is_active then
         slot1_gather_fx.Stop()
+        slot2_muzzle_fx.Stop()
         reset_collect_fire_sfx_timer()
         beam_visible_remaining = 0.0
         clear_beamed_ragdoll_actor()
@@ -2613,6 +2744,7 @@ local function apply_fire(delta_time)
         return
     end
 
+    slot2_muzzle_fx.Stop()
     local is_fire_pressed = fire_pressed()
     local is_fire_held = fire_held()
 
@@ -2698,6 +2830,7 @@ function EndPlay()
         camera:SetFOV(slot2_fire_feedback.base_fov)
     end
     slot1_gather_fx.Stop()
+    slot2_muzzle_fx.Stop()
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
 end
@@ -2713,6 +2846,7 @@ end
 
 function Tick(delta_time)
     if Session.inputEnabled ~= true then
+        slot2_muzzle_fx.Stop()
         update_session_gun_state()
         return
     end
@@ -2724,11 +2858,13 @@ function Tick(delta_time)
     slot2_fire_feedback.Refresh(delta_time)
     update_camera_view()
     update_view_weapon(delta_time)
+    slot2_muzzle_fx.Refresh(delta_time)
 end
 
 function PostCameraTick(delta_time)
     if Session.inputEnabled ~= true then
         slot1_gather_fx.Stop()
+        slot2_muzzle_fx.Stop()
         publish_target_state()
         publish_crosshair_state(0.0)
         return

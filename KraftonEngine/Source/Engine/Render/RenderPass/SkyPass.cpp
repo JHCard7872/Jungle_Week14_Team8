@@ -1,4 +1,4 @@
-#include "SkyPass.h"
+﻿#include "SkyPass.h"
 #include "RenderPassRegistry.h"
 
 #include "Render/Command/DrawCommandList.h"
@@ -15,6 +15,7 @@ REGISTER_RENDER_PASS(FSkyPass)
 namespace
 {
 	constexpr const char* SkyTexturePath = "Content/Data/SkySphere/Tycho.jpeg";
+	constexpr float SkyHeightOffset = 50.0f;
 }
 
 FSkyPass::FSkyPass()
@@ -79,9 +80,10 @@ void FSkyPass::Execute(const FPassContext& Ctx)
 	const float FarClip = Ctx.Frame.FarClip > 1.0f ? Ctx.Frame.FarClip : 1000.0f;
 	const float SkyRadius = FarClip * 0.9f;
 	const float SkyScale = SkyRadius * 2.0f;
+	const FVector SkyCenter = Ctx.Frame.CameraPosition + FVector(0.0f, 0.0f, SkyHeightOffset);
 	const FMatrix World =
 		FMatrix::MakeScaleMatrix(FVector(SkyScale, SkyScale, SkyScale)) *
-		FMatrix::MakeTranslationMatrix(Ctx.Frame.CameraPosition);
+		FMatrix::MakeTranslationMatrix(SkyCenter);
 
 	FPerObjectConstants PerObject = FPerObjectConstants::FromWorldMatrix(World);
 	SkyPerObjectCB.Update(DC, &PerObject, sizeof(FPerObjectConstants));
