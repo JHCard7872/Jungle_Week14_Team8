@@ -19,6 +19,7 @@ local MIN_VOLUME = 0
 local MAX_VOLUME = 10
 local DEFAULT_SFX_VOLUME = 8
 local DEFAULT_BGM_VOLUME = 8
+local ENTRIES_PER_PAGE = 5
 local PAGE_BODY_IDS = {
     options = "page_body_options",
     controls = "page_body_controls",
@@ -39,10 +40,13 @@ local scoreboard_entries = nil
 -- Confirm/Back 버튼 클릭 시 호출할 콜백
 local on_confirm = nil
 local on_back = nil
+local scoreboard_current_page = 1
 
 -- 플레이 방법 탭/장치 상태
 local controls_active_tab = "input"
 local controls_active_device = "km"
+local controls_game_current_page = 1
+local CONTROLS_GAME_TOTAL_PAGES = 2
 
 local TAB_SELECTED_BG     = "#d6f28e40"
 local TAB_SELECTED_BORDER = "#d6f28eff"
@@ -131,26 +135,32 @@ local function commit_option_settings()
 end
 
 local function apply_scoreboard_to_view()
-    if widget == nil then
-        return
-    end
+    if widget == nil then return end
 
     local entries = scoreboard_entries or {}
-    for i = 1, 5 do
+    local total_entries = #entries
+    local total_pages = math.max(1, math.ceil(total_entries / ENTRIES_PER_PAGE))
+    scoreboard_current_page = math.max(1, math.min(scoreboard_current_page, total_pages))
+
+    local start_idx = (scoreboard_current_page - 1) * ENTRIES_PER_PAGE + 1
+
+    for i = 1, ENTRIES_PER_PAGE do
         local row_id = "score_row_" .. tostring(i)
-        local entry = entries[i]
+        local entry = entries[start_idx + i - 1]
         set_display(row_id, entry ~= nil)
 
         if entry ~= nil then
-            set_text("score_rank_" .. tostring(i), tostring(i))
+            local rank = start_idx + i - 1
+            set_text("score_rank_" .. tostring(i), tostring(rank))
             set_text("score_name_" .. tostring(i), tostring(entry.nickname or "김정글"))
-            set_text("score_count_" .. tostring(i), tostring(entry.collectedCount or 0))
+            set_text("score_count_" .. tostring(i), tostring(entry.collectedCount or 0) .. "체")
             set_text("score_value_" .. tostring(i), tostring(entry.totalScore or 0))
             set_text("score_date_" .. tostring(i), tostring(entry.savedDateText or entry.savedDate or "-"))
         end
     end
 
-    set_display("score_empty_text", #entries == 0)
+    set_display("score_empty_text", total_entries == 0)
+    set_text("scoreboard_page_label", tostring(scoreboard_current_page) .. "/" .. tostring(total_pages))
 end
 
 local function set_sfx_volume(value)
@@ -178,6 +188,17 @@ local function set_controls_device(device)
     set_display("controls_image_gp", not km)
 end
 
+local function set_controls_game_page(page)
+    if widget == nil then return end
+    controls_game_current_page = math.max(1, math.min(page, CONTROLS_GAME_TOTAL_PAGES))
+    for i = 1, CONTROLS_GAME_TOTAL_PAGES do
+        set_display("controls_game_page_" .. tostring(i), i == controls_game_current_page)
+    end
+    set_text("controls_game_page_label", tostring(controls_game_current_page) .. "/" .. tostring(CONTROLS_GAME_TOTAL_PAGES))
+    set_display("controls_game_prev_button", controls_game_current_page > 1)
+    set_display("controls_game_next_button", controls_game_current_page < CONTROLS_GAME_TOTAL_PAGES)
+end
+
 local function set_controls_tab(tab)
     if widget == nil then return end
     controls_active_tab = tab
@@ -193,6 +214,11 @@ local function set_controls_tab(tab)
 
     set_display("controls_body_game",  game)
     set_display("controls_body_input", input)
+
+    if game then
+        controls_game_current_page = 1
+        set_controls_game_page(1)
+    end
 
     if input then
         set_controls_device(controls_active_device)
@@ -283,8 +309,32 @@ local function bind_actions()
         set_controls_tab("none")
     end))
 
+    widget:bind_click("controls_game_prev_button", on_button_click(function()
+        set_controls_game_page(controls_game_current_page - 1)
+    end))
+
+    widget:bind_click("controls_game_next_button", on_button_click(function()
+        set_controls_game_page(controls_game_current_page + 1)
+    end))
+
     widget:bind_click("controls_close_button_input", on_button_click(function()
         set_controls_tab("none")
+    end))
+
+    widget:bind_click("scoreboard_prev_button", on_button_click(function()
+        if scoreboard_current_page > 1 then
+            scoreboard_current_page = scoreboard_current_page - 1
+            apply_scoreboard_to_view()
+        end
+    end))
+
+    widget:bind_click("scoreboard_next_button", on_button_click(function()
+        local entries = scoreboard_entries or {}
+        local total_pages = math.max(1, math.ceil(#entries / ENTRIES_PER_PAGE))
+        if scoreboard_current_page < total_pages then
+            scoreboard_current_page = scoreboard_current_page + 1
+            apply_scoreboard_to_view()
+        end
     end))
 
     bind_hover_sound("page_back_button")
@@ -299,6 +349,10 @@ local function bind_actions()
     bind_hover_sound("controls_device_gp")
     bind_hover_sound("controls_close_button_game")
     bind_hover_sound("controls_close_button_input")
+    bind_hover_sound("controls_game_prev_button")
+    bind_hover_sound("controls_game_next_button")
+    bind_hover_sound("scoreboard_prev_button")
+    bind_hover_sound("scoreboard_next_button")
     bindings_initialized = true
 end
 
@@ -439,9 +493,11 @@ function M.Destroy()
     on_back = nil
     on_settings_changed = nil
     scoreboard_entries = nil
+    scoreboard_current_page = 1
     settings = UserSettings.GetSettings()
     controls_active_tab = "input"
     controls_active_device = "km"
+    controls_game_current_page = 1
 end
 
 return M

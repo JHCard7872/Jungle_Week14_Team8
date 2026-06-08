@@ -216,7 +216,7 @@ local function open_menu_page(page_type, title)
         pageType = page_type,
         title = title,
         initialSettings = menu_settings,
-        scoreboardEntries = page_type == "scoreboard" and ScoreStorage.ReadTop(5) or nil,
+        scoreboardEntries = page_type == "scoreboard" and ScoreStorage.ReadAll() or nil,
         onSettingsChanged = function(settings, changed_page_type)
             if changed_page_type == "options" then
                 apply_menu_settings(settings)
