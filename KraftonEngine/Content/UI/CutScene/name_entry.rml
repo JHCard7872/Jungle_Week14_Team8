@@ -1,6 +1,7 @@
 <rml>
 <head>
     <title>Name Entry</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
     <link type="text/rcss" href="name_entry.rcss" />
 </head>
 
@@ -16,13 +17,13 @@
                 <div id="name_popup_message">사원 이름을 입력해주세요.</div>
                 <div id="name_popup_rule">한글 / Alphabet 6글자 이내</div>
 
-                <input id="player_name_input" type="text" value="" />
+                <input id="player_name_input" type="text" value="김사원" />
                 <div id="name_error_text"></div>
 
                 <button id="name_confirm_button" class="name_button">
                     <img class="name_button_image name_button_default" src="../../Sprite/ui_horiz_button.png" />
                     <img class="name_button_image name_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                    <div class="name_button_label">Confirm</div>
+                    <div class="name_button_label">결정</div>
                 </button>
             </div>
         </div>

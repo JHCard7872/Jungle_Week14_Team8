@@ -1,0 +1,12 @@
+<rml>
+<head>
+    <title>CutScene Background</title>
+    <link type="text/rcss" href="../Common/common_font.rcss" />
+    <link type="text/rcss" href="cutscene_background.rcss" />
+</head>
+<body>
+    <div id="cutscene_background_root">
+        <img id="cutscene_player_background" src="../../Sprite/cutscene_player.png" />
+    </div>
+</body>
+</rml>

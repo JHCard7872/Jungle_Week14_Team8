@@ -4,8 +4,7 @@ body {
     height: 100%;
     overflow: hidden;
     background-color: transparent;
-    font-family: NanumGothic;
-    font-weight: bold;
+
     color: #ffffff;
 }
 
