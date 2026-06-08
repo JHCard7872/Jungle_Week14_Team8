@@ -108,7 +108,7 @@ return {
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
-    SLOT1_GRAB_FORCE_SCALE = 15.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
+    SLOT1_GRAB_FORCE_SCALE = 25.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
     GRAB_SPRING_ACCELERATION = 42.0, -- 목표 위치로 끌어당기는 가속도 계수. 질량 보정 전 단계에서 사용한다
     GRAB_DAMPING_ACCELERATION = 10.0, -- 현재 속도에 대한 감쇠 가속도 계수. 높을수록 덜 출렁인다
     GRAB_MAX_ERROR = 30.0,
@@ -116,7 +116,9 @@ return {
     GRAB_TORQUE_SCALE = 0.25,
     GRAB_ANGULAR_DAMPING = 10.0,
     GRAB_MAX_TORQUE = 100000.0,
-    STATIC_GRAB_MAX_TORQUE = 500.0, -- StaticMesh single-body grab torque cap. Keeps small props from over-spinning.
+    STATIC_GRAB_FORCE_SCALE = 0.10, -- StaticMesh는 단일 바디라 Slot1 힘을 크게 낮춰 과한 가속을 막는다
+    STATIC_GRAB_MAX_ACCELERATION = 30.0, -- StaticMesh center grab 전용 가속도 상한. Ragdoll보다 훨씬 보수적으로 둔다
+    STATIC_GRAB_MAX_TORQUE = 0.0, -- StaticMesh는 표면 offset torque를 끄고 중심점만 당긴다
     GRAB_REFERENCE_MASS = 18.0, -- 이 질량은 grip scale 1.0으로 취급한다
     GRAB_MASS_POWER = 0.50, -- 질량 차이가 grip 난이도로 반영되는 곡선. 클수록 무거운 랙돌이 더 둔해진다
     GRAB_MIN_MASS_SCALE = 0.35,

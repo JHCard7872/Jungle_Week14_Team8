@@ -97,7 +97,7 @@ local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
 local beamed_ragdoll_actor = nil
-local grab_fixed_ray = { start = nil, direction = nil, catalog_mass = nil }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
+local grab_fixed_ray = { start = nil, direction = nil, catalog_mass = nil, is_static_mesh = false }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
 
 local RAGDOLL_TAG = "Ragdoll"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
@@ -1336,6 +1336,7 @@ local function clear_grab_state()
     grab_fixed_ray.start = nil
     grab_fixed_ray.direction = nil
     grab_fixed_ray.catalog_mass = nil
+    grab_fixed_ray.is_static_mesh = false
 end
 
 local function compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
@@ -1748,8 +1749,9 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     end
 
     local catalog_mass = nil
+    local ragdoll_pawn = nil
     if owner.AsGOIncRagdollPawn ~= nil then
-        local ragdoll_pawn = owner:AsGOIncRagdollPawn()
+        ragdoll_pawn = owner:AsGOIncRagdollPawn()
         if ragdoll_pawn ~= nil and ragdoll_pawn.GetRagdollId ~= nil then
             local ragdoll_id = ragdoll_pawn:GetRagdollId()
             local catalog_entry = type(ragdoll_id) == "string" and RagdollData[ragdoll_id] or nil
@@ -1770,6 +1772,16 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     grabbed_body = body
     grabbed_owner_actor = owner
     grabbed_hit_component = get_hit_component(hit)
+    if grabbed_hit_component == nil and body.GetOwnerComponent ~= nil then
+        grabbed_hit_component = body:GetOwnerComponent()
+    end
+    grab_fixed_ray.is_static_mesh = not (is_ragdoll_actor(owner) or ragdoll_pawn ~= nil)
+    if grabbed_hit_component ~= nil and grabbed_hit_component.GetClassName ~= nil then
+        local class_name = grabbed_hit_component:GetClassName()
+        if type(class_name) == "string" and string.find(class_name, "StaticMeshComponent", 1, true) ~= nil then
+            grab_fixed_ray.is_static_mesh = true
+        end
+    end
     grabbed_local_hit_point = body:WorldToLocalPoint(grab_point)
     grabbed_aim_distance = grab_distance
     grabbed_target_world = target_point
@@ -1812,7 +1824,10 @@ local function apply_grab_force(delta_time, start, direction)
     end
 
     local current_body_center = grabbed_body:GetLocation()
-    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
+    local current_grab_world = current_body_center
+    if not grab_fixed_ray.is_static_mesh then
+        current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
+    end
     local desired, resolved_grab_distance = compute_grab_target(start, direction)
     if desired == nil then
         clear_grab_state()
@@ -1887,12 +1902,24 @@ local function apply_grab_force(delta_time, start, direction)
         end
     end
 
-    desired_acceleration = clamp_vector_length(desired_acceleration, C.GRAB_MAX_ACCELERATION)
-    local force = desired_acceleration * (body_mass * mass_grip_scale * slot1_grab_force_scale)
+    local max_acceleration = C.GRAB_MAX_ACCELERATION
+    local grab_force_scale = slot1_grab_force_scale
+    if grab_fixed_ray.is_static_mesh then
+        max_acceleration = C.STATIC_GRAB_MAX_ACCELERATION or max_acceleration
+        grab_force_scale = grab_force_scale * (C.STATIC_GRAB_FORCE_SCALE or 1.0)
+    end
+
+    desired_acceleration = clamp_vector_length(desired_acceleration, max_acceleration)
+    local force = desired_acceleration * (body_mass * mass_grip_scale * grab_force_scale)
     grabbed_body:AddForce(force)
 
     local grab_offset = current_grab_world - current_body_center
-    if grab_offset:Length() > 1.0 then
+    local torque_max = C.GRAB_MAX_TORQUE
+    if grab_fixed_ray.is_static_mesh then
+        torque_max = C.STATIC_GRAB_MAX_TORQUE or 0.0
+    end
+
+    if torque_max > 0.0 and grab_offset:Length() > 1.0 then
         local angular_velocity = grabbed_body:GetAngularVelocity()
         if angular_velocity == nil then
             angular_velocity = Vector.Zero()
@@ -1900,19 +1927,7 @@ local function apply_grab_force(delta_time, start, direction)
         local torque = (
             grab_offset:Cross(desired_acceleration) * C.GRAB_TORQUE_SCALE
             - angular_velocity * C.GRAB_ANGULAR_DAMPING
-        ) * (body_mass * mass_grip_scale * slot1_grab_force_scale)
-
-        local torque_max = C.GRAB_MAX_TORQUE
-        local torque_component = grabbed_hit_component
-        if torque_component == nil and grabbed_body.GetOwnerComponent ~= nil then
-            torque_component = grabbed_body:GetOwnerComponent()
-        end
-        if torque_component ~= nil and torque_component.GetClassName ~= nil then
-            local class_name = torque_component:GetClassName()
-            if type(class_name) == "string" and string.find(class_name, "StaticMeshComponent", 1, true) ~= nil then
-                torque_max = C.STATIC_GRAB_MAX_TORQUE or torque_max
-            end
-        end
+        ) * (body_mass * mass_grip_scale * grab_force_scale)
 
         torque = clamp_vector_length(torque, torque_max)
         grabbed_body:AddTorque(torque)
@@ -1948,7 +1963,10 @@ local function update_grab_visuals()
     end
     trigger_hit_rim_on_component(grabbed_hit_component)
 
-    local current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
+    local current_grab_world = grabbed_body:GetLocation()
+    if not grab_fixed_ray.is_static_mesh then
+        current_grab_world = grabbed_body:LocalToWorldPoint(grabbed_local_hit_point)
+    end
     last_aim_point = current_grab_world
     update_beam_points(current_grab_world)
     set_beam_visible(true)
