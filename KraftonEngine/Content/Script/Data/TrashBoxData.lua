@@ -5,6 +5,6 @@
 -- ============================================================================
 
 return {
-    collectFxPath = "Content/Data/Buble.uasset", -- 수거 파티클 — 추후 FX_CollectPop으로 교체
-    collectFxLife = 1.5,                          -- 파티클 자동 정리 수명(초)
+    collectFxPath = "Content/Particle/FX_CollectPop.uasset", -- 수거 파티클(뾰로롱 팍)
+    collectFxLife = 1.5,                                     -- 파티클 자동 정리 수명(초)
 }
