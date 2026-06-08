@@ -18,7 +18,7 @@
                 <div id="name_popup_message" class="ui_modal_description">사원 이름을 입력해주세요.</div>
                 <div id="name_popup_rule" class="ui_modal_input_rule">한글 / Alphabet 6글자 이내</div>
 
-                <input id="player_name_input" class="ui_modal_input_field" type="text" value="김사원" />
+                <input id="player_name_input" class="ui_modal_input_field" type="text" value="김정글" />
                 <div id="name_error_text" class="ui_modal_error_text"></div>
 
                 <button id="name_confirm_button" class="name_button ui_horizontal_button_small">
