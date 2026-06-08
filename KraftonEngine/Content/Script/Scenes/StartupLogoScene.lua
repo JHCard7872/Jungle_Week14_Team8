@@ -10,10 +10,9 @@ local TITLE_FADE_IN_DURATION = 0.5
 --   (로고가 조금 빠르게 등장 -> 서서히 사라지며 하얀 화면) * 로고 개수
 -- 배경은 항상 흰색이고, 로고는 opacity만 제어한다.
 local LOGO_IDS = {
-    "logo_jungle",
-    "logo_jungle_gametechlab",
-    "logo_eng_ver2",
-    "logo_dev_concepters",
+    "startup_0",
+    "startup_1",
+    "startup_2",
 }
 
 local widget = nil
