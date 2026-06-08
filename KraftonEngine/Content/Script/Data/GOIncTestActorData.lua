@@ -62,8 +62,8 @@ return {
     SLOT2_BEAM_HIT_VISIBLE_TIME = 0.16, -- Slot2가 무언가에 맞았을 때는 miss와 구분되도록 살짝 더 길게 표시
     SLOT2_KNOCKBACK_IMPULSE_PER_MASS = 5.00, -- Slot2 피격 순간에만 주는 넉백. 질량을 곱해 크기 차이와 무관하게 반응이 보이게 한다
     SLOT2_KNOCKBACK_UP_BIAS = 2.50, -- 빔 방향에 위쪽을 섞어 뒤로 밀리면서 살짝 뜨는 느낌을 만든다
-    SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS = 18.00, -- Skeletal ragdoll 전용 넉백. Static 수치는 유지하고 ragdoll만 더 확실하게 밀어낸다
-    SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE = 1.60, -- 본 이름 대신 컴포넌트 동기화용 중심 body를 더 강하게 밀어 전체 ragdoll 이동감을 만든다
+    SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS = 10.00, -- Skeletal ragdoll은 중심 body와 전체 body에 분산해서 확실한 반응을 만든다
+    SLOT2_RAGDOLL_KNOCKBACK_CENTER_BODY_SCALE = 1.00, -- 본 이름 대신 컴포넌트 동기화용 중심 body에 적용할 배율
     HIT_RIM_DURATION = 0.50,
     HIT_RIM_FLASH_INTENSITY = 3.5,
     HIT_RIM_SUSTAIN_INTENSITY = 1.6,
