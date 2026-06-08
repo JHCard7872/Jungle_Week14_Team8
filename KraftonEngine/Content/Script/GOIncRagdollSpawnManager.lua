@@ -459,10 +459,9 @@ function BeginPlay()
     loggedUnregisteredCharacterIds = {}
     bImmediateSpawnPending = SPAWN_IMMEDIATELY_ON_BEGIN_PLAY
 
-    if bImmediateSpawnPending and Session.inputEnabled == true then
     cache_spawn_area_boxes()
 
-    if SPAWN_IMMEDIATELY_ON_BEGIN_PLAY then
+    if bImmediateSpawnPending and Session.inputEnabled == true then
         spawn_one()
         bImmediateSpawnPending = false
     end
