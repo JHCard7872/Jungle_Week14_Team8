@@ -34,7 +34,8 @@ local RAGDOLL_THUD_SOUND_KEY = "sfx_stamp_impact"
 local RAGDOLL_THUD_MIN_IMPULSE = 30.0
 local RAGDOLL_THUD_MAX_IMPULSE = 100.0
 local RAGDOLL_THUD_MIN_VOLUME = 0.0
-local RAGDOLL_THUD_MAX_VOLUME = 0.8
+local RAGDOLL_THUD_MAX_VOLUME = 0.12
+local RAGDOLL_THUD_FX_PATH = "Content/Particle/FX_LandingDust.uasset"
 local RAGDOLL_THUD_COOLDOWN = 0.6
 local RAGDOLL_THUD_MIN_DEAD_TIME = 0.1
 local RAGDOLL_THUD_MIN_DISTANCE = 30.0
@@ -287,6 +288,47 @@ local function play_ragdoll_thud_sfx(hitPos, impactVolume)
         RAGDOLL_THUD_MAX_DISTANCE
     )
     return true
+end
+
+local function spawn_ragdoll_thud_fx(hitPos)
+    if hitPos == nil or RAGDOLL_THUD_FX_PATH == nil or RAGDOLL_THUD_FX_PATH == "" then
+        return
+    end
+
+    if ParticleManager == nil then
+        return
+    end
+
+    local fxActor = nil
+    if ParticleManager.SpawnAtConfigured ~= nil then
+        fxActor = ParticleManager.SpawnAtConfigured(RAGDOLL_THUD_FX_PATH, hitPos, true, true)
+    elseif ParticleManager.SpawnAt ~= nil then
+        fxActor = ParticleManager.SpawnAt(RAGDOLL_THUD_FX_PATH, hitPos)
+    end
+
+    if fxActor == nil then
+        return
+    end
+
+    fxActor.Location = hitPos
+    if fxActor.GetRootPrimitiveComponent == nil then
+        return
+    end
+
+    local component = fxActor:GetRootPrimitiveComponent()
+    if component == nil then
+        return
+    end
+
+    if component.ResetParticleSystem ~= nil then
+        component:ResetParticleSystem()
+    end
+    if component.SetVisibility ~= nil then
+        component:SetVisibility(true)
+    end
+    if component.PrimeForImmediateRendering ~= nil then
+        component:PrimeForImmediateRendering()
+    end
 end
 
 local function apply_beam_shock_impulse()
@@ -1654,6 +1696,7 @@ function OnHit(other_actor, hit_component, other_comp, normal_impulse, hit_resul
     end
 
     if play_ragdoll_thud_sfx(hitPos, impactVolume) then
+        spawn_ragdoll_thud_fx(hitPos)
         ragdollThudCooldownRemaining = RAGDOLL_THUD_COOLDOWN
     end
 end

@@ -10,6 +10,7 @@
 
 local ScoreMgr     = require("Manager/ScoreManager")
 local MissionMgr   = require("Manager/MissionManager")
+local LoadMgr      = require("Manager/ServerLoadManager")
 local UserSettings = require("Data/UserSettings")
 local ParticleFX   = require("ParticleFX")
 local Session      = require("GameSession")
@@ -66,6 +67,7 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
     other_actor:RemoveTag("Ragdoll")          -- 중복 이벤트·타 수거함 재수거 차단 (맨 먼저)
     ScoreMgr.AddForRagdoll(other_actor)
     MissionMgr.NotifyRecovered(other_actor)   -- 타입 태그를 읽으므로 Destroy 전에 호출
+    LoadMgr.ReduceForPortalCollect()
     AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
     ParticleFX.Burst(Portal.collectFxPath, other_actor.Location, Portal.collectFxLife) -- Destroy 전 위치 읽기
     other_actor:Destroy()                     -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)

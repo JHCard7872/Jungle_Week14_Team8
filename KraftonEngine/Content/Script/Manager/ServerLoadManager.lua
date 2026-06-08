@@ -36,4 +36,18 @@ function M.Update(dt)
     Session.load = Session.load + abandonedCount * Config.loadPerRagdoll * dt
 end
 
+function M.ReduceForPortalCollect()
+    if abandonedCount > 0 then
+        abandonedCount = abandonedCount - 1
+    end
+
+    local recover = tonumber(Config.loadRecoverPerPortalCollect) or 0
+    if recover <= 0 then
+        return
+    end
+
+    local currentLoad = tonumber(Session.load) or 0
+    Session.load = math.max(0, currentLoad - recover)
+end
+
 return M
