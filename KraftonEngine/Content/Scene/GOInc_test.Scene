@@ -1268,6 +1268,196 @@
               "bTickEnable" : true
             },
             "bHiddenInComponentTree" : true
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "ObjectId" : 37,
+            "Properties" : {
+              "BillboardRollDegrees" : 0.000000,
+              "BillboardTintColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "Mass" : 1.000000,
+              "MaterialSlot" : "Content/Material/Editor/DirectionalLight.mat",
+              "ObjectName" : "UBillboardComponent_96",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bEditorOnly" : true,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : true,
+              "bIsActive" : true,
+              "bIsBillboard" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            },
+            "bHiddenInComponentTree" : true
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "ObjectId" : 38,
+            "Properties" : {
+              "BillboardRollDegrees" : 0.000000,
+              "BillboardTintColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "Mass" : 1.000000,
+              "MaterialSlot" : "Content/Material/Editor/DirectionalLight.mat",
+              "ObjectName" : "UBillboardComponent_34",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bEditorOnly" : true,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : true,
+              "bIsActive" : true,
+              "bIsBillboard" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            },
+            "bHiddenInComponentTree" : true
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "ObjectId" : 39,
+            "Properties" : {
+              "BillboardRollDegrees" : 0.000000,
+              "BillboardTintColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "Mass" : 1.000000,
+              "MaterialSlot" : "Content/Material/Editor/DirectionalLight.mat",
+              "ObjectName" : "UBillboardComponent_35",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bEditorOnly" : true,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : true,
+              "bIsActive" : true,
+              "bIsBillboard" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            },
+            "bHiddenInComponentTree" : true
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "ObjectId" : 40,
+            "Properties" : {
+              "BillboardRollDegrees" : 0.000000,
+              "BillboardTintColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "Mass" : 1.000000,
+              "MaterialSlot" : "Content/Material/Editor/DirectionalLight.mat",
+              "ObjectName" : "UBillboardComponent_129",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bEditorOnly" : true,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : true,
+              "bIsActive" : true,
+              "bIsBillboard" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            },
+            "bHiddenInComponentTree" : true
+          }, {
+            "Children" : [],
+            "ClassName" : "UBillboardComponent",
+            "ObjectId" : 41,
+            "Properties" : {
+              "BillboardRollDegrees" : 0.000000,
+              "BillboardTintColor" : [1.000000, 1.000000, 1.000000, 1.000000],
+              "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+              "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+              "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "Mass" : 1.000000,
+              "MaterialSlot" : "Content/Material/Editor/DirectionalLight.mat",
+              "ObjectName" : "UBillboardComponent_276",
+              "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+              "RelativeTransform.Location" : [0.000000, 0.000000, 0.000000],
+              "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+              "ResponseContainer" : {
+                "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+                "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+              },
+              "bAutoActivate" : true,
+              "bCastShadow" : true,
+              "bCastShadowAsTwoSided" : false,
+              "bEditorOnly" : true,
+              "bEnableGravity" : true,
+              "bGenerateOverlapEvents" : false,
+              "bHiddenInComponentTree" : true,
+              "bIsActive" : true,
+              "bIsBillboard" : true,
+              "bIsVisible" : true,
+              "bKinematicPhysics" : false,
+              "bSimulatePhysics" : false,
+              "bTickEnable" : true
+            },
+            "bHiddenInComponentTree" : true
           }],
         "ClassName" : "UDirectionalLightComponent",
         "ObjectId" : 3,
@@ -1297,7 +1487,7 @@
       "Name" : "GOIncActor",
       "NonSceneComponents" : [{
           "ClassName" : "ULuaScriptComponent",
-          "ObjectId" : 55,
+          "ObjectId" : 60,
           "Properties" : {
             "ObjectName" : "ULuaScriptComponent_0",
             "ScriptFile" : "GOIncTestActor.lua",
@@ -1308,7 +1498,7 @@
             "bTickEnable" : true
           }
         }],
-      "ObjectId" : 37,
+      "ObjectId" : 42,
       "Properties" : {
         "ObjectName" : "GOIncActor",
         "PendingActorLocation" : [0.000000, 0.000000, 30.000000],
@@ -1322,7 +1512,7 @@
         "Children" : [{
             "Children" : [],
             "ClassName" : "UStaticMeshComponent",
-            "ObjectId" : 39,
+            "ObjectId" : 44,
             "Properties" : {
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
               "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1359,7 +1549,7 @@
             "Children" : [{
                 "Children" : [],
                 "ClassName" : "UCameraComponent",
-                "ObjectId" : 41,
+                "ObjectId" : 46,
                 "Properties" : {
                   "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                   "CameraState.FOV" : 1.047198,
@@ -1378,7 +1568,7 @@
                 }
               }],
             "ClassName" : "USpringArmComponent",
-            "ObjectId" : 40,
+            "ObjectId" : 45,
             "Properties" : {
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
               "CameraLagMaxDistance" : 0.000000,
@@ -1409,7 +1599,7 @@
                             "Children" : [{
                                 "Children" : [],
                                 "ClassName" : "UStaticMeshComponent",
-                                "ObjectId" : 47,
+                                "ObjectId" : 52,
                                 "Properties" : {
                                   "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                                   "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1446,7 +1636,7 @@
                                 "Children" : [{
                                     "Children" : [],
                                     "ClassName" : "UParticleSystemComponent",
-                                    "ObjectId" : 49,
+                                    "ObjectId" : 54,
                                     "Properties" : {
                                       "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                                       "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1480,7 +1670,7 @@
                                     }
                                   }],
                                 "ClassName" : "USceneComponent",
-                                "ObjectId" : 48,
+                                "ObjectId" : 53,
                                 "Properties" : {
                                   "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                                   "ObjectName" : "GOIncMuzzlePointA",
@@ -1494,7 +1684,7 @@
                                 }
                               }],
                             "ClassName" : "USceneComponent",
-                            "ObjectId" : 46,
+                            "ObjectId" : 51,
                             "Properties" : {
                               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                               "ObjectName" : "GOIncWeaponPitchPivotA",
@@ -1508,7 +1698,7 @@
                             }
                           }],
                         "ClassName" : "USceneComponent",
-                        "ObjectId" : 45,
+                        "ObjectId" : 50,
                         "Properties" : {
                           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                           "ObjectName" : "GOIncWeaponSlotA",
@@ -1525,7 +1715,7 @@
                             "Children" : [{
                                 "Children" : [],
                                 "ClassName" : "UStaticMeshComponent",
-                                "ObjectId" : 52,
+                                "ObjectId" : 57,
                                 "Properties" : {
                                   "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                                   "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1562,7 +1752,7 @@
                                 "Children" : [{
                                     "Children" : [],
                                     "ClassName" : "UParticleSystemComponent",
-                                    "ObjectId" : 54,
+                                    "ObjectId" : 59,
                                     "Properties" : {
                                       "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                                       "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1596,7 +1786,7 @@
                                     }
                                   }],
                                 "ClassName" : "USceneComponent",
-                                "ObjectId" : 53,
+                                "ObjectId" : 58,
                                 "Properties" : {
                                   "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                                   "ObjectName" : "GOIncMuzzlePointB",
@@ -1610,7 +1800,7 @@
                                 }
                               }],
                             "ClassName" : "USceneComponent",
-                            "ObjectId" : 51,
+                            "ObjectId" : 56,
                             "Properties" : {
                               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                               "ObjectName" : "GOIncWeaponPitchPivotB",
@@ -1624,7 +1814,7 @@
                             }
                           }],
                         "ClassName" : "USceneComponent",
-                        "ObjectId" : 50,
+                        "ObjectId" : 55,
                         "Properties" : {
                           "CachedEditRotator" : [-0.000000, 179.999985, 179.999985],
                           "ObjectName" : "GOIncWeaponSlotB",
@@ -1638,7 +1828,7 @@
                         }
                       }],
                     "ClassName" : "USceneComponent",
-                    "ObjectId" : 44,
+                    "ObjectId" : 49,
                     "Properties" : {
                       "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
                       "ObjectName" : "GOIncWeaponSwapPivot",
@@ -1652,7 +1842,7 @@
                     }
                   }],
                 "ClassName" : "USceneComponent",
-                "ObjectId" : 43,
+                "ObjectId" : 48,
                 "Properties" : {
                   "CachedEditRotator" : [-0.000000, 0.928909, -0.373001],
                   "ObjectName" : "GOIncWeaponVisualPivot",
@@ -1666,7 +1856,7 @@
                 }
               }],
             "ClassName" : "USceneComponent",
-            "ObjectId" : 42,
+            "ObjectId" : 47,
             "Properties" : {
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
               "ObjectName" : "GOIncViewWeaponRoot",
@@ -1680,7 +1870,7 @@
             }
           }],
         "ClassName" : "UCapsuleComponent",
-        "ObjectId" : 38,
+        "ObjectId" : 43,
         "Properties" : {
           "CachedEditRotator" : [4.175203, 0.000000, 0.000000],
           "CapsuleHalfHeight" : 2.000000,
@@ -1719,7 +1909,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_44",
       "NonSceneComponents" : [],
-      "ObjectId" : 56,
+      "ObjectId" : 61,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_44",
         "PendingActorLocation" : [9.004982, -3.682711, 4.000000],
@@ -1732,7 +1922,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 57,
+        "ObjectId" : 62,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1770,7 +1960,7 @@
       "ClassName" : "ASkeletalMeshActor",
       "Name" : "ASkeletalMeshActor_0",
       "NonSceneComponents" : [],
-      "ObjectId" : 58,
+      "ObjectId" : 63,
       "Properties" : {
         "ObjectName" : "ASkeletalMeshActor_0",
         "PendingActorLocation" : [7.488783, 0.804008, 3.920896],
@@ -1783,7 +1973,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "USkeletalMeshComponent",
-        "ObjectId" : 59,
+        "ObjectId" : 64,
         "Properties" : {
           "AnimInstanceClass" : "UCharacterAnimInstance",
           "AnimationData" : {
@@ -1837,7 +2027,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_45",
       "NonSceneComponents" : [],
-      "ObjectId" : 60,
+      "ObjectId" : 65,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_45",
         "PendingActorLocation" : [1.619802, 1.213538, 0.706459],
@@ -1850,7 +2040,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 61,
+        "ObjectId" : 66,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1886,11 +2076,11 @@
       }
     }, {
       "ClassName" : "AStaticMeshActor",
-      "Name" : "AStaticMeshActor_16",
+      "Name" : "aes",
       "NonSceneComponents" : [],
-      "ObjectId" : 62,
+      "ObjectId" : 67,
       "Properties" : {
-        "ObjectName" : "AStaticMeshActor_16",
+        "ObjectName" : "aes",
         "PendingActorLocation" : [0.000000, 0.000000, 0.000000],
         "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
         "PendingActorScale" : [40.000000, 40.000000, 40.000000],
@@ -1902,7 +2092,7 @@
         "Children" : [{
             "Children" : [],
             "ClassName" : "UStaticMeshComponent",
-            "ObjectId" : 64,
+            "ObjectId" : 69,
             "Properties" : {
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
               "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1937,7 +2127,7 @@
             }
           }],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 63,
+        "ObjectId" : 68,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -1975,7 +2165,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_9",
       "NonSceneComponents" : [],
-      "ObjectId" : 65,
+      "ObjectId" : 70,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_9",
         "PendingActorLocation" : [116.842041, -70.037247, -0.277061],
@@ -1988,7 +2178,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 66,
+        "ObjectId" : 71,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 89.999977, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -2026,7 +2216,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_46",
       "NonSceneComponents" : [],
-      "ObjectId" : 67,
+      "ObjectId" : 72,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_46",
         "PendingActorLocation" : [138.261719, -63.940086, -0.177061],
@@ -2039,7 +2229,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 68,
+        "ObjectId" : 73,
         "Properties" : {
           "CachedEditRotator" : [0.342640, 150.223297, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -2077,7 +2267,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_47",
       "NonSceneComponents" : [],
-      "ObjectId" : 69,
+      "ObjectId" : 74,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_47",
         "PendingActorLocation" : [138.296844, -39.349342, -0.077061],
@@ -2090,7 +2280,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 70,
+        "ObjectId" : 75,
         "Properties" : {
           "CachedEditRotator" : [0.342643, -146.095764, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -2128,7 +2318,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_48",
       "NonSceneComponents" : [],
-      "ObjectId" : 71,
+      "ObjectId" : 76,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_48",
         "PendingActorLocation" : [105.355453, -34.986103, -1.379565],
@@ -2141,7 +2331,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 72,
+        "ObjectId" : 77,
         "Properties" : {
           "CachedEditRotator" : [0.342643, 44.802769, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -2179,7 +2369,7 @@
       "ClassName" : "AStaticMeshActor",
       "Name" : "AStaticMeshActor_49",
       "NonSceneComponents" : [],
-      "ObjectId" : 73,
+      "ObjectId" : 78,
       "Properties" : {
         "ObjectName" : "AStaticMeshActor_49",
         "PendingActorLocation" : [105.455452, -34.950565, -1.374842],
@@ -2192,7 +2382,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "UStaticMeshComponent",
-        "ObjectId" : 74,
+        "ObjectId" : 79,
         "Properties" : {
           "CachedEditRotator" : [0.342643, 44.802769, 0.000000],
           "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
@@ -2230,7 +2420,7 @@
       "ClassName" : "AActor",
       "Name" : "SpawnArea",
       "NonSceneComponents" : [],
-      "ObjectId" : 75,
+      "ObjectId" : 80,
       "Properties" : {
         "ObjectName" : "SpawnArea",
         "PendingActorLocation" : [18.224678, -13.583515, 9.882000],
@@ -2244,7 +2434,7 @@
         "Children" : [{
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 77,
+            "ObjectId" : 82,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2280,7 +2470,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 78,
+            "ObjectId" : 83,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2316,7 +2506,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 79,
+            "ObjectId" : 84,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2352,7 +2542,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 80,
+            "ObjectId" : 85,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2388,7 +2578,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 81,
+            "ObjectId" : 86,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2424,7 +2614,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 82,
+            "ObjectId" : 87,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2460,7 +2650,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 83,
+            "ObjectId" : 88,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2496,7 +2686,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBoxComponent",
-            "ObjectId" : 84,
+            "ObjectId" : 89,
             "Properties" : {
               "BoxExtent" : [1.000000, 1.000000, 1.000000],
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
@@ -2531,7 +2721,7 @@
             }
           }],
         "ClassName" : "USceneComponent",
-        "ObjectId" : 76,
+        "ObjectId" : 81,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "ObjectName" : "USceneComponent_10",
@@ -2549,7 +2739,7 @@
       "Name" : "SpawnManager",
       "NonSceneComponents" : [{
           "ClassName" : "ULuaScriptComponent",
-          "ObjectId" : 87,
+          "ObjectId" : 92,
           "Properties" : {
             "ObjectName" : "ULuaScriptComponent_1",
             "ScriptFile" : "GOIncRagdollSpawnManager.lua",
@@ -2560,7 +2750,7 @@
             "bTickEnable" : true
           }
         }],
-      "ObjectId" : 85,
+      "ObjectId" : 90,
       "Properties" : {
         "ObjectName" : "SpawnManager",
         "PendingActorLocation" : [-1.242218, -23.290232, 0.859653],
@@ -2573,7 +2763,7 @@
       "RootComponent" : {
         "Children" : [],
         "ClassName" : "USceneComponent",
-        "ObjectId" : 86,
+        "ObjectId" : 91,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "ObjectName" : "USceneComponent_12",
@@ -2591,7 +2781,7 @@
       "Name" : "AGOIncKirbyRagdollPawn_0",
       "NonSceneComponents" : [{
           "ClassName" : "UGOIncRagdollMovementComponent",
-          "ObjectId" : 94,
+          "ObjectId" : 99,
           "Properties" : {
             "Acceleration" : 12.000000,
             "BrakingDeceleration" : 8.000000,
@@ -2617,7 +2807,7 @@
           }
         }, {
           "ClassName" : "ULuaScriptComponent",
-          "ObjectId" : 95,
+          "ObjectId" : 100,
           "Properties" : {
             "ObjectName" : "ULuaScriptComponent_2",
             "ScriptFile" : "GOIncRagdollPawn_Test.lua",
@@ -2628,7 +2818,7 @@
             "bTickEnable" : true
           }
         }],
-      "ObjectId" : 88,
+      "ObjectId" : 93,
       "Properties" : {
         "CharacterConfig" : {
           "AliveCapsuleHalfHeight" : 0.500000,
@@ -2675,7 +2865,7 @@
         "Children" : [{
             "Children" : [],
             "ClassName" : "UCapsuleComponent",
-            "ObjectId" : 90,
+            "ObjectId" : 95,
             "Properties" : {
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
               "CapsuleHalfHeight" : 0.500000,
@@ -2712,7 +2902,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UCapsuleComponent",
-            "ObjectId" : 91,
+            "ObjectId" : 96,
             "Properties" : {
               "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
               "CapsuleHalfHeight" : 3.500000,
@@ -2749,7 +2939,7 @@
           }, {
             "Children" : [],
             "ClassName" : "USkeletalMeshComponent",
-            "ObjectId" : 92,
+            "ObjectId" : 97,
             "Properties" : {
               "AnimInstanceClass" : "None",
               "AnimationData" : {
@@ -2801,7 +2991,7 @@
           }, {
             "Children" : [],
             "ClassName" : "UBillboardComponent",
-            "ObjectId" : 93,
+            "ObjectId" : 98,
             "Properties" : {
               "BillboardRollDegrees" : 0.000000,
               "BillboardTintColor" : [1.000000, 1.000000, 1.000000, 1.000000],
@@ -2837,7 +3027,7 @@
             }
           }],
         "ClassName" : "USceneComponent",
-        "ObjectId" : 89,
+        "ObjectId" : 94,
         "Properties" : {
           "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
           "ObjectName" : "USceneComponent_11",
@@ -2850,6 +3040,3321 @@
           "bTickEnable" : true
         }
       }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "MedicalTank3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 101,
+      "Properties" : {
+        "ObjectName" : "MedicalTank3",
+        "PendingActorLocation" : [48.603371, -57.118862, 2.186134],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.200000, 0.200000, 0.200000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 102,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/sci-fi_medical_tank_with_frost/Final-Textures.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [48.603371, -57.118862, 2.186134],
+          "RelativeTransform.Scale" : [0.200000, 0.200000, 0.200000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/sci-fi_medical_tank_with_frost_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit",
+      "NonSceneComponents" : [],
+      "ObjectId" : 103,
+      "Properties" : {
+        "ObjectName" : "Medical Kit",
+        "PendingActorLocation" : [40.139271, -67.327576, 0.849858],
+        "PendingActorRotation" : [39.899998, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 104,
+        "Properties" : {
+          "CachedEditRotator" : [39.899998, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [40.139271, -67.327576, 0.849858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "MedicalTank2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 105,
+      "Properties" : {
+        "ObjectName" : "MedicalTank2",
+        "PendingActorLocation" : [33.005291, -66.685890, 0.949858],
+        "PendingActorRotation" : [39.899998, 0.000000, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 106,
+        "Properties" : {
+          "CachedEditRotator" : [39.899998, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/sci-fi_medical_tank_with_frost/Final-Textures.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [33.005291, -66.685890, 0.949858],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/sci-fi_medical_tank_with_frost_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "MedicalTank",
+      "NonSceneComponents" : [],
+      "ObjectId" : 107,
+      "Properties" : {
+        "ObjectName" : "MedicalTank",
+        "PendingActorLocation" : [40.662952, -71.730530, 0.949858],
+        "PendingActorRotation" : [39.899998, 0.000000, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 108,
+        "Properties" : {
+          "CachedEditRotator" : [39.899998, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/sci-fi_medical_tank_with_frost/Final-Textures.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [40.662952, -71.730530, 0.949858],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/sci-fi_medical_tank_with_frost_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit_2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 109,
+      "Properties" : {
+        "ObjectName" : "Medical Kit_2",
+        "PendingActorLocation" : [32.230267, -73.165306, 0.949858],
+        "PendingActorRotation" : [39.899998, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 110,
+        "Properties" : {
+          "CachedEditRotator" : [39.899998, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [32.230267, -73.165306, 0.949858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit_3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 111,
+      "Properties" : {
+        "ObjectName" : "Medical Kit_3",
+        "PendingActorLocation" : [44.200047, -144.584183, 1.049858],
+        "PendingActorRotation" : [39.899998, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 112,
+        "Properties" : {
+          "CachedEditRotator" : [39.899998, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [44.200047, -144.584183, 1.049858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit_4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 113,
+      "Properties" : {
+        "ObjectName" : "Medical Kit_4",
+        "PendingActorLocation" : [52.366268, -144.484177, 1.149858],
+        "PendingActorRotation" : [39.899960, 55.069149, 0.000007],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 114,
+        "Properties" : {
+          "CachedEditRotator" : [39.899960, 55.069149, 0.000007],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [52.366268, -144.484177, 1.149858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit_5",
+      "NonSceneComponents" : [],
+      "ObjectId" : 115,
+      "Properties" : {
+        "ObjectName" : "Medical Kit_5",
+        "PendingActorLocation" : [37.228806, -142.323975, 1.249858],
+        "PendingActorRotation" : [39.899963, 55.069149, 0.000004],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 116,
+        "Properties" : {
+          "CachedEditRotator" : [39.899963, 55.069149, 0.000004],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [37.228806, -142.323975, 1.249858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "WetCaution",
+      "NonSceneComponents" : [],
+      "ObjectId" : 117,
+      "Properties" : {
+        "ObjectName" : "WetCaution",
+        "PendingActorLocation" : [83.914139, -93.870239, 1.392533],
+        "PendingActorRotation" : [0.000000, -86.153656, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 118,
+        "Properties" : {
+          "CachedEditRotator" : [0.000000, -86.153656, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/wet_floor_sign/lambert1.mat"],
+          "ObjectName" : "UStaticMeshComponent_148",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [83.914139, -93.870239, 1.392533],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/wet_floor_sign_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "WetCaution1",
+      "NonSceneComponents" : [],
+      "ObjectId" : 119,
+      "Properties" : {
+        "ObjectName" : "WetCaution1",
+        "PendingActorLocation" : [104.385551, -72.715485, 1.492533],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 120,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [2, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/wet_floor_sign/lambert1.mat"],
+          "ObjectName" : "UStaticMeshComponent_148",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [104.385551, -72.715485, 1.492533],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/wet_floor_sign_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "WetCaution2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 121,
+      "Properties" : {
+        "ObjectName" : "WetCaution2",
+        "PendingActorLocation" : [99.995041, -72.763779, 1.592533],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 122,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/wet_floor_sign/lambert1.mat"],
+          "ObjectName" : "UStaticMeshComponent_148",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [99.995041, -72.763779, 1.592533],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/wet_floor_sign_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "WetCaution3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 123,
+      "Properties" : {
+        "ObjectName" : "WetCaution3",
+        "PendingActorLocation" : [84.014137, -88.963585, 1.492533],
+        "PendingActorRotation" : [0.000000, -86.153656, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 124,
+        "Properties" : {
+          "CachedEditRotator" : [0.000000, -86.153656, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/wet_floor_sign/lambert1.mat"],
+          "ObjectName" : "UStaticMeshComponent_148",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [84.014137, -88.963585, 1.492533],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/wet_floor_sign_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Barrel",
+      "NonSceneComponents" : [],
+      "ObjectId" : 125,
+      "Properties" : {
+        "ObjectName" : "Barrel",
+        "PendingActorLocation" : [102.467270, -91.084892, 0.048568],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 126,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/industrial_barrel/Material.002.mat"],
+          "ObjectName" : "Barrel",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [102.467270, -91.084892, 0.048568],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/industrial_barrel_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Barrel3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 127,
+      "Properties" : {
+        "ObjectName" : "Barrel3",
+        "PendingActorLocation" : [119.180420, -77.807213, 0.537317],
+        "PendingActorRotation" : [89.980209, -0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 128,
+        "Properties" : {
+          "CachedEditRotator" : [89.980209, -0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/industrial_barrel/Material.002.mat"],
+          "ObjectName" : "Barrel",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [119.180420, -77.807213, 0.537317],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/industrial_barrel_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Barrel2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 129,
+      "Properties" : {
+        "ObjectName" : "Barrel2",
+        "PendingActorLocation" : [119.280418, -83.851234, 0.637317],
+        "PendingActorRotation" : [89.980209, -0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 130,
+        "Properties" : {
+          "CachedEditRotator" : [89.980209, -0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/industrial_barrel/Material.002.mat"],
+          "ObjectName" : "Barrel",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [119.280418, -83.851234, 0.637317],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/industrial_barrel_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "WetCaution4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 131,
+      "Properties" : {
+        "ObjectName" : "WetCaution4",
+        "PendingActorLocation" : [71.648605, -16.059479, 1.592533],
+        "PendingActorRotation" : [-0.000000, 89.999977, 0.000000],
+        "PendingActorScale" : [0.050000, 0.050000, 0.050000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 132,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 89.999977, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/wet_floor_sign/lambert1.mat"],
+          "ObjectName" : "UStaticMeshComponent_148",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [71.648605, -16.059479, 1.592533],
+          "RelativeTransform.Scale" : [0.050000, 0.050000, 0.050000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/wet_floor_sign_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can",
+      "NonSceneComponents" : [],
+      "ObjectId" : 133,
+      "Properties" : {
+        "ObjectName" : "Can",
+        "PendingActorLocation" : [89.128326, -19.566847, 3.289895],
+        "PendingActorRotation" : [52.427620, -179.999939, -179.999939],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 134,
+        "Properties" : {
+          "CachedEditRotator" : [52.427620, -179.999939, -179.999939],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [89.128326, -19.566847, 3.289895],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can1",
+      "NonSceneComponents" : [],
+      "ObjectId" : 135,
+      "Properties" : {
+        "ObjectName" : "Can1",
+        "PendingActorLocation" : [86.492477, -3.923043, 3.389895],
+        "PendingActorRotation" : [52.427620, -179.999924, -179.999924],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 136,
+        "Properties" : {
+          "CachedEditRotator" : [52.427620, -179.999924, -179.999924],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [86.492477, -3.923043, 3.389895],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Cone",
+      "NonSceneComponents" : [],
+      "ObjectId" : 137,
+      "Properties" : {
+        "ObjectName" : "Cone",
+        "PendingActorLocation" : [114.912910, 14.908807, 1.469643],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 138,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/realistic_cone/Cone.002.mat"],
+          "ObjectName" : "UStaticMeshComponent_313",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [114.912910, 14.908807, 1.469643],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/realistic_cone_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Cone1",
+      "NonSceneComponents" : [],
+      "ObjectId" : 139,
+      "Properties" : {
+        "ObjectName" : "Cone1",
+        "PendingActorLocation" : [120.196716, 15.008807, 1.569643],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 140,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/realistic_cone/Cone.002.mat"],
+          "ObjectName" : "UStaticMeshComponent_313",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [120.196716, 15.008807, 1.569643],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/realistic_cone_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Tube",
+      "NonSceneComponents" : [],
+      "ObjectId" : 141,
+      "Properties" : {
+        "ObjectName" : "Tube",
+        "PendingActorLocation" : [87.906235, 11.758212, 1.311580],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 142,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/lab_tube_for_p.a.l/lambert1.mat"],
+          "ObjectName" : "Tube",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [87.906235, 11.758212, 1.311580],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/lab_tube_for_p.a.l_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Tube1",
+      "NonSceneComponents" : [],
+      "ObjectId" : 143,
+      "Properties" : {
+        "ObjectName" : "Tube1",
+        "PendingActorLocation" : [83.394890, 8.396879, 1.411580],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 144,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/lab_tube_for_p.a.l/lambert1.mat"],
+          "ObjectName" : "UStaticMeshComponent_315",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [83.394890, 8.396879, 1.411580],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/lab_tube_for_p.a.l_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending MachineV2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 145,
+      "Properties" : {
+        "ObjectName" : "Vending MachineV2",
+        "PendingActorLocation" : [140.239944, -24.419905, 2.641584],
+        "PendingActorRotation" : [0.000000, -89.999977, 0.000000],
+        "PendingActorScale" : [3.680000, 4.700000, 3.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 146,
+        "Properties" : {
+          "CachedEditRotator" : [0.000000, -89.999977, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/vending_machine/VendingMachine01_Snacks.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine_Text.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01_PlasticPanel.mat"],
+          "ObjectName" : "UStaticMeshComponent_43",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [140.239944, -24.419905, 2.641584],
+          "RelativeTransform.Scale" : [3.680000, 4.700000, 3.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/vending_machine_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending Machine",
+      "NonSceneComponents" : [],
+      "ObjectId" : 147,
+      "Properties" : {
+        "ObjectName" : "Vending Machine",
+        "PendingActorLocation" : [140.029205, -20.791222, 0.023095],
+        "PendingActorRotation" : [-0.000000, 89.999977, 0.000000],
+        "PendingActorScale" : [0.600000, 0.600000, 0.600000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 148,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 89.999977, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/ClawPerfect.mat", "Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/rsfwr3w636wweyddhshyg.mat", "Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/rwswrw66weydhur47.mat"],
+          "ObjectName" : "UStaticMeshComponent_68",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [140.029205, -20.791222, 0.023095],
+          "RelativeTransform.Scale" : [0.600000, 0.600000, 0.600000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending Machine_2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 149,
+      "Properties" : {
+        "ObjectName" : "Vending Machine_2",
+        "PendingActorLocation" : [-28.825207, -43.721378, 0.123095],
+        "PendingActorRotation" : [0.000000, -45.000004, 0.000000],
+        "PendingActorScale" : [0.600000, 0.600000, 0.600000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 150,
+        "Properties" : {
+          "CachedEditRotator" : [0.000000, -45.000004, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/ClawPerfect.mat", "Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/rsfwr3w636wweyddhshyg.mat", "Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/rwswrw66weydhur47.mat"],
+          "ObjectName" : "UStaticMeshComponent_68",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-28.825207, -43.721378, 0.123095],
+          "RelativeTransform.Scale" : [0.600000, 0.600000, 0.600000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending MachineV3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 151,
+      "Properties" : {
+        "ObjectName" : "Vending MachineV3",
+        "PendingActorLocation" : [-25.876917, -46.446468, 2.841584],
+        "PendingActorRotation" : [-0.000000, 135.000000, 0.000000],
+        "PendingActorScale" : [3.680000, 4.700000, 3.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 152,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 135.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/vending_machine/VendingMachine01_Snacks.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine_Text.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01_PlasticPanel.mat"],
+          "ObjectName" : "UStaticMeshComponent_43",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-25.876917, -46.446468, 2.841584],
+          "RelativeTransform.Scale" : [3.680000, 4.700000, 3.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/vending_machine_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending Machine_3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 153,
+      "Properties" : {
+        "ObjectName" : "Vending Machine_3",
+        "PendingActorLocation" : [-34.173744, -38.172714, -0.035303],
+        "PendingActorRotation" : [0.000000, -45.000004, 0.000000],
+        "PendingActorScale" : [0.600000, 0.600000, 0.600000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 154,
+        "Properties" : {
+          "CachedEditRotator" : [0.000000, -45.000004, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/ClawPerfect.mat", "Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/rsfwr3w636wweyddhshyg.mat", "Content/Material/Auto/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly/rwswrw66weydhur47.mat"],
+          "ObjectName" : "UStaticMeshComponent_68",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-34.173744, -38.172714, -0.035303],
+          "RelativeTransform.Scale" : [0.600000, 0.600000, 0.600000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/claw_arcade_animated_.glb_v1.0_free_low_poly_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending MachineV4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 155,
+      "Properties" : {
+        "ObjectName" : "Vending MachineV4",
+        "PendingActorLocation" : [-31.125473, -40.797798, 2.783186],
+        "PendingActorRotation" : [-0.000000, 135.000000, 0.000000],
+        "PendingActorScale" : [3.680000, 4.700000, 3.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 156,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 135.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/vending_machine/VendingMachine01_Snacks.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine_Text.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01_PlasticPanel.mat"],
+          "ObjectName" : "UStaticMeshComponent_43",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-31.125473, -40.797798, 2.783186],
+          "RelativeTransform.Scale" : [3.680000, 4.700000, 3.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/vending_machine_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 157,
+      "Properties" : {
+        "ObjectName" : "Can_2",
+        "PendingActorLocation" : [-18.858046, -49.723984, 1.477359],
+        "PendingActorRotation" : [52.427620, -179.999924, -179.999924],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 158,
+        "Properties" : {
+          "CachedEditRotator" : [52.427620, -179.999924, -179.999924],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-18.858046, -49.723984, 1.477359],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 159,
+      "Properties" : {
+        "ObjectName" : "Can_3",
+        "PendingActorLocation" : [-31.113667, -35.984734, 0.642644],
+        "PendingActorRotation" : [52.427574, 121.954453, -179.999893],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 160,
+        "Properties" : {
+          "CachedEditRotator" : [52.427574, 121.954453, -179.999893],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-31.113667, -35.984734, 0.642644],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 161,
+      "Properties" : {
+        "ObjectName" : "Can_4",
+        "PendingActorLocation" : [-16.024834, -51.691002, 1.577359],
+        "PendingActorRotation" : [52.427620, -179.999908, -179.999908],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 162,
+        "Properties" : {
+          "CachedEditRotator" : [52.427620, -179.999908, -179.999908],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-16.024834, -51.691002, 1.577359],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_5",
+      "NonSceneComponents" : [],
+      "ObjectId" : 163,
+      "Properties" : {
+        "ObjectName" : "Can_5",
+        "PendingActorLocation" : [-28.180454, -37.851749, 0.842644],
+        "PendingActorRotation" : [52.427570, 121.954453, -179.999893],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 164,
+        "Properties" : {
+          "CachedEditRotator" : [52.427570, 121.954453, -179.999893],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-28.180454, -37.851749, 0.842644],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_6",
+      "NonSceneComponents" : [],
+      "ObjectId" : 165,
+      "Properties" : {
+        "ObjectName" : "Can_6",
+        "PendingActorLocation" : [35.762325, -24.208136, 1.677359],
+        "PendingActorRotation" : [52.427620, -179.999893, -179.999893],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 166,
+        "Properties" : {
+          "CachedEditRotator" : [52.427620, -179.999893, -179.999893],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [35.762325, -24.208136, 1.677359],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_7",
+      "NonSceneComponents" : [],
+      "ObjectId" : 167,
+      "Properties" : {
+        "ObjectName" : "Can_7",
+        "PendingActorLocation" : [23.706709, -10.268879, 1.042644],
+        "PendingActorRotation" : [52.427570, 121.954453, -179.999893],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 168,
+        "Properties" : {
+          "CachedEditRotator" : [52.427570, 121.954453, -179.999893],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [23.706709, -10.268879, 1.042644],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit_6",
+      "NonSceneComponents" : [],
+      "ObjectId" : 169,
+      "Properties" : {
+        "ObjectName" : "Medical Kit_6",
+        "PendingActorLocation" : [-8.877531, -85.534225, 1.049858],
+        "PendingActorRotation" : [-46.385609, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 170,
+        "Properties" : {
+          "CachedEditRotator" : [-46.385609, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-8.877531, -85.534225, 1.049858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Medical Kit_7",
+      "NonSceneComponents" : [],
+      "ObjectId" : 171,
+      "Properties" : {
+        "ObjectName" : "Medical Kit_7",
+        "PendingActorLocation" : [-0.868525, -79.596497, 1.049858],
+        "PendingActorRotation" : [84.548996, -37.069664, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 172,
+        "Properties" : {
+          "CachedEditRotator" : [84.548996, -37.069664, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/medical_kit/Medkit.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-0.868525, -79.596497, 1.049858],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/medical_kit_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "MedicalTank4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 173,
+      "Properties" : {
+        "ObjectName" : "MedicalTank4",
+        "PendingActorLocation" : [41.212147, -53.682838, 2.286134],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.200000, 0.200000, 0.200000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 174,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/sci-fi_medical_tank_with_frost/Final-Textures.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [41.212147, -53.682838, 2.286134],
+          "RelativeTransform.Scale" : [0.200000, 0.200000, 0.200000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/sci-fi_medical_tank_with_frost_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "MedicalTank5",
+      "NonSceneComponents" : [],
+      "ObjectId" : 175,
+      "Properties" : {
+        "ObjectName" : "MedicalTank5",
+        "PendingActorLocation" : [39.323746, -80.377167, 2.386134],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.200000, 0.200000, 0.200000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 176,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/sci-fi_medical_tank_with_frost/Final-Textures.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [39.323746, -80.377167, 2.386134],
+          "RelativeTransform.Scale" : [0.200000, 0.200000, 0.200000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/sci-fi_medical_tank_with_frost_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending MachineV5",
+      "NonSceneComponents" : [],
+      "ObjectId" : 177,
+      "Properties" : {
+        "ObjectName" : "Vending MachineV5",
+        "PendingActorLocation" : [86.755020, -107.007217, 2.941584],
+        "PendingActorRotation" : [-0.000000, -179.973434, 0.000000],
+        "PendingActorScale" : [3.680000, 4.700000, 3.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 178,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, -179.973434, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/vending_machine/VendingMachine01_Snacks.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine_Text.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01_PlasticPanel.mat"],
+          "ObjectName" : "UStaticMeshComponent_43",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [86.755020, -107.007217, 2.941584],
+          "RelativeTransform.Scale" : [3.680000, 4.700000, 3.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/vending_machine_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "NintendoDS_1",
+      "NonSceneComponents" : [],
+      "ObjectId" : 179,
+      "Properties" : {
+        "ObjectName" : "NintendoDS_1",
+        "PendingActorLocation" : [73.241142, -58.202080, 1.763207],
+        "PendingActorRotation" : [-0.000000, -179.999969, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 180,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, -179.999969, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/YONA/nintendo_ds/Material.005.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.008.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.001.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.012.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.011.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.018.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.019.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.020.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.010.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.009.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.015.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.016.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.003.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.004.mat"],
+          "ObjectName" : "aes",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [73.241142, -58.202080, 1.763207],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/YONA/nintendo_ds_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "NintendoDS",
+      "NonSceneComponents" : [],
+      "ObjectId" : 181,
+      "Properties" : {
+        "ObjectName" : "NintendoDS",
+        "PendingActorLocation" : [73.341141, -52.256393, 1.775191],
+        "PendingActorRotation" : [0.000014, 88.386505, 30.200449],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 182,
+        "Properties" : {
+          "CachedEditRotator" : [0.000014, 88.386505, 30.200449],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/YONA/nintendo_ds/Material.005.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.008.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.001.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.012.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.011.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.018.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.019.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.020.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.010.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.009.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.015.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.016.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.003.mat", "Content/Material/Auto/YONA/nintendo_ds/Material.004.mat"],
+          "ObjectName" : "UStaticMeshComponent_342",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [73.341141, -52.256393, 1.775191],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/YONA/nintendo_ds_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "NesController",
+      "NonSceneComponents" : [],
+      "ObjectId" : 183,
+      "Properties" : {
+        "ObjectName" : "NesController",
+        "PendingActorLocation" : [78.773216, -58.724300, 1.396751],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.200000, 0.200000, 0.200000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 184,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/YONA/NesController/Controller.mat"],
+          "ObjectName" : "NesController",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [78.773216, -58.724300, 1.396751],
+          "RelativeTransform.Scale" : [0.200000, 0.200000, 0.200000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/YONA/NesController_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Vending MachineV6",
+      "NonSceneComponents" : [],
+      "ObjectId" : 185,
+      "Properties" : {
+        "ObjectName" : "Vending MachineV6",
+        "PendingActorLocation" : [87.852707, -36.665600, 2.941584],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [3.680000, 4.700000, 3.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 186,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/vending_machine/VendingMachine01_Snacks.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine_Text.mat", "Content/Material/Auto/Arcade/vending_machine/VendingMachine01_PlasticPanel.mat"],
+          "ObjectName" : "UStaticMeshComponent_43",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [87.852707, -36.665600, 2.941584],
+          "RelativeTransform.Scale" : [3.680000, 4.700000, 3.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/vending_machine_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Danganronpa",
+      "NonSceneComponents" : [],
+      "ObjectId" : 187,
+      "Properties" : {
+        "ObjectName" : "Danganronpa",
+        "PendingActorLocation" : [88.247002, -67.151016, 0.000000],
+        "PendingActorRotation" : [-0.000000, -179.999969, 0.000000],
+        "PendingActorScale" : [0.400000, 0.400000, 0.400000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 188,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, -179.999969, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/arcade_anime_danganronpa/CAJA.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/boton.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.004.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/boton2.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.003.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/TUBO.001.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/bordes.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.011.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.006.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.007.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.008.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/arcade.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.009.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.010.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.006.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.005.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.002.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/vidrio.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.008.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.007.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.009.mat"],
+          "ObjectName" : "UStaticMeshComponent_351",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [88.247002, -67.151016, 0.000000],
+          "RelativeTransform.Scale" : [0.400000, 0.400000, 0.400000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/arcade_anime_danganronpa_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Danganronpa_2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 189,
+      "Properties" : {
+        "ObjectName" : "Danganronpa_2",
+        "PendingActorLocation" : [88.247002, -65.023033, 0.000000],
+        "PendingActorRotation" : [-0.000000, -179.999954, 0.000000],
+        "PendingActorScale" : [0.400000, 0.400000, 0.400000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 190,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, -179.999954, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/arcade_anime_danganronpa/CAJA.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/boton.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.004.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/boton2.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.003.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/TUBO.001.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/bordes.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.011.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.006.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.007.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.008.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/arcade.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.009.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/Material.010.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.006.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.005.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.002.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/vidrio.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.008.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.007.mat", "Content/Material/Auto/Arcade/arcade_anime_danganronpa/BOTONES.009.mat"],
+          "ObjectName" : "UStaticMeshComponent_351",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [88.247002, -65.023033, 0.000000],
+          "RelativeTransform.Scale" : [0.400000, 0.400000, 0.400000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/arcade_anime_danganronpa_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CanV2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 191,
+      "Properties" : {
+        "ObjectName" : "CanV2",
+        "PendingActorLocation" : [86.687454, -44.064270, 3.110021],
+        "PendingActorRotation" : [-0.000000, 0.000000, 58.124382],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 192,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 58.124382],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_1/Scene_-_Root.mat"],
+          "ObjectName" : "UStaticMeshComponent_364",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [86.687454, -44.064270, 3.110021],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_1_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CanV3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 193,
+      "Properties" : {
+        "ObjectName" : "CanV3",
+        "PendingActorLocation" : [77.492134, -42.464039, 3.210021],
+        "PendingActorRotation" : [-0.000002, -53.864880, 58.124722],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 194,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000002, -53.864880, 58.124722],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_1/Scene_-_Root.mat"],
+          "ObjectName" : "UStaticMeshComponent_364",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [77.492134, -42.464039, 3.210021],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_1_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CanV4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 195,
+      "Properties" : {
+        "ObjectName" : "CanV4",
+        "PendingActorLocation" : [4.461746, -33.285122, 3.310021],
+        "PendingActorRotation" : [-0.000002, -53.864876, 58.124722],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 196,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000002, -53.864876, 58.124722],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_1/Scene_-_Root.mat"],
+          "ObjectName" : "UStaticMeshComponent_364",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [4.461746, -33.285122, 3.310021],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_1_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CanV5",
+      "NonSceneComponents" : [],
+      "ObjectId" : 197,
+      "Properties" : {
+        "ObjectName" : "CanV5",
+        "PendingActorLocation" : [82.103607, -67.754311, 3.410021],
+        "PendingActorRotation" : [-0.000002, -53.864872, 58.124714],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 198,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000002, -53.864872, 58.124714],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_1/Scene_-_Root.mat"],
+          "ObjectName" : "UStaticMeshComponent_364",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [82.103607, -67.754311, 3.410021],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_1_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CanV6",
+      "NonSceneComponents" : [],
+      "ObjectId" : 199,
+      "Properties" : {
+        "ObjectName" : "CanV6",
+        "PendingActorLocation" : [77.155899, -67.654312, 3.510021],
+        "PendingActorRotation" : [-0.000003, -53.864872, 58.124710],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 200,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000003, -53.864872, 58.124710],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_1/Scene_-_Root.mat"],
+          "ObjectName" : "UStaticMeshComponent_364",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [77.155899, -67.654312, 3.510021],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_1_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "Can_8",
+      "NonSceneComponents" : [],
+      "ObjectId" : 201,
+      "Properties" : {
+        "ObjectName" : "Can_8",
+        "PendingActorLocation" : [81.230675, -43.164509, 0.742644],
+        "PendingActorRotation" : [52.427570, 121.954453, -179.999893],
+        "PendingActorScale" : [0.005000, 0.005000, 0.005000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 202,
+        "Properties" : {
+          "CachedEditRotator" : [52.427570, 121.954453, -179.999893],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/drink_can_2/TT_checker_512x512_UV_GRID.mat"],
+          "ObjectName" : "UStaticMeshComponent_157",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [81.230675, -43.164509, 0.742644],
+          "RelativeTransform.Scale" : [0.005000, 0.005000, 0.005000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/drink_can_2_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "RatroTV",
+      "NonSceneComponents" : [],
+      "ObjectId" : 203,
+      "Properties" : {
+        "ObjectName" : "RatroTV",
+        "PendingActorLocation" : [82.622116, -35.803825, 3.313574],
+        "PendingActorRotation" : [0.000000, -92.879051, 0.000000],
+        "PendingActorScale" : [5.000000, 5.000000, 5.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 204,
+        "Properties" : {
+          "CachedEditRotator" : [0.000000, -92.879051, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/old_jvc_tv/tv_case.mat", "Content/Material/Auto/Arcade/old_jvc_tv/display.mat"],
+          "ObjectName" : "UStaticMeshComponent_374",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [82.622116, -35.803825, 3.313574],
+          "RelativeTransform.Scale" : [5.000000, 5.000000, 5.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/old_jvc_tv_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup",
+      "NonSceneComponents" : [],
+      "ObjectId" : 205,
+      "Properties" : {
+        "ObjectName" : "CannedSoup",
+        "PendingActorLocation" : [6.518902, -18.117052, 2.750863],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 206,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [6.518902, -18.117052, 2.750863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_2",
+      "NonSceneComponents" : [],
+      "ObjectId" : 207,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_2",
+        "PendingActorLocation" : [18.140574, -35.229683, 2.850863],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 208,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [18.140574, -35.229683, 2.850863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_3",
+      "NonSceneComponents" : [],
+      "ObjectId" : 209,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_3",
+        "PendingActorLocation" : [21.678549, -35.129684, 2.950863],
+        "PendingActorRotation" : [-78.874512, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 210,
+        "Properties" : {
+          "CachedEditRotator" : [-78.874512, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [21.678549, -35.129684, 2.950863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_4",
+      "NonSceneComponents" : [],
+      "ObjectId" : 211,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_4",
+        "PendingActorLocation" : [-14.854490, -35.029686, 3.050863],
+        "PendingActorRotation" : [-78.874512, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 212,
+        "Properties" : {
+          "CachedEditRotator" : [-78.874512, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [-14.854490, -35.029686, 3.050863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_5",
+      "NonSceneComponents" : [],
+      "ObjectId" : 213,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_5",
+        "PendingActorLocation" : [75.666763, -38.910835, 3.150863],
+        "PendingActorRotation" : [-78.874512, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 214,
+        "Properties" : {
+          "CachedEditRotator" : [-78.874512, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [75.666763, -38.910835, 3.150863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_6",
+      "NonSceneComponents" : [],
+      "ObjectId" : 215,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_6",
+        "PendingActorLocation" : [122.974754, -57.885933, 3.250863],
+        "PendingActorRotation" : [-78.874512, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 216,
+        "Properties" : {
+          "CachedEditRotator" : [-78.874512, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [122.974754, -57.885933, 3.250863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_7",
+      "NonSceneComponents" : [],
+      "ObjectId" : 217,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_7",
+        "PendingActorLocation" : [123.074753, 3.168076, 3.350863],
+        "PendingActorRotation" : [-78.874512, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 218,
+        "Properties" : {
+          "CachedEditRotator" : [-78.874512, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [123.074753, 3.168076, 3.350863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "CannedSoup_8",
+      "NonSceneComponents" : [],
+      "ObjectId" : 219,
+      "Properties" : {
+        "ObjectName" : "CannedSoup_8",
+        "PendingActorLocation" : [130.537521, -7.820006, 3.450863],
+        "PendingActorRotation" : [-78.874512, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 220,
+        "Properties" : {
+          "CachedEditRotator" : [-78.874512, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Arcade/psx_canned_tomato_soup/material_0.mat"],
+          "ObjectName" : "UStaticMeshComponent_473",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [130.537521, -7.820006, 3.450863],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Arcade/psx_canned_tomato_soup_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "AStaticMeshActor_345",
+      "NonSceneComponents" : [],
+      "ObjectId" : 221,
+      "Properties" : {
+        "ObjectName" : "AStaticMeshActor_345",
+        "PendingActorLocation" : [88.890724, -59.673790, 2.500000],
+        "PendingActorRotation" : [-0.000000, -179.999985, 0.000000],
+        "PendingActorScale" : [3.000000, 3.000000, 2.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 222,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, -179.999985, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/YONA/arcade_cabinet/material.mat", "Content/Material/Auto/YONA/arcade_cabinet/Frame.mat", "Content/Material/Auto/YONA/arcade_cabinet/Screen.mat"],
+          "ObjectName" : "UStaticMeshComponent_494",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [88.890724, -59.673790, 2.500000],
+          "RelativeTransform.Scale" : [3.000000, 3.000000, 2.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/YONA/arcade_cabinet_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "AStaticMeshActor_346",
+      "NonSceneComponents" : [],
+      "ObjectId" : 223,
+      "Properties" : {
+        "ObjectName" : "AStaticMeshActor_346",
+        "PendingActorLocation" : [88.890999, -61.713528, 2.500000],
+        "PendingActorRotation" : [-0.000000, -179.999969, 0.000000],
+        "PendingActorScale" : [3.000000, 3.000000, 2.500000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 224,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, -179.999969, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/YONA/arcade_cabinet/material.mat", "Content/Material/Auto/YONA/arcade_cabinet/Frame.mat", "Content/Material/Auto/YONA/arcade_cabinet/Screen.mat"],
+          "ObjectName" : "UStaticMeshComponent_494",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [88.890999, -61.713528, 2.500000],
+          "RelativeTransform.Scale" : [3.000000, 3.000000, 2.500000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/YONA/arcade_cabinet_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "MedicalTank6",
+      "NonSceneComponents" : [],
+      "ObjectId" : 225,
+      "Properties" : {
+        "ObjectName" : "MedicalTank6",
+        "PendingActorLocation" : [29.264215, -80.277168, 2.486134],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [0.200000, 0.200000, 0.200000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 226,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Lab/sci-fi_medical_tank_with_frost/Final-Textures.mat"],
+          "ObjectName" : "UStaticMeshComponent_89",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [29.264215, -80.277168, 2.486134],
+          "RelativeTransform.Scale" : [0.200000, 0.200000, 0.200000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Lab/sci-fi_medical_tank_with_frost_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "AStaticMeshActor_349",
+      "NonSceneComponents" : [],
+      "ObjectId" : 227,
+      "Properties" : {
+        "ObjectName" : "AStaticMeshActor_349",
+        "PendingActorLocation" : [136.797501, -6.343896, 0.202893],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 228,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.cap.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.toprims.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.cap3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.toprim3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.cap2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel.toprim2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/barrel2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.capbase.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.mid.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.capbase2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.mid2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.capbase3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container.mid3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/container3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cylinder.base.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cylinder.dial.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cylinder.hose.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cylinder.tap.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cylinder.valve.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cylinder.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.base2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.tap2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.valve2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.base.3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.tap3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/small.cyl.valve3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/base.rim.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/cylinder.001.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/cylinder.rim.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/dial.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/hose.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/material.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/valve.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/backup.cyl.valve.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/backup.cyl.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/base3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/cylinder.rim3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/cylinder3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/dial3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/tap3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/valve3.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/base2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/cylinder.rim2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/cylinder2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/dial2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/tap2.mat", "Content/Material/Auto/Industry/low_poly_industrial_pack/valve2.mat"],
+          "ObjectName" : "UStaticMeshComponent_499",
+          "ObjectType" : [0, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [136.797501, -6.343896, 0.202893],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Map/JHCARD/Industry/low_poly_industrial_pack_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : false,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : true
+        }
+      }
+    }, {
+      "ClassName" : "AStaticMeshActor",
+      "Name" : "AStaticMeshActor_422",
+      "NonSceneComponents" : [],
+      "ObjectId" : 229,
+      "Properties" : {
+        "ObjectName" : "AStaticMeshActor_422",
+        "PendingActorLocation" : [80.065483, -22.384384, 1.426353],
+        "PendingActorRotation" : [-0.000000, 0.000000, 0.000000],
+        "PendingActorScale" : [1.000000, 1.000000, 1.000000],
+        "PendingActorVisible" : true,
+        "PendingTagsString" : "",
+        "bNeedsTick" : true
+      },
+      "RootComponent" : {
+        "Children" : [],
+        "ClassName" : "UStaticMeshComponent",
+        "ObjectId" : 230,
+        "Properties" : {
+          "CachedEditRotator" : [-0.000000, 0.000000, 0.000000],
+          "CenterOfMassOffset" : [0.000000, 0.000000, 0.000000],
+          "CollisionEnabled" : [3, 0, 0, 0, 0, 0, 0, 0],
+          "Mass" : 1.000000,
+          "MaterialSlots" : ["Content/Material/Auto/BasicShapeMaterial.mat"],
+          "ObjectName" : "UStaticMeshComponent_576",
+          "ObjectType" : [1, 0, 0, 0, 0, 0, 0, 0],
+          "RelativeTransform.Location" : [80.065483, -22.384384, 1.426353],
+          "RelativeTransform.Scale" : [1.000000, 1.000000, 1.000000],
+          "ResponseContainer" : {
+            "Responses[0]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[1]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[2]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[3]" : [2, 0, 0, 0, 0, 0, 0, 0],
+            "Responses[4]" : [2, 0, 0, 0, 0, 0, 0, 0]
+          },
+          "StaticMeshPath" : "Content/Data/BasicShape/Cube_StaticMesh.uasset",
+          "bAutoActivate" : true,
+          "bCastShadow" : true,
+          "bCastShadowAsTwoSided" : false,
+          "bEditorOnly" : false,
+          "bEnableGravity" : true,
+          "bGenerateOverlapEvents" : false,
+          "bHiddenInComponentTree" : false,
+          "bIsActive" : true,
+          "bIsVisible" : true,
+          "bKinematicPhysics" : false,
+          "bSimulatePhysics" : true,
+          "bTickEnable" : true,
+          "bUseMeshTriangleCollision" : false
+        }
+      }
     }],
   "ClassName" : "UWorld",
   "ContextHandle" : "NewScene",
@@ -2859,9 +6364,9 @@
   "PerspectiveCamera" : {
     "FOV" : 1.047198,
     "FarClip" : 1000.000000,
-    "Location" : [-2.995558, 12.758068, 4.150544],
+    "Location" : [68.325974, -47.774643, 8.711730],
     "NearClip" : 0.100000,
-    "Rotation" : [0.000000, 17.715677, 1355.983887]
+    "Rotation" : [0.000000, 38.715481, 1019.711060]
   },
   "Version" : 2,
   "WorldSettings" : {
