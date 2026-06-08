@@ -1,19 +1,19 @@
 local UI_DOCUMENT_PATH = "Content/UI/StartupLogo/startup_logo.rml"
 local STARTUP_LOGO_Z_ORDER = 250
-local REVEAL_IN_DURATION = 0.8
-local HOLD_DURATION = 0.25
-local REVEAL_OUT_DURATION = 0.8
-local LOGO_FULL_WIDTH = 720.0
-local STARTUP_TO_TITLE_FADE_OUT_DURATION = 0.5
+local LOGO_FADE_IN_DURATION = 0.30
+local LOGO_HOLD_DURATION = 0.45
+local LOGO_FADE_OUT_DURATION = 1.05
+local STARTUP_TO_TITLE_FADE_OUT_DURATION = 0.05
 local TITLE_FADE_IN_DURATION = 0.5
 
--- opacity로 로고 자체를 반투명하게 만들면 흰 배경과 섞이면서
--- 중간 프레임의 채도가 죽어 보인다. 그래서 로고 색은 항상 100%로 두고,
--- 흰 배경 위에서 슬롯의 폭만 열고 닫는 방식으로 등장/퇴장시킨다.
+-- 원하는 흐름:
+--   (로고가 조금 빠르게 등장 -> 서서히 사라지며 하얀 화면) * 로고 개수
+-- 배경은 항상 흰색이고, 로고는 opacity만 제어한다.
 local LOGO_IDS = {
     "logo_jungle",
     "logo_jungle_gametechlab",
     "logo_eng_ver2",
+    "logo_dev_concepters",
 }
 
 local widget = nil
@@ -56,16 +56,6 @@ local function set_fade_overlay_opacity(alpha)
     set_element_opacity("startup_fade_overlay", alpha)
 end
 
-local function set_logo_slot_width(element_id, width)
-    if widget == nil then
-        return
-    end
-
-    local clamped = math.max(0.0, math.min(LOGO_FULL_WIDTH, width or 0.0))
-    widget:SetProperty(element_id, "width", string.format("%.2fpx", clamped))
-    widget:SetProperty(element_id, "margin-left", string.format("%.2fpx", -clamped * 0.5))
-end
-
 local function ensure_widget()
     if UI == nil or UI.CreateWidget == nil then
         return nil
@@ -90,12 +80,10 @@ end
 local function reset_logo_slots()
     for _, element_id in ipairs(LOGO_IDS) do
         local slot_id = element_id .. "_slot"
-        set_display(slot_id, false)
-        set_logo_slot_width(slot_id, 0.0)
-        -- 로고 색상 보존용: 이미지 alpha는 건드리지 않는다.
-        if widget ~= nil then
-            widget:SetProperty(element_id, "opacity", "1")
-        end
+        -- 매 프레임 display none/block을 반복하면 일부 환경에서 텍스처가 다시 뜨며 깜박일 수 있다.
+        -- 슬롯은 항상 켜두고, 흰 배경 위에서 로고 opacity만 바꾼다.
+        set_display(slot_id, true)
+        set_element_opacity(element_id, 0.0)
     end
 end
 
@@ -107,10 +95,11 @@ local function begin_fade_out_to_title()
     fade_out_active = true
     fade_out_elapsed = 0.0
     set_fade_overlay_opacity(0.0)
+    reset_logo_slots()
 end
 
 local function update_logo_sequence(dt)
-    local logo_duration = REVEAL_IN_DURATION + HOLD_DURATION + REVEAL_OUT_DURATION
+    local logo_duration = LOGO_FADE_IN_DURATION + LOGO_HOLD_DURATION + LOGO_FADE_OUT_DURATION
     local total_duration = logo_duration * #LOGO_IDS
 
     sequence_elapsed = math.min(sequence_elapsed + (dt or 0.0), total_duration)
@@ -123,20 +112,18 @@ local function update_logo_sequence(dt)
 
     local logo_index = math.floor(sequence_elapsed / logo_duration) + 1
     local phase_elapsed = sequence_elapsed - ((logo_index - 1) * logo_duration)
-    local width_ratio = 0.0
+    local alpha = 0.0
 
-    if phase_elapsed < REVEAL_IN_DURATION then
-        width_ratio = smoothstep01(phase_elapsed / REVEAL_IN_DURATION)
-    elseif phase_elapsed < REVEAL_IN_DURATION + HOLD_DURATION then
-        width_ratio = 1.0
+    if phase_elapsed < LOGO_FADE_IN_DURATION then
+        alpha = smoothstep01(phase_elapsed / LOGO_FADE_IN_DURATION)
+    elseif phase_elapsed < LOGO_FADE_IN_DURATION + LOGO_HOLD_DURATION then
+        alpha = 1.0
     else
-        width_ratio = 1.0 - smoothstep01((phase_elapsed - REVEAL_IN_DURATION - HOLD_DURATION) / REVEAL_OUT_DURATION)
+        alpha = 1.0 - smoothstep01((phase_elapsed - LOGO_FADE_IN_DURATION - LOGO_HOLD_DURATION) / LOGO_FADE_OUT_DURATION)
     end
 
     local logo_id = LOGO_IDS[logo_index]
-    local slot_id = logo_id .. "_slot"
-    set_display(slot_id, true)
-    set_logo_slot_width(slot_id, LOGO_FULL_WIDTH * width_ratio)
+    set_element_opacity(logo_id, alpha)
 end
 
 function BeginPlay()

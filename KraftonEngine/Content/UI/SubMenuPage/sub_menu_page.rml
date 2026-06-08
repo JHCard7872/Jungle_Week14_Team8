@@ -48,18 +48,28 @@
 
             <!-- Controls (플레이 방법) -->
             <div id="page_body_controls" class="page_body_section">
-                <!-- 상단 탭 버튼 2개 -->
-                <button id="controls_tab_game" class="controls_tab">
-                    <img class="controls_tab_icon" src="../../Sprite/question_mark.png" />
-                    <div class="controls_tab_label">게임 진행</div>
-                </button>
-                <button id="controls_tab_input" class="controls_tab">
-                    <img class="controls_tab_icon" src="../../Sprite/input.png" />
-                    <div class="controls_tab_label">조작 방법</div>
-                </button>
+                <!-- 최초 선택 화면: Pause의 2버튼 UI를 좌/우 배치로 재사용 -->
+                <div id="controls_choice_buttons">
+                    <button id="controls_tab_game" class="controls_choice_button ui_horizontal_button">
+                        <img class="controls_choice_button_img controls_choice_btn_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="controls_choice_button_img controls_choice_btn_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="controls_choice_button_label ui_horizontal_button_text">게임 진행</div>
+                    </button>
+                    <button id="controls_tab_input" class="controls_choice_button ui_horizontal_button">
+                        <img class="controls_choice_button_img controls_choice_btn_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="controls_choice_button_img controls_choice_btn_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="controls_choice_button_label ui_horizontal_button_text">조작 방법</div>
+                    </button>
+                </div>
 
                 <!-- 게임 진행 탭 내용 -->
                 <div id="controls_body_game" class="controls_body">
+                    <img id="controls_image_process" class="controls_how_to_play" src="../../Sprite/how_to_play_process.png" />
+                    <button id="controls_close_button_game" class="controls_close_button ui_horizontal_button">
+                        <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="horiz_button_label ui_horizontal_button_text_large">닫기</div>
+                    </button>
                 </div>
 
                 <!-- 조작 방법 탭 내용 -->
@@ -74,6 +84,11 @@
                     <!-- how to play 이미지 -->
                     <img id="controls_image_km" class="controls_how_to_play" src="../../Sprite/how_to_play_keyboardmouse.png" />
                     <img id="controls_image_gp" class="controls_how_to_play" src="../../Sprite/how_to_play_gamepad.png" />
+                    <button id="controls_close_button_input" class="controls_close_button ui_horizontal_button">
+                        <img class="horiz_button_image horiz_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="horiz_button_image horiz_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div class="horiz_button_label ui_horizontal_button_text_large">닫기</div>
+                    </button>
                 </div>
             </div>
 
@@ -105,11 +120,14 @@
             <div id="page_body_credits" class="page_body_section simple_page_body">
                 <div class="simple_card credits_card">
                     <div id="credits_title" class="simple_card_title">Credits</div>
+                    <div id="credits_developers_team" class="simple_line">Developers Team</div>
+                    <img id="credits_developers_logo" src="../../Sprite/logo/dev_concepters.png" />
                     <img id="credits_id_card_1" class="credits_id_card" src="../../Sprite/id_card_jungle_김연하.png" />
                     <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_강건우.png" />
                     <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_박준혁.png" />
                     <img id="credits_id_card_4" class="credits_id_card" src="../../Sprite/id_card_jungle_오준혁.png" />
                     <div id="credits_special_thanks" class="simple_line">Special Thanks : Jungle GameTechlab 3기의 모두들 그리고 코치님들</div>
+                    <div id="credits_hint" class="simple_line">Hint: 플레이 중 반짝이는 무언가를 찾아보세요</div>
                 </div>
             </div>
         </div>

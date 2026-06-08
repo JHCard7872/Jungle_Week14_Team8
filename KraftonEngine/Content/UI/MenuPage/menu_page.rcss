@@ -30,30 +30,6 @@ body {
     z-index: 10;
 }
 
-/* 좌상단 제목: MainMenu와 같은 ui_title_label + Cafe24PROUP 타이틀 */
-#page_title_frame {
-    position: absolute;
-    left: 5%;
-    top: 4.6%;
-    z-index: 20;
-    pointer-events: none;
-}
-
-#page_title_label {
-    position: absolute;
-    left: 0px;
-    top: 74px;
-    pointer-events: none;
-}
-
-#page_title {
-    position: absolute;
-    left: 22px;
-    top: 0px;
-    width: 720px;
-    height: 104px;
-}
-
 /* 우측 상단 Back 버튼: "Back" 텍스트 + 화살표 아이콘, 텍스트는 흰색 */
 #page_back_button {
     position: absolute;

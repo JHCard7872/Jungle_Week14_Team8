@@ -51,25 +51,26 @@ body {
 #modal_content {
     position: absolute;
     left: 11%;
-    top: 26%;
+    top: 22%;
     width: 78%;
-    height: 52%;
+    height: 58%;
+    overflow: visible;
 }
 
 #modal_title {
     position: absolute;
     left: 0px;
-    top: 0px;
+    top: -22px;
     width: 100%;
-    height: 56px;
+    height: 64px;
 }
 
 #modal_message {
     position: absolute;
     left: 0px;
-    top: 62px;
+    top: 58px;
     width: 100%;
-    height: 84px;
+    height: 100px;
 }
 
 #modal_button_row {
@@ -77,17 +78,23 @@ body {
     left: 0px;
     top: 150px;
     width: 100%;
-    height: 88px;
+    height: 104px;
+    z-index: 50;
 }
 
 .modal_button {
+    display: block;
     position: absolute;
+    left: 0px;
     top: 0px;
+    width: 300px;
+    height: 104px;
     margin: 0px;
     padding: 0px;
-    border: 0px;
+    border-width: 0px;
     background-color: transparent;
     transform-origin: center center;
+    z-index: 60;
 }
 
 /* 기본: 이미지 버튼 2개 */
@@ -211,6 +218,18 @@ body {
 
 
 /* 입력형 공통 모달: 사원 이름 입력처럼 텍스트 입력 + 텍스트 버튼 1개가 필요한 경우 사용 */
+/*
+   기본 모달은 제목/본문/버튼만 있어서 content 영역을 작게 잡아도 되지만,
+   input 모달은 name_entry.rml 시절과 같은 세로 배치가 필요하다.
+   기존에는 #modal_content height: 52% 인 상태에서 button_row top: 224px 이라
+   버튼 행이 부모 영역 밖으로 나가 RmlUi에서 클리핑될 수 있었다.
+*/
+.modal_with_input #modal_content {
+    top: 10%;
+    height: 84%;
+    overflow: visible;
+}
+
 #modal_input_area {
     position: absolute;
     left: 0px;
@@ -225,12 +244,13 @@ body {
 }
 
 .modal_with_input #modal_message {
-    top: 58px;
-    height: 36px;
+    top: 54px;
+    height: 46px;
 }
 
 .modal_with_input #modal_button_row {
-    top: 224px;
+    top: 232px;
+    height: 104px;
 }
 
 #modal_input_rule {

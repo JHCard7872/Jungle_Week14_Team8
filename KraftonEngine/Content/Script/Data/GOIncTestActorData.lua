@@ -53,17 +53,20 @@ return {
     CAPSULE_SWEEP_MIN_MOVE = 0.0001,    -- 너무 작은 이동량은 sweep을 생략해 떨림을 줄인다
     GROUNDED_Z_VELOCITY_EPSILON = 0.05, -- Raycast가 없을 때 접지 판정에 쓰는 Z 속도 허용값
 
-    LOOK_SENSITIVITY = 0.12,  -- 마우스 이동량을 Yaw/Pitch 각도로 바꾸는 감도
-    MIN_PITCH = -30.0,        -- 1인칭 카메라가 위를 볼 수 있는 최소 Pitch. 이 엔진은 음수 Pitch가 위쪽
-    MAX_PITCH = 20.0,         -- 1인칭 카메라가 아래를 볼 수 있는 최대 Pitch
+    LOOK_SENSITIVITY = 0.2,  -- 마우스 이동량을 Yaw/Pitch 각도로 바꾸는 감도
+    MIN_PITCH = -75.0,        -- 1인칭 카메라가 위를 볼 수 있는 최소 Pitch. 이 엔진은 음수 Pitch가 위쪽
+    MAX_PITCH = 75.0,         -- 1인칭 카메라가 아래를 볼 수 있는 최대 Pitch
     CAMERA_HEIGHT = 1.2,      -- Root 기준 카메라 피벗 높이
     MAX_TRACE_DISTANCE = MAX_TRACE_DISTANCE,
     FRONT_HIT_DISTANCE_EPSILON = 0.05, -- Extra range so a physics hit on the same front surface still wins
     BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
     SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
     SLOT2_BEAM_HIT_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2는 hit/miss 모두 플래시처럼 짧게 표시
-    SLOT1_GATHER_FX_PATH = "Content/Particle/FX_GatherLoop.uasset", -- Weapon1 홀드 중 Beam Src에 붙여두는 모이는 원형 글로우
-    SLOT1_GATHER_FX_SOURCE_OFFSET = 0.0, -- Beam Src에서 Dst 방향으로 살짝 띄워 무기 끝에 딱 달라붙지 않게 한다
+    SLOT1_GATHER_FX_PATH = "Content/Particle/FX_MuzzleGlowSphereCyan.uasset", -- Weapon1 홀드 중 Beam Src/총구에 붙여두는 시안 메시 글로우
+    SLOT1_GATHER_FX_SOURCE_OFFSET = 0.00, -- Beam Src에서 Dst 방향으로 살짝 띄워 무기 끝에 딱 달라붙지 않게 한다
+    SLOT2_MUZZLE_FX_PATH = "Content/Particle/FX_MuzzleGlowSphere.uasset", -- Weapon2 발사 순간 총구에 한 번 터지는 빨간 메시 글로우
+    SLOT2_MUZZLE_FX_VISIBLE_TIME = 0.10, -- Weapon2 발사 글로우가 총구를 따라가는 시간. 기존 FX가 있으면 Reset하고 없으면 Weapon1처럼 생성한다
+    SLOT2_BEAM_MATERIAL_PATH = "Content/Material/Auto/BeamPink.mat", -- Weapon2 LMB 빔 색. SectionColor = 5, 0.1, 2.5 핑크 계열
     SLOT2_HIT_SPARK_FX_PATH = "Content/Particle/FX_SparkLoopRed.uasset", -- Slot2 빔이 실제 표면을 맞춘 위치에 터뜨리는 스파크
     SLOT2_HIT_SPARK_SURFACE_OFFSET = 0.0, -- 빔 Dst와 완전히 같은 위치에 생성한다. 경로 중간처럼 보이면 이 값을 0으로 유지한다
     SLOT2_KNOCKBACK_IMPULSE_PER_MASS = 4.00, -- Slot2 피격 순간에만 주는 넉백. 질량을 곱해 크기 차이와 무관하게 반응이 보이게 한다
@@ -131,11 +134,15 @@ return {
     WEAPON_RIGHT_OFFSET = 0.40,   -- 카메라 로컬 Right 기준 총 화면 위치
     WEAPON_UP_OFFSET = -0.20,     -- 카메라 로컬 Up 기준 총 화면 위치. 음수면 화면 아래
     WEAPON_PITCH_SCALE = 0.01,    -- 카메라 Pitch가 총 시각 PitchPivot에 전달되는 비율
-    WEAPON_MAX_VISUAL_PITCH = 1.0, -- 총 시각 PitchPivot이 추가로 회전할 수 있는 최대 각도
+    WEAPON_MAX_VISUAL_PITCH = 2.0, -- 총 시각 PitchPivot이 추가로 회전할 수 있는 최대 각도
     WEAPON_PITCH_NORMALIZE = 80.0, -- Pitch 보정 곡선을 만들 때 정규화 기준으로 쓰는 카메라 Pitch
+    WEAPON_PITCH_DRIVER_MIN = -35.0, -- 카메라 범위가 더 넓어져도 총 ViewModel은 이 Pitch까지만 따라간다
+    WEAPON_PITCH_DRIVER_MAX = 35.0, -- 아래 보기에서도 총 손잡이가 과하게 드러나지 않도록 총 보정 범위를 분리한다
     WEAPON_PITCH_PULLBACK = 0.05,  -- 극단 Pitch에서 총을 카메라 쪽으로 살짝 당기는 Forward 보정량
     WEAPON_PITCH_INWARD_OFFSET = 0.00, -- 극단 Pitch에서 총을 화면 안쪽으로 넣는 Right 보정량
     WEAPON_PITCH_UP_OFFSET = 0.04, -- 위/아래를 볼 때 총 화면 위치를 카메라 Up 방향으로 보정하는 양
+    WEAPON_EXTRA_LOOK_UP_Z_OFFSET = 0.08, -- 카메라가 총 회전 한계보다 더 위를 볼 때 총을 화면 위쪽으로 조금 더 보정한다
+    WEAPON_EXTRA_LOOK_DOWN_Z_OFFSET = -0.08, -- 카메라가 총 회전 한계보다 더 아래를 볼 때 총을 화면 아래쪽으로 더 강하게 보정한다
     WEAPON_WALK_BOB_MIN_SPEED = 0.2, -- 이 속도보다 느리면 걷기 무기 흔들림을 끈다
     WEAPON_WALK_BOB_BLEND_SPEED = 2.0, -- 걷기 시작/정지 시 무기 흔들림이 붙고 빠지는 속도
     WEAPON_WALK_BOB_FREQUENCY = 3.0, -- 걷기 무기 흔들림 위상 속도(rad/sec)

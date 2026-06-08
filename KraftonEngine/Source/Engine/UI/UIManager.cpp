@@ -355,10 +355,15 @@ namespace
 		};
 
 		static constexpr FExplicitFont ExplicitFonts[] = {
-			{"Galmuri/Galmuri11.ttf",       "Galmuri", Rml::Style::FontWeight::Normal, Rml::Style::FontStyle::Normal},
-			{"Galmuri/Galmuri11-Bold.ttf",  "Galmuri", Rml::Style::FontWeight::Bold,   Rml::Style::FontStyle::Normal},
-			{"rokaf/ROKAF Sans Medium.ttf", "rokaf",   Rml::Style::FontWeight::Normal, Rml::Style::FontStyle::Normal},
-			{"rokaf/ROKAF Sans Bold.ttf",   "rokaf",   Rml::Style::FontWeight::Bold,   Rml::Style::FontStyle::Normal},
+			{"Galmuri/Galmuri11.ttf",       "Galmuri",    Rml::Style::FontWeight::Normal,                      Rml::Style::FontStyle::Normal},
+			{"Galmuri/Galmuri11-Bold.ttf",  "Galmuri",    Rml::Style::FontWeight::Bold,                        Rml::Style::FontStyle::Normal},
+			{"rokaf/ROKAF Sans Medium.ttf", "rokaf",      Rml::Style::FontWeight::Normal,                      Rml::Style::FontStyle::Normal},
+			{"rokaf/ROKAF Sans Bold.ttf",   "rokaf",      Rml::Style::FontWeight::Bold,                        Rml::Style::FontStyle::Normal},
+			// yoon-gothic 파일명의 숫자(110/340)가 weight 접미사로 인식되지 않아 자동 추론이 실패함
+			{"yoon-gothic340.ttf",          "YoonGothic", Rml::Style::FontWeight::Normal,                      Rml::Style::FontStyle::Normal},
+			{"yoon-gothic110.ttf",          "YoonGothic", static_cast<Rml::Style::FontWeight>(300),            Rml::Style::FontStyle::Normal},
+			// "Arial Black.ttf"는 "black" 접미사 제거 후 family가 "Arial"로 추론됨
+			{"Arial Black.ttf",             "Arial Black", static_cast<Rml::Style::FontWeight>(900),           Rml::Style::FontStyle::Normal},
 		};
 
 		for (const FExplicitFont& Mapping : ExplicitFonts)
