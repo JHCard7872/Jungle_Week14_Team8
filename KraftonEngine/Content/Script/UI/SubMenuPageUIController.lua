@@ -143,7 +143,7 @@ local function apply_scoreboard_to_view()
 
         if entry ~= nil then
             set_text("score_rank_" .. tostring(i), tostring(i))
-            set_text("score_name_" .. tostring(i), tostring(entry.nickname or "김사원"))
+            set_text("score_name_" .. tostring(i), tostring(entry.nickname or "김정글"))
             set_text("score_count_" .. tostring(i), tostring(entry.collectedCount or 0))
             set_text("score_value_" .. tostring(i), tostring(entry.totalScore or 0))
             set_text("score_date_" .. tostring(i), tostring(entry.savedDateText or entry.savedDate or "-"))

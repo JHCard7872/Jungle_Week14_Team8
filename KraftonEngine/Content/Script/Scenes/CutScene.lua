@@ -13,7 +13,7 @@ local BG_Z_ORDER = 10
 local MODAL_Z_ORDER = 180
 local UI_CLICK_KEY = "sfx_ui_click"
 local KEY_ENTER = 0x0D
-local DEFAULT_EMPLOYEE_NAME = "김사원"
+local DEFAULT_EMPLOYEE_NAME = "김정글"
 local INVALID_NAME_MESSAGE = "잘못된 형식의 이름입니다. 다시 입력해주세요"
 
 local background_widget = nil
