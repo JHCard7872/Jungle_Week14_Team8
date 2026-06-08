@@ -23,13 +23,22 @@ local BEAM_SHOCK_INTERVAL = 0.05
 local BEAM_SHOCK_IMPULSE_STRENGTH = 0.00
 local RED_BEAM_SHOCK_DURATION = 1.0
 local RED_BEAM_SHOCK_INTERVAL = 0.05
-local RED_BEAM_SHOCK_IMPULSE_STRENGTH = 0.08
-local RED_BEAM_JITTER_LINEAR_STRENGTH = 0.015
-local RED_BEAM_JITTER_TORQUE_STRENGTH = 0.55
-local RED_BEAM_JITTER_ROOT_SCALE = 0.08
-local RED_BEAM_JITTER_MAX_LINEAR_SPEED = 0.30
-local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS = 18.00
-local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE = 1.60
+local RED_BEAM_SHOCK_IMPULSE_STRENGTH = 1.40
+local RED_BEAM_JITTER_LINEAR_STRENGTH = 0.40
+local RED_BEAM_JITTER_TORQUE_STRENGTH = 13.00
+local RED_BEAM_JITTER_ROOT_SCALE = 0.75
+local RED_BEAM_JITTER_MAX_LINEAR_SPEED = 7.00
+local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_IMPULSE_PER_MASS = 14.00
+local RED_BEAM_RAGDOLL_KNOCKBACK_FALLBACK_CENTER_BODY_SCALE = 1.20
+local RAGDOLL_THUD_SOUND_KEY = "sfx_stamp_impact"
+local RAGDOLL_THUD_MIN_IMPULSE = 30.0
+local RAGDOLL_THUD_MAX_IMPULSE = 100.0
+local RAGDOLL_THUD_MIN_VOLUME = 0.0
+local RAGDOLL_THUD_MAX_VOLUME = 0.12
+local RAGDOLL_THUD_COOLDOWN = 0.6
+local RAGDOLL_THUD_MIN_DEAD_TIME = 0.1
+local RAGDOLL_THUD_MIN_DISTANCE = 30.0
+local RAGDOLL_THUD_MAX_DISTANCE = 2500.0
 
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
@@ -80,6 +89,8 @@ local bWarnedMissingBeamShockImpulse = false
 local beamShockElapsed = BEAM_SHOCK_INTERVAL
 local redBeamShockRemaining = 0.0
 local redBeamShockElapsed = RED_BEAM_SHOCK_INTERVAL
+local ragdollThudCooldownRemaining = 0.0
+local deadElapsedForThud = 0.0
 local bKilledByRedBeam = false
 local pendingRedBeamKnockbackDirection = nil
 local pendingRedBeamKnockbackImpulsePerMass = 0.0
@@ -208,6 +219,65 @@ local function play_revive_sfx()
 
     AudioManager.Play("sfx_revive", volume)
     HUD.QueuePopup("REVIVED")
+end
+
+local function thud_clamp01(value)
+    if value < 0.0 then
+        return 0.0
+    end
+
+    if value > 1.0 then
+        return 1.0
+    end
+
+    return value
+end
+
+local function thud_smoothstep(alpha)
+    alpha = thud_clamp01(alpha)
+    return alpha * alpha * (3.0 - 2.0 * alpha)
+end
+
+local function get_ragdoll_thud_impact_volume(impulseSize)
+    if impulseSize < RAGDOLL_THUD_MIN_IMPULSE then
+        return 0.0
+    end
+
+    local impulseRange = RAGDOLL_THUD_MAX_IMPULSE - RAGDOLL_THUD_MIN_IMPULSE
+    if impulseRange <= 0.0001 then
+        return RAGDOLL_THUD_MAX_VOLUME
+    end
+
+    local alpha = (impulseSize - RAGDOLL_THUD_MIN_IMPULSE) / impulseRange
+    alpha = thud_clamp01(alpha)
+    alpha = thud_smoothstep(alpha)
+
+    return RAGDOLL_THUD_MIN_VOLUME +
+        (RAGDOLL_THUD_MAX_VOLUME - RAGDOLL_THUD_MIN_VOLUME) * alpha
+end
+
+local function play_ragdoll_thud_sfx(hitPos, impactVolume)
+    if hitPos == nil or AudioManager == nil or AudioManager.PlayAt == nil then
+        return false
+    end
+
+    if impactVolume == nil or impactVolume <= 0.0 then
+        return false
+    end
+
+    local volume = 1.0
+    if UserSettings ~= nil and UserSettings.GetSfxVolumeScalar ~= nil then
+        volume = UserSettings.GetSfxVolumeScalar()
+    end
+
+    AudioManager.PlayAt(
+        RAGDOLL_THUD_SOUND_KEY,
+        hitPos,
+        volume * impactVolume,
+        RAGDOLL_THUD_MIN_DISTANCE,
+        RAGDOLL_THUD_MAX_DISTANCE
+    )
+    return true
 end
 
 local function apply_beam_shock_impulse()
@@ -373,6 +443,7 @@ local function tick_red_beam_shock(dt)
     end
 
     redBeamShockElapsed = 0.0
+    apply_red_beam_shock_impulse()
     apply_red_beam_jitter_impulse()
 
     if redBeamShockRemaining <= 0.0 then
@@ -1002,6 +1073,8 @@ function EnterDeadRagdoll()
     reviveElapsed = 0.0
     reviveStartYaw = obj.Rotation.Z
     reviveTargetYaw = obj.Rotation.Z
+    ragdollThudCooldownRemaining = 0.0
+    deadElapsedForThud = 0.0
     cancel_revive_mesh_relative_location_blend()
 
     if pawn ~= nil and pawn.EnterDeadRagdollState ~= nil then
@@ -1087,6 +1160,7 @@ function OnRedBeamHit(reason)
     set_revive_trigger_enabled(false)
 
     start_red_beam_shock()
+    apply_red_beam_shock_impulse()
     apply_red_beam_jitter_impulse()
     return true
 end
@@ -1229,6 +1303,11 @@ function EnterAliveFlee()
     finish_revive_mesh_relative_location_blend()
     set_flee_animation_play_rate(1.0)
 
+    -- 부활 완료(AliveFlee 진입) 순간 머리 위 ! 빌보드를 띄운다. main쪽 6a5b7ce5가 지웠던 호출 복원.
+    if pawn ~= nil and pawn.ShowAliveExclamation ~= nil then
+        pawn:ShowAliveExclamation(1.5)
+    end
+
     -- Reviving yaw blend의 마지막 값을 확정해 첫 AliveFlee Tick에서 회전이 튀지 않게 한다.
     obj.Rotation = Vector.new(0.0, 0.0, reviveTargetYaw)
 
@@ -1358,6 +1437,19 @@ function Tick(dt)
         capture_initial_mesh_offsets()
     end
 
+    local deltaTime = dt or 0.0
+    if type(deltaTime) ~= "number" then
+        deltaTime = 0.0
+    end
+
+    if ragdollThudCooldownRemaining > 0.0 then
+        ragdollThudCooldownRemaining = math.max(0.0, ragdollThudCooldownRemaining - deltaTime)
+    end
+
+    if state == STATE_DEAD then
+        deadElapsedForThud = deadElapsedForThud + deltaTime
+    end
+
     if Input.GetKeyDown(Key.R) then
         if state == STATE_DEAD then
             EnterReviving()
@@ -1402,6 +1494,57 @@ function Tick(dt)
     if state == STATE_FLEE_STOPPING and movement ~= nil then
         TickFleeStopping(dt)
         return
+    end
+end
+
+function OnHit(other_actor, hit_component, other_comp, normal_impulse, hit_result)
+    if state ~= STATE_DEAD then
+        return
+    end
+
+    if deadElapsedForThud < RAGDOLL_THUD_MIN_DEAD_TIME then
+        return
+    end
+
+    if ragdollThudCooldownRemaining > 0.0 then
+        return
+    end
+
+    local impulseSize = 0.0
+    if normal_impulse ~= nil and normal_impulse.Length ~= nil then
+        local ok, value = pcall(function()
+            return normal_impulse:Length()
+        end)
+
+        if ok and type(value) == "number" then
+            impulseSize = value
+        end
+    end
+
+    local impactVolume = get_ragdoll_thud_impact_volume(impulseSize)
+    if impactVolume <= 0.0 then
+        return
+    end
+
+    local hitPos = nil
+    if hit_result ~= nil then
+        if hit_result.WorldHitLocation ~= nil then
+            hitPos = hit_result.WorldHitLocation
+        elseif hit_result.Location ~= nil then
+            hitPos = hit_result.Location
+        end
+    end
+
+    if hitPos == nil and obj ~= nil then
+        hitPos = obj.Location
+    end
+
+    if hitPos == nil then
+        return
+    end
+
+    if play_ragdoll_thud_sfx(hitPos, impactVolume) then
+        ragdollThudCooldownRemaining = RAGDOLL_THUD_COOLDOWN
     end
 end
 

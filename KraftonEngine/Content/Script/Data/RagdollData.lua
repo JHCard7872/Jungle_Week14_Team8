@@ -52,23 +52,6 @@ return {
         uiOrder        = 20,
     },
 
-    ["brown-gorilla"] = {
-        id             = "brown-gorilla",
-        displayName    = "갈색 고릴라",
-        referenceImage = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
-
-        mass           = 160.0,   -- 실제 ragdoll 전체 질량 / UI 표시용 무게
-        baseScore      = 100,    -- 수거당 100점 통일 (임시 밸런스)
-        canRevive      = true,
-        reviveSpeed    = 2.0,
-        attackPower    = 25,     -- placeholder
-
-        pawnClass      = "AGOIncDonkeyKongRagdollPawn",
-        canSpawn       = true,
-        spawnWeight    = 1,
-        uiOrder        = 30,
-    },
-
     ["yellow-mouse"] = {
         id             = "yellow-mouse",
         displayName    = "노란 전기쥐",

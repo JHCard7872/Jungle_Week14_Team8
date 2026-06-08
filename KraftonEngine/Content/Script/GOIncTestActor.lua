@@ -49,7 +49,26 @@ local weapon_swap_state = {
     start_angle = 0.0,
     target_angle = 0.0,
     current_angle = 0.0,
-    is_active = false
+    is_active = false,
+    walk_phase = 0.0,
+    walk_weight = 0.0,
+    sprint_weight = 0.0,
+    is_sprinting = false
+}
+local slot2_fire_feedback = {
+    recoil_elapsed = 0.0,
+    recoil_duration = 0.0,
+    recoil_pitch_start = 0.0,
+    recoil_yaw_start = 0.0,
+    recoil_pitch = 0.0,
+    recoil_yaw = 0.0,
+    shake_elapsed = 0.0,
+    shake_duration = 0.0,
+    shake_offset = Vector.Zero(),
+    shake_rotation = Vector.Zero(),
+    fov_elapsed = 0.0,
+    fov_duration = 0.0,
+    base_fov = nil
 }
 
 local base_view_weapon_root_rotation = nil -- 씬에서 읽은 ViewWeaponRoot 기본 회전
@@ -72,7 +91,7 @@ local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
 local beamed_ragdoll_actor = nil
-local grab_fixed_ray = { start = nil, direction = nil }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
+local grab_fixed_ray = { start = nil, direction = nil, catalog_mass = nil }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
 
 local RAGDOLL_TAG = "Ragdoll"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
@@ -165,6 +184,79 @@ end
 local function ease_in_out(t)
     local clamped = clamp(t, 0.0, 1.0)
     return clamped * clamped * (3.0 - 2.0 * clamped)
+end
+
+slot2_fire_feedback.random_signed = function()
+    return math.random() * 2.0 - 1.0
+end
+
+slot2_fire_feedback.Refresh = function(delta_time)
+    local dt = math.max(delta_time or 0.0, 0.0)
+
+    if slot2_fire_feedback.recoil_duration > 0.0
+        and slot2_fire_feedback.recoil_elapsed < slot2_fire_feedback.recoil_duration then
+        slot2_fire_feedback.recoil_elapsed = slot2_fire_feedback.recoil_elapsed + dt
+        local alpha = ease_in_out(slot2_fire_feedback.recoil_elapsed / slot2_fire_feedback.recoil_duration)
+        local remain = 1.0 - alpha
+        slot2_fire_feedback.recoil_pitch = slot2_fire_feedback.recoil_pitch_start * remain
+        slot2_fire_feedback.recoil_yaw = slot2_fire_feedback.recoil_yaw_start * remain
+    else
+        slot2_fire_feedback.recoil_pitch = 0.0
+        slot2_fire_feedback.recoil_yaw = 0.0
+    end
+
+    if slot2_fire_feedback.shake_duration > 0.0
+        and slot2_fire_feedback.shake_elapsed < slot2_fire_feedback.shake_duration then
+        slot2_fire_feedback.shake_elapsed = slot2_fire_feedback.shake_elapsed + dt
+        local alpha = ease_in_out(slot2_fire_feedback.shake_elapsed / slot2_fire_feedback.shake_duration)
+        local intensity = (C.SLOT2_CAMERA_SHAKE_INTENSITY or 0.04) * (1.0 - alpha)
+        local rotation_intensity = (C.SLOT2_CAMERA_SHAKE_ROTATION_DEGREES or 0.0) * (1.0 - alpha)
+        slot2_fire_feedback.shake_offset = vec(
+            slot2_fire_feedback.random_signed() * (C.SLOT2_CAMERA_SHAKE_FORWARD_SCALE or 0.5) * intensity,
+            slot2_fire_feedback.random_signed() * (C.SLOT2_CAMERA_SHAKE_RIGHT_SCALE or 0.5) * intensity,
+            slot2_fire_feedback.random_signed() * (C.SLOT2_CAMERA_SHAKE_UP_SCALE or 0.2) * intensity)
+        slot2_fire_feedback.shake_rotation = vec(
+            slot2_fire_feedback.random_signed() * rotation_intensity * 0.35,
+            slot2_fire_feedback.random_signed() * rotation_intensity * 0.55,
+            slot2_fire_feedback.random_signed() * rotation_intensity)
+    else
+        slot2_fire_feedback.shake_offset = Vector.Zero()
+        slot2_fire_feedback.shake_rotation = Vector.Zero()
+    end
+
+    if camera ~= nil and camera.SetFOV ~= nil then
+        if slot2_fire_feedback.base_fov == nil and camera.GetFOV ~= nil then
+            slot2_fire_feedback.base_fov = camera:GetFOV()
+        end
+
+        if slot2_fire_feedback.base_fov ~= nil
+            and slot2_fire_feedback.fov_duration > 0.0
+            and slot2_fire_feedback.fov_elapsed < slot2_fire_feedback.fov_duration then
+            slot2_fire_feedback.fov_elapsed = slot2_fire_feedback.fov_elapsed + dt
+            local alpha = clamp(slot2_fire_feedback.fov_elapsed / slot2_fire_feedback.fov_duration, 0.0, 1.0)
+            local punch = math.sin(alpha * math.pi) * ((C.SLOT2_FOV_PUNCH_DEGREES or 1.5) * 0.0174532925199433)
+            camera:SetFOV(slot2_fire_feedback.base_fov + punch)
+        elseif slot2_fire_feedback.base_fov ~= nil then
+            camera:SetFOV(slot2_fire_feedback.base_fov)
+        end
+    end
+end
+
+slot2_fire_feedback.Trigger = function()
+    slot2_fire_feedback.recoil_elapsed = 0.0
+    slot2_fire_feedback.recoil_duration = C.SLOT2_RECOIL_RECOVER_TIME or 0.05
+    slot2_fire_feedback.recoil_pitch_start = C.SLOT2_RECOIL_PITCH_DEGREES or -0.4
+    slot2_fire_feedback.recoil_yaw_start = slot2_fire_feedback.random_signed() * (C.SLOT2_RECOIL_YAW_RANDOM_DEGREES or 0.15)
+    slot2_fire_feedback.recoil_pitch = slot2_fire_feedback.recoil_pitch_start
+    slot2_fire_feedback.recoil_yaw = slot2_fire_feedback.recoil_yaw_start
+    slot2_fire_feedback.shake_elapsed = 0.0
+    slot2_fire_feedback.shake_duration = C.SLOT2_CAMERA_SHAKE_DURATION or 0.045
+    slot2_fire_feedback.fov_elapsed = 0.0
+    slot2_fire_feedback.fov_duration = C.SLOT2_FOV_PUNCH_DURATION or 0.08
+
+    if slot2_fire_feedback.base_fov == nil and camera ~= nil and camera.GetFOV ~= nil then
+        slot2_fire_feedback.base_fov = camera:GetFOV()
+    end
 end
 
 local function get_next_weapon_swap_angle()
@@ -471,8 +563,13 @@ local function update_camera_view()
     obj.Rotation = vec(0.0, 0.0, yaw)
 
     if camera_pivot ~= nil then
-        camera_pivot.RelativeLocation = vec(0.0, 0.0, C.CAMERA_HEIGHT)
-        camera_pivot.Rotation = vec(0.0, pitch, 0.0)
+        local shake_offset = slot2_fire_feedback.shake_offset or Vector.Zero()
+        local shake_rotation = slot2_fire_feedback.shake_rotation or Vector.Zero()
+        camera_pivot.RelativeLocation = vec(shake_offset.X, shake_offset.Y, C.CAMERA_HEIGHT + shake_offset.Z)
+        camera_pivot.Rotation = vec(
+            shake_rotation.X,
+            pitch + slot2_fire_feedback.recoil_pitch + shake_rotation.Y,
+            slot2_fire_feedback.recoil_yaw + shake_rotation.Z)
     end
 
     if camera ~= nil then
@@ -653,8 +750,10 @@ local function update_weapon_slot_transform(pitch_pivot_component, base_pitch_lo
     end
 end
 
-local function update_view_weapon()
+local function update_view_weapon(delta_time)
     local weapon_offset, visual_pitch = get_weapon_offset_for_pitch()
+    local walk_offset, walk_rotation = C:UpdateWeaponWalkBob(
+        delta_time, player_velocity, weapon_swap_state, vec, clamp, weapon_swap_state.is_sprinting)
 
     if view_weapon_root ~= nil then
         if camera ~= nil then
@@ -664,14 +763,18 @@ local function update_view_weapon()
         end
         view_weapon_root.Rotation = vec(
             base_view_weapon_root_rotation.X,
-            base_view_weapon_root_rotation.Y + pitch,
-            base_view_weapon_root_rotation.Z
+            base_view_weapon_root_rotation.Y + pitch + slot2_fire_feedback.recoil_pitch,
+            base_view_weapon_root_rotation.Z + slot2_fire_feedback.recoil_yaw
         )
     end
 
     if weapon_visual_pivot ~= nil then
-        weapon_visual_pivot.RelativeLocation = weapon_offset
-        weapon_visual_pivot.Rotation = copy_vec(base_weapon_visual_rotation)
+        weapon_visual_pivot.RelativeLocation = weapon_offset + walk_offset
+        weapon_visual_pivot.Rotation = vec(
+            base_weapon_visual_rotation.X + walk_rotation.X,
+            base_weapon_visual_rotation.Y + walk_rotation.Y,
+            base_weapon_visual_rotation.Z + walk_rotation.Z
+        )
     end
 
     if weapon_components.swap_pivot ~= nil then
@@ -762,6 +865,8 @@ local function center_physics_raycast(max_distance)
     local primitive_distance = nil
     local physics_distance = distance
     local front_hit_epsilon = C.FRONT_HIT_DISTANCE_EPSILON or 0.05
+    local b_use_grab_raycast = World ~= nil
+        and (World.PhysicsGrabRaycast ~= nil or World.GrabRaycast ~= nil)
     local hit = nil
 
     if World ~= nil and World.PrimitiveRaycast ~= nil then
@@ -771,19 +876,28 @@ local function center_physics_raycast(max_distance)
             if primitive_distance == nil and primitive_hit.Hit ~= nil then
                 primitive_distance = primitive_hit.Hit.Distance
             end
-            if primitive_distance ~= nil and primitive_distance > 0.0 then
+            -- Grab raycasts have their own body filter and must be able to pass
+            -- through a same-actor capsule/front primitive to reach the ragdoll body.
+            if not b_use_grab_raycast and primitive_distance ~= nil and primitive_distance > 0.0 then
                 physics_distance = math.min(distance, primitive_distance + front_hit_epsilon)
             end
         end
     end
 
-    if World ~= nil and World.PhysicsRaycast ~= nil then
-        hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+    if World ~= nil then
+        if World.PhysicsGrabRaycast ~= nil then
+            hit = World.PhysicsGrabRaycast(start, direction, physics_distance, obj)
+        elseif World.GrabRaycast ~= nil then
+            hit = World.GrabRaycast(start, direction, physics_distance, obj)
+        elseif World.PhysicsRaycast ~= nil then
+            hit = World.PhysicsRaycast(start, direction, physics_distance, obj)
+        end
     end
 
     if primitive_hit ~= nil and primitive_hit.bHit then
         local physics_hit_distance = nil
         local physics_hit_actor = nil
+        local physics_hit_body = nil
         if hit ~= nil and hit.bHit then
             physics_hit_distance = hit.Distance
             if physics_hit_distance == nil and hit.Hit ~= nil then
@@ -792,6 +906,10 @@ local function center_physics_raycast(max_distance)
             physics_hit_actor = hit.HitActor
             if physics_hit_actor == nil and hit.Hit ~= nil then
                 physics_hit_actor = hit.Hit.HitActor
+            end
+            physics_hit_body = hit.PhysicsBody
+            if physics_hit_body == nil and hit.Hit ~= nil then
+                physics_hit_body = hit.Hit.PhysicsBody
             end
         end
 
@@ -805,8 +923,9 @@ local function center_physics_raycast(max_distance)
             and primitive_distance ~= nil
             and (physics_hit_distance <= primitive_distance
                 or (b_same_front_actor and physics_hit_distance <= primitive_distance + front_hit_epsilon))
+        local b_same_actor_grab_body = b_same_front_actor and physics_hit_body ~= nil
 
-        if hit == nil or not hit.bHit or not b_physics_hit_is_front then
+        if hit == nil or not hit.bHit or (not b_physics_hit_is_front and not b_same_actor_grab_body) then
             hit = primitive_hit
         end
     end
@@ -1006,6 +1125,7 @@ local function clear_grab_state()
     -- 레이 캐시도 반드시 비운다 — 안 비우면 다음 grab의 첫 물리 스텝이 이전 조준으로 당긴다
     grab_fixed_ray.start = nil
     grab_fixed_ray.direction = nil
+    grab_fixed_ray.catalog_mass = nil
 end
 
 local function compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
@@ -1364,6 +1484,18 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
         return false
     end
 
+    local catalog_mass = nil
+    if owner.AsGOIncRagdollPawn ~= nil then
+        local ragdoll_pawn = owner:AsGOIncRagdollPawn()
+        if ragdoll_pawn ~= nil and ragdoll_pawn.GetRagdollId ~= nil then
+            local ragdoll_id = ragdoll_pawn:GetRagdollId()
+            local catalog_entry = type(ragdoll_id) == "string" and RagdollData[ragdoll_id] or nil
+            if catalog_entry ~= nil and type(catalog_entry.mass) == "number" then
+                catalog_mass = catalog_entry.mass
+            end
+        end
+    end
+
     local grab_point = get_hit_point_or_end(hit, fallback_end)
     local grab_distance = compute_grab_aim_distance(start, direction, grab_point, hit, fallback_end)
     local target_point, resolved_grab_distance = compute_grab_target(start, direction, grab_distance)
@@ -1382,6 +1514,7 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
     grabbed_target_velocity = Vector.Zero()
     grab_fixed_ray.start = copy_vec(start)
     grab_fixed_ray.direction = copy_vec(direction)
+    grab_fixed_ray.catalog_mass = catalog_mass
     set_beamed_ragdoll_actor(owner)
 
     body:WakeUp()
@@ -1457,34 +1590,52 @@ local function apply_grab_force(delta_time, start, direction)
         end
     end
 
-    -- 질량 보정 제거: AddForce는 PhysX에서 F = m*a로 처리되므로,
-    -- 여기서 force에 mass를 다시 곱하면 RagdollMassScale 차이가 상쇄된다.
-    -- 따라서 같은 빔 힘을 넣고, 무거운 body는 자연스럽게 덜 가속되게 둔다.
-    local force = error * C.GRAB_SPRING_ACCELERATION
+    local body_mass = 1.0
+    if grabbed_body.GetMass ~= nil then
+        body_mass = math.max(grabbed_body:GetMass(), 0.001)
+    end
+    local mass_grip_scale = C:ComputeGrabMassGripScale(body_mass, grab_fixed_ray.catalog_mass)
+
+    -- 먼저 목표 가속도를 만들고, 마지막에 body_mass를 곱해 AddForce의 F/m 효과를 보정한다.
+    -- mass_grip_scale은 catalog mass가 큰 랙돌일수록 낮아져 "들리긴 하지만 둔한" 느낌을 만든다.
+    local desired_acceleration = error * C.GRAB_SPRING_ACCELERATION
         - linear_velocity * C.GRAB_DAMPING_ACCELERATION
 
     if min_distance_penetration > 0.0 and actor_outward_direction ~= nil then
-        local guard_force = actor_outward_direction * (
+        local guard_strength = (
             min_distance_penetration * C.GRAB_MIN_DISTANCE_GUARD_ACCELERATION
             + blocked_inward_speed * C.GRAB_MIN_DISTANCE_GUARD_DAMPING
         )
-        force = force + guard_force
+        local guard_max = C.GRAB_MIN_DISTANCE_GUARD_MAX_ACCELERATION or 0.0
+        if guard_max > 0.0 then
+            guard_strength = clamp(guard_strength, 0.0, guard_max)
+        else
+            guard_strength = math.max(guard_strength, 0.0)
+        end
+        desired_acceleration = desired_acceleration + actor_outward_direction * guard_strength
     end
 
     if actor_distance ~= nil and actor_outward_direction ~= nil and actor_distance <= min_actor_distance then
-        local inward_force = force:Dot(actor_outward_direction)
-        if inward_force < 0.0 then
-            force = force - actor_outward_direction * inward_force
+        local inward_acceleration = desired_acceleration:Dot(actor_outward_direction)
+        if inward_acceleration < 0.0 then
+            desired_acceleration = desired_acceleration - actor_outward_direction * inward_acceleration
         end
     end
 
-    force = clamp_vector_length(force, C.GRAB_MAX_ACCELERATION)
+    desired_acceleration = clamp_vector_length(desired_acceleration, C.GRAB_MAX_ACCELERATION)
+    local force = desired_acceleration * (body_mass * mass_grip_scale)
     grabbed_body:AddForce(force)
 
     local grab_offset = current_grab_world - current_body_center
     if grab_offset:Length() > 1.0 then
-        local torque = grab_offset:Cross(force) * C.GRAB_TORQUE_SCALE
-            - grabbed_body:GetAngularVelocity() * C.GRAB_ANGULAR_DAMPING
+        local angular_velocity = grabbed_body:GetAngularVelocity()
+        if angular_velocity == nil then
+            angular_velocity = Vector.Zero()
+        end
+        local torque = (
+            grab_offset:Cross(desired_acceleration) * C.GRAB_TORQUE_SCALE
+            - angular_velocity * C.GRAB_ANGULAR_DAMPING
+        ) * (body_mass * mass_grip_scale)
         torque = clamp_vector_length(torque, C.GRAB_MAX_TORQUE)
         grabbed_body:AddTorque(torque)
     end
@@ -1562,6 +1713,16 @@ local function update_active_grab(delta_time)
     grab_fixed_ray.direction = copy_vec(direction)
     update_grab_visuals()
     return true
+end
+
+local function try_begin_beam_grab_while_held(hit, start, direction, fallback_end)
+    if grabbed_body ~= nil or not fire_held() then
+        return false
+    end
+
+    -- Keep the held beam hot: if a pickable body enters the beam after the
+    -- initial press frame, grab it without requiring the player to click again.
+    return begin_beam_grab(hit, start, direction, fallback_end)
 end
 
 local function update_beam_fade(delta_time)
@@ -1717,6 +1878,7 @@ local function apply_slot2_fire(delta_time)
     end
 
     play_one_shot_sfx("sfx_gun_attack_shoot")
+    slot2_fire_feedback.Trigger()
 
     local hit, fallback_end, _, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, true)
@@ -2170,9 +2332,16 @@ local function apply_kinematic_movement(delta_time)
 
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
+    weapon_swap_state.is_sprinting = Input.GetKey(C.KEY_SHIFT) and move_dir:Length() > 0.0001
 
     if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized() * C.MOVE_SPEED
+        -- remote 스프린트(SHIFT) 배수를 기본으로, L3(왼쪽 스틱 클릭) 대쉬 배수도 함께 반영한다.
+        -- 둘 다 눌린 경우는 더 큰 배수만 적용해 과하게 곱해지지 않게 한다.
+        local speed_multiplier = weapon_swap_state.is_sprinting and C.SPRINT_SPEED_MULTIPLIER or 1.0
+        if Input.GetKey(C.PAD_KEY_L3) then
+            speed_multiplier = math.max(speed_multiplier, C.DASH_SPEED_MULTIPLIER)
+        end
+        horizontal_velocity = move_dir:Normalized() * (C.MOVE_SPEED * speed_multiplier)
     end
 
     velocity.X = horizontal_velocity.X
@@ -2266,7 +2435,7 @@ local function apply_fire(delta_time)
     local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
     set_beamed_ragdoll_actor(get_hit_actor(hit))
-    if is_fire_pressed and begin_beam_grab(hit, start, direction, fallback_end) then
+    if try_begin_beam_grab_while_held(hit, start, direction, fallback_end) then
         return
     end
 
@@ -2290,6 +2459,9 @@ function BeginPlay()
 
     bind_components()
     cache_view_weapon_base_transforms()
+    if camera ~= nil and camera.GetFOV ~= nil then
+        slot2_fire_feedback.base_fov = camera:GetFOV()
+    end
     player_velocity = Vector.Zero()
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
@@ -2307,7 +2479,7 @@ function BeginPlay()
     end
 
     update_camera_view()
-    update_view_weapon()
+    update_view_weapon(0.0)
     set_beam_visible(false)
 
     if camera ~= nil then
@@ -2323,6 +2495,9 @@ function BeginPlay()
 end
 
 function EndPlay()
+    if camera ~= nil and camera.SetFOV ~= nil and slot2_fire_feedback.base_fov ~= nil then
+        camera:SetFOV(slot2_fire_feedback.base_fov)
+    end
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
 end
@@ -2346,8 +2521,9 @@ function Tick(delta_time)
     update_session_gun_state()
     obj.Rotation = vec(0.0, 0.0, yaw)
     select_active_beam_particle()
+    slot2_fire_feedback.Refresh(delta_time)
     update_camera_view()
-    update_view_weapon()
+    update_view_weapon(delta_time)
 end
 
 function PostCameraTick(delta_time)

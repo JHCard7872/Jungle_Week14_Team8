@@ -151,10 +151,10 @@ void UEngine::Tick(float DeltaTime)
 	FDirectoryWatcher::Get().ProcessChanges();
 	FNotificationManager::Get().Tick(DeltaTime);
 	InputSystem::Get().Tick();
-	FAudioManager::Get().Tick();
 	CLOTH_STATS_RESET_SIMULATION();
 	CLOTH_STATS_RESET_RENDER();
 	WorldTick(DeltaTime);
+	FAudioManager::Get().Tick();
     FGarbageCollector::Get().CollectGarbage();
 	Render(DeltaTime);
 }

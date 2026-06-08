@@ -2684,6 +2684,15 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	{
 		FAudioManager::Get().PlayAudio(SoundName, Volume);
 	});
+	AudioManager.set_function("PlayAt", [](const FString& SoundName, const FVector& Location, sol::optional<float> Volume, sol::optional<float> MinDistance, sol::optional<float> MaxDistance)
+	{
+		FAudioManager::Get().PlayAudioAt(
+			SoundName,
+			Location,
+			Volume.value_or(1.0f),
+			MinDistance.value_or(300.0f),
+			MaxDistance.value_or(2500.0f));
+	});
 	AudioManager.set_function("PlayManaged", [](const FString& SoundName, const FString& ChannelName, float Volume)
 	{
 		FAudioManager::Get().PlayManagedAudio(SoundName, ChannelName, Volume);
@@ -3452,7 +3461,9 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 
 	Lua.new_usertype<UCameraComponent>("CameraComponent",
 		sol::base_classes,
-		sol::bases<USceneComponent, UActorComponent, UObject>()
+		sol::bases<USceneComponent, UActorComponent, UObject>(),
+		"SetFOV", &UCameraComponent::SetFOV,
+		"GetFOV", &UCameraComponent::GetFOV
 	);
 
 	Lua.new_usertype<AActor>("Actor",
