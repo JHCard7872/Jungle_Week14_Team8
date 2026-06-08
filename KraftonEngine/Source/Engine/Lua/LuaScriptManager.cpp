@@ -57,6 +57,7 @@
 #include "Math/Rotator.h"
 #include "Math/MathUtils.h"
 #include "Particles/ParticleEmitterInstances.h"
+#include "Materials/MaterialManager.h"
 #include "Platform/WindowsWindow.h"
 #include "UI/UIManager.h"
 #include "UI/UserWidget.h"
@@ -3490,6 +3491,24 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 				}
 			}
 
+			ParticleComponent->RefreshDynamicData();
+			return true;
+		},
+		"SetParticleMaterialByPath", [](UPrimitiveComponent& Component, sol::optional<int32> ElementIndex, const FString& MaterialPath)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			UMaterial* Material = FMaterialManager::Get().GetOrCreateMaterial(MaterialPath);
+			if (!Material)
+			{
+				return false;
+			}
+
+			ParticleComponent->SetMaterial(ElementIndex.value_or(0), Material);
 			ParticleComponent->RefreshDynamicData();
 			return true;
 		},
