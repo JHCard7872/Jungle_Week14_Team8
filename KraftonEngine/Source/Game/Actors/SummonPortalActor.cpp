@@ -34,6 +34,8 @@ namespace
 
 void ASummonPortalActor::InitDefaultComponents()
 {
+	AddTag(FName("Portal"));   // MinimapController가 태그로 찾는다 (TrashBox와 동일 규약)
+
 	// 1) Root — 액터 위치가 곧 소환진 바닥 중심
 	USceneComponent* Root = AddComponent<USceneComponent>();
 	Root->SetFName(FName("SummonPortalRoot"));

@@ -8,6 +8,47 @@
     <div id="hud_root">
         <div id="hud_minimap_container">
             <img id="hud_minimap_image" src="../../Sprite/play_hud_minimap.png" />
+            <img id="minimap_marker_portal" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal.png" />
+            <img id="minimap_marker_trashbox_1" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
+            <img id="minimap_marker_trashbox_2" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
+            <img id="minimap_marker_trashbox_3" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
+            <img id="minimap_marker_trashbox_4" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
+            <img id="minimap_marker_trashbox_5" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
+            <img id="minimap_marker_ragdoll_1" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_2" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_3" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_4" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_5" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_6" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_7" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_8" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_9" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_10" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_11" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_12" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_13" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_14" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_ragdoll_15" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
+            <img id="minimap_marker_player" class="minimap_marker mm_player" src="../../Sprite/minimap_marker_player.png" />
+        </div>
+
+        <div id="hud_minimap_legend">
+            <div class="legend_row" style="top: 8px;">
+                <img class="legend_icon" src="../../Sprite/minimap_marker_player.png" />
+                <div class="legend_label">플레이어</div>
+            </div>
+            <div class="legend_row" style="top: 37px;">
+                <img class="legend_icon" src="../../Sprite/minimap_marker_ragdoll.png" />
+                <div class="legend_label">래그돌</div>
+            </div>
+            <div class="legend_row" style="top: 66px;">
+                <img class="legend_icon" src="../../Sprite/minimap_marker_portal.png" />
+                <div class="legend_label">포탈</div>
+            </div>
+            <div class="legend_row" style="top: 95px;">
+                <img class="legend_icon" src="../../Sprite/minimap_marker_trashbox.png" />
+                <div class="legend_label">수거함</div>
+            </div>
         </div>
 
         <div id="hud_mission_container">

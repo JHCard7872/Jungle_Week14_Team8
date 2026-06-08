@@ -155,7 +155,14 @@ function BeginPlay()
     HUD.SetGameplayHudVisible(false)
     HUD.SetServerLoad(0)
     HUD.UpdateFromSession()
-    PauseUI.Create({ onContinue = exitPause })
+    PauseUI.Create({
+        onContinue = exitPause,
+        onGoTitle = function()
+            ended = true
+            Engine.ResumeGame()
+            Engine.LoadScene("Title")
+        end,
+    })
     HUD.SetStartCountdownVisible(false)
 
     Engine.SetOnEscape(enterPause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)

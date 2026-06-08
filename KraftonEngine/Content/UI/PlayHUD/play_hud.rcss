@@ -22,22 +22,91 @@ body {
     pointer-events: none;
 }
 
+/* 종횡비를 이미지(1190:1322≈0.90)에 맞춰야 width/height:100% 이미지가 왜곡·넘침 없이 채워진다.
+   크기를 바꿀 때도 width:height = 1190:1322 비율을 유지하고 MinimapController의 MAP_W/MAP_H를 같이 맞출 것. */
 #hud_minimap_container {
     position: absolute;
     left: 24px;
     top: 20px;
-    width: 300px;
-    height: 135px;
-    transform-origin: 0% 0%;
-    transform: scale(1.15);
+    width: 225px;
+    height: 250px;
+    overflow: hidden;
 }
 
-#hud_minimap_image {
+/* 2-id 스코프로 #hud_root img(height:auto)를 이긴다 — 정확히 컨테이너 크기로 그려 왜곡 방지.
+   width:height는 반드시 이미지 종횡비(1190:1322)와 같게 유지할 것. */
+#hud_minimap_container #hud_minimap_image {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
+    width: 225px;
+    height: 250px;
+}
+
+/* 미니맵 마커 — #hud_minimap_container 스코프로 specificity를 올려 #hud_root img(display:block)를 이긴다.
+   기본 display:none(숨김), 위치/표시는 MinimapController가 SetProperty(인라인)로 제어. */
+#hud_minimap_container .minimap_marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin-left: -8px;
+    margin-top: -8px;
+    display: none;
+}
+
+#hud_minimap_container .mm_player {
+    width: 22px;
+    height: 22px;
+    margin-left: -11px;
+    margin-top: -11px;
+}
+
+#hud_minimap_container .mm_portal {
+    width: 20px;
+    height: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
+}
+
+/* 미니맵 범례 — 어떤 마커가 뭔지 표시. id 스코프로 #hud_root img(height:auto)를 이긴다. */
+#hud_minimap_legend {
+    position: absolute;
+    left: 26px;
+    top: 278px;
+    width: 172px;
+    height: 128px;
+    background-color: #07131bb4;
+    border-radius: 12px;
+}
+
+/* 행은 absolute + 명시 top(rml 인라인)으로 쌓는다 — relative flow로는 빈 행(자식이 전부 absolute)이 0높이로 접혀 라벨이 겹쳐 보였다. */
+#hud_minimap_legend .legend_row {
+    position: absolute;
+    left: 14px;
+    width: 146px;
+    height: 27px;
+}
+
+#hud_minimap_legend .legend_icon {
+    position: absolute;
+    left: 0px;
+    top: 3px;
+    width: 20px;
+    height: 20px;
+}
+
+#hud_minimap_legend .legend_label {
+    position: absolute;
+    left: 30px;
+    top: 0px;
+    width: 116px;
+    height: 27px;
+    line-height: 27px;
+    font-family: NanumGothic;
+    font-weight: bold;
+    font-size: 18px;
+    color: #eafaff;
+    font-effect: shadow(2px 2px #000000aa);
 }
 
 #hud_mission_container {

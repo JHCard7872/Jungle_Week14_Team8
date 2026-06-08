@@ -40,6 +40,15 @@ local scoreboard_entries = nil
 local on_confirm = nil
 local on_back = nil
 
+-- 플레이 방법 탭/장치 상태
+local controls_active_tab = "input"
+local controls_active_device = "km"
+
+local TAB_SELECTED_BG     = "#d6f28e40"
+local TAB_SELECTED_BORDER = "#d6f28eff"
+local TAB_DEFAULT_BG      = "#00000060"
+local TAB_DEFAULT_BORDER  = "#ffffff44"
+
 -- 현재 화면에 표시 중인 옵션 설정값
 local settings = UserSettings.GetSettings()
 
@@ -156,6 +165,33 @@ local function set_bgm_volume(value)
 end
 
 
+local function set_controls_device(device)
+    if widget == nil then return end
+    controls_active_device = device
+    local km = device == "km"
+    widget:SetProperty("controls_device_km", "background-color", km and TAB_SELECTED_BG or TAB_DEFAULT_BG)
+    widget:SetProperty("controls_device_km", "border-color",     km and TAB_SELECTED_BORDER or TAB_DEFAULT_BORDER)
+    widget:SetProperty("controls_device_gp", "background-color", (not km) and TAB_SELECTED_BG or TAB_DEFAULT_BG)
+    widget:SetProperty("controls_device_gp", "border-color",     (not km) and TAB_SELECTED_BORDER or TAB_DEFAULT_BORDER)
+    set_display("controls_image_km", km)
+    set_display("controls_image_gp", not km)
+end
+
+local function set_controls_tab(tab)
+    if widget == nil then return end
+    controls_active_tab = tab
+    local game = tab == "game"
+    widget:SetProperty("controls_tab_game",  "background-color", game and TAB_SELECTED_BG or TAB_DEFAULT_BG)
+    widget:SetProperty("controls_tab_game",  "border-color",     game and TAB_SELECTED_BORDER or TAB_DEFAULT_BORDER)
+    widget:SetProperty("controls_tab_input", "background-color", (not game) and TAB_SELECTED_BG or TAB_DEFAULT_BG)
+    widget:SetProperty("controls_tab_input", "border-color",     (not game) and TAB_SELECTED_BORDER or TAB_DEFAULT_BORDER)
+    set_display("controls_body_game",  game)
+    set_display("controls_body_input", not game)
+    if not game then
+        set_controls_device(controls_active_device)
+    end
+end
+
 local function set_current_page(page_type, title)
     if widget == nil then
         return
@@ -166,6 +202,12 @@ local function set_current_page(page_type, title)
 
     for key, body_id in pairs(PAGE_BODY_IDS) do
         set_display(body_id, key == current_page_type)
+    end
+
+    if current_page_type == "controls" then
+        controls_active_tab = "input"
+        controls_active_device = "km"
+        set_controls_tab("input")
     end
 
     -- Confirm은 Options에서 설정 적용용으로 쓰고, 나머지 페이지에서는 닫기 버튼으로 사용한다.
@@ -210,12 +252,32 @@ local function bind_actions()
         set_bgm_volume(settings.bgmVolume + 1)
     end))
 
+    widget:bind_click("controls_tab_game", on_button_click(function()
+        set_controls_tab("game")
+    end))
+
+    widget:bind_click("controls_tab_input", on_button_click(function()
+        set_controls_tab("input")
+    end))
+
+    widget:bind_click("controls_device_km", on_button_click(function()
+        set_controls_device("km")
+    end))
+
+    widget:bind_click("controls_device_gp", on_button_click(function()
+        set_controls_device("gp")
+    end))
+
     bind_hover_sound("page_back_button")
     bind_hover_sound("page_confirm_button")
     bind_hover_sound("sfx_volume_down")
     bind_hover_sound("sfx_volume_up")
     bind_hover_sound("bgm_volume_down")
     bind_hover_sound("bgm_volume_up")
+    bind_hover_sound("controls_tab_game")
+    bind_hover_sound("controls_tab_input")
+    bind_hover_sound("controls_device_km")
+    bind_hover_sound("controls_device_gp")
     bindings_initialized = true
 end
 
@@ -357,6 +419,8 @@ function M.Destroy()
     on_settings_changed = nil
     scoreboard_entries = nil
     settings = UserSettings.GetSettings()
+    controls_active_tab = "input"
+    controls_active_device = "km"
 end
 
 return M

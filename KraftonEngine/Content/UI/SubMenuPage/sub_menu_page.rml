@@ -41,14 +41,34 @@
                 </div>
             </div>
 
-            <!-- Controls -->
-            <div id="page_body_controls" class="page_body_section simple_page_body">
-                <div class="simple_card">
-                    <div id="controls_title" class="simple_card_title">Controls Sample</div>
-                    <div id="controls_line_1" class="simple_line">Move : WASD</div>
-                    <div id="controls_line_2" class="simple_line">Aim : Mouse</div>
-                    <div id="controls_line_3" class="simple_line">Shoot / Recover : Left Click</div>
-                    <div id="controls_line_4" class="simple_line">Pause : ESC</div>
+            <!-- Controls (플레이 방법) -->
+            <div id="page_body_controls" class="page_body_section">
+                <!-- 상단 탭 버튼 2개 -->
+                <button id="controls_tab_game" class="controls_tab">
+                    <img class="controls_tab_icon" src="../../Sprite/question_mark.png" />
+                    <div class="controls_tab_label">게임 진행</div>
+                </button>
+                <button id="controls_tab_input" class="controls_tab">
+                    <img class="controls_tab_icon" src="../../Sprite/input.png" />
+                    <div class="controls_tab_label">조작 방법</div>
+                </button>
+
+                <!-- 게임 진행 탭 내용 -->
+                <div id="controls_body_game" class="controls_body">
+                </div>
+
+                <!-- 조작 방법 탭 내용 -->
+                <div id="controls_body_input" class="controls_body">
+                    <!-- 입력 장치 선택 버튼 (아이콘만) -->
+                    <button id="controls_device_km" class="controls_device_button">
+                        <img class="controls_device_icon" src="../../Sprite/input_mousekeyboard.png" />
+                    </button>
+                    <button id="controls_device_gp" class="controls_device_button">
+                        <img class="controls_device_icon" src="../../Sprite/input_gamepad.png" />
+                    </button>
+                    <!-- how to play 이미지 -->
+                    <img id="controls_image_km" class="controls_how_to_play" src="../../Sprite/how_to_play_keyboardmouse.png" />
+                    <img id="controls_image_gp" class="controls_how_to_play" src="../../Sprite/how_to_play_gamepad.png" />
                 </div>
             </div>
 
