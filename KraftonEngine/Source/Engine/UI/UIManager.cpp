@@ -343,6 +343,37 @@ namespace
 
 			LoadedFaceKeys.insert(FaceKey);
 		}
+
+		// Galmuri / ROKAF 폰트는 파일명에서 family 이름을 자동 추론하면 RCSS가 기대하는
+		// 키("Galmuri", "rokaf")와 달라지므로 명시적으로 재등록한다.
+		struct FExplicitFont
+		{
+			const char* RelativeToFontRoot;
+			const char* Family;
+			Rml::Style::FontWeight Weight;
+			Rml::Style::FontStyle Style;
+		};
+
+		static constexpr FExplicitFont ExplicitFonts[] = {
+			{"Galmuri/Galmuri11.ttf",       "Galmuri", Rml::Style::FontWeight::Normal, Rml::Style::FontStyle::Normal},
+			{"Galmuri/Galmuri11-Bold.ttf",  "Galmuri", Rml::Style::FontWeight::Bold,   Rml::Style::FontStyle::Normal},
+			{"rokaf/ROKAF Sans Medium.ttf", "rokaf",   Rml::Style::FontWeight::Normal, Rml::Style::FontStyle::Normal},
+			{"rokaf/ROKAF Sans Bold.ttf",   "rokaf",   Rml::Style::FontWeight::Bold,   Rml::Style::FontStyle::Normal},
+		};
+
+		for (const FExplicitFont& Mapping : ExplicitFonts)
+		{
+			const std::filesystem::path FontPath = FontRoot / Mapping.RelativeToFontRoot;
+			if (!std::filesystem::exists(FontPath))
+			{
+				UE_LOG("[RmlUi] Explicit font not found: %s", Mapping.RelativeToFontRoot);
+				continue;
+			}
+			if (!Rml::LoadFontFace(ToRmlPath(FontPath), Mapping.Family, Mapping.Style, Mapping.Weight))
+			{
+				UE_LOG("[RmlUi] Failed to load explicit font alias: %s -> %s", Mapping.RelativeToFontRoot, Mapping.Family);
+			}
+		}
 	}
 }
 
