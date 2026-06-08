@@ -69,6 +69,8 @@ public:
 		LockedWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
 		LockedWallNormal = FVector(0.0f, 0.0f, 0.0f);
 		WallAvoidanceLockTimer = 0.0f;
+		CornerEscapeDirection = FVector(0.0f, 0.0f, 0.0f);
+		CornerEscapeTimer = 0.0f;
 	}
 	UFUNCTION(Callable, Category="GOIncRagdollMovement|Step")
 	void SetStepUpEnabled(bool bEnabled) { bStepUpEnabled = bEnabled; }
@@ -134,6 +136,12 @@ public:
 	float WallAvoidanceLockDuration = 0.35f;
 	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Wall Contact Nudge Distance", Min=0.0f, Max=0.5f, Speed=0.005f)
 	float WallContactNudgeDistance = 0.04f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Corner Escape Duration", Min=0.0f, Max=2.0f, Speed=0.01f)
+	float CornerEscapeDuration = 0.45f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Corner Normal Dot Threshold", Min=-1.0f, Max=1.0f, Speed=0.01f)
+	float CornerNormalDotThreshold = 0.65f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Collision", DisplayName="Corner Nudge Distance", Min=0.0f, Max=0.5f, Speed=0.005f)
+	float CornerNudgeDistance = 0.06f;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Use Step Up")
 	bool bStepUpEnabled = true;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Max Step Height", Min=0.0f, Max=2.0f, Speed=0.01f)
@@ -179,6 +187,8 @@ private:
 	FVector LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
 	FVector LockedWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
 	FVector LockedWallNormal = FVector(0.0f, 0.0f, 0.0f);
+	FVector CornerEscapeDirection = FVector(0.0f, 0.0f, 0.0f);
 	float WallAvoidanceLockTimer = 0.0f;
+	float CornerEscapeTimer = 0.0f;
 	bool bIsGrounded = false;
 };
