@@ -11,7 +11,7 @@
     "_pad" : null
   },
   "PathFileName" : "Content/Material/Auto/IDCard/IDCard_PJH/Material.001.mat",
-  "RasterizerState" : "",
+  "RasterizerState" : "SolidNoCull",
   "RenderPass" : "Opaque",
   "ShaderPath" : "Shaders/Geometry/UberLit.hlsl",
   "Textures" : {
