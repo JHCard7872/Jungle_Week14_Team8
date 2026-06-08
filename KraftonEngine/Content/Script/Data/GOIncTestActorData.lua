@@ -108,7 +108,7 @@ return {
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
-    SLOT1_GRAB_FORCE_SCALE = 5.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
+    SLOT1_GRAB_FORCE_SCALE = 15.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
     GRAB_SPRING_ACCELERATION = 42.0, -- 목표 위치로 끌어당기는 가속도 계수. 질량 보정 전 단계에서 사용한다
     GRAB_DAMPING_ACCELERATION = 10.0, -- 현재 속도에 대한 감쇠 가속도 계수. 높을수록 덜 출렁인다
     GRAB_MAX_ERROR = 30.0,
