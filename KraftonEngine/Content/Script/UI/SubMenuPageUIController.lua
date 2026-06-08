@@ -181,15 +181,24 @@ end
 local function set_controls_tab(tab)
     if widget == nil then return end
     controls_active_tab = tab
-    local game = tab == "game"
-    widget:SetProperty("controls_tab_game",  "background-color", game and TAB_SELECTED_BG or TAB_DEFAULT_BG)
-    widget:SetProperty("controls_tab_game",  "border-color",     game and TAB_SELECTED_BORDER or TAB_DEFAULT_BORDER)
-    widget:SetProperty("controls_tab_input", "background-color", (not game) and TAB_SELECTED_BG or TAB_DEFAULT_BG)
-    widget:SetProperty("controls_tab_input", "border-color",     (not game) and TAB_SELECTED_BORDER or TAB_DEFAULT_BORDER)
+    local game  = tab == "game"
+    local input = tab == "input"
+    local choice = not game and not input
+
+    -- 컨테이너만 숨기면 일부 RmlUi 스타일/hover 상태에서 내부 버튼이 남는 경우가 있어서
+    -- 선택 버튼 2개도 같이 직접 토글한다.
+    set_display("controls_choice_buttons", choice)
+    set_display("controls_tab_game", choice)
+    set_display("controls_tab_input", choice)
+
     set_display("controls_body_game",  game)
-    set_display("controls_body_input", not game)
-    if not game then
+    set_display("controls_body_input", input)
+
+    if input then
         set_controls_device(controls_active_device)
+    else
+        set_display("controls_image_km", false)
+        set_display("controls_image_gp", false)
     end
 end
 
@@ -206,12 +215,13 @@ local function set_current_page(page_type, title)
     end
 
     if current_page_type == "controls" then
-        controls_active_tab = "input"
+        controls_active_tab = "none"
         controls_active_device = "km"
-        set_controls_tab("input")
+        set_controls_tab("none")
     end
 
-    -- Confirm은 Options에서 설정 적용용으로 쓰고, 나머지 페이지에서는 닫기 버튼으로 사용한다.
+    -- Confirm은 Options에서만 노출, controls는 body 내 닫기 버튼으로 대체
+    set_display("page_confirm_button", current_page_type ~= "controls")
     set_text("page_confirm_label", current_page_type == "options" and "결정" or "닫기")
 
     apply_settings_to_view()
@@ -269,6 +279,14 @@ local function bind_actions()
         set_controls_device("gp")
     end))
 
+    widget:bind_click("controls_close_button_game", on_button_click(function()
+        set_controls_tab("none")
+    end))
+
+    widget:bind_click("controls_close_button_input", on_button_click(function()
+        set_controls_tab("none")
+    end))
+
     bind_hover_sound("page_back_button")
     bind_hover_sound("page_confirm_button")
     bind_hover_sound("sfx_volume_down")
@@ -279,6 +297,8 @@ local function bind_actions()
     bind_hover_sound("controls_tab_input")
     bind_hover_sound("controls_device_km")
     bind_hover_sound("controls_device_gp")
+    bind_hover_sound("controls_close_button_game")
+    bind_hover_sound("controls_close_button_input")
     bindings_initialized = true
 end
 

@@ -80,6 +80,8 @@ body {
     width: 230px;
     height: 26px;
 
+    font-family: YoonGothic;
+    font-weight: normal;
     font-size: 20px;
     line-height: 26px;
     text-align: left;
@@ -90,6 +92,8 @@ body {
     width: 190px;
     height: 28px;
 
+    font-family: YoonGothic;
+    font-weight: normal;
     font-size: 20px;
     line-height: 28px;
     text-align: left;
@@ -101,6 +105,7 @@ body {
     height: 88px;
     color: #000000;
 
+    font-family: Arial Black;
     font-weight: 900;
     font-size: 76px;
     line-height: 88px;
@@ -112,6 +117,7 @@ body {
     height: 150px;
     color: #000000;
 
+    font-family: Arial Black;
     font-weight: 900;
     font-size: 116px;
     line-height: 150px;

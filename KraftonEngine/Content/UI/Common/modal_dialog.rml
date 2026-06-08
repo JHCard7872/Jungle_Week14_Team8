@@ -24,19 +24,19 @@
                 </div>
 
                 <div id="modal_button_row">
-                    <button id="modal_button_left" class="modal_button">
+                    <div id="modal_button_left" class="modal_button">
                         <div class="modal_button_glow"></div>
                         <img class="modal_button_image modal_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
                         <img class="modal_button_image modal_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
                         <div id="modal_button_left_label" class="modal_button_label ui_modal_button_text">Continue</div>
-                    </button>
+                    </div>
 
-                    <button id="modal_button_right" class="modal_button">
+                    <div id="modal_button_right" class="modal_button">
                         <div class="modal_button_glow"></div>
                         <img class="modal_button_image modal_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
                         <img class="modal_button_image modal_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
                         <div id="modal_button_right_label" class="modal_button_label ui_modal_button_text">No</div>
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>

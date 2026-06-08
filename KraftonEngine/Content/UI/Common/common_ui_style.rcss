@@ -142,8 +142,8 @@
     font-family: rokaf;
     font-weight: bold;
     color: #ffffff;
-    font-size: 48px;
-    line-height: 62px;
+    font-size: 52px;
+    line-height: 66px;
     text-align: center;
     font-effect: shadow(3px 3px #000000aa);
 }
@@ -152,8 +152,8 @@
     font-family: Galmuri;
     font-weight: bold;
     color: #ffffff;
-    font-size: 28px;
-    line-height: 42px;
+    font-size: 34px;
+    line-height: 48px;
     text-align: center;
     font-effect: shadow(2px 2px #000000aa);
 }
