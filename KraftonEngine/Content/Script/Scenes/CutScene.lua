@@ -198,9 +198,8 @@ function BeginPlay()
     ensure_background_widget()
     show_name_input(DEFAULT_EMPLOYEE_NAME)
 
-    Engine.SetOnEscape(function()
-        request_scene_load("MainMenu")
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응. (진행은 Enter/결정 버튼)
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)

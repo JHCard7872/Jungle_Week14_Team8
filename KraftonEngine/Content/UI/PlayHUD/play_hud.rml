@@ -15,7 +15,6 @@
             <img id="minimap_marker_trashbox_2" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
             <img id="minimap_marker_trashbox_3" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
             <img id="minimap_marker_trashbox_4" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
-            <img id="minimap_marker_trashbox_5" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
             <img id="minimap_marker_ragdoll_1" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
             <img id="minimap_marker_ragdoll_2" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />
             <img id="minimap_marker_ragdoll_3" class="minimap_marker mm_ragdoll" src="../../Sprite/minimap_marker_ragdoll.png" />

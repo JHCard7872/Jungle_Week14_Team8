@@ -17,24 +17,24 @@ FGOIncRagdollCharacterConfig AGOIncKirbyRagdollPawn::MakeCharacterConfig() const
 
 	Config.AliveCapsuleRadius = 0.5f;
 	Config.AliveCapsuleHalfHeight = 0.5f;
-	Config.ReviveTriggerCapsuleRadius = 3.5f;
-	Config.ReviveTriggerCapsuleHalfHeight = 3.5f;
+	Config.ReviveTriggerCapsuleRadius = 16.0f;
+	Config.ReviveTriggerCapsuleHalfHeight = 16.0f;
 
 	Config.bCanRevive = true;
-	Config.ReviveBlendDuration = 0.5f;
+	Config.ReviveBlendDuration = 0.2f;
 
-	Config.FleeSpeed = 3.2f;
+	Config.FleeSpeed = 12.0f;
 	Config.FleeAcceleration = 12.0f;
 	Config.FleeBrakingDeceleration = 8.0f;
-	Config.FleeEndDistance = 8.0f;
+	Config.FleeEndDistance = 30.0f;
 	Config.FleeStopDuration = 0.8f;
 	Config.FleeStopMinBrakingDeceleration = 0.1f;
 	Config.FleeRotationYawOffsetDegrees = 0.0f;
 
 	Config.FleeAnimationBaseSpeed = 3.2f;
 	Config.FleeAnimationMinPlayRate = 0.0f;
-	Config.FleeAnimationMaxPlayRate = 1.0f;
-	Config.FleeStopStartPlayRate = 1.0f;
+	Config.FleeAnimationMaxPlayRate = 1.8f;
+	Config.FleeStopStartPlayRate = 1.8f;
 	Config.FleeStopEndPlayRate = 0.0f;
 
 	return Config;
