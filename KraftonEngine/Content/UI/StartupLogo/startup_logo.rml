@@ -2,24 +2,21 @@
 <head>
     <title>Startup Logo</title>
     <link type="text/rcss" href="../Common/common_font.rcss" />
-    <link type="text/rcss" href="startup_logo.rcss" />
     <link type="text/rcss" href="../Common/common_ui_style.rcss" />
+    <link type="text/rcss" href="startup_logo.rcss" />
 </head>
 <body>
     <div id="startup_logo_root">
         <div id="startup_logo_background"></div>
 
-        <div id="logo_jungle_slot" class="startup_logo_slot">
-            <img id="logo_jungle" class="startup_logo_image" src="../../Sprite/logo/jungle.png" />
+        <div id="startup_0_slot" class="startup_logo_slot">
+            <img id="startup_0" class="startup_logo_image" src="../../Sprite/startup_0.png" />
         </div>
-        <div id="logo_jungle_gametechlab_slot" class="startup_logo_slot">
-            <img id="logo_jungle_gametechlab" class="startup_logo_image" src="../../Sprite/logo/jungleGameTechlab.png" />
+        <div id="startup_1_slot" class="startup_logo_slot">
+            <img id="startup_1" class="startup_logo_image" src="../../Sprite/startup_1.png" />
         </div>
-        <div id="logo_eng_ver2_slot" class="startup_logo_slot">
-            <img id="logo_eng_ver2" class="startup_logo_image" src="../../Sprite/logo/eng_ver2.png" />
-        </div>
-        <div id="logo_dev_concepters_slot" class="startup_logo_slot">
-            <img id="logo_dev_concepters" class="startup_logo_image" src="../../Sprite/logo/dev_concepters.png" />
+        <div id="startup_2_slot" class="startup_logo_slot">
+            <img id="startup_2" class="startup_logo_image" src="../../Sprite/startup_2.png" />
         </div>
 
         <div id="startup_fade_overlay"></div>
