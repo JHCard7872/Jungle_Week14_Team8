@@ -2,6 +2,7 @@
 
 #include "Engine/Runtime/ActorPlacementRegistry.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/Actors/GOIncIdCard.h"
 #include "Game/Actors/GOIncTrashBox.h"
 #include "Game/Actors/GOIncTruck.h"
 #include "Game/Actors/SummonPortalActor.h"
@@ -103,6 +104,19 @@ void RegisterGameActorPlacements()
 				TrashBox->SetActorLocation(Location);
 			}
 			return TrashBox;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc IdCard",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncIdCard* IdCard = World ? World->SpawnActor<AGOIncIdCard>() : nullptr;
+			if (IdCard)
+			{
+				IdCard->InitDefaultComponents();
+				IdCard->SetActorLocation(Location);
+			}
+			return IdCard;
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(

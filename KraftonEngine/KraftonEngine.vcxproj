@@ -549,6 +549,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\Component\Light\LightComponentBase.cpp" />
     <ClCompile Include="Source\Engine\Component\Light\PointLightComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\Light\SpotLightComponent.cpp" />
+    <ClCompile Include="Source\Engine\Component\Movement\BobbingMovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\Movement\CharacterMovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\Movement\FloatingPawnMovementComponent.cpp" />
     <ClCompile Include="Source\Engine\Component\Movement\GOIncRagdollMovementComponent.cpp" />
@@ -829,6 +830,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\Viewport\GameViewportClient.cpp" />
     <ClCompile Include="Source\Engine\Viewport\Viewport.cpp" />
     <ClCompile Include="Source\Engine\Viewport\ViewportClient.cpp" />
+    <ClCompile Include="Source\Game\Actors\GOIncIdCard.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTrashBox.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp" />
     <ClCompile Include="Source\Game\Actors\SummonPortalActor.cpp" />
@@ -1013,6 +1015,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\Component\Light\LightComponentBase.h" />
     <ClInclude Include="Source\Engine\Component\Light\PointLightComponent.h" />
     <ClInclude Include="Source\Engine\Component\Light\SpotLightComponent.h" />
+    <ClInclude Include="Source\Engine\Component\Movement\BobbingMovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\Movement\CharacterMovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\Movement\FloatingPawnMovementComponent.h" />
     <ClInclude Include="Source\Engine\Component\Movement\GOIncRagdollMovementComponent.h" />
@@ -1371,6 +1374,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\Viewport\GameViewportClient.h" />
     <ClInclude Include="Source\Engine\Viewport\Viewport.h" />
     <ClInclude Include="Source\Engine\Viewport\ViewportClient.h" />
+    <ClInclude Include="Source\Game\Actors\GOIncIdCard.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTrashBox.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTruck.h" />
     <ClInclude Include="Source\Game\Actors\SummonPortalActor.h" />
