@@ -301,20 +301,25 @@ body {
     top: 286px;
 }
 
-#credits_line_1 {
-    top: 112px;
+.credits_card {
+    height: 650px;
 }
 
-#credits_line_2 {
-    top: 170px;
+/* 4장 × 15% + 5구간 × 8% = 100% → 양끝·사이 간격 동일 */
+.credits_id_card {
+    position: absolute;
+    top: 100px;
+    width: 15\%;
+    height: 390px;
 }
 
-#credits_line_3 {
-    top: 228px;
-}
+#credits_id_card_1 { left: 8%; }
+#credits_id_card_2 { left: 31%; }
+#credits_id_card_3 { left: 54%; }
+#credits_id_card_4 { left: 77%; }
 
-#credits_line_4 {
-    top: 286px;
+#credits_special_thanks {
+    top: 512px;
 }
 
 /* 스코어보드: scoreboard.json에서 읽은 값을 Lua가 각 row에 채운다 */

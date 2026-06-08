@@ -72,11 +72,12 @@
             <!-- Credits -->
             <div id="page_body_credits" class="page_body_section simple_page_body">
                 <div class="simple_card credits_card">
-                    <div id="credits_title" class="simple_card_title">Credits Sample</div>
-                    <div id="credits_line_1" class="simple_line">Concept / World : GO Inc. Team</div>
-                    <div id="credits_line_2" class="simple_line">UI / Sound : Sample Credit</div>
-                    <div id="credits_line_3" class="simple_line">Programming : Sample Credit</div>
-                    <div id="credits_line_4" class="simple_line">Special Thanks : Ragdoll Recovery Crew</div>
+                    <div id="credits_title" class="simple_card_title">Credits</div>
+                    <img id="credits_id_card_1" class="credits_id_card" src="../../Sprite/id_card_jungle_김연하.png" />
+                    <img id="credits_id_card_2" class="credits_id_card" src="../../Sprite/id_card_jungle_강건우.png" />
+                    <img id="credits_id_card_3" class="credits_id_card" src="../../Sprite/id_card_jungle_박준혁.png" />
+                    <img id="credits_id_card_4" class="credits_id_card" src="../../Sprite/id_card_jungle_오준혁.png" />
+                    <div id="credits_special_thanks" class="simple_line">Special Thanks : Jungle GameTechlab 3기의 모두들 그리고 코치님들</div>
                 </div>
             </div>
         </div>
