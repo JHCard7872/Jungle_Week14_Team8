@@ -20,7 +20,7 @@ FGOIncRagdollCharacterConfig AGOIncLaraRagdollPawn::MakeCharacterConfig() const
 	Config.ReviveTriggerCapsuleRadius = 4.5f;
 	Config.ReviveTriggerCapsuleHalfHeight = 4.5f;
 
-	Config.bCanRevive = true;
+	Config.bCanRevive = false;
 	Config.ReviveBlendDuration = 0.5f;
 
 	Config.FleeSpeed = 3.7f;
