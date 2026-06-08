@@ -222,6 +222,7 @@ local function open_menu_page(page_type, title)
     main_menu_widget:SetWantsMouse(false)
     set_main_menu_controls_visible(false)
     set_cursor_hidden()
+    set_element_opacity("menu_background_blur", 0.0)
     Engine.SetCursorVisible(true)
 
     refresh_menu_settings()
@@ -365,11 +366,13 @@ local function update_sub_page_fade(dt)
 
     if sub_page_fading_in then
         SubMenuPageUI.SetOpacity(t)
+        set_element_opacity("menu_background_blur", t)
         if t >= 1.0 then
             sub_page_fading_in = false
         end
     elseif sub_page_fading_out then
         SubMenuPageUI.SetOpacity(1.0 - t)
+        set_element_opacity("menu_background_blur", 1.0 - t)
         if t >= 1.0 then
             do_close_menu_page()
         end
