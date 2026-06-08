@@ -370,8 +370,8 @@ body {
 
 #controls_image_gp {
     top: 84px;
-    width: 50%;
-    margin-left: -25%;
+    width: 70%;
+    margin-left: -35%;
 }
 
 #controls_image_process {
@@ -381,12 +381,13 @@ body {
     margin-left: -41%;
 }
 
-/* 각 body 내부 닫기 버튼 */
+/* 각 body 내부 닫기 버튼 — 우측 하단 고정, width 60% */
 .controls_close_button {
     position: absolute;
-    bottom: 0px;
-    left: 50%;
-    margin-left: -220px;
+    bottom: -170px;
+    right: -50px;
+    width: 264px;
+    height: 104px;
     padding: 0px;
     background-color: transparent;
     border: 0px;
@@ -405,6 +406,18 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
+    width: 80%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.controls_close_button .horiz_button_label {
+    position: absolute;
+    top: 50%;
+    left: 0px;
+    width: 100%;
+    transform: translateY(-50%);
+    text-align: center;
     pointer-events: none;
 }
 
@@ -456,7 +469,7 @@ body {
 
 
 .credits_card {
-    height: 650px;
+    height: 760px;
 }
 
 #credits_developers_team {
@@ -472,7 +485,7 @@ body {
     left: 50%;
     top: 76px;
     width: 360px;
-    height: auto;
+    height: 96px;
     margin-left: -180px;
 }
 
@@ -481,7 +494,7 @@ body {
     position: absolute;
     top: 188px;
     width: 15%;
-    height: 330px;
+    height: auto;
 }
 
 #credits_id_card_1 { left: 8%; }
@@ -490,11 +503,19 @@ body {
 #credits_id_card_4 { left: 77%; }
 
 #credits_special_thanks {
-    top: 530px;
+    top: 648px;
+    left: 36px;
+    right: 36px;
+    width: auto;
+    text-align: right;
 }
 
 #credits_hint {
-    top: 582px;
+    top: 706px;
+    left: 36px;
+    right: 36px;
+    width: auto;
+    text-align: right;
     color: #fff2a8;
 }
 

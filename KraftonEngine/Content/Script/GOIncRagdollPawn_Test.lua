@@ -43,6 +43,10 @@ local RAGDOLL_THUD_MAX_DISTANCE = 2500.0
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
 
+-- AliveFlee 상태에서 넘을 수 있는 낮은 둔턱 높이.
+-- 값이 커지면 벽을 타는 느낌이 날 수 있으므로 0.15 ~ 0.25 정도에서 조정한다.
+local FLEE_STEP_UP_HEIGHT = 1.0
+
 -- FleeStopping 설정값.
 -- 거리 조건을 만족하면 이 시간 동안 이동 입력을 끊고 감속한다.
 -- animation play rate도 남은 시간 비율에 맞춰 1.0 -> 0.0으로 내려간 뒤 ragdoll로 전환한다.
@@ -1086,6 +1090,9 @@ function EnterDeadRagdoll()
         movement:StopMovementImmediately()
         movement:SetMovementEnabled(false)
 
+        if movement.SetStepUpEnabled ~= nil then
+            movement:SetStepUpEnabled(false)
+        end
         if movement.SetFloorRaycastEnabled ~= nil then
             movement:SetFloorRaycastEnabled(false)
         end
@@ -1224,6 +1231,9 @@ function EnterReviving()
         movement:StopMovementImmediately()
         movement:SetMovementEnabled(false)
 
+        if movement.SetStepUpEnabled ~= nil then
+            movement:SetStepUpEnabled(false)
+        end
         if movement.SetFloorRaycastEnabled ~= nil then
             movement:SetFloorRaycastEnabled(false)
         end
@@ -1271,6 +1281,14 @@ function EnterAliveFlee()
 
     if pawn ~= nil and pawn.EnterAliveFleeState ~= nil then
         pawn:EnterAliveFleeState()
+        if movement ~= nil then
+            if movement.SetStepUpEnabled ~= nil then
+                movement:SetStepUpEnabled(true)
+            end
+            if movement.SetMaxStepHeight ~= nil then
+                movement:SetMaxStepHeight(FLEE_STEP_UP_HEIGHT)
+            end
+        end
     else
         if mesh ~= nil then
             mesh:SetCollisionEnabled("NoCollision")
@@ -1285,6 +1303,14 @@ function EnterAliveFlee()
 
         if movement ~= nil then
             movement:StopMovementImmediately()
+
+            if movement.SetStepUpEnabled ~= nil then
+                movement:SetStepUpEnabled(true)
+            end
+            if movement.SetMaxStepHeight ~= nil then
+                movement:SetMaxStepHeight(FLEE_STEP_UP_HEIGHT)
+            end
+
             movement:SetMovementEnabled(true)
 
             if movement.SetFloorRaycastEnabled ~= nil then

@@ -77,6 +77,11 @@ void UGOIncRagdollMovementComponent::SetBrakingDeceleration(float InBrakingDecel
 	BrakingDeceleration = std::max(0.0f, InBrakingDeceleration);
 }
 
+void UGOIncRagdollMovementComponent::SetMaxStepHeight(float InMaxStepHeight)
+{
+	MaxStepHeight = std::max(0.0f, InMaxStepHeight);
+}
+
 void UGOIncRagdollMovementComponent::SetFloorRaycastEnabled(bool bEnabled)
 {
 	bFloorRaycastEnabled = bEnabled;
@@ -247,6 +252,15 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 			return true;
 		}
 
+		if (bIgnoreWalkableFloorHits && bStepUpEnabled && bIsGrounded && !IsWalkableFloorHit(Hit))
+		{
+			const FVector RemainingAfterSafeMove = Remaining - SafeMove;
+			if (TryStepUp(RemainingAfterSafeMove, Hit))
+			{
+				return true;
+			}
+		}
+
 		const FVector UsedMove = MoveDir * std::min(Hit.Distance, RemainingDistance);
 		Remaining = Remaining - UsedMove;
 
@@ -272,7 +286,72 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 	return true;
 }
 
+bool UGOIncRagdollMovementComponent::TryStepUp(const FVector& MoveDelta, const FHitResult& BlockingHit)
+{
+	USceneComponent* Updated = GetUpdatedComponent();
+	if (!Updated || !bStepUpEnabled || MaxStepHeight <= 0.0f)
+	{
+		return false;
+	}
+
+	if (!bFloorRaycastEnabled || !bIsGrounded)
+	{
+		return false;
+	}
+
+	if (IsWalkableFloorHit(BlockingHit))
+	{
+		return false;
+	}
+
+	const FVector HorizontalDelta(MoveDelta.X, MoveDelta.Y, 0.0f);
+	if (HorizontalDelta.Length() <= SmallMoveThreshold)
+	{
+		return false;
+	}
+
+	const FVector OriginalLocation = Updated->GetWorldLocation();
+	const bool bWasGrounded = bIsGrounded;
+	const FVector StepUpDelta(0.0f, 0.0f, MaxStepHeight);
+
+	FHitResult UpHit;
+	if (SweepCapsuleMoveFrom(GetSweepCapsuleWorldLocation(), StepUpDelta, UpHit))
+	{
+		Updated->SetWorldLocation(OriginalLocation);
+		bIsGrounded = bWasGrounded;
+		return false;
+	}
+
+	Updated->SetWorldLocation(OriginalLocation + StepUpDelta);
+
+	FHitResult ForwardHit;
+	if (SweepCapsuleMove(HorizontalDelta, ForwardHit))
+	{
+		Updated->SetWorldLocation(OriginalLocation);
+		bIsGrounded = bWasGrounded;
+		return false;
+	}
+
+	Updated->SetWorldLocation(Updated->GetWorldLocation() + HorizontalDelta);
+
+	if (!SnapUpdatedComponentToFloor())
+	{
+		Updated->SetWorldLocation(OriginalLocation);
+		bIsGrounded = bWasGrounded;
+		return false;
+	}
+
+	Velocity.Z = 0.0f;
+	bIsGrounded = true;
+	return true;
+}
+
 bool UGOIncRagdollMovementComponent::SweepCapsuleMove(const FVector& MoveDelta, FHitResult& OutHit) const
+{
+	return SweepCapsuleMoveFrom(GetSweepCapsuleWorldLocation(), MoveDelta, OutHit);
+}
+
+bool UGOIncRagdollMovementComponent::SweepCapsuleMoveFrom(const FVector& Start, const FVector& MoveDelta, FHitResult& OutHit) const
 {
 	UWorld* World = GetWorld();
 	AActor* Owner = GetOwner();
@@ -296,7 +375,7 @@ bool UGOIncRagdollMovementComponent::SweepCapsuleMove(const FVector& MoveDelta, 
 		std::max(0.001f, HalfHeight - SweepShrink));
 
 	return World->PhysicsSweep(
-		GetSweepCapsuleWorldLocation(),
+		Start,
 		MoveDir,
 		MoveDistance,
 		Shape,
@@ -475,4 +554,6 @@ void UGOIncRagdollMovementComponent::Serialize(FArchive& Ar)
 	Ar << ExplicitSweepCapsuleRadius;
 	Ar << ExplicitSweepCapsuleHalfHeight;
 	Ar << ExplicitSweepCapsuleLocalOffset;
+	Ar << bStepUpEnabled;
+	Ar << MaxStepHeight;
 }
