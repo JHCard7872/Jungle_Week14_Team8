@@ -8,7 +8,9 @@
 <body>
     <div id="cutscene_background_root">
         <img id="cutscene_player_background" src="../../Sprite/cutscene_player.png" />
-            <div id="cutscene_caption" class="ui_cutscene_caption"></div>
+        <div id="cutscene_dim_overlay"></div>
+        <div id="cutscene_fade_overlay"></div>
+        <div id="cutscene_caption" class="ui_cutscene_caption"></div>
     </div>
 </body>
 </rml>

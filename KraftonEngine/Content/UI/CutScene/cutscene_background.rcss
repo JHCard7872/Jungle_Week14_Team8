@@ -23,6 +23,30 @@ body {
     pointer-events: none;
 }
 
+#cutscene_fade_overlay {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 1;
+    pointer-events: none;
+    z-index: 30;
+}
+
+#cutscene_dim_overlay {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 20;
+}
+
 /* Cut scene 자막 자리 — 실제 사용 시 Lua에서 display/text만 바꿔 쓰면 된다. */
 #cutscene_caption {
     position: absolute;

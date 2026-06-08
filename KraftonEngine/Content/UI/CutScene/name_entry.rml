@@ -14,8 +14,7 @@
             <img id="name_popup_image" class="ui_modal_background" src="../../Sprite/ui_modal.png" />
 
             <div id="name_content">
-                <div id="name_popup_title" class="ui_modal_title">Employee Registration</div>
-                <div id="name_popup_message" class="ui_modal_description">사원 이름을 입력해주세요.</div>
+                <div id="name_popup_message" class="ui_modal_description">나의 이름은...</div>
                 <div id="name_popup_rule" class="ui_modal_input_rule">한글 / Alphabet 6글자 이내</div>
 
                 <input id="player_name_input" class="ui_modal_input_field" type="text" value="김정글" />
