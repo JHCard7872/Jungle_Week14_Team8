@@ -43,6 +43,9 @@ local RAGDOLL_THUD_MAX_DISTANCE = 2500.0
 -- Player와의 수평 거리가 이 값 이상이면 바로 ragdoll이 아니라 감속 상태로 진입한다.
 local FLEE_END_DISTANCE = 10.0
 
+-- 벽 회피가 발생하면 player 위치 기반 fleeDir을 잠깐 무시하고 회피 방향으로 계속 진행한다.
+local FLEE_WALL_AVOID_OVERRIDE_DURATION = 5.0
+
 -- AliveFlee 상태에서 넘을 수 있는 낮은 둔턱 높이.
 -- 값이 커지면 벽을 타는 느낌이 날 수 있으므로 0.15 ~ 0.25 정도에서 조정한다.
 local FLEE_STEP_UP_HEIGHT = 1.0
@@ -88,6 +91,8 @@ local reviveElapsed = 0.0
 local reviveStartYaw = 0.0
 local reviveTargetYaw = 0.0
 local currentFleeAnimationPlayRate = 1.0
+local wallAvoidOverrideTimer = 0.0
+local wallAvoidOverrideDirection = nil
 local bWarnedMissingSetPlayRate = false
 local bWarnedMissingBeamShockImpulse = false
 local beamShockElapsed = BEAM_SHOCK_INTERVAL
@@ -1068,8 +1073,80 @@ local function face_direction(direction)
     obj.Rotation = Vector.new(0.0, 0.0, get_yaw_from_direction(direction))
 end
 
+local function clear_wall_avoid_override()
+    wallAvoidOverrideTimer = 0.0
+    wallAvoidOverrideDirection = nil
+
+    if movement ~= nil and movement.ClearLastWallAvoidanceDirection ~= nil then
+        movement:ClearLastWallAvoidanceDirection()
+    end
+end
+
+local function try_begin_wall_avoid_override()
+    if movement == nil or movement.HasLastWallAvoidanceDirection == nil or not movement:HasLastWallAvoidanceDirection() then
+        return false
+    end
+
+    local direction = nil
+    if movement.GetLastWallAvoidanceDirection ~= nil then
+        direction = movement:GetLastWallAvoidanceDirection()
+    end
+
+    if movement.ClearLastWallAvoidanceDirection ~= nil then
+        movement:ClearLastWallAvoidanceDirection()
+    end
+
+    if direction == nil then
+        return false
+    end
+
+    direction.Z = 0.0
+    if direction:Length() <= 0.001 then
+        return false
+    end
+
+    wallAvoidOverrideDirection = direction:Normalized()
+    wallAvoidOverrideTimer = FLEE_WALL_AVOID_OVERRIDE_DURATION
+    return true
+end
+
+local function has_wall_avoid_override_signal()
+    if wallAvoidOverrideTimer > 0.0 and wallAvoidOverrideDirection ~= nil then
+        return true
+    end
+
+    return movement ~= nil
+        and movement.HasLastWallAvoidanceDirection ~= nil
+        and movement:HasLastWallAvoidanceDirection()
+end
+
+local function get_alive_flee_move_direction(fleeDir, deltaTime)
+    try_begin_wall_avoid_override()
+
+    if wallAvoidOverrideTimer > 0.0 and wallAvoidOverrideDirection ~= nil then
+        wallAvoidOverrideTimer = wallAvoidOverrideTimer - (deltaTime or 0.0)
+        if wallAvoidOverrideTimer > 0.0 then
+            return wallAvoidOverrideDirection
+        end
+
+        clear_wall_avoid_override()
+    end
+
+    if fleeDir == nil then
+        local fallback = obj.Forward
+        fallback.Z = 0.0
+        if fallback:Length() > 0.001 then
+            return fallback:Normalized()
+        end
+        return Vector.new(1.0, 0.0, 0.0)
+    end
+
+    return fleeDir
+end
+
 function EnterDeadRagdoll()
     state = STATE_DEAD
+    clear_wall_avoid_override()
     reset_beam_shock_timer()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
@@ -1184,6 +1261,7 @@ function EnterReviving()
     end
 
     state = STATE_REVIVING
+    clear_wall_avoid_override()
     reset_beam_shock_timer()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
@@ -1274,6 +1352,7 @@ end
 
 function EnterAliveFlee()
     state = STATE_ALIVE
+    clear_wall_avoid_override()
     pendingDeadReason = nil
     fleeStopElapsed = 0.0
     fleeStopStartSpeed = 0.0
@@ -1506,14 +1585,19 @@ function Tick(dt)
     end
 
     if state == STATE_ALIVE and movement ~= nil then
-        if has_reached_flee_end_distance() then
+        local bWallAvoidOverride = has_wall_avoid_override_signal()
+        if not bWallAvoidOverride and has_reached_flee_end_distance() then
             EnterFleeStopping("FleeDistance")
             return
         end
 
-        local fleeDir = get_flee_direction()
-        face_direction(fleeDir)
-        movement:AddInputVector(fleeDir)
+        local fleeDir = nil
+        if not bWallAvoidOverride then
+            fleeDir = get_flee_direction()
+        end
+        local moveDir = get_alive_flee_move_direction(fleeDir, dt)
+        face_direction(moveDir)
+        movement:AddInputVector(moveDir)
         return
     end
 

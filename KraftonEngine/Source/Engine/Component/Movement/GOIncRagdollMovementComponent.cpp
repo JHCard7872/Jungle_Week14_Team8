@@ -4,10 +4,12 @@
 #include "Component/Shape/CapsuleComponent.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/World.h"
+#include "Math/MathUtils.h"
 #include "Math/Quat.h"
 #include "Serialization/Archive.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -32,6 +34,17 @@ namespace
 		const FVector Normal = GetBestHitNormal(Hit);
 		return !Normal.IsNearlyZero() && Normal.Z > WalkableFloorNormalZ;
 	}
+
+	FVector RotateDirection2D(const FVector& Direction, float Degrees)
+	{
+		const float Radians = Degrees * FMath::DegToRad;
+		const float Cos = std::cos(Radians);
+		const float Sin = std::sin(Radians);
+		return FVector(
+			Direction.X * Cos - Direction.Y * Sin,
+			Direction.X * Sin + Direction.Y * Cos,
+			0.0f);
+	}
 }
 
 void UGOIncRagdollMovementComponent::AddInputVector(const FVector& WorldVector)
@@ -50,6 +63,7 @@ void UGOIncRagdollMovementComponent::StopMovementImmediately()
 {
 	Velocity = FVector(0.0f, 0.0f, 0.0f);
 	PendingInputVector = FVector(0.0f, 0.0f, 0.0f);
+	ClearLastWallAvoidanceDirection();
 }
 
 void UGOIncRagdollMovementComponent::SetMovementEnabled(bool bEnabled)
@@ -151,9 +165,11 @@ void UGOIncRagdollMovementComponent::TickComponent(float DeltaTime, ELevelTick T
 	USceneComponent* Updated = GetUpdatedComponent();
 	if (!bMovementEnabled || !Updated || DeltaTime <= 0.0f)
 	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
 		return;
 	}
 
+	Input = AdjustInputForWallAvoidance(Input, DeltaTime);
 	ApplyInputToVelocity(Input, DeltaTime);
 
 	if (bGravityEnabled)
@@ -383,6 +399,152 @@ bool UGOIncRagdollMovementComponent::SweepCapsuleMoveFrom(const FVector& Start, 
 		OutHit,
 		ECollisionChannel::Pawn,
 		Owner);
+}
+
+FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVector& Input, float DeltaTime)
+{
+	const float InputLength = Input.Length();
+	if (InputLength <= SmallInputThreshold)
+	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		return Input;
+	}
+
+	const float ProbeDistance = std::max(0.0f, WallAvoidanceProbeDistance);
+	const float Strength = FMath::Clamp(WallAvoidanceStrength, 0.0f, 1.0f);
+	if (!bWallAvoidanceEnabled || !bSweepMovementEnabled || Strength <= SmallInputThreshold ||
+		ProbeDistance <= SmallMoveThreshold || !CanUseCapsuleSweep())
+	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		return Input;
+	}
+
+	FVector DesiredDir(Input.X, Input.Y, 0.0f);
+	DesiredDir = DesiredDir.GetSafeNormal();
+	if (DesiredDir.IsNearlyZero())
+	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		return Input;
+	}
+
+	FHitResult ForwardHit;
+	if (!ProbeWallAvoidance(DesiredDir, ProbeDistance, ForwardHit))
+	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		return Input;
+	}
+
+	FVector WallNormal = GetBestHitNormal(ForwardHit);
+	WallNormal.Z = 0.0f;
+	WallNormal = WallNormal.GetSafeNormal();
+	if (WallNormal.IsNearlyZero())
+	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		return Input;
+	}
+
+	const float IntoWall = DesiredDir.Dot(WallNormal);
+	if (IntoWall >= -SmallInputThreshold)
+	{
+		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+		return Input;
+	}
+
+	FVector HorizontalVelocity(Velocity.X, Velocity.Y, 0.0f);
+	const float VelocityIntoWall = HorizontalVelocity.Dot(WallNormal);
+	if (VelocityIntoWall < 0.0f)
+	{
+		HorizontalVelocity = HorizontalVelocity - WallNormal * VelocityIntoWall;
+		Velocity.X = HorizontalVelocity.X;
+		Velocity.Y = HorizontalVelocity.Y;
+	}
+
+	const float SideAngle = FMath::Clamp(WallAvoidanceSideProbeAngleDegrees, 0.0f, 90.0f);
+	const FVector LeftDir = RotateDirection2D(DesiredDir, SideAngle).GetSafeNormal();
+	const FVector RightDir = RotateDirection2D(DesiredDir, -SideAngle).GetSafeNormal();
+	const float LeftClearance = GetWallAvoidanceClearance(LeftDir, ProbeDistance);
+	const float RightClearance = GetWallAvoidanceClearance(RightDir, ProbeDistance);
+
+	FVector PreferredSideDir = LeftClearance >= RightClearance ? LeftDir : RightDir;
+	const float ClearanceDiff = std::abs(LeftClearance - RightClearance);
+	if (ClearanceDiff <= SweepSkinWidth && !LastWallAvoidanceDirection.IsNearlyZero())
+	{
+		PreferredSideDir =
+			LeftDir.Dot(LastWallAvoidanceDirection) >= RightDir.Dot(LastWallAvoidanceDirection)
+				? LeftDir
+				: RightDir;
+	}
+
+	FVector SlideDir = DesiredDir - WallNormal * IntoWall;
+	SlideDir.Z = 0.0f;
+	if (SlideDir.IsNearlyZero())
+	{
+		SlideDir = FVector(-WallNormal.Y, WallNormal.X, 0.0f);
+		if (SlideDir.Dot(PreferredSideDir) < 0.0f)
+		{
+			SlideDir *= -1.0f;
+		}
+	}
+	SlideDir = SlideDir.GetSafeNormal();
+
+	FVector AvoidDir =
+		SlideDir +
+		PreferredSideDir * FMath::Clamp(WallAvoidanceSideBias, 0.0f, 1.0f) +
+		WallNormal * FMath::Clamp(WallAvoidanceNormalPush, 0.0f, 1.0f);
+	AvoidDir.Z = 0.0f;
+	AvoidDir = AvoidDir.GetSafeNormal(1.0e-6f, SlideDir);
+
+	const float HitDistance = std::max(0.0f, ForwardHit.Distance);
+	const float Closeness = 1.0f - FMath::Clamp(HitDistance / ProbeDistance, 0.0f, 1.0f);
+	const float AvoidanceWeight = FMath::Clamp(Strength * (0.45f + Closeness * 0.55f), 0.0f, 1.0f);
+	if (AvoidanceWeight <= SmallInputThreshold)
+	{
+		return Input;
+	}
+
+	if (LastWallAvoidanceDirection.IsNearlyZero() || WallAvoidanceSmoothingSpeed <= 0.0f)
+	{
+		LastWallAvoidanceDirection = AvoidDir;
+	}
+	else
+	{
+		const float SmoothAlpha = FMath::Clamp(WallAvoidanceSmoothingSpeed * DeltaTime, 0.0f, 1.0f);
+		LastWallAvoidanceDirection =
+			FVector::Lerp(LastWallAvoidanceDirection, AvoidDir, SmoothAlpha).GetSafeNormal(1.0e-6f, AvoidDir);
+	}
+
+	FVector AdjustedDir = FVector::Lerp(DesiredDir, LastWallAvoidanceDirection, AvoidanceWeight);
+	AdjustedDir.Z = 0.0f;
+	AdjustedDir = AdjustedDir.GetSafeNormal(1.0e-6f, LastWallAvoidanceDirection);
+
+	return AdjustedDir * InputLength;
+}
+
+bool UGOIncRagdollMovementComponent::ProbeWallAvoidance(const FVector& Direction, float ProbeDistance, FHitResult& OutHit) const
+{
+	const FVector ProbeDir = FVector(Direction.X, Direction.Y, 0.0f).GetSafeNormal();
+	if (ProbeDir.IsNearlyZero() || ProbeDistance <= SmallMoveThreshold)
+	{
+		return false;
+	}
+
+	if (!SweepCapsuleMoveFrom(GetSweepCapsuleWorldLocation(), ProbeDir * ProbeDistance, OutHit))
+	{
+		return false;
+	}
+
+	return !IsWalkableFloorHit(OutHit);
+}
+
+float UGOIncRagdollMovementComponent::GetWallAvoidanceClearance(const FVector& Direction, float ProbeDistance) const
+{
+	FHitResult Hit;
+	if (!ProbeWallAvoidance(Direction, ProbeDistance, Hit))
+	{
+		return ProbeDistance;
+	}
+
+	return std::max(0.0f, Hit.Distance);
 }
 
 bool UGOIncRagdollMovementComponent::CanUseCapsuleSweep() const
