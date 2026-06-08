@@ -1,7 +1,9 @@
 #include "AnimNotify_PlaySound.h"
 
 #include "Audio/AudioManager.h"
+#include "Component/Primitive/SkeletalMeshComponent.h"
 #include "Core/Logging/Log.h"
+#include "Math/MathUtils.h"
 
 namespace
 {
@@ -11,7 +13,7 @@ namespace
 	static TSet<FString> GLoadedPlaySoundPaths;
 }
 
-void UAnimNotify_PlaySound::Notify(USkeletalMeshComponent* /*MeshComp*/, UAnimSequenceBase* /*Anim*/)
+void UAnimNotify_PlaySound::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* /*Anim*/)
 {
 	if (SoundPath.empty()) return;
 
@@ -31,5 +33,20 @@ void UAnimNotify_PlaySound::Notify(USkeletalMeshComponent* /*MeshComp*/, UAnimSe
 		}
 	}
 
-	FAudioManager::Get().PlayAudio(Key, Volume);
+	const float FinalVolume = FMath::Clamp(Volume, 0.0f, 1.0f);
+
+	if (bSpatialized && MeshComp != nullptr)
+	{
+		FAudioManager::Get().PlayAudioAt(
+			Key,
+			MeshComp->GetWorldLocation(),
+			FinalVolume,
+			MinDistance,
+			MaxDistance
+		);
+	}
+	else
+	{
+		FAudioManager::Get().PlayAudio(Key, FinalVolume);
+	}
 }
