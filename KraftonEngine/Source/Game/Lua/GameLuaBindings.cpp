@@ -23,6 +23,19 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialManager.h"
 #include "Math/Transform.h"
+#include "Particles/ParticleSystem.h"
+#include "Particles/ParticleSystemManager.h"
+#include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleLODLevel.h"
+#include "Particles/ParticleModuleRequired.h"
+#include "Particles/Spawn/ParticleModuleSpawn.h"
+#include "Particles/Lifetime/ParticleModuleLifetime.h"
+#include "Particles/Velocity/ParticleModuleVelocity.h"
+#include "Particles/Size/ParticleModuleSize.h"
+#include "Particles/Size/ParticleModuleSizeOverLife.h"
+#include "Particles/Color/ParticleModuleColor.h"
+#include "Distributions/DistributionVector.h"
+#include "Distributions/DistributionFloat.h"
 
 #include <algorithm>
 #include <cctype>
@@ -41,6 +54,109 @@
 // ============================================================
 namespace
 {
+	// ===== 파티클 베이커 헬퍼 (수거 FX_CollectPop 생성용, 개발 1회용) =====
+	// 기본 스프라이트 이미터가 만들어 둔 모듈을 찾아 in-place로 다듬기 위한 헬퍼들.
+	template<typename T>
+	T* FindParticleModule(UParticleLODLevel* LOD)
+	{
+		for (auto& Module : LOD->Modules)
+		{
+			if (T* Typed = Cast<T>(Module)) return Typed;
+		}
+		return nullptr;
+	}
+
+	void SetVecUniform(FRawDistributionVector& Dist, UObject* Owner, const FVector& Min, const FVector& Max)
+	{
+		UDistributionVectorUniform* U = UObjectManager::Get().CreateObject<UDistributionVectorUniform>(Owner);
+		U->Min = Min;
+		U->Max = Max;
+		Dist.Distribution = U;
+	}
+
+	void SetVecConstant(FRawDistributionVector& Dist, UObject* Owner, const FVector& Value)
+	{
+		UDistributionVectorConstant* K = UObjectManager::Get().CreateObject<UDistributionVectorConstant>(Owner);
+		K->Constant = Value;
+		Dist.Distribution = K;
+	}
+
+	void SetFloatConstant(FRawDistributionFloat& Dist, UObject* Owner, float Value)
+	{
+		UDistributionFloatConstant* K = UObjectManager::Get().CreateObject<UDistributionFloatConstant>(Owner);
+		K->Constant = Value;
+		Dist.Distribution = K;
+	}
+
+	// 기본 스프라이트 이미터를 만든 뒤 t=0 버스트 단발로 바꾸고 속도/크기/색/수명을 다듬어
+	// 한 emitter를 구성한다. SizeOverLife로 수명에 따른 축소 페이드를 더한다.
+	UParticleEmitter* BuildCollectPopEmitter(
+		UParticleSystem* System, const char* Name,
+		int32 BurstCount, float LifeMin, float LifeMax,
+		const FVector& VelMin, const FVector& VelMax, float VelRadial,
+		const FVector& SizeMin, const FVector& SizeMax,
+		float ScaleStart, float ScaleEnd,
+		const FVector& Color, float Alpha)
+	{
+		UParticleEmitter* Emitter = UObjectManager::Get().CreateObject<UParticleEmitter>(System);
+		Emitter->InitializeDefaultSpriteEmitter();   // Required/Spawn/Lifetime/Location/Velocity/Size/Color 생성
+		Emitter->EmitterName = FName(Name);
+
+		UParticleLODLevel* LOD = Emitter->GetLODLevel(0);
+		if (!LOD) return Emitter;
+
+		// Required: 1초 단발(one-shot). 기본은 무한 루프(0)라 버스트가 1초마다 재발사됨
+		if (LOD->RequiredModule)
+		{
+			LOD->RequiredModule->EmitterDuration = 1.0f;
+			LOD->RequiredModule->EmitterLoops    = 1;
+		}
+
+		// Spawn: 연속 분사 끄고 t=0 버스트로 한 번에 "팍"
+		if (LOD->SpawnModule)
+		{
+			LOD->SpawnModule->SpawnRate = 0.0f;
+			FParticleBurst Burst;
+			Burst.Count    = BurstCount;
+			Burst.CountLow = -1;
+			Burst.Time     = 0.0f;
+			LOD->SpawnModule->BurstList.push_back(Burst);
+		}
+
+		if (UParticleModuleLifetime* Lifetime = FindParticleModule<UParticleModuleLifetime>(LOD))
+		{
+			Lifetime->LifetimeMin = LifeMin;
+			Lifetime->LifetimeMax = LifeMax;
+		}
+		if (UParticleModuleVelocity* Velocity = FindParticleModule<UParticleModuleVelocity>(LOD))
+		{
+			SetVecUniform(Velocity->StartVelocity, Velocity, VelMin, VelMax);
+			SetFloatConstant(Velocity->StartVelocityRadial, Velocity, VelRadial);
+		}
+		if (UParticleModuleSize* Size = FindParticleModule<UParticleModuleSize>(LOD))
+		{
+			SetVecUniform(Size->StartSize, Size, SizeMin, SizeMax);
+		}
+		if (UParticleModuleColor* ColorMod = FindParticleModule<UParticleModuleColor>(LOD))
+		{
+			SetVecConstant(ColorMod->StartColor, ColorMod, Color);
+			SetFloatConstant(ColorMod->StartAlpha, ColorMod, Alpha);
+		}
+
+		// 수명에 따라 크기 축소(반짝→사라짐, 팍→수축) — 기본 이미터엔 없어서 추가
+		UParticleModuleSizeOverLife* SizeOverLife = UObjectManager::Get().CreateObject<UParticleModuleSizeOverLife>(LOD);
+		SizeOverLife->bEnabled   = true;
+		SizeOverLife->ScaleStart = ScaleStart;
+		SizeOverLife->ScaleEnd   = ScaleEnd;
+		LOD->Modules.push_back(SizeOverLife);
+
+		LOD->UpdateModuleLists();        // 구조 변경(모듈 추가) 후 필수
+		Emitter->CacheEmitterModuleInfo();   // 페이로드 오프셋 재계산
+
+		System->GetEmitters().push_back(Emitter);   // 완성된 emitter를 시스템에 등록 — 빠지면 빈 에셋이 저장됨
+		return Emitter;
+	}
+
 	FString NormalizeLuaName(FString Value)
 	{
 		Value.erase(
@@ -241,6 +357,48 @@ void RegisterGameLuaBindings(sol::state& Lua)
 
 			UE_LOG("[GOInc] Spawned summon portal.");
 			return Portal;
+		});
+
+		// 수거 "뾰로롱 팍" 파티클을 코드로 구워 Content/Particle/FX_CollectPop.uasset 생성.
+		// 개발 1회용 — 콘솔에서 한 번 호출해 에셋을 만든 뒤 에디터에서 미세조정·커밋한다.
+		// Sparkle(부드러운 반짝) + Burst(방사형 폭발) 2-emitter 구성.
+		GOInc.set_function("BakeCollectPopFX", []() -> bool
+		{
+			UParticleSystem* System = UObjectManager::Get().CreateObject<UParticleSystem>();
+			if (!System)
+			{
+				UE_LOG("[GOInc] BakeCollectPopFX failed. CreateObject<UParticleSystem> null.");
+				return false;
+			}
+
+			// Sparkle(뾰로롱): 약한 상향 드리프트 + 작은 크기 + 따뜻한 흰색, 반짝 사라짐
+			BuildCollectPopEmitter(System, "Sparkle",
+				14, 0.45f, 0.60f,
+				FVector(-0.6f, -0.6f, 0.8f), FVector(0.6f, 0.6f, 2.0f), 0.5f,
+				FVector(8.0f, 8.0f, 8.0f), FVector(18.0f, 18.0f, 18.0f),
+				1.0f, 0.0f,
+				FVector(1.0f, 0.95f, 0.6f), 1.0f);
+
+			// Burst(팍): 강한 방사형 외향 속도 + 살짝 큰 크기 + 짧은 수명, 확장 후 수축
+			BuildCollectPopEmitter(System, "Burst",
+				28, 0.40f, 0.50f,
+				FVector(-2.5f, -2.5f, 0.0f), FVector(2.5f, 2.5f, 1.2f), 4.0f,
+				FVector(14.0f, 14.0f, 14.0f), FVector(26.0f, 26.0f, 26.0f),
+				1.2f, 0.0f,
+				FVector(1.0f, 0.85f, 0.4f), 1.0f);
+
+			System->SetSourcePath("Content/Particle/FX_CollectPop.uasset");
+			const bool bSaved = FParticleSystemManager::Get().Save(System);
+
+			UObjectManager::Get().DestroyObject(System);   // 베이커가 소유 — 저장 후 해제
+
+			if (!bSaved)
+			{
+				UE_LOG("[GOInc] BakeCollectPopFX: Save failed.");
+				return false;
+			}
+			UE_LOG("[GOInc] BakeCollectPopFX: saved Content/Particle/FX_CollectPop.uasset");
+			return true;
 		});
 
 		GOInc.set_function("IsRagdollCharacterRegistered", [](const FString& CharacterId) -> bool
