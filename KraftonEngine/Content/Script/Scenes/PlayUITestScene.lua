@@ -47,6 +47,7 @@ function BeginPlay()
 end
 
 function Tick(dt)
+    UpdateCoroutines(dt)   -- 코루틴 심장 — 없으면 팝업 등 Wait 기반 연출이 첫 프레임에 멈춰 안 사라진다
     HUD.Update(dt)
 end
 
