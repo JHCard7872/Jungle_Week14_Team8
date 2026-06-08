@@ -2332,13 +2332,20 @@ local function apply_kinematic_movement(delta_time)
 
     local velocity = ensure_player_velocity()
     local horizontal_velocity = Vector.Zero()
-    weapon_swap_state.is_sprinting = Input.GetKey(C.KEY_SHIFT) and move_dir:Length() > 0.0001
+    -- 총 숙임 이펙트(is_sprinting)는 SHIFT 스프린트와 L3(패드) 대쉬 둘 다에서 동작해야 한다.
+    -- 속도 배수와 분리한다 — L3 대쉬 속도(1.7)는 그대로 두고 숙임 연출만 공유한다.
+    local is_moving = move_dir:Length() > 0.0001
+    local shift_held = Input.GetKey(C.KEY_SHIFT)
+    local dash_held = Input.GetKey(C.PAD_KEY_L3)
+    weapon_swap_state.is_sprinting = (shift_held or dash_held) and is_moving
 
-    if move_dir:Length() > 0.0001 then
-        -- remote 스프린트(SHIFT) 배수를 기본으로, L3(왼쪽 스틱 클릭) 대쉬 배수도 함께 반영한다.
-        -- 둘 다 눌린 경우는 더 큰 배수만 적용해 과하게 곱해지지 않게 한다.
-        local speed_multiplier = weapon_swap_state.is_sprinting and C.SPRINT_SPEED_MULTIPLIER or 1.0
-        if Input.GetKey(C.PAD_KEY_L3) then
+    if is_moving then
+        -- 속도 배수는 입력별로 따로: SHIFT=스프린트, L3=대쉬. 둘 다면 더 큰 쪽만 적용.
+        local speed_multiplier = 1.0
+        if shift_held then
+            speed_multiplier = C.SPRINT_SPEED_MULTIPLIER
+        end
+        if dash_held then
             speed_multiplier = math.max(speed_multiplier, C.DASH_SPEED_MULTIPLIER)
         end
         horizontal_velocity = move_dir:Normalized() * (C.MOVE_SPEED * speed_multiplier)

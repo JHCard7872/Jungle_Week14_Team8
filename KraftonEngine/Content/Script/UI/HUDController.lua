@@ -1,6 +1,7 @@
 local Session = require("GameSession")
 local RagdollData = require("Data/RagdollData")
 local UserSettings = require("Data/UserSettings")
+local Minimap = require("UI/MinimapController")
 
 local UI_DOCUMENT_PATH = "Content/UI/PlayHUD/play_hud.rml"
 local HUD_Z_ORDER = 200
@@ -1041,6 +1042,7 @@ function M.Update(dt)
     update_server_load_visual(dt)
     apply_server_load()
     apply_popup()
+    Minimap.Update(widget, dt)
 end
 
 function M.UpdateFromSession(dt)
@@ -1076,6 +1078,7 @@ function M.UpdateFromSession(dt)
 
     update_server_load_visual(dt)
     apply_all()
+    Minimap.Update(widget, dt)
 end
 
 function M.SetGameplayHudVisible(visible)
