@@ -97,7 +97,7 @@ local grabbed_target_world = nil
 local grabbed_last_target_world = nil
 local grabbed_target_velocity = nil
 local beamed_ragdoll_actor = nil
-local id_card_fade_entries = {}
+local id_card_remove_entries = {}
 local grab_fixed_ray = { start = nil, direction = nil, catalog_mass = nil, is_static_mesh = false }   -- PostCameraTick이 조준 레이를 캐시, FixedTick(물리 스텝)이 소비
 
 local RAGDOLL_TAG = "Ragdoll"
@@ -1521,7 +1521,7 @@ slot2_fire_feedback.SpawnImpactSpark = function(hit, beam_target_point, beam_dir
     ParticleManager.SpawnAt(spark_path, impact_location)
 end
 
-local function apply_hit_rim_style(component, style)
+local function apply_hit_rim_style(component, style, line_density, scroll_speed)
     if component == nil then
         return
     end
@@ -1530,8 +1530,8 @@ local function apply_hit_rim_style(component, style)
         component:SetHitRimStyle(style)
     end
 
-    if style == C.HIT_RIM_STYLE_SCAN_LINES and component.SetHitRimScanParams ~= nil then
-        component:SetHitRimScanParams(C.HIT_SCAN_LINE_DENSITY, C.HIT_SCAN_SCROLL_SPEED)
+    if component.SetHitRimScanParams ~= nil and (style == C.HIT_RIM_STYLE_SCAN_LINES or line_density ~= nil or scroll_speed ~= nil) then
+        component:SetHitRimScanParams(line_density or C.HIT_SCAN_LINE_DENSITY, scroll_speed or C.HIT_SCAN_SCROLL_SPEED)
     end
 end
 
@@ -1665,8 +1665,8 @@ local function record_id_card_name(actor_name)
     names[#names + 1] = actor_name
 end
 
-local function begin_id_card_fade(actor, hit_component)
-    if not is_actor_valid(actor) or id_card_fade_entries[actor] ~= nil then
+local function begin_id_card_remove_timer(actor, hit_component)
+    if not is_actor_valid(actor) or id_card_remove_entries[actor] ~= nil then
         return
     end
 
@@ -1677,7 +1677,7 @@ local function begin_id_card_fade(actor, hit_component)
         start_scale = copy_vec(start_scale)
     end
 
-    id_card_fade_entries[actor] = {
+    id_card_remove_entries[actor] = {
         actor = actor,
         actor_name = get_id_card_actor_name(actor),
         component = hit_component,
@@ -1686,10 +1686,18 @@ local function begin_id_card_fade(actor, hit_component)
     }
 end
 
+local function is_id_card_actor(actor)
+    if not (is_actor_valid(actor) and actor.HasTag ~= nil) then
+        return false
+    end
+
+    local id_card_tag = C.ID_CARD_TAG or "IDCard"
+    return actor:HasTag(id_card_tag) or actor:HasTag("IdCard")
+end
+
 local function trigger_id_card_rim(hit, should_flash)
     local actor = get_hit_actor(hit)
-    local id_card_tag = C.ID_CARD_TAG or "IDCard"
-    if not (is_actor_valid(actor) and actor.HasTag ~= nil and actor:HasTag(id_card_tag)) then
+    if not is_id_card_actor(actor) then
         return false
     end
 
@@ -1697,12 +1705,24 @@ local function trigger_id_card_rim(hit, should_flash)
     if hit_component == nil and actor.GetRootPrimitiveComponent ~= nil then
         hit_component = actor:GetRootPrimitiveComponent()
     end
+    if actor.GetPrimitiveComponentByName ~= nil then
+        local visual_component = actor:GetPrimitiveComponentByName("IdCardBillboard")
+            or actor:GetPrimitiveComponentByName("IDCardBillboard")
+            or actor:GetPrimitiveComponentByName("CardBillboard")
+        if visual_component ~= nil then
+            hit_component = visual_component
+        end
+    end
     if hit_component == nil then
-        begin_id_card_fade(actor, hit_component)
+        begin_id_card_remove_timer(actor, hit_component)
         return true
     end
 
-    apply_hit_rim_style(hit_component, C.ID_CARD_HIT_RIM_STYLE or C.HIT_RIM_STYLE_SCAN_LINES)
+    apply_hit_rim_style(
+        hit_component,
+        C.ID_CARD_HIT_RIM_STYLE or C.HIT_RIM_STYLE_SCAN_LINES,
+        C.ID_CARD_HIT_UV_NOISE_DENSITY or C.ID_CARD_HIT_SCAN_LINE_DENSITY or C.HIT_SCAN_LINE_DENSITY,
+        C.ID_CARD_HIT_UV_SCROLL_SPEED or C.ID_CARD_HIT_SCAN_SCROLL_SPEED or C.HIT_SCAN_SCROLL_SPEED)
     set_hit_rim_color(
         hit_component,
         C.ID_CARD_HIT_RIM_COLOR_R or 1.0,
@@ -1717,7 +1737,7 @@ local function trigger_id_card_rim(hit, should_flash)
     local impact_intensity = C.ID_CARD_HIT_IMPACT_INTENSITY or C.HIT_IMPACT_INTENSITY
     local hit_location = get_hit_location(hit)
 
-    begin_id_card_fade(actor, hit_component)
+    begin_id_card_remove_timer(actor, hit_component)
 
     if hit_location ~= nil then
         if should_flash and hit_component.TriggerHitRimAt ~= nil then
@@ -1741,25 +1761,29 @@ local function trigger_id_card_rim(hit, should_flash)
     return true
 end
 
-local function update_id_card_fades(delta_time)
+local function update_id_card_removals(delta_time)
     local dt = math.max(delta_time or 0.0, 0.0)
-    local delay = math.max(C.ID_CARD_FADE_DELAY or 0.0, 0.0)
-    local fade_duration = math.max(C.ID_CARD_FADE_DURATION or 0.01, 0.01)
-    local min_scale = math.max(C.ID_CARD_FADE_MIN_SCALE or 0.02, 0.0)
+    local remove_delay = math.max(C.ID_CARD_REMOVE_DELAY or 2.0, 0.0)
+    local shrink_duration = math.max(C.ID_CARD_SHRINK_DURATION or 0.70, 0.01)
+    local min_scale = math.max(C.ID_CARD_SHRINK_MIN_SCALE or 0.02, 0.0)
 
-    for actor, entry in pairs(id_card_fade_entries) do
+    for actor, entry in pairs(id_card_remove_entries) do
         if not is_actor_valid(actor) then
-            id_card_fade_entries[actor] = nil
+            id_card_remove_entries[actor] = nil
         else
             entry.elapsed = (entry.elapsed or 0.0) + dt
-            local fade_elapsed = math.max(entry.elapsed - delay, 0.0)
-            local alpha = clamp(fade_elapsed / fade_duration, 0.0, 1.0)
-            local scale_alpha = 1.0 - ease_in_out(alpha)
-            local scale = min_scale + (1.0 - min_scale) * scale_alpha
-            actor.Scale = vec(
-                (entry.start_scale.X or 1.0) * scale,
-                (entry.start_scale.Y or 1.0) * scale,
-                (entry.start_scale.Z or 1.0) * scale)
+            local shrink_elapsed = math.max(entry.elapsed - remove_delay, 0.0)
+            local alpha = clamp(shrink_elapsed / shrink_duration, 0.0, 1.0)
+
+            if alpha > 0.0 then
+                local scale_alpha = 1.0 - ease_in_out(alpha)
+                local scale = min_scale + (1.0 - min_scale) * scale_alpha
+                local start_scale = entry.start_scale or vec(1.0, 1.0, 1.0)
+                actor.Scale = vec(
+                    (start_scale.X or 1.0) * scale,
+                    (start_scale.Y or 1.0) * scale,
+                    (start_scale.Z or 1.0) * scale)
+            end
 
             if alpha >= 1.0 then
                 record_id_card_name(entry.actor_name)
@@ -1769,7 +1793,7 @@ local function update_id_card_fades(delta_time)
                 if actor.Destroy ~= nil then
                     actor:Destroy()
                 end
-                id_card_fade_entries[actor] = nil
+                id_card_remove_entries[actor] = nil
             end
         end
     end
@@ -3019,7 +3043,7 @@ function PrePhysicsTick(delta_time)
 end
 
 function Tick(delta_time)
-    update_id_card_fades(delta_time)
+    update_id_card_removals(delta_time)
 
     if Session.inputEnabled ~= true then
         slot2_muzzle_fx.Stop()

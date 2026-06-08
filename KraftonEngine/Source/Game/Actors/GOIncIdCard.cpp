@@ -25,7 +25,7 @@ namespace
 // 기본값들은 Default.Scene의 AActor_0 구성을 구운 것
 void AGOIncIdCard::InitDefaultComponents()
 {
-	AddTag(FName("IdCard"));
+	AddTag(FName("IDCard"));
 
 	// 1) Root — 빌보드/파티클/그랩박스를 형제로 묶는 기준점. Bobbing이 이 Root를 위아래로 움직인다.
 	USceneComponent* Root = AddComponent<USceneComponent>();
