@@ -4,6 +4,7 @@
 #include "Component/Shape/CapsuleComponent.h"
 #include "GameFramework/AActor.h"
 #include "GameFramework/World.h"
+#include "Core/Logging/Log.h"
 #include "Math/MathUtils.h"
 #include "Math/Quat.h"
 #include "Serialization/Archive.h"
@@ -262,12 +263,6 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 			Updated->SetWorldLocation(Updated->GetWorldLocation() + SafeMove);
 		}
 
-		if (Hit.bStartPenetrating)
-		{
-			Velocity.Z = std::max(0.0f, Velocity.Z);
-			return true;
-		}
-
 		if (bIgnoreWalkableFloorHits && bStepUpEnabled && bIsGrounded && !IsWalkableFloorHit(Hit))
 		{
 			const FVector RemainingAfterSafeMove = Remaining - SafeMove;
@@ -275,6 +270,22 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 			{
 				return true;
 			}
+		}
+
+		if (Hit.bStartPenetrating)
+		{
+			if (bStepUpDebugLogEnabled)
+			{
+				const FVector HitNormal = GetBestHitNormal(Hit);
+				UE_LOG("[GOIncStepUp] Fail=StartPenetratingAfterStepAttempt hitDist=%.3f remainingLen=%.3f hitNormal=(%.3f, %.3f, %.3f)",
+					Hit.Distance,
+					RemainingDistance,
+					HitNormal.X,
+					HitNormal.Y,
+					HitNormal.Z);
+			}
+			Velocity.Z = std::max(0.0f, Velocity.Z);
+			return true;
 		}
 
 		const FVector UsedMove = MoveDir * std::min(Hit.Distance, RemainingDistance);
@@ -304,35 +315,87 @@ bool UGOIncRagdollMovementComponent::MoveUpdatedComponentWithSweep(const FVector
 
 bool UGOIncRagdollMovementComponent::TryStepUp(const FVector& MoveDelta, const FHitResult& BlockingHit)
 {
+	return AttemptStepUp(MoveDelta, BlockingHit, true);
+}
+
+bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, const FHitResult& BlockingHit, bool bCommitMove)
+{
 	USceneComponent* Updated = GetUpdatedComponent();
 	if (!Updated || !bStepUpEnabled || MaxStepHeight <= 0.0f)
 	{
+		if (bStepUpDebugLogEnabled)
+		{
+			UE_LOG("[GOIncStepUp] Fail=DisabledOrNoUpdated commit=%d updated=%d enabled=%d maxStep=%.3f moveLen=%.3f",
+				bCommitMove ? 1 : 0,
+				Updated ? 1 : 0,
+				bStepUpEnabled ? 1 : 0,
+				MaxStepHeight,
+				MoveDelta.Length());
+		}
 		return false;
 	}
 
 	if (!bFloorRaycastEnabled || !bIsGrounded)
 	{
+		if (bStepUpDebugLogEnabled)
+		{
+			UE_LOG("[GOIncStepUp] Fail=NotGrounded commit=%d floorRaycast=%d grounded=%d moveLen=%.3f",
+				bCommitMove ? 1 : 0,
+				bFloorRaycastEnabled ? 1 : 0,
+				bIsGrounded ? 1 : 0,
+				MoveDelta.Length());
+		}
 		return false;
 	}
 
 	if (IsWalkableFloorHit(BlockingHit))
 	{
+		if (bStepUpDebugLogEnabled)
+		{
+			const FVector HitNormal = GetBestHitNormal(BlockingHit);
+			UE_LOG("[GOIncStepUp] Fail=BlockingHitIsFloor commit=%d hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f)",
+				bCommitMove ? 1 : 0,
+				BlockingHit.Distance,
+				HitNormal.X,
+				HitNormal.Y,
+				HitNormal.Z);
+		}
 		return false;
 	}
 
 	const FVector HorizontalDelta(MoveDelta.X, MoveDelta.Y, 0.0f);
 	if (HorizontalDelta.Length() <= SmallMoveThreshold)
 	{
+		if (bStepUpDebugLogEnabled)
+		{
+			UE_LOG("[GOIncStepUp] Fail=NoHorizontalDelta commit=%d move=(%.3f, %.3f, %.3f)",
+				bCommitMove ? 1 : 0,
+				MoveDelta.X,
+				MoveDelta.Y,
+				MoveDelta.Z);
+		}
 		return false;
 	}
 
 	const FVector OriginalLocation = Updated->GetWorldLocation();
+	const float OriginalCapsuleZ = GetSweepCapsuleWorldLocation().Z;
 	const bool bWasGrounded = bIsGrounded;
 	const FVector StepUpDelta(0.0f, 0.0f, MaxStepHeight);
 
 	FHitResult UpHit;
 	if (SweepCapsuleMoveFrom(GetSweepCapsuleWorldLocation(), StepUpDelta, UpHit))
 	{
+		if (bStepUpDebugLogEnabled)
+		{
+			const FVector HitNormal = GetBestHitNormal(UpHit);
+			UE_LOG("[GOIncStepUp] Fail=UpBlocked commit=%d upDist=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f)",
+				bCommitMove ? 1 : 0,
+				MaxStepHeight,
+				UpHit.Distance,
+				HitNormal.X,
+				HitNormal.Y,
+				HitNormal.Z);
+		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return false;
@@ -343,6 +406,17 @@ bool UGOIncRagdollMovementComponent::TryStepUp(const FVector& MoveDelta, const F
 	FHitResult ForwardHit;
 	if (SweepCapsuleMove(HorizontalDelta, ForwardHit))
 	{
+		if (bStepUpDebugLogEnabled)
+		{
+			const FVector HitNormal = GetBestHitNormal(ForwardHit);
+			UE_LOG("[GOIncStepUp] Fail=ForwardBlocked commit=%d horizontalLen=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f)",
+				bCommitMove ? 1 : 0,
+				HorizontalDelta.Length(),
+				ForwardHit.Distance,
+				HitNormal.X,
+				HitNormal.Y,
+				HitNormal.Z);
+		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return false;
@@ -350,11 +424,104 @@ bool UGOIncRagdollMovementComponent::TryStepUp(const FVector& MoveDelta, const F
 
 	Updated->SetWorldLocation(Updated->GetWorldLocation() + HorizontalDelta);
 
-	if (!SnapUpdatedComponentToFloor())
+	FHitResult StepFloorHit;
+	const float StepFloorProbeDistance = MaxStepHeight + FloorProbeDistance;
+	const FVector HorizontalDir = HorizontalDelta.GetSafeNormal();
+	const float CapsuleRadius = GetSweepCapsuleRadius();
+	const float ForwardProbeDistance = std::max(
+		HorizontalDelta.Length(),
+		CapsuleRadius + std::max(0.0f, StepForwardProbeDistance));
+	const FVector ForwardProbeCapsuleLocation = GetSweepCapsuleWorldLocation() + HorizontalDir * ForwardProbeDistance;
+	bool bFoundStepFloor =
+		TraceFloorAtCapsuleLocation(ForwardProbeCapsuleLocation, StepFloorProbeDistance, StepFloorHit) &&
+		IsWalkableFloorHit(StepFloorHit);
+
+	if (bFoundStepFloor)
 	{
+		const float CandidateCapsuleZ = StepFloorHit.WorldHitLocation.Z + GetCapsuleHalfHeight() + FloorSnapClearance;
+		const float CandidateStepHeight = CandidateCapsuleZ - OriginalCapsuleZ;
+		if (CandidateStepHeight < -MaxStepHeight - FloorSnapClearance ||
+			CandidateStepHeight > MaxStepHeight + FloorSnapClearance)
+		{
+			bFoundStepFloor = false;
+		}
+	}
+
+	if (!bFoundStepFloor)
+	{
+		bFoundStepFloor =
+			TraceFloorAtCapsuleLocation(GetSweepCapsuleWorldLocation(), StepFloorProbeDistance, StepFloorHit) &&
+			IsWalkableFloorHit(StepFloorHit);
+	}
+
+	if (!bFoundStepFloor)
+	{
+		if (bStepUpDebugLogEnabled)
+		{
+			UE_LOG("[GOIncStepUp] Fail=NoStepFloor commit=%d horizontalLen=%.3f maxStep=%.3f floorProbe=%.3f capsuleRadius=%.3f forwardProbe=%.3f forwardPadding=%.3f",
+				bCommitMove ? 1 : 0,
+				HorizontalDelta.Length(),
+				MaxStepHeight,
+				FloorProbeDistance,
+				CapsuleRadius,
+				ForwardProbeDistance,
+				StepForwardProbeDistance);
+		}
 		Updated->SetWorldLocation(OriginalLocation);
 		bIsGrounded = bWasGrounded;
 		return false;
+	}
+
+	const float DesiredCapsuleZ = StepFloorHit.WorldHitLocation.Z + GetCapsuleHalfHeight() + FloorSnapClearance;
+	const float StepHeight = DesiredCapsuleZ - OriginalCapsuleZ;
+	if (StepHeight < -MaxStepHeight - FloorSnapClearance || StepHeight > MaxStepHeight + FloorSnapClearance)
+	{
+		if (bStepUpDebugLogEnabled)
+		{
+			UE_LOG("[GOIncStepUp] Fail=InvalidStepHeight commit=%d stepHeight=%.3f maxStep=%.3f desiredCapsuleZ=%.3f originalCapsuleZ=%.3f floorZ=%.3f",
+				bCommitMove ? 1 : 0,
+				StepHeight,
+				MaxStepHeight,
+				DesiredCapsuleZ,
+				OriginalCapsuleZ,
+				StepFloorHit.WorldHitLocation.Z);
+		}
+		Updated->SetWorldLocation(OriginalLocation);
+		bIsGrounded = bWasGrounded;
+		return false;
+	}
+
+	FVector FinalLocation = Updated->GetWorldLocation();
+	FinalLocation.Z += DesiredCapsuleZ - GetSweepCapsuleWorldLocation().Z;
+	Updated->SetWorldLocation(FinalLocation);
+
+	if (!bCommitMove)
+	{
+		if (bStepUpDebugLogEnabled)
+		{
+			UE_LOG("[GOIncStepUp] Success=Simulation stepHeight=%.3f horizontalLen=%.3f maxStep=%.3f floorZ=%.3f capsuleRadius=%.3f forwardProbe=%.3f",
+				StepHeight,
+				HorizontalDelta.Length(),
+				MaxStepHeight,
+				StepFloorHit.WorldHitLocation.Z,
+				CapsuleRadius,
+				ForwardProbeDistance);
+		}
+		Updated->SetWorldLocation(OriginalLocation);
+		bIsGrounded = bWasGrounded;
+		return true;
+	}
+
+	if (bStepUpDebugLogEnabled)
+	{
+		UE_LOG("[GOIncStepUp] Success=Commit stepHeight=%.3f horizontalLen=%.3f maxStep=%.3f finalZ=%.3f floorZ=%.3f capsuleRadius=%.3f forwardProbe=%.3f",
+			StepHeight,
+			HorizontalDelta.Length(),
+			MaxStepHeight,
+			FinalLocation.Z,
+			StepFloorHit.WorldHitLocation.Z,
+			CapsuleRadius,
+			ForwardProbeDistance);
 	}
 
 	Velocity.Z = 0.0f;
@@ -434,6 +601,39 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 		return Input;
 	}
 
+	USceneComponent* Updated = GetUpdatedComponent();
+	if (Updated && bStepUpEnabled && bIsGrounded)
+	{
+		const FVector OriginalLocation = Updated->GetWorldLocation();
+		const bool bWasGrounded = bIsGrounded;
+		const float SafeDistance = std::max(0.0f, ForwardHit.Distance - SweepSkinWidth);
+		const float ClampedSafeDistance = std::min(SafeDistance, ProbeDistance);
+		const FVector SafeMove = DesiredDir * ClampedSafeDistance;
+		if (SafeMove.Length() > SmallMoveThreshold)
+		{
+			Updated->SetWorldLocation(OriginalLocation + SafeMove);
+		}
+
+		const float RemainingProbeDistance = std::max(SmallMoveThreshold, ProbeDistance - ClampedSafeDistance);
+		const bool bCanStepUp = AttemptStepUp(DesiredDir * RemainingProbeDistance, ForwardHit, false);
+		Updated->SetWorldLocation(OriginalLocation);
+		bIsGrounded = bWasGrounded;
+
+		if (bCanStepUp)
+		{
+			if (bStepUpDebugLogEnabled)
+			{
+				UE_LOG("[GOIncStepUp] WallAvoidance=SkippedBecauseStepUpPossible probeDist=%.3f safeDist=%.3f remainingProbe=%.3f hitDist=%.3f",
+					ProbeDistance,
+					ClampedSafeDistance,
+					RemainingProbeDistance,
+					ForwardHit.Distance);
+			}
+			LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
+			return Input;
+		}
+	}
+
 	FVector WallNormal = GetBestHitNormal(ForwardHit);
 	WallNormal.Z = 0.0f;
 	WallNormal = WallNormal.GetSafeNormal();
@@ -441,6 +641,19 @@ FVector UGOIncRagdollMovementComponent::AdjustInputForWallAvoidance(const FVecto
 	{
 		LastWallAvoidanceDirection = FVector(0.0f, 0.0f, 0.0f);
 		return Input;
+	}
+
+	if (bStepUpDebugLogEnabled)
+	{
+		UE_LOG("[GOIncStepUp] WallAvoidance=Active hitDist=%.3f wallNormal=(%.3f, %.3f, %.3f) inputDir=(%.3f, %.3f, %.3f) maxStep=%.3f",
+			ForwardHit.Distance,
+			WallNormal.X,
+			WallNormal.Y,
+			WallNormal.Z,
+			DesiredDir.X,
+			DesiredDir.Y,
+			DesiredDir.Z,
+			MaxStepHeight);
 	}
 
 	const float IntoWall = DesiredDir.Dot(WallNormal);
@@ -647,6 +860,11 @@ void UGOIncRagdollMovementComponent::ClampVelocityToMaxSpeed()
 
 bool UGOIncRagdollMovementComponent::TraceFloor(FHitResult& OutHit) const
 {
+	return TraceFloorAtCapsuleLocation(GetSweepCapsuleWorldLocation(), FloorProbeDistance, OutHit);
+}
+
+bool UGOIncRagdollMovementComponent::TraceFloorAtCapsuleLocation(const FVector& CapsuleLocation, float ProbeDistance, FHitResult& OutHit) const
+{
 	USceneComponent* Updated = GetUpdatedComponent();
 	if (!Updated)
 	{
@@ -671,12 +889,11 @@ bool UGOIncRagdollMovementComponent::TraceFloor(FHitResult& OutHit) const
 		return false;
 	}
 
-	const FVector Start = GetSweepCapsuleWorldLocation();
 	const FVector Dir(0.0f, 0.0f, -1.0f);
-	const float MaxDist = HalfHeight + FloorProbeDistance + FloorSnapClearance;
+	const float MaxDist = HalfHeight + std::max(0.0f, ProbeDistance) + FloorSnapClearance;
 
 	return World->PhysicsRaycastByObjectTypes(
-		Start,
+		CapsuleLocation,
 		Dir,
 		MaxDist,
 		OutHit,
@@ -718,4 +935,5 @@ void UGOIncRagdollMovementComponent::Serialize(FArchive& Ar)
 	Ar << ExplicitSweepCapsuleLocalOffset;
 	Ar << bStepUpEnabled;
 	Ar << MaxStepHeight;
+	Ar << StepForwardProbeDistance;
 }

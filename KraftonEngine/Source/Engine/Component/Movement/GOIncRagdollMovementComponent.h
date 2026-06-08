@@ -128,6 +128,10 @@ public:
 	bool bStepUpEnabled = true;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Max Step Height", Min=0.0f, Max=2.0f, Speed=0.01f)
 	float MaxStepHeight = 0.0f;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Step Forward Probe Padding", Min=0.0f, Max=2.0f, Speed=0.01f)
+	float StepForwardProbeDistance = 0.05f;
+	UPROPERTY(Edit, Category="GOIncRagdollMovement|Step", DisplayName="Debug Step Up Logs")
+	bool bStepUpDebugLogEnabled = true;
 
 	// Component 간 직접 참조를 피하기 위해 CapsuleComponent 포인터 대신 shape 값만 저장한다.
 	// Actor/Lua가 AliveCapsule의 크기와 UpdatedComponent 기준 local offset을 전달한다.
@@ -148,11 +152,13 @@ private:
 	void ApplyBraking(float DeltaTime);
 	void ClampVelocityToMaxSpeed();
 	bool TraceFloor(FHitResult& OutHit) const;
+	bool TraceFloorAtCapsuleLocation(const FVector& CapsuleLocation, float ProbeDistance, FHitResult& OutHit) const;
 	float GetCapsuleHalfHeight() const;
 	void ResolveFloorAfterMove();
 	void MoveUpdatedComponent(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits = false);
 	bool MoveUpdatedComponentWithSweep(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits);
 	bool TryStepUp(const FVector& MoveDelta, const FHitResult& BlockingHit);
+	bool AttemptStepUp(const FVector& MoveDelta, const FHitResult& BlockingHit, bool bCommitMove);
 	bool SweepCapsuleMove(const FVector& MoveDelta, FHitResult& OutHit) const;
 	bool SweepCapsuleMoveFrom(const FVector& Start, const FVector& MoveDelta, FHitResult& OutHit) const;
 	bool CanUseCapsuleSweep() const;

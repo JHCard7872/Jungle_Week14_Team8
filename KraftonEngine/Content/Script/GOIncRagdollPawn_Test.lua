@@ -47,8 +47,8 @@ local FLEE_END_DISTANCE = 10.0
 local FLEE_WALL_AVOID_OVERRIDE_DURATION = 5.0
 
 -- AliveFlee 상태에서 넘을 수 있는 낮은 둔턱 높이.
--- 값이 커지면 벽을 타는 느낌이 날 수 있으므로 0.15 ~ 0.25 정도에서 조정한다.
-local FLEE_STEP_UP_HEIGHT = 1.0
+-- 값이 커지면 벽을 타는 느낌이 날 수 있으므로 0.25 ~ 0.4 정도에서 조정한다.
+local FLEE_STEP_UP_HEIGHT = 0.4
 
 -- FleeStopping 설정값.
 -- 거리 조건을 만족하면 이 시간 동안 이동 입력을 끊고 감속한다.
