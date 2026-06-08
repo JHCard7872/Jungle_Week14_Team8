@@ -2163,7 +2163,12 @@ local function apply_kinematic_movement(delta_time)
     local horizontal_velocity = Vector.Zero()
 
     if move_dir:Length() > 0.0001 then
-        horizontal_velocity = move_dir:Normalized() * C.MOVE_SPEED
+        -- L3(왼쪽 스틱 클릭)를 누르고 있으면 대쉬 — 이동 속도에 배수를 곱한다
+        local speed = C.MOVE_SPEED
+        if Input.GetKey(C.PAD_KEY_L3) then
+            speed = speed * C.DASH_SPEED_MULTIPLIER
+        end
+        horizontal_velocity = move_dir:Normalized() * speed
     end
 
     velocity.X = horizontal_velocity.X

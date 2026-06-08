@@ -26,6 +26,7 @@ return {
     PAD_KEY_RT = 0xCA, -- 오른쪽 트리거(임계값 디지털): 그랩/발사
     PAD_KEY_LB = 0xC8, -- 왼쪽 숄더: 그랩 거리 가까이
     PAD_KEY_LT = 0xC9, -- 왼쪽 트리거(임계값 디지털): 그랩 거리 멀리
+    PAD_KEY_L3 = 0xD1, -- 왼쪽 스틱 클릭(L3): 대쉬 — 누르고 있는 동안 이동 속도 배수
     PAD_LOOK_YAW_DEG_PER_SEC   = 180.0, -- 우스틱 풀기울임 시 좌우 회전 속도(도/초)
     PAD_LOOK_PITCH_DEG_PER_SEC = 120.0, -- 우스틱 풀기울임 시 상하 회전 속도(도/초). 위로 밀면 위를 본다
     PAD_DISTANCE_NOTCHES_PER_SEC = 6.0, -- LB/LT를 누르고 있는 동안 초당 휠 노치 환산량
@@ -39,6 +40,7 @@ return {
     TARGET_INFO_FALLBACK_IMAGE_PATH = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
 
     MOVE_SPEED = 6.0,                   -- WASD 수평 이동 속도
+    DASH_SPEED_MULTIPLIER = 1.7,        -- L3(왼쪽 스틱 클릭) 누르고 있을 때 이동 속도 배수 (대쉬)
     JUMP_VELOCITY = 6.5,                -- Space 입력 시 Lua가 보관하는 Z 속도에 넣는 점프 속도
     GRAVITY_ACCELERATION = 9.8,         -- PhysX 시뮬레이션 대신 엔진 쪽 이동에서 직접 적용할 중력 가속도
     PLAYER_CAPSULE_HALF_HEIGHT = 1.0,   -- GOIncRoot 캡슐의 실제 월드 반높이. Scene의 HalfHeight 2.0 * ScaleZ 0.5
