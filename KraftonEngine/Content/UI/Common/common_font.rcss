@@ -1,11 +1,12 @@
 /* =============================================================================
-   Common Font Style
-   프로젝트 UI 기본 서체를 바꾸고 싶으면 이 파일만 우선 수정한다.
-   개별 화면 RCSS에는 크기/위치/색상만 남기고, 기본 font-family/font-weight는 여기서 관리한다.
+   Common Font Tokens
+   -----------------------------------------------------------------------------
+   엔진의 실제 font key가 다르면 이 파일의 font-family 값만 바꾸면 된다.
+   UI 타입별 크기/배경/색상은 common_ui_style.rcss에서 관리한다.
    ============================================================================= */
 
 body {
-    font-family: NanumGothic;
+    font-family: Galmuri;
     font-weight: bold;
     color: #ffffff;
 }
@@ -13,6 +14,6 @@ body {
 button,
 input,
 textarea {
-    font-family: NanumGothic;
+    font-family: Galmuri;
     font-weight: bold;
 }

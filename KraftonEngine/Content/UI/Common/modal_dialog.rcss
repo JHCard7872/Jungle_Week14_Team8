@@ -35,8 +35,6 @@ body {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: 920px;
-    height: 420px;
     margin-left: -460px;
     margin-top: -210px;
     z-index: 20;
@@ -46,8 +44,6 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
 }
 
@@ -66,11 +62,6 @@ body {
     top: 0px;
     width: 100%;
     height: 56px;
-    color: #ffffff;
-    font-size: 40px;
-    line-height: 56px;
-    text-align: center;
-    font-effect: shadow(3px 3px #000000aa);
 }
 
 #modal_message {
@@ -79,11 +70,6 @@ body {
     top: 62px;
     width: 100%;
     height: 84px;
-    color: #ffffff;
-    font-size: 28px;
-    line-height: 42px;
-    text-align: center;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 #modal_button_row {
@@ -97,8 +83,6 @@ body {
 .modal_button {
     position: absolute;
     top: 0px;
-    width: 300px;
-    height: 104px;
     margin: 0px;
     padding: 0px;
     border: 0px;
@@ -154,8 +138,6 @@ body {
     position: absolute;
     left: 0px;
     top: 0px;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
 }
 
@@ -177,12 +159,7 @@ body {
     top: 26px;
     width: 100%;
     height: 52px;
-    color: #ffffff;
-    font-size: 40px;
-    line-height: 52px;
-    text-align: center;
     pointer-events: none;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 /* YES / NO 같은 질문 팝업용. 위치 계산은 Lua가 아니라 CSS 클래스만으로 처리한다. */
@@ -205,12 +182,6 @@ body {
     top: 0px;
     width: 100%;
     height: 64px;
-    font-size: 36px;
-    line-height: 64px;
-    letter-spacing: 2px;
-    color: #ffffff;
-    text-align: center;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 .modal_two_buttons #modal_button_left.text_only {
@@ -256,8 +227,6 @@ body {
 .modal_with_input #modal_message {
     top: 58px;
     height: 36px;
-    font-size: 24px;
-    line-height: 36px;
 }
 
 .modal_with_input #modal_button_row {
@@ -270,10 +239,6 @@ body {
     top: 0px;
     width: 100%;
     height: 26px;
-    color: #b8f8ff;
-    font-size: 18px;
-    line-height: 26px;
-    text-align: center;
 }
 
 #modal_text_input {
@@ -284,13 +249,6 @@ body {
     height: 52px;
     margin-left: -190px;
     padding: 0px 16px;
-    color: #111111;
-    background-color: #ffffffee;
-    border: 3px #00eaff;
-    border-radius: 10px;
-    font-size: 28px;
-    line-height: 52px;
-    text-align: center;
 }
 
 #modal_input_error {
@@ -299,11 +257,6 @@ body {
     top: 90px;
     width: 100%;
     height: 26px;
-    color: #ffde5a;
-    font-size: 18px;
-    line-height: 26px;
-    text-align: center;
-    font-effect: shadow(2px 2px #000000aa);
 }
 
 /* 커서 스프라이트 — 크기를 바꾸면 ModalDialogUIController.lua의 CURSOR_SIZE도 같이 맞출 것

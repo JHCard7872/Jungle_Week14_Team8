@@ -3,38 +3,39 @@
     <title>Common Modal Dialog</title>
     <link type="text/rcss" href="common_font.rcss" />
     <link type="text/rcss" href="modal_dialog.rcss" />
+    <link type="text/rcss" href="common_ui_style.rcss" />
 </head>
 
 <body>
     <div id="modal_root" class="modal_hidden modal_two_buttons">
         <div id="modal_dim"></div>
 
-        <div id="modal_box">
-            <img id="modal_popup_image" src="../../Sprite/ui_question_popup.png" />
+        <div id="modal_box" class="ui_modal_frame">
+            <img id="modal_popup_image" class="ui_modal_background" src="../../Sprite/ui_modal.png" />
 
             <div id="modal_content">
-                <div id="modal_title">Paused</div>
-                <div id="modal_message"></div>
+                <div id="modal_title" class="ui_modal_title">Paused</div>
+                <div id="modal_message" class="ui_modal_description"></div>
 
                 <div id="modal_input_area">
-                    <div id="modal_input_rule"></div>
-                    <input id="modal_text_input" type="text" value="" />
-                    <div id="modal_input_error"></div>
+                    <div id="modal_input_rule" class="ui_modal_input_rule"></div>
+                    <input id="modal_text_input" class="ui_modal_input_field" type="text" value="" />
+                    <div id="modal_input_error" class="ui_modal_error_text"></div>
                 </div>
 
                 <div id="modal_button_row">
                     <button id="modal_button_left" class="modal_button">
                         <div class="modal_button_glow"></div>
-                        <img class="modal_button_image modal_button_default" src="../../Sprite/ui_horiz_button.png" />
-                        <img class="modal_button_image modal_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                        <div id="modal_button_left_label" class="modal_button_label">Continue</div>
+                        <img class="modal_button_image modal_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="modal_button_image modal_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div id="modal_button_left_label" class="modal_button_label ui_modal_button_text">Continue</div>
                     </button>
 
                     <button id="modal_button_right" class="modal_button">
                         <div class="modal_button_glow"></div>
-                        <img class="modal_button_image modal_button_default" src="../../Sprite/ui_horiz_button.png" />
-                        <img class="modal_button_image modal_button_hover" src="../../Sprite/ui_horiz_button_hover.png" />
-                        <div id="modal_button_right_label" class="modal_button_label">No</div>
+                        <img class="modal_button_image modal_button_default ui_horizontal_button_image" src="../../Sprite/ui_button.png" />
+                        <img class="modal_button_image modal_button_hover ui_horizontal_button_image" src="../../Sprite/ui_button_hover.png" />
+                        <div id="modal_button_right_label" class="modal_button_label ui_modal_button_text">No</div>
                     </button>
                 </div>
             </div>
