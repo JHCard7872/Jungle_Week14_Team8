@@ -211,9 +211,8 @@ function BeginPlay()
         end
     end
 
-    Engine.SetOnEscape(function()
-        Engine.Exit()
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응(우발 종료/전환 방지). 종료는 MainMenu 버튼으로만.
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)

@@ -156,13 +156,8 @@ function BeginPlay()
         request_scene_load("Title")
     end
 
-    Engine.SetOnEscape(function()
-        if widget ~= nil then
-            begin_fade_out_to_title()
-        else
-            request_scene_load("Title")
-        end
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응. (로고는 자동으로 Title로 진행)
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)

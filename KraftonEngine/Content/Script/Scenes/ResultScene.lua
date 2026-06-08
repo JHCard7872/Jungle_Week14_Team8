@@ -130,13 +130,8 @@ function BeginPlay()
         Session.inputEnabled = true
     end
 
-    Engine.SetOnEscape(function()
-        if ResultUI.IsSequenceFinished() and not save_prompt_open and not action_prompt_open then
-            show_save_prompt()
-        elseif action_prompt_open then
-            request_scene_load("Title")
-        end
-    end)
+    -- ESC 비활성화: Play의 Pause 외에는 ESC 무반응. (진행은 아무 키/버튼)
+    Engine.SetOnEscape(function() end)
 end
 
 function Tick(dt)
