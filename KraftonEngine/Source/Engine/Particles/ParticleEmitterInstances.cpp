@@ -2778,6 +2778,143 @@ namespace
 			TaperValues, NoiseDistanceScale, SourceModifier, TargetModifier);
 		return BeamData;
 	}
+
+	void RefreshBeamPayloadCurveAfterUserSet(FParticleBeam2EmitterInstance& BeamInst, FBaseParticle& Particle, bool bForceTargetReached)
+	{
+		if (!BeamInst.BeamTypeData)
+		{
+			return;
+		}
+
+		int32 CurrentOffset = BeamInst.TypeDataOffset;
+		FBeam2TypeDataPayload* BeamData = nullptr;
+		FVector* InterpolatedPoints = nullptr;
+		float* NoiseRate = nullptr;
+		float* NoiseDeltaTime = nullptr;
+		FVector* TargetNoisePoints = nullptr;
+		FVector* NextNoisePoints = nullptr;
+		float* TaperValues = nullptr;
+		float* NoiseDistanceScale = nullptr;
+		FBeamParticleModifierPayloadData* SourceModifier = nullptr;
+		FBeamParticleModifierPayloadData* TargetModifier = nullptr;
+		BeamInst.BeamTypeData->GetDataPointers(&BeamInst, reinterpret_cast<const uint8*>(&Particle), CurrentOffset,
+			BeamData, InterpolatedPoints, NoiseRate, NoiseDeltaTime, TargetNoisePoints, NextNoisePoints,
+			TaperValues, NoiseDistanceScale, SourceModifier, TargetModifier);
+		if (!BeamData)
+		{
+			return;
+		}
+
+		if (bForceTargetReached)
+		{
+			Particle.Location = BeamData->TargetPoint;
+			BEAM2_TYPEDATA_SETLOCKED(BeamData->Lock_Max_NumNoisePoints, true);
+		}
+
+		BeamData->Direction = BeamData->TargetPoint - BeamData->SourcePoint;
+		const double FullMagnitude = std::max(static_cast<double>(BeamData->Direction.Length()), 0.001);
+		BeamData->Direction.Normalize();
+
+		const int32 InterpolationPoints = BeamInst.BeamTypeData->InterpolationPoints;
+		const int32 InterpolationCount = InterpolationPoints > 0 ? InterpolationPoints : 1;
+		const bool bLowFreqNoise = BeamInst.BeamModule_Noise && BeamInst.BeamModule_Noise->bLowFreq_Enabled;
+		int32 InterpSteps = InterpolationCount;
+
+		if (!bLowFreqNoise)
+		{
+			if (BEAM2_TYPEDATA_LOCKED(BeamData->Lock_Max_NumNoisePoints))
+			{
+				BeamData->StepSize = FullMagnitude / static_cast<double>(InterpolationCount);
+				BeamData->Steps = InterpolationCount;
+				BeamData->TravelRatio = 0.0f;
+			}
+			else
+			{
+				double TrueMagnitude = static_cast<double>((Particle.Location - BeamData->SourcePoint).Length());
+				if (TrueMagnitude > FullMagnitude)
+				{
+					Particle.Location = BeamData->TargetPoint;
+					TrueMagnitude = FullMagnitude;
+					BEAM2_TYPEDATA_SETLOCKED(BeamData->Lock_Max_NumNoisePoints, true);
+					BeamData->StepSize = FullMagnitude / static_cast<double>(InterpolationCount);
+					BeamData->Steps = InterpolationCount;
+					BeamData->TravelRatio = 0.0f;
+				}
+				else
+				{
+					BeamData->StepSize = FullMagnitude / static_cast<double>(InterpolationCount);
+					BeamData->TravelRatio = static_cast<float>(TrueMagnitude / FullMagnitude);
+					BeamData->Steps = static_cast<int32>(std::floor(BeamData->TravelRatio * static_cast<float>(InterpolationCount)));
+					BeamData->TravelRatio = static_cast<float>((TrueMagnitude - (BeamData->StepSize * static_cast<double>(BeamData->Steps))) / BeamData->StepSize);
+				}
+			}
+			InterpSteps = BeamData->Steps;
+		}
+		else
+		{
+			const int32 Freq = std::max(0, BEAM2_TYPEDATA_FREQUENCY(BeamData->Lock_Max_NumNoisePoints));
+			int32 Count = Freq;
+			if (BeamInst.BeamModule_Noise->FrequencyDistance > 0.0f)
+			{
+				Count = std::min(Freq, static_cast<int32>(FullMagnitude / BeamInst.BeamModule_Noise->FrequencyDistance));
+			}
+
+			const double TrueMagnitude = static_cast<double>((Particle.Location - BeamData->SourcePoint).Length());
+			BeamData->StepSize = FullMagnitude / static_cast<double>(Count + 1);
+			if (BEAM2_TYPEDATA_LOCKED(BeamData->Lock_Max_NumNoisePoints))
+			{
+				BeamData->Steps = Count;
+				BeamData->TravelRatio = 0.0f;
+			}
+			else
+			{
+				BeamData->TravelRatio = static_cast<float>(TrueMagnitude / FullMagnitude);
+				BeamData->Steps = static_cast<int32>(std::floor(BeamData->TravelRatio * static_cast<float>(Count + 1)));
+				BeamData->Steps = std::min(BeamData->Steps, Count);
+				const double StepDistance = BeamData->StepSize * static_cast<double>(BeamData->Steps);
+				const double Denom = (BeamData->Steps == Count) ? (FullMagnitude - StepDistance) : BeamData->StepSize;
+				BeamData->TravelRatio = Denom > 0.001 ? static_cast<float>((TrueMagnitude - StepDistance) / Denom) : 0.0f;
+			}
+		}
+
+		if (InterpolatedPoints && InterpolationPoints > 0)
+		{
+			BeamData->InterpolationSteps = InterpSteps;
+			FVector SourceTangent = BeamData->SourceTangent.IsNearlyZero() ? FVector::XAxisVector : BeamData->SourceTangent;
+			FVector TargetTangent = BeamData->TargetTangent.IsNearlyZero() ? FVector::XAxisVector : BeamData->TargetTangent;
+			SourceTangent *= BeamData->SourceStrength;
+			TargetTangent *= BeamData->TargetStrength;
+
+			const float InvTess = 1.0f / static_cast<float>(InterpolationPoints);
+			const int32 SafeInterpSteps = std::min(InterpSteps, InterpolationPoints);
+			for (int32 InterpIndex = 0; InterpIndex < SafeInterpSteps; ++InterpIndex)
+			{
+				InterpolatedPoints[InterpIndex] = CubicInterpVector(
+					BeamData->SourcePoint,
+					SourceTangent,
+					BeamData->TargetPoint,
+					TargetTangent,
+					InvTess * static_cast<float>(InterpIndex + 1));
+			}
+
+			BeamData->TriangleCount = BeamData->Steps * 2;
+		}
+		else
+		{
+			BeamData->InterpolationSteps = 0;
+			BeamData->TriangleCount = bLowFreqNoise ? BeamData->Steps * 2 : 2;
+		}
+
+		if (bLowFreqNoise)
+		{
+			const int32 NoiseTess = BeamInst.BeamModule_Noise->NoiseTessellation ? BeamInst.BeamModule_Noise->NoiseTessellation : 1;
+			BeamData->TriangleCount = BeamData->Steps * NoiseTess * 2;
+			if (BEAM2_TYPEDATA_LOCKED(BeamData->Lock_Max_NumNoisePoints))
+			{
+				BeamData->TriangleCount += NoiseTess * 2;
+			}
+		}
+	}
 }
 
 
@@ -3196,10 +3333,13 @@ void FParticleBeam2EmitterInstance::SetBeamSourcePoint(FVector NewSourcePoint, i
 
 		auto ApplyToPayload = [this, &NewSourcePoint](int32 ActiveIndex)
 		{
-			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			FBaseParticle* Particle = GetParticle(ActiveIndex);
+			FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+			if (Particle && BeamData)
 			{
 				BeamData->SourcePoint = NewSourcePoint;
 				BeamData->Direction = ResolveBeamDirection(BeamData->SourcePoint, BeamData->TargetPoint);
+				RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, false);
 			}
 		};
 
@@ -3244,6 +3384,7 @@ void FParticleBeam2EmitterInstance::SetBeamSourceAndTargetPoints(FVector NewSour
 
 		BeamData->Direction = NewTargetPoint - NewSourcePoint;
 		BeamData->Direction.Normalize();
+		RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, true);
 	};
 
 	// UserSet index 0 is the Beam module fallback for particles without an
@@ -3313,6 +3454,7 @@ void FParticleBeam2EmitterInstance::SetBeamSourceAndTargetPointsWithTangents(
 		BeamData->TargetStrength = TargetStrength;
 		BeamData->Direction = BeamDirection;
 		Particle->Location = NewTargetPoint;
+		RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, true);
 	};
 
 	// UserSet index 0 is the module fallback; keep all live payloads on the
@@ -3345,9 +3487,12 @@ void FParticleBeam2EmitterInstance::SetBeamSourceTangent(FVector NewTangentPoint
 
 		auto ApplyToPayload = [this, &SourceTangent](int32 ActiveIndex)
 		{
-			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			FBaseParticle* Particle = GetParticle(ActiveIndex);
+			FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+			if (Particle && BeamData)
 			{
 				BeamData->SourceTangent = SourceTangent;
+				RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, false);
 			}
 		};
 
@@ -3375,9 +3520,12 @@ void FParticleBeam2EmitterInstance::SetBeamSourceStrength(float NewSourceStrengt
 
 		auto ApplyToPayload = [this, SourceStrength](int32 ActiveIndex)
 		{
-			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			FBaseParticle* Particle = GetParticle(ActiveIndex);
+			FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+			if (Particle && BeamData)
 			{
 				BeamData->SourceStrength = SourceStrength;
+				RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, false);
 			}
 		};
 
@@ -3413,6 +3561,7 @@ void FParticleBeam2EmitterInstance::SetBeamTargetPoint(FVector NewTargetPoint, i
 			BeamData->TargetPoint = NewTargetPoint;
 			BeamData->Direction = ResolveBeamDirection(BeamData->SourcePoint, BeamData->TargetPoint);
 			Particle->Location = NewTargetPoint;
+			RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, true);
 		};
 
 		if (TargetIndex == 0)
@@ -3439,9 +3588,12 @@ void FParticleBeam2EmitterInstance::SetBeamTargetTangent(FVector NewTangentPoint
 
 		auto ApplyToPayload = [this, &TargetTangent](int32 ActiveIndex)
 		{
-			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			FBaseParticle* Particle = GetParticle(ActiveIndex);
+			FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+			if (Particle && BeamData)
 			{
 				BeamData->TargetTangent = TargetTangent;
+				RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, false);
 			}
 		};
 
@@ -3469,9 +3621,12 @@ void FParticleBeam2EmitterInstance::SetBeamTargetStrength(float NewTargetStrengt
 
 		auto ApplyToPayload = [this, TargetStrength](int32 ActiveIndex)
 		{
-			if (FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex))
+			FBaseParticle* Particle = GetParticle(ActiveIndex);
+			FBeam2TypeDataPayload* BeamData = GetActiveBeamPayloadByIndex(*this, ActiveIndex);
+			if (Particle && BeamData)
 			{
 				BeamData->TargetStrength = TargetStrength;
+				RefreshBeamPayloadCurveAfterUserSet(*this, *Particle, false);
 			}
 		};
 

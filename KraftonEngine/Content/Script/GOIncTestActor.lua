@@ -18,6 +18,7 @@ local collect_fire_sfx_elapsed = 0.0
 local footstep_sfx_elapsed = 0.0
 local beam_visible_remaining = 0.0 -- Beam을 계속 보이게 유지할 남은 시간
 local last_aim_point = nil         -- 마지막 발사 시 카메라 Raycast로 계산한 조준 지점
+local last_beam_source_point = nil -- Beam setter에 마지막으로 넘긴 Src. 글로우 FX도 이 값을 그대로 따른다.
 local aim_trace_cache = {          -- PostCameraTick 한 프레임 안에서 fire/crosshair가 공유하는 조준 Raycast 결과
     serial = 0,
     resolved_serial = -1,
@@ -299,7 +300,14 @@ local function fire_held()
     return Input.GetKey(C.KEY_LBUTTON) or Input.GetKey(C.PAD_KEY_RT)
 end
 
+local function shift_held()
+    return Input.GetKey(C.KEY_SHIFT)
+end
+
 local function crosshair_hold_active()
+    if shift_held() then
+        return false
+    end
     if weapon_swap_state.is_sprinting then
         return false
     end
@@ -810,6 +818,7 @@ end
 local set_beam_visible
 local set_beam_points
 local update_beam_points
+local update_slot1_glow_at_beam_source
 
 local function get_camera_aim_ray()
     if Engine ~= nil and Engine.GetViewportCenterRay ~= nil then
@@ -1090,7 +1099,8 @@ slot1_gather_fx.Update = function(source_point, target_point, is_hold)
     end
 
     local fx_path = C.SLOT1_GATHER_FX_PATH
-    if fx_path == nil or fx_path == "" or ParticleManager == nil or ParticleManager.SpawnAt == nil then
+    if fx_path == nil or fx_path == "" or ParticleManager == nil
+        or (ParticleManager.SpawnAt == nil and ParticleManager.SpawnAtConfigured == nil) then
         slot1_gather_fx.Stop()
         return
     end
@@ -1125,11 +1135,24 @@ slot1_gather_fx.Update = function(source_point, target_point, is_hold)
             slot1_gather_fx.component = slot1_gather_fx.actor:GetRootPrimitiveComponent()
         end
         if slot1_gather_fx.component ~= nil then
+            if slot1_gather_fx.component.MoveParticleSystemTo ~= nil then
+                slot1_gather_fx.component:MoveParticleSystemTo(fx_location)
+            elseif slot1_gather_fx.component.SetLocation ~= nil then
+                slot1_gather_fx.component:SetLocation(fx_location)
+            else
+                slot1_gather_fx.component.Location = fx_location
+            end
+
+            local did_reset = false
             if not slot1_gather_fx.active and slot1_gather_fx.component.ResetParticleSystem ~= nil then
                 slot1_gather_fx.component:ResetParticleSystem()
+                did_reset = true
             end
             if slot1_gather_fx.component.SetVisibility ~= nil then
                 slot1_gather_fx.component:SetVisibility(true)
+            end
+            if did_reset and slot1_gather_fx.component.PrimeForImmediateRendering ~= nil then
+                slot1_gather_fx.component:PrimeForImmediateRendering()
             end
         end
         slot1_gather_fx.active = true
@@ -1406,6 +1429,27 @@ local function set_slot2_hit_rim_color(component)
         C.SLOT2_HIT_RIM_COLOR_A)
 end
 
+local function get_hit_rim_flash_intensity()
+    if weapon_swap_state.active_index == 2 then
+        return C.SLOT2_HIT_RIM_FLASH_INTENSITY or C.HIT_RIM_FLASH_INTENSITY
+    end
+    return C.HIT_RIM_FLASH_INTENSITY
+end
+
+local function get_hit_rim_sustain_intensity()
+    if weapon_swap_state.active_index == 2 then
+        return C.SLOT2_HIT_RIM_SUSTAIN_INTENSITY or C.HIT_RIM_SUSTAIN_INTENSITY
+    end
+    return C.HIT_RIM_SUSTAIN_INTENSITY
+end
+
+local function get_hit_impact_intensity()
+    if weapon_swap_state.active_index == 2 then
+        return C.SLOT2_HIT_IMPACT_INTENSITY or C.HIT_IMPACT_INTENSITY
+    end
+    return C.HIT_IMPACT_INTENSITY
+end
+
 local function trigger_hit_rim_on_component(hit_component, should_flash, hit_location)
     if hit_component == nil or hit_component.GetSimulatePhysics == nil or not hit_component:GetSimulatePhysics() then
         return
@@ -1423,23 +1467,27 @@ local function trigger_hit_rim_on_component(hit_component, should_flash, hit_loc
         set_slot1_hit_rim_color(hit_component)
     end
 
+    local flash_intensity = get_hit_rim_flash_intensity()
+    local sustain_intensity = get_hit_rim_sustain_intensity()
+    local impact_intensity = get_hit_impact_intensity()
+
     if hit_location ~= nil then
         if should_flash and hit_component.TriggerHitRimAt ~= nil then
-            hit_component:TriggerHitRimAt(hit_location, C.HIT_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
+            hit_component:TriggerHitRimAt(hit_location, C.HIT_RIM_DURATION, flash_intensity, C.HIT_RIM_POWER, sustain_intensity, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
             return
         elseif hit_component.RefreshHitRimAt ~= nil then
-            hit_component:RefreshHitRimAt(hit_location, C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_RIM_POWER, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
+            hit_component:RefreshHitRimAt(hit_location, sustain_intensity, C.HIT_RIM_POWER, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
             return
         end
     end
 
     if should_flash and hit_component.TriggerHitRim ~= nil then
-        hit_component:TriggerHitRim(C.HIT_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY)
+        hit_component:TriggerHitRim(C.HIT_RIM_DURATION, flash_intensity, C.HIT_RIM_POWER, sustain_intensity)
         if hit_location ~= nil and hit_component.SetHitImpactGlow ~= nil then
-            hit_component:SetHitImpactGlow(hit_location, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
+            hit_component:SetHitImpactGlow(hit_location, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
         end
     elseif hit_component.RefreshHitRim ~= nil then
-        hit_component:RefreshHitRim(C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_RIM_POWER)
+        hit_component:RefreshHitRim(sustain_intensity, C.HIT_RIM_POWER)
     end
 end
 
@@ -1476,15 +1524,18 @@ local function trigger_red_beam_rim_on_ragdoll_mesh(hit)
 
     apply_hit_rim_style(mesh, C.HIT_RIM_STYLE_NOISE)
     set_slot2_hit_rim_color(mesh)
+    local flash_intensity = get_hit_rim_flash_intensity()
+    local sustain_intensity = get_hit_rim_sustain_intensity()
+    local impact_intensity = get_hit_impact_intensity()
 
     local hit_location = get_hit_location(hit)
     if hit_location ~= nil and mesh.TriggerHitRimAt ~= nil then
-        mesh:TriggerHitRimAt(hit_location, RED_BEAM_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, C.HIT_IMPACT_INTENSITY)
+        mesh:TriggerHitRimAt(hit_location, RED_BEAM_RIM_DURATION, flash_intensity, C.HIT_RIM_POWER, sustain_intensity, C.HIT_IMPACT_RADIUS, C.HIT_IMPACT_CORE_RADIUS, impact_intensity)
         return
     end
 
     if mesh.TriggerHitRim ~= nil then
-        mesh:TriggerHitRim(RED_BEAM_RIM_DURATION, C.HIT_RIM_FLASH_INTENSITY, C.HIT_RIM_POWER, C.HIT_RIM_SUSTAIN_INTENSITY)
+        mesh:TriggerHitRim(RED_BEAM_RIM_DURATION, flash_intensity, C.HIT_RIM_POWER, sustain_intensity)
     end
 end
 
@@ -1608,6 +1659,7 @@ local function begin_beam_grab(hit, start, direction, fallback_end)
         beam_particle:ResetParticleSystem()
     end
     update_beam_points(grab_point)
+    update_slot1_glow_at_beam_source(grab_point, fire_held())
     set_beam_visible(true)
     beam_visible_remaining = 0.0
     return true
@@ -1861,10 +1913,11 @@ end
 local function build_crosshair_state()
     update_viewport_center()
 
-    local is_hold = Input.GetKey(C.KEY_LBUTTON)
+    local is_visible = not shift_held()
+    local is_hold = is_visible and crosshair_hold_active()
     return {
         mode = get_current_gun_mode(),
-        visible = true,
+        visible = is_visible,
         hold = is_hold,
         rotation = is_hold and crosshair_hold_rotation or 0.0,
         x = crosshair_screen_x or viewport_center_x,
@@ -1873,7 +1926,7 @@ local function build_crosshair_state()
 end
 
 local function publish_crosshair_state(delta_time)
-    update_crosshair_hold_rotation(delta_time, Input.GetKey(C.KEY_LBUTTON))
+    update_crosshair_hold_rotation(delta_time, crosshair_hold_active())
     local crosshair_state = build_crosshair_state()
 
     if Session ~= nil and Session.gun ~= nil then
@@ -1968,11 +2021,29 @@ end
 
 update_beam_points = function(aim_point)
     local source_point = get_beam_source_point()
-    if source_point == nil then
-        return
+    if source_point == nil or aim_point == nil then
+        last_beam_source_point = nil
+        return nil
     end
 
     set_beam_points(source_point, aim_point)
+    last_beam_source_point = source_point
+    return source_point
+end
+
+local function get_resolved_beam_source_point()
+    if beam_particle ~= nil and beam_particle.GetBeamSourcePoint ~= nil then
+        local ok, source_point = beam_particle:GetBeamSourcePoint(0)
+        if ok and source_point ~= nil then
+            return source_point
+        end
+    end
+
+    return last_beam_source_point
+end
+
+update_slot1_glow_at_beam_source = function(target_point, is_hold)
+    slot1_gather_fx.Update(get_resolved_beam_source_point(), target_point, is_hold)
 end
 
 local function apply_slot2_fire(delta_time)
@@ -2526,7 +2597,7 @@ local function apply_fire(delta_time)
 
     if update_active_grab(delta_time) then
         update_collect_fire_sfx(delta_time, is_fire_held)
-        slot1_gather_fx.Update(get_beam_source_point(), last_aim_point, is_fire_held)
+        update_slot1_glow_at_beam_source(last_aim_point, is_fire_held)
         return
     end
 
@@ -2538,8 +2609,6 @@ local function apply_fire(delta_time)
         return
     end
 
-    local source_point = get_beam_source_point()
-
     local hit, fallback_end, start, direction = center_physics_raycast(C.MAX_TRACE_DISTANCE)
     trigger_hit_rim(hit, is_fire_pressed)
     set_beamed_ragdoll_actor(get_hit_actor(hit))
@@ -2548,12 +2617,12 @@ local function apply_fire(delta_time)
     end
 
     last_aim_point = get_hit_point_or_end(hit, fallback_end)
-    slot1_gather_fx.Update(source_point, last_aim_point, true)
 
     if is_fire_pressed and beam_particle ~= nil and beam_particle.ResetParticleSystem ~= nil then
         beam_particle:ResetParticleSystem()
     end
     update_beam_points(last_aim_point)
+    update_slot1_glow_at_beam_source(last_aim_point, true)
     set_beam_visible(true)
     beam_visible_remaining = C.BEAM_VISIBLE_TIME
 end

@@ -63,6 +63,7 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include <tuple>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -3427,6 +3428,62 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 			ParticleComponent->ResetSystem();
 			return true;
 		},
+		"PrimeForImmediateRendering", [](UPrimitiveComponent& Component)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			ParticleComponent->PrimeForImmediateRendering();
+			return true;
+		},
+		"MoveParticleSystemTo", [](UPrimitiveComponent& Component, const FVector& WorldLocation)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			const FVector OldLocation = ParticleComponent->GetWorldLocation();
+			const FVector Delta = WorldLocation - OldLocation;
+			ParticleComponent->SetWorldLocation(WorldLocation);
+
+			if (Delta.Length() > 1.0e-4f)
+			{
+				for (FParticleEmitterInstance* Instance : ParticleComponent->GetEmitterInstances())
+				{
+					if (!Instance)
+					{
+						continue;
+					}
+
+					Instance->Location += Delta;
+					Instance->OldLocation += Delta;
+
+					if (!Instance->UseLocalSpace())
+					{
+						for (int32 ParticleIndex = 0; ParticleIndex < Instance->ActiveParticles; ++ParticleIndex)
+						{
+							if (FBaseParticle* Particle = Instance->GetParticle(ParticleIndex))
+							{
+								Particle->Location += Delta;
+								Particle->OldLocation += Delta;
+							}
+						}
+					}
+
+					Instance->UpdateTransforms();
+					Instance->ForceUpdateBoundingBox();
+					Instance->IsRenderDataDirty = 1;
+				}
+			}
+
+			ParticleComponent->RefreshDynamicData();
+			return true;
+		},
 		"SetBeamEndPoint", [](UPrimitiveComponent& Component, const FVector& EndPoint)
 		{
 			return ApplyToBeamEmitters(Component, [&EndPoint](FParticleBeam2EmitterInstance& BeamInstance)
@@ -3441,6 +3498,37 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 			{
 				BeamInstance.SetBeamSourcePoint(SourcePoint, ResolvedIndex);
 			});
+		},
+		"GetBeamSourcePoint", [](UPrimitiveComponent& Component, sol::optional<int32> SourceIndex)
+		{
+			FVector SourcePoint = FVector::ZeroVector;
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return std::make_tuple(false, SourcePoint);
+			}
+
+			if (ParticleComponent->GetEmitterInstances().empty())
+			{
+				ParticleComponent->InitializeSystem();
+			}
+
+			const int32 ResolvedIndex = SourceIndex.value_or(0);
+			for (FParticleEmitterInstance* Instance : ParticleComponent->GetEmitterInstances())
+			{
+				FParticleBeam2EmitterInstance* BeamInstance = dynamic_cast<FParticleBeam2EmitterInstance*>(Instance);
+				if (!BeamInstance)
+				{
+					continue;
+				}
+
+				if (BeamInstance->GetBeamSourcePoint(ResolvedIndex, SourcePoint))
+				{
+					return std::make_tuple(true, SourcePoint);
+				}
+			}
+
+			return std::make_tuple(false, SourcePoint);
 		},
 		"SetBeamPoints", [](UPrimitiveComponent& Component, const FVector& SourcePoint, const FVector& TargetPoint, sol::optional<int32> BeamIndex, sol::optional<int32> SheetCount)
 		{
