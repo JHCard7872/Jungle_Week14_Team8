@@ -28,6 +28,7 @@ void FMeshBufferManager::Release()
 	}
 	MeshBufferMap.clear();
 	MeshDataMap.clear();
+	PNCTMeshDataMap.clear();
 	bIsInitialized = false;
 }
 
@@ -56,6 +57,7 @@ void FMeshBufferManager::CreatePrimitiveMeshData()
 	CreateCube();
 	CreatePlane();
 	CreateSphere();
+	CreateSkySphere();
 	CreateTranslationGizmo();
 	CreateRotationGizmo();
 	CreateScaleGizmo();
@@ -133,6 +135,54 @@ void FMeshBufferManager::CreateSphere(int Slices, int Stacks)
 		for (int j = 0; j < Slices; ++j) {
 			uint32 first = i * (Slices + 1) + j;
 			uint32 second = first + Slices + 1;
+
+			indices.push_back(first);
+			indices.push_back(second);
+			indices.push_back(first + 1);
+
+			indices.push_back(second);
+			indices.push_back(second + 1);
+			indices.push_back(first + 1);
+		}
+	}
+}
+
+void FMeshBufferManager::CreateSkySphere(int Slices, int Stacks)
+{
+	TMeshData<FVertexPNCT>& Data = PNCTMeshDataMap[EMeshShape::SkySphere];
+	TArray<FVertexPNCT>& vertices = Data.Vertices;
+	TArray<uint32>& indices = Data.Indices;
+
+	const float Radius = 0.5f;
+	const FVector4 Color(1.0f, 1.0f, 1.0f, 1.0f);
+
+	for (int i = 0; i <= Stacks; ++i)
+	{
+		const float StackRatio = static_cast<float>(i) / static_cast<float>(Stacks);
+		const float Phi = 3.141592f * StackRatio;
+
+		for (int j = 0; j <= Slices; ++j)
+		{
+			const float SliceRatio = static_cast<float>(j) / static_cast<float>(Slices);
+			const float Theta = 2.0f * 3.141592f * SliceRatio;
+
+			const float x = Radius * sin(Phi) * cos(Theta);
+			const float y = Radius * sin(Phi) * sin(Theta);
+			const float z = Radius * cos(Phi);
+			const FVector Position(x, y, z);
+			const FVector Normal = Position.Normalized();
+			const FVector2 UV(1.0f - SliceRatio, StackRatio);
+
+			vertices.push_back({ Position, Normal, Color, UV });
+		}
+	}
+
+	for (int i = 0; i < Stacks; ++i)
+	{
+		for (int j = 0; j < Slices; ++j)
+		{
+			const uint32 first = i * (Slices + 1) + j;
+			const uint32 second = first + Slices + 1;
 
 			indices.push_back(first);
 			indices.push_back(second);

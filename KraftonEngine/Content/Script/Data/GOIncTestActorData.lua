@@ -62,6 +62,10 @@ return {
     BEAM_VISIBLE_TIME = BEAM_VISIBLE_TIME,
     SLOT2_BEAM_MISS_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2가 아무것도 맞추지 못했을 때는 기존처럼 짧게 표시
     SLOT2_BEAM_HIT_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2는 hit/miss 모두 플래시처럼 짧게 표시
+    SLOT1_GATHER_FX_PATH = "Content/Particle/FX_GatherLoop.uasset", -- Weapon1 홀드 중 Beam Src에 붙여두는 모이는 원형 글로우
+    SLOT1_GATHER_FX_SOURCE_OFFSET = 0.0, -- Beam Src에서 Dst 방향으로 살짝 띄워 무기 끝에 딱 달라붙지 않게 한다
+    SLOT2_HIT_SPARK_FX_PATH = "Content/Particle/FX_SparkLoopRed.uasset", -- Slot2 빔이 실제 표면을 맞춘 위치에 터뜨리는 스파크
+    SLOT2_HIT_SPARK_SURFACE_OFFSET = 0.0, -- 빔 Dst와 완전히 같은 위치에 생성한다. 경로 중간처럼 보이면 이 값을 0으로 유지한다
     SLOT2_KNOCKBACK_IMPULSE_PER_MASS = 4.00, -- Slot2 피격 순간에만 주는 넉백. 질량을 곱해 크기 차이와 무관하게 반응이 보이게 한다
     SLOT2_KNOCKBACK_UP_BIAS = 2.50, -- 빔 방향에 위쪽을 섞어 뒤로 밀리면서 살짝 뜨는 느낌을 만든다
     SLOT2_RAGDOLL_KNOCKBACK_IMPULSE_PER_MASS = 8.00, -- Skeletal ragdoll은 중심 body와 전체 body에 분산해서 확실한 반응을 만든다
@@ -81,6 +85,9 @@ return {
     HIT_RIM_FLASH_INTENSITY = 3.5,
     HIT_RIM_SUSTAIN_INTENSITY = 1.6,
     HIT_RIM_POWER = 2.8,
+    SLOT2_HIT_RIM_FLASH_INTENSITY = 1.35,
+    SLOT2_HIT_RIM_SUSTAIN_INTENSITY = 0.55,
+    SLOT2_HIT_IMPACT_INTENSITY = 0.85,
     HIT_RIM_STYLE_NOISE = 0.0,
     HIT_RIM_STYLE_SCAN_LINES = 1.0,
     SLOT1_HIT_RIM_COLOR_R = 0.05,
@@ -89,14 +96,15 @@ return {
     SLOT1_HIT_RIM_COLOR_A = 1.00,
     -- RedBeam particle color ratio is about (5.0, 0.1, 2.5), normalized here for rim tint.
     SLOT2_HIT_RIM_COLOR_R = 1.00,
-    SLOT2_HIT_RIM_COLOR_G = 0.02,
-    SLOT2_HIT_RIM_COLOR_B = 0.50,
+    SLOT2_HIT_RIM_COLOR_G = 0.18,
+    SLOT2_HIT_RIM_COLOR_B = 0.76,
     SLOT2_HIT_RIM_COLOR_A = 1.00,
     HIT_SCAN_LINE_DENSITY = 18.0,
     HIT_SCAN_SCROLL_SPEED = 2.00,
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
+    SLOT1_GRAB_FORCE_SCALE = 5.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
     GRAB_SPRING_ACCELERATION = 42.0, -- 목표 위치로 끌어당기는 가속도 계수. 질량 보정 전 단계에서 사용한다
     GRAB_DAMPING_ACCELERATION = 10.0, -- 현재 속도에 대한 감쇠 가속도 계수. 높을수록 덜 출렁인다
     GRAB_MAX_ERROR = 30.0,

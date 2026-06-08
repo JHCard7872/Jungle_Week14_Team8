@@ -23,6 +23,7 @@ enum class EMeshShape
 {
 	Cube,
 	Sphere,
+	SkySphere,
 	Plane,
 	Quad,
 	TexturedQuad,
@@ -33,6 +34,7 @@ enum class EMeshShape
 
 enum class ERenderPass : uint32
 {
+	Sky,
 	PreDepth,			// Depth-only 프리패스 (color write 없음, Early-Z용)
 	LightCulling,		// 라이트 컬링 CS 디스패치 (Tile/Cluster)
 	ShadowMap,			// 라이트별 Shadow Depth 렌더링
@@ -57,6 +59,7 @@ enum class ERenderPass : uint32
 inline const char* GetRenderPassName(ERenderPass Pass)
 {
 	static const char* Names[] = {
+		"RenderPass::Sky",
 		"RenderPass::PreDepth",
 		"RenderPass::LightCulling",
 		"RenderPass::ShadowMap",
@@ -73,8 +76,8 @@ inline const char* GetRenderPassName(ERenderPass Pass)
 		"RenderPass::GizmoOuter",
 		"RenderPass::GizmoInner",
 		"RenderPass::OverlayFont",
-		"RenderPass::UI",
 		"RenderPass::GammaCorrection",
+		"RenderPass::UI",
 	};
 	static_assert(ARRAYSIZE(Names) == (uint32)ERenderPass::MAX, "Names must match ERenderPass entries");
 	return Names[(uint32)Pass];
@@ -84,6 +87,7 @@ namespace RenderStateStrings
 {
 	inline constexpr FEnumEntry RenderPassMap[] =
 	{
+		{ "Sky",           (int)ERenderPass::Sky },
 		{ "PreDepth",      (int)ERenderPass::PreDepth },
 		{ "LightCulling",  (int)ERenderPass::LightCulling },
 		{ "ShadowMap",     (int)ERenderPass::ShadowMap },
@@ -100,8 +104,8 @@ namespace RenderStateStrings
 		{ "GizmoOuter",    (int)ERenderPass::GizmoOuter },
 		{ "GizmoInner",    (int)ERenderPass::GizmoInner },
 		{ "OverlayFont",   (int)ERenderPass::OverlayFont },
-		{ "UI",            (int)ERenderPass::UI },
 		{ "GammaCorrection",(int)ERenderPass::GammaCorrection },
+		{ "UI",            (int)ERenderPass::UI },
 	};
 
 	static_assert(ARRAYSIZE(RenderPassMap) == (int)ERenderPass::MAX, "RenderPassMap must match ERenderPass entries");

@@ -16,6 +16,10 @@
 #include "Component/Primitive/StaticMeshComponent.h"
 
 #include "Particles/ParticleSystem.h"
+#include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleLODLevel.h"
+#include "Particles/ParticleModuleRequired.h"
+#include "Particles/Spawn/ParticleModuleSpawn.h"
 #include "Particles/ParticleSystemManager.h"
 #include "Core/Types/CollisionTypes.h"
 #include "Runtime/Engine.h"
@@ -59,6 +63,7 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include <tuple>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -441,6 +446,43 @@ namespace
 		Result["HitComponent"] = Hit.HitComponent;
 		Result["PhysicsBody"] = Hit.PhysicsBody;
 		return Result;
+	}
+
+	void ApplyParticleRuntimeOptions(
+		UParticleSystem* Template,
+		bool bForceLocalSpace,
+		bool bOverrideSpawnRate,
+		float SpawnRateOverride)
+	{
+		if (!Template)
+		{
+			return;
+		}
+
+		for (UParticleEmitter* Emitter : Template->GetEmitters())
+		{
+			if (!Emitter)
+			{
+				continue;
+			}
+
+			for (UParticleLODLevel* LODLevel : Emitter->GetLODLevels())
+			{
+				if (!LODLevel)
+				{
+					continue;
+				}
+
+				if (bForceLocalSpace && LODLevel->RequiredModule)
+				{
+					LODLevel->RequiredModule->bUseLocalSpace = true;
+				}
+				if (bOverrideSpawnRate && LODLevel->SpawnModule)
+				{
+					LODLevel->SpawnModule->SpawnRate = (std::max)(0.0f, SpawnRateOverride);
+				}
+			}
+		}
 	}
 }
 
@@ -2743,7 +2785,7 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 	});
 
 	// ParticleManager — 파티클 에셋(.uasset)을 위치에 스폰. FParticleSystemManager(캐시) 래핑.
-	// 반환값은 Actor 핸들 — 수명 관리(Destroy)는 Lua 쪽 몫이다 (ParticleFX.lua 참고).
+	// SpawnAt으로 만든 Actor는 파티클 emitter가 모두 완료되면 C++ 컴포넌트가 자동 정리한다.
 	sol::table ParticleManager = Lua.create_named_table("ParticleManager");
 	ParticleManager.set_function("SpawnAt", [](const FString& Path, const FVector& Pos) -> AActor*
 	{
@@ -2758,19 +2800,78 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 			return nullptr;
 		}
 
-		AActor* Actor = World->SpawnActorByClass(AActor::StaticClass());
-		if (!Actor) return nullptr;
-
-		UParticleSystemComponent* Comp = Actor->AddComponent<UParticleSystemComponent>();
-		if (!Comp)
+		UParticleSystemComponent* Comp = nullptr;
+		AActor* Actor = World->SpawnActorWithInitializer<AActor>([&](AActor* SpawnedActor)
 		{
-			World->DestroyActor(Actor);
+			Comp = SpawnedActor ? SpawnedActor->AddComponent<UParticleSystemComponent>() : nullptr;
+			if (!Comp)
+			{
+				return;
+			}
+
+			SpawnedActor->SetRootComponent(Comp);
+			Comp->SetDestroyOwnerOnComplete(true);
+			SpawnedActor->SetActorLocation(Pos);
+			Comp->SetTemplate(Template);   // 위치가 정해진 뒤 InitializeSystem + render state dirty 까지
+		});
+		if (!Actor || !Comp)
+		{
+			if (Actor)
+			{
+				World->DestroyActor(Actor);
+			}
 			return nullptr;
 		}
 
-		Actor->SetRootComponent(Comp);
-		Comp->SetTemplate(Template);   // 내부에서 InitializeSystem + render state dirty 까지
-		Actor->SetActorLocation(Pos);
+		Comp->PrimeForImmediateRendering();
+		return Actor;
+	});
+	ParticleManager.set_function("SpawnAtConfigured",
+		[](const FString& Path, const FVector& Pos, sol::optional<bool> bForceLocalSpace, sol::optional<bool> bDestroyOwnerOnComplete, sol::optional<float> SpawnRateOverride) -> AActor*
+	{
+		if (!GEngine) return nullptr;
+		UWorld* World = GEngine->GetWorld();
+		if (!World) return nullptr;
+
+		UParticleSystem* Template = FParticleSystemManager::Get().Load(Path);
+		if (!Template)
+		{
+			UE_LOG("[Lua] ParticleManager.SpawnAtConfigured: 파티클 로드 실패. Path=%s", Path.c_str());
+			return nullptr;
+		}
+
+		const bool bUseLocalSpace = bForceLocalSpace.value_or(false);
+		const bool bOverrideSpawnRate = SpawnRateOverride.has_value();
+		ApplyParticleRuntimeOptions(
+			Template,
+			bUseLocalSpace,
+			bOverrideSpawnRate,
+			SpawnRateOverride.value_or(0.0f));
+
+		UParticleSystemComponent* Comp = nullptr;
+		AActor* Actor = World->SpawnActorWithInitializer<AActor>([&](AActor* SpawnedActor)
+		{
+			Comp = SpawnedActor ? SpawnedActor->AddComponent<UParticleSystemComponent>() : nullptr;
+			if (!Comp)
+			{
+				return;
+			}
+
+			SpawnedActor->SetRootComponent(Comp);
+			Comp->SetDestroyOwnerOnComplete(bDestroyOwnerOnComplete.value_or(true));
+			SpawnedActor->SetActorLocation(Pos);
+			Comp->SetTemplate(Template);
+		});
+		if (!Actor || !Comp)
+		{
+			if (Actor)
+			{
+				World->DestroyActor(Actor);
+			}
+			return nullptr;
+		}
+
+		Comp->PrimeForImmediateRendering();
 		return Actor;
 	});
 
@@ -3336,6 +3437,62 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 			ParticleComponent->ResetSystem();
 			return true;
 		},
+		"PrimeForImmediateRendering", [](UPrimitiveComponent& Component)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			ParticleComponent->PrimeForImmediateRendering();
+			return true;
+		},
+		"MoveParticleSystemTo", [](UPrimitiveComponent& Component, const FVector& WorldLocation)
+		{
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return false;
+			}
+
+			const FVector OldLocation = ParticleComponent->GetWorldLocation();
+			const FVector Delta = WorldLocation - OldLocation;
+			ParticleComponent->SetWorldLocation(WorldLocation);
+
+			if (Delta.Length() > 1.0e-4f)
+			{
+				for (FParticleEmitterInstance* Instance : ParticleComponent->GetEmitterInstances())
+				{
+					if (!Instance)
+					{
+						continue;
+					}
+
+					Instance->Location += Delta;
+					Instance->OldLocation += Delta;
+
+					if (!Instance->UseLocalSpace())
+					{
+						for (int32 ParticleIndex = 0; ParticleIndex < Instance->ActiveParticles; ++ParticleIndex)
+						{
+							if (FBaseParticle* Particle = Instance->GetParticle(ParticleIndex))
+							{
+								Particle->Location += Delta;
+								Particle->OldLocation += Delta;
+							}
+						}
+					}
+
+					Instance->UpdateTransforms();
+					Instance->ForceUpdateBoundingBox();
+					Instance->IsRenderDataDirty = 1;
+				}
+			}
+
+			ParticleComponent->RefreshDynamicData();
+			return true;
+		},
 		"SetBeamEndPoint", [](UPrimitiveComponent& Component, const FVector& EndPoint)
 		{
 			return ApplyToBeamEmitters(Component, [&EndPoint](FParticleBeam2EmitterInstance& BeamInstance)
@@ -3350,6 +3507,37 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 			{
 				BeamInstance.SetBeamSourcePoint(SourcePoint, ResolvedIndex);
 			});
+		},
+		"GetBeamSourcePoint", [](UPrimitiveComponent& Component, sol::optional<int32> SourceIndex)
+		{
+			FVector SourcePoint = FVector::ZeroVector;
+			UParticleSystemComponent* ParticleComponent = Cast<UParticleSystemComponent>(&Component);
+			if (!ParticleComponent)
+			{
+				return std::make_tuple(false, SourcePoint);
+			}
+
+			if (ParticleComponent->GetEmitterInstances().empty())
+			{
+				ParticleComponent->InitializeSystem();
+			}
+
+			const int32 ResolvedIndex = SourceIndex.value_or(0);
+			for (FParticleEmitterInstance* Instance : ParticleComponent->GetEmitterInstances())
+			{
+				FParticleBeam2EmitterInstance* BeamInstance = dynamic_cast<FParticleBeam2EmitterInstance*>(Instance);
+				if (!BeamInstance)
+				{
+					continue;
+				}
+
+				if (BeamInstance->GetBeamSourcePoint(ResolvedIndex, SourcePoint))
+				{
+					return std::make_tuple(true, SourcePoint);
+				}
+			}
+
+			return std::make_tuple(false, SourcePoint);
 		},
 		"SetBeamPoints", [](UPrimitiveComponent& Component, const FVector& SourcePoint, const FVector& TargetPoint, sol::optional<int32> BeamIndex, sol::optional<int32> SheetCount)
 		{

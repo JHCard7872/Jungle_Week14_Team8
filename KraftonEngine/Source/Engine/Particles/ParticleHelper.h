@@ -310,7 +310,7 @@ struct alignas(16) FBaseParticle
 	FLinearColor BaseColor;
 
 	float RelativeTime = 0.0f;
-	float OneOverMaxLifetime = 1.0f;
+	float OneOverMaxLifetime = 0.0f;
 	float Placeholder0 = 0.0f;
 	float Placeholder1 = 0.0f;
 };
