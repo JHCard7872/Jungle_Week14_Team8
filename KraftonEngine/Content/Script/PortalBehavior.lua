@@ -15,10 +15,32 @@ local Session      = require("GameSession")
 local Portal       = require("Data/PortalData")
 
 local lastSeq = 0   -- 마지막으로 반영한 미션 발급 시퀀스 — 변하면 재배치
+-- 흡수 축소 연출 토글. ⚠️ false 고정: true면 ShrinkAndDestroy가 시뮬레이션된 래그돌을 스케일하다
+-- 엔진을 세그폴트시킨다(연속 흡수 시). false면 물리 정지 + 파티클 + 즉시 Destroy(안정). 비스케일
+-- 축소 연출이 마련되면 그때 켤 것 — 지금 true로 바꾸면 크래시한다.
+local USE_SHRINK = false
 
 local function pickAndMove()
     local c = Portal.spawnPositions[math.random(#Portal.spawnPositions)]
     obj.Location = Vector.new(c.x, c.y, c.z)
+end
+
+-- 흡수 축소 코루틴. ⚠️ 현재 USE_SHRINK=false로 비활성. 시뮬레이션된 래그돌 액터를 스케일하면
+-- (a.Scale = SetActorScale, 루트 변환이라도) 엔진이 세그폴트한다 — 첫 흡수는 통과하나 연속
+-- 흡수에서 죽음(ragdoll 물리 바디 스케일 취약성, 메모리 ragdoll-scale-bug 계열). 스케일 대신
+-- 포탈로 가라앉히는 등 비스케일 연출이 생기기 전까지 호출 금지. yield 전후 IsValid로 소멸 가드.
+local function ShrinkAndDestroy(a)
+    local t = 0.0
+    while t < Portal.shrinkDuration do
+        if not a or not a:IsValid() then return end
+        local dt = WaitFrame()
+        t = t + dt
+        if not a or not a:IsValid() then return end   -- yield 직후 재검증(프레임 사이 소멸 가드)
+        local f = math.min(t / Portal.shrinkDuration, 1.0)
+        local s = 1.0 + (Portal.shrinkTargetRatio - 1.0) * f   -- 1.0 → 0.1 선형 보간
+        a.Scale = Vector.new(s, s, s)
+    end
+    if a and a:IsValid() then a:Destroy() end
 end
 
 function BeginPlay()
@@ -59,6 +81,19 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
     ScoreMgr.AddForRagdoll(other_actor)
     MissionMgr.NotifyRecovered(other_actor)   -- 타입 태그를 읽으므로 Destroy 전에 호출
     AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
+
+    -- 물리 정지 — 축소 전 필수. 정지 안 하면 컨스트레인트가 스케일 변화와 싸워 폭발한다.
+    local pawn = nil
+    if other_actor.AsGOIncRagdollPawn ~= nil then pawn = other_actor:AsGOIncRagdollPawn() end
+    local mesh = pawn and pawn:GetRagdollMeshComponent() or nil
+    if mesh then mesh:SetAllBodiesSimulatePhysics(false) end
+
     ParticleFX.Burst(Portal.collectFxPath, other_actor.Location, Portal.collectFxLife) -- Destroy 전 위치 읽기
-    other_actor:Destroy()                     -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)
+
+    -- 축소 흡수: 물리 정지 후 액터 루트 스케일만 보간해 줄이고 소멸. 폭발 시 USE_SHRINK=false 폴백.
+    if USE_SHRINK and mesh then
+        StartCoroutine(function() ShrinkAndDestroy(other_actor) end)
+    else
+        other_actor:Destroy()                 -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)
+    end
 end
