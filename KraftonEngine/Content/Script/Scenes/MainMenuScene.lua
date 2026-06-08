@@ -153,6 +153,7 @@ local function play_ui_hover()
 end
 
 local function set_main_menu_controls_visible(is_visible)
+    set_element_display("menu_header", is_visible)
     set_element_display("menu_help", is_visible)
     set_element_display("menu_option", is_visible)
     set_element_display("menu_play", is_visible)
@@ -160,6 +161,14 @@ local function set_main_menu_controls_visible(is_visible)
     set_element_display("menu_credits", is_visible)
     set_element_display("menu_back_to_title", is_visible)
     set_element_display("menu_exit_game", is_visible)
+
+    set_element_display("label_help", is_visible)
+    set_element_display("label_option", is_visible)
+    set_element_display("label_play", is_visible)
+    set_element_display("label_scoreboard", is_visible)
+    set_element_display("label_credits", is_visible)
+    set_element_display("label_back_to_title", is_visible)
+    set_element_display("label_exit_game", is_visible)
 
     if not is_visible then
         set_cursor_hidden()
@@ -296,7 +305,7 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_option", on_menu_button_click(function()
-        open_menu_page("options", "Options")
+        open_menu_page("options", "옵션")
     end))
 
     widget:bind_click("menu_play", on_menu_button_click(function()
@@ -304,11 +313,11 @@ local function bind_menu_actions(widget)
     end))
 
     widget:bind_click("menu_scoreboard", on_menu_button_click(function()
-        open_menu_page("scoreboard", "Scoreboard")
+        open_menu_page("scoreboard", "스코어보드")
     end))
 
     widget:bind_click("menu_credits", on_menu_button_click(function()
-        open_menu_page("credits", "Credits")
+        open_menu_page("credits", "크레딧")
     end))
 
     widget:bind_click("menu_back_to_title", on_menu_button_click(function()

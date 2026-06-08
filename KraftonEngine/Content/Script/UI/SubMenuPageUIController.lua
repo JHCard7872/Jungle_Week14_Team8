@@ -143,9 +143,10 @@ local function apply_scoreboard_to_view()
 
         if entry ~= nil then
             set_text("score_rank_" .. tostring(i), tostring(i))
-            set_text("score_name_" .. tostring(i), tostring(entry.nickname or "SAMPLE"))
+            set_text("score_name_" .. tostring(i), tostring(entry.nickname or "김사원"))
             set_text("score_count_" .. tostring(i), tostring(entry.collectedCount or 0))
             set_text("score_value_" .. tostring(i), tostring(entry.totalScore or 0))
+            set_text("score_date_" .. tostring(i), tostring(entry.savedDateText or entry.savedDate or "-"))
         end
     end
 
@@ -211,7 +212,7 @@ local function set_current_page(page_type, title)
     end
 
     -- Confirm은 Options에서 설정 적용용으로 쓰고, 나머지 페이지에서는 닫기 버튼으로 사용한다.
-    set_text("page_confirm_label", current_page_type == "options" and "Confirm" or "Close")
+    set_text("page_confirm_label", current_page_type == "options" and "결정" or "닫기")
 
     apply_settings_to_view()
     apply_scoreboard_to_view()

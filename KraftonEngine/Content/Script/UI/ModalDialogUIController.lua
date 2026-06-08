@@ -66,7 +66,7 @@ local function set_button_style(element_id, style_name)
         return
     end
 
-    local class_value = "modal_button"
+    local class_value = "modal_button ui_horizontal_button_small"
     if style_name == "text_only" then
         class_value = class_value .. " text_only"
     end

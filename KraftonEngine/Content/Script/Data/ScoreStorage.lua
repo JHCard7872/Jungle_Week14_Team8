@@ -44,6 +44,14 @@ local function write_all(path, content)
     return true
 end
 
+local function format_saved_at(timestamp)
+    timestamp = tonumber(timestamp) or 0
+    if os.date == nil or timestamp <= 0 then
+        return "-"
+    end
+    return os.date("%Y-%m-%d %H:%M", timestamp) or "-"
+end
+
 local function read_current_content()
     local primary_content = read_all(SAVE_PATH)
     if primary_content ~= "" and not string.match(primary_content, "^%s*$") then
@@ -64,12 +72,15 @@ local function read_current_content()
 end
 
 local function build_record_json(record)
+    local saved_at = math.floor(tonumber(record.savedAt) or (os.time ~= nil and os.time() or 0))
+    local saved_date = tostring(record.savedDate or record.savedDateText or format_saved_at(saved_at))
     return string.format(
-        '{"nickname":"%s","totalScore":%d,"collectedCount":%d,"savedAt":%d}',
+        '{"nickname":"%s","totalScore":%d,"collectedCount":%d,"savedAt":%d,"savedDate":"%s"}',
         escape_json_string(record.nickname),
         math.max(0, math.floor(tonumber(record.totalScore) or 0)),
         math.max(0, math.floor(tonumber(record.collectedCount) or 0)),
-        math.floor(tonumber(record.savedAt) or 0)
+        saved_at,
+        escape_json_string(saved_date)
     )
 end
 
@@ -80,12 +91,15 @@ local function parse_records(content)
         local total_score = tonumber(string.match(object_text, '"totalScore"%s*:%s*(%-?%d+)')) or 0
         local collected_count = tonumber(string.match(object_text, '"collectedCount"%s*:%s*(%-?%d+)')) or 0
         local saved_at = tonumber(string.match(object_text, '"savedAt"%s*:%s*(%-?%d+)')) or 0
+        local saved_date = string.match(object_text, '"savedDate"%s*:%s*"([^"]*)"') or format_saved_at(saved_at)
 
         table.insert(records, {
             nickname = nickname,
             totalScore = total_score,
             collectedCount = collected_count,
             savedAt = saved_at,
+            savedDate = saved_date,
+            savedDateText = saved_date,
         })
     end
 
