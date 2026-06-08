@@ -54,6 +54,7 @@ struct FShowFlags
 	bool bBoundingVolume = false;
 	bool bDebugDraw = true;
 	bool bOctree = false;
+	bool bSkySphere = true;
 	bool bFog = true;
 	bool bDepthOfField = false;
 	bool bDOFBokeh = false;

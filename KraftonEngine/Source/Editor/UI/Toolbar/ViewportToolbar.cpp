@@ -556,6 +556,7 @@ void FViewportToolbar::RenderShowFlags(const FToolbarRenderState& State)
 		ImGui::Checkbox("Bounding Volume", &RenderOptions.ShowFlags.bBoundingVolume);
 		ImGui::Checkbox("Debug Draw", &RenderOptions.ShowFlags.bDebugDraw);
 		ImGui::Checkbox("Octree", &RenderOptions.ShowFlags.bOctree);
+		ImGui::Checkbox("Sky Sphere", &RenderOptions.ShowFlags.bSkySphere);
 		ImGui::Checkbox("Fog", &RenderOptions.ShowFlags.bFog);
 		ImGui::Checkbox("DepthOfField", &RenderOptions.ShowFlags.bDepthOfField);
 		if (RenderOptions.ShowFlags.bDepthOfField)

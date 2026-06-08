@@ -31,6 +31,7 @@ namespace Key
 	constexpr const char* bBoundingVolume = "bBoundingVolume";
 	constexpr const char* bDebugDraw = "bDebugDraw";
 	constexpr const char* bOctree = "bOctree";
+	constexpr const char* bSkySphere = "bSkySphere";
 	constexpr const char* bFog = "bFog";
 	constexpr const char* bDepthOfField = "bDepthOfField";
 	constexpr const char* bDOFBokeh = "bDOFBokeh";
@@ -180,6 +181,7 @@ json::JSON SaveRenderOptions(const FViewportRenderOptions& Opts)
 	Obj[Key::bBoundingVolume] = Opts.ShowFlags.bBoundingVolume;
 	Obj[Key::bDebugDraw] = Opts.ShowFlags.bDebugDraw;
 	Obj[Key::bOctree] = Opts.ShowFlags.bOctree;
+	Obj[Key::bSkySphere] = Opts.ShowFlags.bSkySphere;
 	Obj[Key::bFog] = Opts.ShowFlags.bFog;
 	Obj[Key::bDepthOfField] = Opts.ShowFlags.bDepthOfField;
 	Obj[Key::bDOFBokeh] = Opts.ShowFlags.bDOFBokeh;
@@ -246,6 +248,8 @@ void LoadRenderOptions(json::JSON Obj, FViewportRenderOptions& Opts)
 		Opts.ShowFlags.bDebugDraw = Obj[Key::bDebugDraw].ToBool();
 	if (Obj.hasKey(Key::bOctree))
 		Opts.ShowFlags.bOctree = Obj[Key::bOctree].ToBool();
+	if (Obj.hasKey(Key::bSkySphere))
+		Opts.ShowFlags.bSkySphere = Obj[Key::bSkySphere].ToBool();
 	if (Obj.hasKey(Key::bFog))
 		Opts.ShowFlags.bFog = Obj[Key::bFog].ToBool();
 	if (Obj.hasKey(Key::bDepthOfField))
