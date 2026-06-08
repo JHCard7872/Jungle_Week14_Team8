@@ -57,6 +57,7 @@ local S = {
         need   = 0,      -- 목표 수
         got    = 0,      -- 현재 수거 수
         text   = "",     -- HUD 표시 문구 ("xxx N체 수거")
+        seq    = 0,      -- 발급 시퀀스(단조 증가) — 포탈이 "새 미션 발급"을 감지해 재배치하는 트리거
     },
 
     result = {
@@ -83,7 +84,7 @@ function S.Reset(timeLimit)
         scoreText = "",
         imagePath = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
     }
-    S.mission = { active = false, target = "", need = 0, got = 0, text = "" }
+    S.mission = { active = false, target = "", need = 0, got = 0, text = "", seq = 0 }
     -- 주의: 위 초기 result 테이블과 필드를 똑같이 유지할 것 —
     -- baseScore/urgentScore가 빠지면 ScoreManager가 첫 수거부터 nil 산술로 죽는다 (편집 유실 사고 이력 있음)
     S.result = { collectedCount = 0, baseScore = 0, urgentScore = 0, gameOverReason = "", gradeText = "" }

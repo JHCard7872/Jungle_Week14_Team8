@@ -24,6 +24,7 @@ local Session  = require("GameSession")
 
 local M = {}
 local current = nil   -- { target, need, got, text } / 발급 보류면 nil
+local seq     = 0     -- 발급 시퀀스(단조 증가) — 새 미션이 실제로 만들어질 때만 +1, 포탈이 재배치 트리거로 읽는다
 
 -- current가 바뀔 때마다 호출 — HUD가 직독하는 Session.mission 캐시를 갱신한다
 local function publish()
@@ -33,6 +34,7 @@ local function publish()
         need   = current ~= nil and current.need or 0,
         got    = current ~= nil and current.got or 0,
         text   = current ~= nil and current.text or "",
+        seq    = seq,
     }
 end
 
@@ -83,6 +85,7 @@ function M.IssueNext()
         target, need = bestId, bestN
     end
 
+    seq = seq + 1   -- 새 미션 발급 — 보류(nil) 분기는 위에서 이미 return하므로 여기까지 오면 실발급
     current = {
         target = target,
         need   = need,
