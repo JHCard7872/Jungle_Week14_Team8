@@ -8,7 +8,7 @@
 // AGOIncTrashBox — 래그돌 수거함 액터 (TrashBox 메시)
 // Root(SceneComponent) 아래 TrashBoxMesh + CollectTrigger
 // + LogoDecal + 4면 벽(Block) 형제 구조.
-// 수거(점수/소멸)는 CollectorBehavior.lua가 담당한다.
+// 수거(점수만, 미션 카운트 없음)는 TrashBoxBehavior.lua가 담당한다.
 // 트리거는 QueryOnly·Kinematic·GenerateOverlapEvents=true 조합 — 하나라도
 // 빠지면 OnOverlap이 안 와서 수거가 조용히 죽는다.
 // ======================================================

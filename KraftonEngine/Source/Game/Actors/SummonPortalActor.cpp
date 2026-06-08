@@ -22,7 +22,7 @@ namespace
 	const FString SummonPortalTemplatePath = "Content/Particle/FX_StrangePortal.uasset";
 	const FString ShaftPlaneMeshPath = "Content/Data/BasicShape/Plane.obj";
 	const FString ShaftMaterialPath = "Content/Material/FX_LightShaftMesh.mat";
-	const FString CollectorLuaScriptFile = "CollectorBehavior.lua";
+	const FString CollectorLuaScriptFile = "PortalBehavior.lua";
 
 	constexpr int32 ShaftCount = 30;
 	constexpr float ShaftRingRadius = 2.05f; // FX_StrangePortal 바닥 링(Radius 2.0~2.1) 위에 걸치는 값

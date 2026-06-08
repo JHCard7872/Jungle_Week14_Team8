@@ -72,6 +72,7 @@ local function start_gameplay()
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
+    GOInc.SpawnSummonPortal()   -- 포탈 1개 코드 스폰 — 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로
     HUD.SetGameplayHudVisible(true)
     HUD.UpdateFromSession(0.0)
 end
