@@ -380,28 +380,64 @@ bool UGOIncRagdollMovementComponent::AttemptStepUp(const FVector& MoveDelta, con
 	const FVector OriginalLocation = Updated->GetWorldLocation();
 	const float OriginalCapsuleZ = GetSweepCapsuleWorldLocation().Z;
 	const bool bWasGrounded = bIsGrounded;
+	FVector StepStartNudge(0.0f, 0.0f, 0.0f);
+	if (BlockingHit.bStartPenetrating || BlockingHit.Distance <= SweepSkinWidth + SmallMoveThreshold)
+	{
+		FVector BlockingNormal = GetBestHitNormal(BlockingHit);
+		BlockingNormal.Z = 0.0f;
+		BlockingNormal = BlockingNormal.GetSafeNormal();
+		if (!BlockingNormal.IsNearlyZero())
+		{
+			StepStartNudge = BlockingNormal * (SweepSkinWidth + 0.01f);
+			Updated->SetWorldLocation(OriginalLocation + StepStartNudge);
+		}
+	}
 	const FVector StepUpDelta(0.0f, 0.0f, MaxStepHeight);
 
 	FHitResult UpHit;
 	if (SweepCapsuleMoveFrom(GetSweepCapsuleWorldLocation(), StepUpDelta, UpHit))
 	{
+		const FVector HitNormal = GetBestHitNormal(UpHit);
+		const bool bCanIgnoreInitialUpBlock =
+			UpHit.Distance <= SweepSkinWidth + SmallMoveThreshold &&
+			HitNormal.Z < -WalkableFloorNormalZ &&
+			(BlockingHit.bStartPenetrating || BlockingHit.Distance <= SweepSkinWidth + SmallMoveThreshold);
+		if (!bCanIgnoreInitialUpBlock)
+		{
+			if (bStepUpDebugLogEnabled)
+			{
+				UE_LOG("[GOIncStepUp] Fail=UpBlocked commit=%d upDist=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f) startNudge=(%.3f, %.3f, %.3f)",
+					bCommitMove ? 1 : 0,
+					MaxStepHeight,
+					UpHit.Distance,
+					HitNormal.X,
+					HitNormal.Y,
+					HitNormal.Z,
+					StepStartNudge.X,
+					StepStartNudge.Y,
+					StepStartNudge.Z);
+			}
+			Updated->SetWorldLocation(OriginalLocation);
+			bIsGrounded = bWasGrounded;
+			return false;
+		}
+
 		if (bStepUpDebugLogEnabled)
 		{
-			const FVector HitNormal = GetBestHitNormal(UpHit);
-			UE_LOG("[GOIncStepUp] Fail=UpBlocked commit=%d upDist=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f)",
+			UE_LOG("[GOIncStepUp] IgnoredInitialUpBlock commit=%d upDist=%.3f hitDist=%.3f hitNormal=(%.3f, %.3f, %.3f) startNudge=(%.3f, %.3f, %.3f)",
 				bCommitMove ? 1 : 0,
 				MaxStepHeight,
 				UpHit.Distance,
 				HitNormal.X,
 				HitNormal.Y,
-				HitNormal.Z);
+				HitNormal.Z,
+				StepStartNudge.X,
+				StepStartNudge.Y,
+				StepStartNudge.Z);
 		}
-		Updated->SetWorldLocation(OriginalLocation);
-		bIsGrounded = bWasGrounded;
-		return false;
 	}
 
-	Updated->SetWorldLocation(OriginalLocation + StepUpDelta);
+	Updated->SetWorldLocation(OriginalLocation + StepStartNudge + StepUpDelta);
 
 	FHitResult ForwardHit;
 	if (SweepCapsuleMove(HorizontalDelta, ForwardHit))

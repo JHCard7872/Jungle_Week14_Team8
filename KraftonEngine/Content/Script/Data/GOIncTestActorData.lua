@@ -64,6 +64,7 @@ return {
     SLOT2_BEAM_HIT_VISIBLE_TIME = BEAM_VISIBLE_TIME, -- Slot2는 hit/miss 모두 플래시처럼 짧게 표시
     SLOT1_GATHER_FX_PATH = "Content/Particle/FX_MuzzleGlowSphereCyan.uasset", -- Weapon1 홀드 중 Beam Src/총구에 붙여두는 시안 메시 글로우
     SLOT1_GATHER_FX_SOURCE_OFFSET = 0.00, -- Beam Src에서 Dst 방향으로 살짝 띄워 무기 끝에 딱 달라붙지 않게 한다
+    SLOT1_TARGET_GATHER_FX_PATH = "Content/Particle/FX_GatherLoopRed.uasset", -- Weapon1 홀드 중 Beam Dst/조준점에 붙여두는 빨간 GatherLoop. Src FX처럼 새 잔상을 뿌리지 않고 위치만 따라간다
     SLOT2_MUZZLE_FX_PATH = "Content/Particle/FX_MuzzleGlowSphere.uasset", -- Weapon2 발사 순간 총구에 한 번 터지는 빨간 메시 글로우
     SLOT2_MUZZLE_FX_VISIBLE_TIME = 0.10, -- Weapon2 발사 글로우가 총구를 따라가는 시간. 기존 FX가 있으면 Reset하고 없으면 Weapon1처럼 생성한다
     SLOT2_BEAM_MATERIAL_PATH = "Content/Material/Auto/BeamPink.mat", -- Weapon2 LMB 빔 색. SectionColor = 5, 0.1, 2.5 핑크 계열
@@ -107,7 +108,7 @@ return {
     HIT_IMPACT_RADIUS = 0.16,
     HIT_IMPACT_CORE_RADIUS = 0.055,
     HIT_IMPACT_INTENSITY = 2.6,
-    SLOT1_GRAB_FORCE_SCALE = 5.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
+    SLOT1_GRAB_FORCE_SCALE = 25.00, -- Weapon1 그랩 최종 힘 배율. 질량 값은 그대로 두고 끌어오는 힘만 더 키우고 싶을 때 조정한다
     GRAB_SPRING_ACCELERATION = 42.0, -- 목표 위치로 끌어당기는 가속도 계수. 질량 보정 전 단계에서 사용한다
     GRAB_DAMPING_ACCELERATION = 10.0, -- 현재 속도에 대한 감쇠 가속도 계수. 높을수록 덜 출렁인다
     GRAB_MAX_ERROR = 30.0,
@@ -115,6 +116,9 @@ return {
     GRAB_TORQUE_SCALE = 0.25,
     GRAB_ANGULAR_DAMPING = 10.0,
     GRAB_MAX_TORQUE = 100000.0,
+    STATIC_GRAB_FORCE_SCALE = 0.10, -- StaticMesh는 단일 바디라 Slot1 힘을 크게 낮춰 과한 가속을 막는다
+    STATIC_GRAB_MAX_ACCELERATION = 30.0, -- StaticMesh center grab 전용 가속도 상한. Ragdoll보다 훨씬 보수적으로 둔다
+    STATIC_GRAB_MAX_TORQUE = 0.0, -- StaticMesh는 표면 offset torque를 끄고 중심점만 당긴다
     GRAB_REFERENCE_MASS = 18.0, -- 이 질량은 grip scale 1.0으로 취급한다
     GRAB_MASS_POWER = 0.50, -- 질량 차이가 grip 난이도로 반영되는 곡선. 클수록 무거운 랙돌이 더 둔해진다
     GRAB_MIN_MASS_SCALE = 0.35,
@@ -171,14 +175,9 @@ return {
     MUZZLE_FORWARD_OFFSET = 0.95,    -- MuzzlePoint 기본 Forward 위치. 씬에 MuzzlePoint가 없을 때 fallback
     MUZZLE_RIGHT_OFFSET = 0.0,       -- MuzzlePoint 기본 Right 위치. 씬에 MuzzlePoint가 없을 때 fallback
     MUZZLE_UP_OFFSET = 0.05,         -- MuzzlePoint 기본 Up 위치. 씬에 MuzzlePoint가 없을 때 fallback
-    BEAM_SOURCE_FORWARD_BIAS = 0.0, -- Beam 시작점을 총구 기준 앞/뒤로 미세 보정. 음수면 카메라 쪽
-    BEAM_SOURCE_RIGHT_BIAS = -0.1,     -- Beam 시작점 좌우 미세 보정
-    BEAM_SOURCE_UP_BIAS = 0.0,        -- Beam 시작점 상하 미세 보정
-    BEAM_SOURCE_PITCH_INFLUENCE = 0.9, -- Beam Src에 카메라 Pitch를 섞는 비율. 0이면 Yaw 기준, 1이면 기존 카메라 기준
-    BEAM_SOURCE_DOWN_PITCH_INFLUENCE = 0.45, -- 아래를 볼 때만 Beam Src가 Pitch를 덜 따라가도록 쓰는 비율
-    BEAM_SOURCE_PITCH_BLEND_DEGREES = 15.0, -- 위 두 influence를 잇는 보간 구간(도). 수평(pitch 0)에서 즉시 점프하면 빔이 꺾여 보인다
+    MUZZLE_FORWARD_EXTRA_OFFSET = 1.50, -- 씬 MuzzlePoint 기준에서 Forward 방향으로 더하는 런타임 보정. Beam Src는 최종 MuzzlePoint 위치를 그대로 쓴다
     BEAM_RENDER_SHEETS = 1, -- GOInc 빔은 한 줄 레이저로 보여야 하므로 Beam sheet를 1장으로 고정
-    BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.18, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
+    BEAM_SOURCE_TANGENT_STRENGTH_SCALE = 0.12, -- Src에서 총구 Forward를 따라가는 곡선 길이 비율
     BEAM_TARGET_TANGENT_STRENGTH_SCALE = 0.08, -- Dst 도착부가 과하게 휘지 않게 낮게 둔 곡선 길이 비율
 
     UpdateWeaponWalkBob = function(self, delta_time, velocity, state, make_vec, clamp_value, is_sprinting)
