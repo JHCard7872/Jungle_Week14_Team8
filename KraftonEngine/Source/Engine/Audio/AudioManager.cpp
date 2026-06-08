@@ -1,6 +1,11 @@
 #include "AudioManager.h"
 #include "Core/Logging/Log.h"
+#include "GameFramework/Camera/PlayerCameraManager.h"
+#include "GameFramework/GameMode/PlayerController.h"
+#include "GameFramework/World.h"
 #include "Platform/Paths.h"
+#include "Render/Types/MinimalViewInfo.h"
+#include "Runtime/Engine.h"
 #include <algorithm>
 
 bool FAudioManager::Initialize()
@@ -18,6 +23,7 @@ bool FAudioManager::Initialize()
 		return false;
 	}
 
+	System->set3DSettings(1.0f, 1.0f, 1.0f);
 	System->getMasterChannelGroup(&MasterGroup);
 
 	LoadDefaultAudios();
@@ -58,10 +64,13 @@ void FAudioManager::Shutdown()
 
 void FAudioManager::Tick()
 {
-	if (System)
+	if (!System)
 	{
-		System->update();
+		return;
 	}
+
+	Update3DListener();
+	System->update();
 }
 
 bool FAudioManager::LoadAudio(const FString& Key, const FString& Path, bool bLoop)
@@ -114,6 +123,34 @@ void FAudioManager::PlayAudio(const FString& Key, float Volume)
 	{
 		Channel->setVolume(Volume);
 	}
+}
+
+void FAudioManager::PlayAudioAt(const FString& Key, const FVector& Location, float Volume, float MinDistance, float MaxDistance)
+{
+	if (!System || !Audios.contains(Key) || !Audios[Key].Sound)
+	{
+		return;
+	}
+
+	FMOD::Channel* Channel = nullptr;
+	System->playSound(Audios[Key].Sound, nullptr, true, &Channel);
+
+	if (!Channel)
+	{
+		return;
+	}
+
+	FMOD_VECTOR Pos{ Location.X, Location.Y, Location.Z };
+	FMOD_VECTOR Vel{ 0.0f, 0.0f, 0.0f };
+
+	const float ClampedMinDistance = std::max(0.0f, MinDistance);
+	const float ClampedMaxDistance = std::max(ClampedMinDistance, MaxDistance);
+
+	Channel->setMode(FMOD_3D | FMOD_3D_WORLDRELATIVE | FMOD_LOOP_OFF);
+	Channel->set3DAttributes(&Pos, &Vel);
+	Channel->set3DMinMaxDistance(ClampedMinDistance, ClampedMaxDistance);
+	Channel->setVolume(std::clamp(Volume, 0.0f, 1.0f));
+	Channel->setPaused(false);
 }
 
 void FAudioManager::PlayManagedAudio(const FString& Key, const FString& ChannelName, float Volume)
@@ -300,6 +337,43 @@ bool FAudioManager::IsLoopPlaying(const FString& LoopName)
 	return FindPlayingLoopChannel(LoopName) != nullptr;
 }
 
+void FAudioManager::Update3DListener()
+{
+	if (!System || !GEngine)
+	{
+		return;
+	}
+
+	UWorld* World = GEngine->GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	APlayerController* PC = World->GetFirstPlayerController();
+	APlayerCameraManager* CameraManager = PC ? PC->GetPlayerCameraManager() : nullptr;
+	if (!CameraManager)
+	{
+		return;
+	}
+
+	FMinimalViewInfo POV;
+	if (!CameraManager->GetCameraCachePOV(POV) && !CameraManager->GetCameraView(POV))
+	{
+		return;
+	}
+
+	const FVector Forward = POV.Rotation.GetForwardVector().GetSafeNormal(1.0e-6f, FVector::ForwardVector);
+	const FVector Up = POV.Rotation.GetUpVector().GetSafeNormal(1.0e-6f, FVector::UpVector);
+
+	FMOD_VECTOR Pos{ POV.Location.X, POV.Location.Y, POV.Location.Z };
+	FMOD_VECTOR Vel{ 0.0f, 0.0f, 0.0f };
+	FMOD_VECTOR Fwd{ Forward.X, Forward.Y, Forward.Z };
+	FMOD_VECTOR UpVec{ Up.X, Up.Y, Up.Z };
+
+	System->set3DListenerAttributes(0, &Pos, &Vel, &Fwd, &UpVec);
+}
+
 FMOD::Channel* FAudioManager::FindPlayingManagedChannel(const FString& ChannelName)
 {
 	if (!ManagedChannels.contains(ChannelName))
@@ -383,4 +457,5 @@ void FAudioManager::LoadDefaultAudios()
 	LoadAudio("sfx_ui_hover", "SfxUiHover.mp3");
 	LoadAudio("sfx_game_over", "SfxGameOver.mp3");
 	LoadAudio("sfx_revive", "SfxRevivedRagdoll.mp3");
+	LoadAudio("sfx_stamp_impact", "SfxStampImpact.mp3");
 }
