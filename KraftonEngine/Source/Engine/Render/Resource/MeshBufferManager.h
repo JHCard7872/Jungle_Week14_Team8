@@ -25,6 +25,7 @@ private:
 	void CreateCube();
 	void CreatePlane();
 	void CreateSphere(int Slices = 20, int Stacks = 20);
+	void CreateSkySphere(int Slices = 64, int Stacks = 32);
 	void CreateTranslationGizmo();
 	void CreateRotationGizmo();
 	void CreateScaleGizmo();

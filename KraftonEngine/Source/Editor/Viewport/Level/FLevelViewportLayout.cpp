@@ -43,6 +43,7 @@
 #include "Engine/Runtime/ActorPlacementRegistry.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace
 {
@@ -1063,11 +1064,36 @@ void FLevelViewportLayout::RenderViewportUI(float DeltaTime)
 				UWorld* EditorWorld = Editor ? Editor->GetWorld() : nullptr;
 				if (EditorWorld)
 				{
+					const ImVec2 MousePos = ImGui::GetIO().MousePos;
+					const FPoint DropPos{ MousePos.x, MousePos.y };
+
+					int32 DropSlotIndex = GetActiveViewportSlotIndex();
+					for (int32 i = 0; i < ActiveSlotCount; ++i)
+					{
+						if (i < static_cast<int32>(LevelViewportClients.size()) &&
+							i < MaxViewportSlots &&
+							ViewportWindows[i] &&
+							ViewportWindows[i]->IsHover(DropPos))
+						{
+							DropSlotIndex = i;
+							break;
+						}
+					}
+
+					FVector SpawnLocation(0.0f, 0.0f, 0.0f);
+					TryComputePlacementLocation(DropSlotIndex, DropPos, SpawnLocation);
+
 					AStaticMeshActor* NewActor = Cast<AStaticMeshActor>(FObjectFactory::Get().Create(AStaticMeshActor::StaticClass()->GetName(), EditorWorld));
 					if (IsValid(NewActor))
 					{
 						NewActor->InitDefaultComponents(FPaths::ToUtf8(ContentItem.Path));
+						NewActor->SetActorLocation(SpawnLocation);
 						EditorWorld->AddActor(NewActor);
+
+						if (SelectionManager)
+						{
+							SelectionManager->Select(NewActor);
+						}
 					}
 				}
 			}
@@ -2305,6 +2331,8 @@ bool FLevelViewportLayout::TryComputePlacementLocation(int32 SlotIndex, const FP
 	constexpr float SpawnDistanceFromCamera = 10.0f;
 	OutLocation = Ray.Origin + Ray.Direction * SpawnDistanceFromCamera;
 
+	bool bFoundPlacement = false;
+
 	if (Editor)
 	{
 		if (UWorld* World = Editor->GetWorld())
@@ -2314,7 +2342,17 @@ bool FLevelViewportLayout::TryComputePlacementLocation(int32 SlotIndex, const FP
 			if (World->RaycastPrimitives(Ray, HitResult, HitActor))
 			{
 				OutLocation = Ray.Origin + RayDirection * HitResult.Distance;
+				bFoundPlacement = true;
 			}
+		}
+	}
+
+	if (!bFoundPlacement && std::abs(RayDirection.Z) > 1e-4f)
+	{
+		const float T = -Ray.Origin.Z / RayDirection.Z;
+		if (T > 0.0f)
+		{
+			OutLocation = Ray.Origin + RayDirection * T;
 		}
 	}
 
