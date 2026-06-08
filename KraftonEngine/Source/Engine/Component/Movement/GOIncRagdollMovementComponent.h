@@ -54,6 +54,12 @@ public:
 	void SetSweepMovementEnabled(bool bEnabled) { bSweepMovementEnabled = bEnabled; }
 	UFUNCTION(Pure, Category="GOIncRagdollMovement|Collision")
 	bool IsSweepMovementEnabled() const { return bSweepMovementEnabled; }
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Step")
+	void SetStepUpEnabled(bool bEnabled) { bStepUpEnabled = bEnabled; }
+	UFUNCTION(Pure, Category="GOIncRagdollMovement|Step")
+	bool IsStepUpEnabled() const { return bStepUpEnabled; }
+	UFUNCTION(Callable, Category="GOIncRagdollMovement|Step")
+	void SetMaxStepHeight(float InMaxStepHeight);
 	UFUNCTION(Pure, Category="GOIncRagdollMovement|Floor")
 	bool IsGrounded() const { return bIsGrounded; }
 
@@ -94,6 +100,10 @@ public:
 	bool bSweepMovementEnabled = true;
 	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Collision", DisplayName="Sweep Skin Width", Min=0.0f, Max=0.5f, Speed=0.005f)
 	float SweepSkinWidth = 0.02f;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Use Step Up")
+	bool bStepUpEnabled = true;
+	UPROPERTY(Edit, Save, Category="GOIncRagdollMovement|Step", DisplayName="Max Step Height", Min=0.0f, Max=2.0f, Speed=0.01f)
+	float MaxStepHeight = 0.0f;
 
 	// Component 간 직접 참조를 피하기 위해 CapsuleComponent 포인터 대신 shape 값만 저장한다.
 	// Actor/Lua가 AliveCapsule의 크기와 UpdatedComponent 기준 local offset을 전달한다.
@@ -115,7 +125,9 @@ private:
 	void ResolveFloorAfterMove();
 	void MoveUpdatedComponent(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits = false);
 	bool MoveUpdatedComponentWithSweep(const FVector& MoveDelta, bool bIgnoreWalkableFloorHits);
+	bool TryStepUp(const FVector& MoveDelta, const FHitResult& BlockingHit);
 	bool SweepCapsuleMove(const FVector& MoveDelta, FHitResult& OutHit) const;
+	bool SweepCapsuleMoveFrom(const FVector& Start, const FVector& MoveDelta, FHitResult& OutHit) const;
 	bool CanUseCapsuleSweep() const;
 	FVector GetSweepCapsuleWorldLocation() const;
 	float GetSweepCapsuleRadius() const;
