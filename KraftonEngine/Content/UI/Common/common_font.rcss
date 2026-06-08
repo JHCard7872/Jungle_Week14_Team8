@@ -1,0 +1,18 @@
+/* =============================================================================
+   Common Font Style
+   프로젝트 UI 기본 서체를 바꾸고 싶으면 이 파일만 우선 수정한다.
+   개별 화면 RCSS에는 크기/위치/색상만 남기고, 기본 font-family/font-weight는 여기서 관리한다.
+   ============================================================================= */
+
+body {
+    font-family: NanumGothic;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+button,
+input,
+textarea {
+    font-family: NanumGothic;
+    font-weight: bold;
+}

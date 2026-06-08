@@ -36,6 +36,31 @@ function M.ShowConfirm(options)
     })
 end
 
+
+function M.ShowInput(options)
+    options = options or {}
+
+    Modal.Create({
+        zOrder = options.zOrder or DEFAULT_Z_ORDER,
+        title = options.title or "",
+        message = options.message or "",
+        leftText = options.confirmText or "결정",
+        rightText = nil,
+        buttonStyle = "text_only",
+        input = true,
+        inputRule = options.ruleText or "",
+        inputValue = options.defaultValue or "",
+        inputError = options.errorText or "",
+        showCursor = options.showCursor ~= false,
+        onLeft = function()
+            if options.onConfirm ~= nil then
+                options.onConfirm(Modal.GetInputText())
+            end
+        end,
+    })
+    Modal.Show()
+end
+
 function M.ShowNotice(options)
     options = options or {}
 
@@ -43,7 +68,7 @@ function M.ShowNotice(options)
         zOrder = options.zOrder,
         title = options.title,
         message = options.message,
-        leftText = options.buttonText or "OK",
+        leftText = options.buttonText or "확인",
         rightText = nil,
         showCursor = options.showCursor,
         onLeft = options.onConfirm,
@@ -56,6 +81,10 @@ end
 
 function M.IsVisible()
     return Modal.IsVisible()
+end
+
+function M.GetInputText()
+    return Modal.GetInputText()
 end
 
 function M.Destroy()

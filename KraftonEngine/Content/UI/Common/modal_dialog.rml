@@ -1,6 +1,7 @@
 <rml>
 <head>
     <title>Common Modal Dialog</title>
+    <link type="text/rcss" href="common_font.rcss" />
     <link type="text/rcss" href="modal_dialog.rcss" />
 </head>
 
@@ -14,6 +15,12 @@
             <div id="modal_content">
                 <div id="modal_title">Paused</div>
                 <div id="modal_message"></div>
+
+                <div id="modal_input_area">
+                    <div id="modal_input_rule"></div>
+                    <input id="modal_text_input" type="text" value="" />
+                    <div id="modal_input_error"></div>
+                </div>
 
                 <div id="modal_button_row">
                     <button id="modal_button_left" class="modal_button">
