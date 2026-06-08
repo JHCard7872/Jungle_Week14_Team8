@@ -21,7 +21,7 @@
             </button>
             <div id="label_help" class="menu_label">
                 <img class="menu_label_image" src="../../Sprite/ui_horiz_button.png" />
-                <div class="menu_label_text">조작 방법</div>
+                <div class="menu_label_text">플레이 방법</div>
             </div>
 
             <button id="menu_option" class="menu_button">
