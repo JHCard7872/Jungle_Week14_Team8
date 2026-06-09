@@ -1,0 +1,18 @@
+{
+  "BlendState" : "AlphaBlend",
+  "DepthStencilState" : "DepthReadOnly",
+  "Domain" : "Surface",
+  "GeneratedShaderPath" : "",
+  "Parameters" : {
+
+  },
+  "PathFileName" : "Content/Sprite/play_exclamation_mark.mat",
+  "RasterizerState" : "SolidNoCull",
+  "ReceiveLighting" : false,
+  "RenderPass" : "AlphaBlend",
+  "ShaderPath" : "Shaders/UI/Billboard.hlsl",
+  "Textures" : {
+    "DiffuseTexture" : "Content/Sprite/play_exclamation_mark.png"
+  },
+  "Version" : 2
+}
