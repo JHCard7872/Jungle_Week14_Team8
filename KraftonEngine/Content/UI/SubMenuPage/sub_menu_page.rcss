@@ -646,6 +646,8 @@ body {
     top: 150px;
     width: 13%;   /* CARD_W */
     height: auto;
+    /* 플립(scale X) 연출이 카드 중심을 기준으로 돌도록 */
+    transform-origin: center center;
 }
 
 #credits_id_card_1 { left: 17%; }   /* START + 0×STRIDE */

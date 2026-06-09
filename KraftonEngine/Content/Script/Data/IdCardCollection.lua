@@ -1,22 +1,24 @@
 -- =============================================================================
--- IdCardCollection — 개발자 ID 카드 컬렉션 (JSON 저장 + 해시 검증)
+-- IdCardCollection — 개발자 ID 카드 컬렉션 (JSON 저장 + 해시 검증 + dev 모드)
 -- [개념] 플레이 중 특정 개발자의 ID 카드를 습득하면, Result 화면 진입 시
 --        습득 목록을 JSON 파일에 누적(합집합) 기록한다 — 컬렉션 개념.
 --        크레딧 화면 진입 시 이 파일을 읽어, 습득한 사람은 id_card_jungle_ 대신
 --        id_card_dev_ 이미지를 렌더한다.
 -- [저장 파일] Content/Data/idcard_collection.json  (scoreboard.json 과 같은 경로)
--- [포맷] { name, hash } 객체의 JSON 배열. 예:
---          [
---            { "name": "김연하", "hash": "d913...33d4" },
---            { "name": "강건우", "hash": "115a...42bc" }
---          ]
+-- [포맷]
+--          {
+--            "devMode": false,
+--            "collected": [
+--              { "name": "김연하", "hash": "d913...33d4" }
+--            ]
+--          }
 --        hash = (이름 + 솔트)의 해시. 읽을 때 hash == hash(name) 인지 다시 계산해
---        검증하므로, 이름만 끼워 넣거나 해시를 임의로 바꾸면 인정되지 않는다.
---        (단 솔트/레인이 소스에 있어 암호학적 보안은 아님 — 캐주얼 치트 방지용 난독화)
--- [사용]
---        게임플레이: require("Data/IdCardCollection").MarkCollected("KKW")
---        Result 진입: IdCardCollection.PersistSessionCollection()
---        크레딧 진입: IdCardCollection.LoadCollectedSet()  -> { [key]=true }
+--        검증하므로 이름만 끼워 넣거나 해시를 임의로 바꾸면 인정되지 않는다.
+--        devMode 가 true면 컬렉션 내용과 무관하게 4명 모두 습득으로 override 한다.
+--        (솔트/레인이 소스에 있어 암호학적 보안은 아님 — 캐주얼 치트 방지용 난독화)
+-- [습득 소스] Result 진입 시 아래 두 곳을 읽어 합집합으로 저장한다:
+--          1) Session.idCardNames        : 게임플레이가 기록한 ID 카드 actor 이름 목록(= 카드 키)
+--          2) Session.collectedIdCards   : MarkCollected() API로 표시한 세션 집합(테스트/대체용)
 -- [누적] 저장은 항상 기존 파일을 읽어 합집합으로만 한다. 이번 판에 못 얻은 카드라도
 --        이미 저장돼 있으면 그대로 유지되고, 제거/초기화는 하지 않는다.
 -- [주의] 이미지 경로는 sub_menu_page.rml 기준 상대경로(../../Sprite/...)다.
@@ -46,8 +48,8 @@ local HASH_LANES = {
     { init = 374761393,  mult = 59, salt = "7" },
 }
 
--- 크레딧에 표시되는 4명.
---  key             : 게임플레이/세션에서 습득을 표시할 때 쓰는 식별자(MarkCollected 인자)
+-- 크레딧에 표시되는 4명. key는 Play.Scene의 ID 카드 actor 이름(=Session.idCardNames 항목)과 동일하다.
+--  key             : 게임플레이/세션 식별자 (KKW/KYH/PJH/OJH)
 --  name            : 저장 파일에 기록되고 해시 입력값으로 쓰이는 사람 이름
 --  creditsElementId: sub_menu_page.rml의 img id 와 1:1 매칭
 --  jungleImage     : 기본(미습득) 이미지 / devImage: 습득 시 교체할 이미지
@@ -79,6 +81,14 @@ end
 
 function M.IsValidKey(key)
     return key ~= nil and BY_KEY[key] ~= nil
+end
+
+-- key(KKW) 또는 이름(강건우) 어느 쪽으로도 사람을 찾는다.
+local function resolve_person(id)
+    if id == nil then
+        return nil
+    end
+    return BY_KEY[id] or BY_NAME[id]
 end
 
 -- 비트 연산 없는 다항식 롤링 해시(레인 1개분, 8자리 hex).
@@ -123,27 +133,25 @@ local function write_all(path, content)
     return true
 end
 
--- JSON 배열에서 { "name": ..., "hash": ... } 객체들을 뽑아 { name -> hash } 맵으로 만든다.
--- 파일이 없거나 깨졌으면 빈 테이블을 반환한다.
-local function parse_entries(content)
-    local map = {}
-    for object_text in string.gmatch(content or "", "{.-}") do
-        local name = string.match(object_text, '"name"%s*:%s*"([^"]*)"')
-        local hash = string.match(object_text, '"hash"%s*:%s*"([0-9a-fA-F]+)"')
-        if name ~= nil and hash ~= nil then
-            map[name] = hash
-        end
+-- 파일 내용에서 devMode 여부와 { name -> hash } 맵을 파싱한다.
+-- 파일이 없거나 깨졌으면 devMode=false, 빈 맵을 반환한다.
+local function parse_file(content)
+    content = content or ""
+    local dev = string.match(content, '"devMode"%s*:%s*(%a+)')
+    local entries = {}
+    for name, hash in string.gmatch(content, '"name"%s*:%s*"([^"]*)"%s*,%s*"hash"%s*:%s*"([0-9a-fA-F]+)"') do
+        entries[name] = hash
     end
-    return map
+    return { devMode = (dev == "true"), entries = entries }
 end
 
-local function load_stored_entries()
-    return parse_entries(read_all(SAVE_PATH))
+local function load_file()
+    return parse_file(read_all(SAVE_PATH))
 end
 
--- name -> hash 맵을 JSON 배열 문자열로 직렬화한다. 알려진 사람은 PEOPLE 순서로,
--- 그 외 보존 대상은 뒤에 붙여 출력이 안정적이도록 한다.
-local function serialize_entries(map)
+-- devMode + { name -> hash } 맵을 JSON 문자열로 직렬화한다.
+-- 알려진 사람은 PEOPLE 순서로, 그 외 보존 대상은 뒤에 붙여 출력이 안정적이도록 한다.
+local function serialize_file(dev_mode, map)
     local names = {}
     local emitted = {}
     for _, person in ipairs(M.PEOPLE) do
@@ -159,20 +167,24 @@ local function serialize_entries(map)
         end
     end
 
+    local collected_block
     if #names == 0 then
-        return "[]\n"
+        collected_block = "[]"
+    else
+        local lines = {}
+        for i, name in ipairs(names) do
+            local comma = (i < #names) and "," or ""
+            lines[#lines + 1] = string.format('    { "name": "%s", "hash": "%s" }%s', name, map[name], comma)
+        end
+        collected_block = "[\n" .. table.concat(lines, "\n") .. "\n  ]"
     end
 
-    local lines = {}
-    for i, name in ipairs(names) do
-        local comma = (i < #names) and "," or ""
-        lines[#lines + 1] = string.format('  { "name": "%s", "hash": "%s" }%s', name, map[name], comma)
-    end
-    return "[\n" .. table.concat(lines, "\n") .. "\n]\n"
+    return string.format('{\n  "devMode": %s,\n  "collected": %s\n}\n',
+        dev_mode and "true" or "false", collected_block)
 end
 
--- 이번 판(세션)에서 습득한 카드를 표시한다. 게임플레이에서 호출한다.
--- 실제 파일 누적 저장은 Result 진입 시 PersistSessionCollection()이 담당한다.
+-- 이번 판(세션)에서 습득한 카드를 표시한다(테스트/대체용 API). 게임플레이는 보통
+-- Session.idCardNames 에 직접 기록하므로 이 함수가 필수는 아니다.
 function M.MarkCollected(key)
     if not M.IsValidKey(key) then
         return false
@@ -184,11 +196,19 @@ function M.MarkCollected(key)
 end
 
 -- 저장된 컬렉션을 { [key]=true } 집합으로 읽어온다. (크레딧 화면용)
--- 각 항목의 hash가 hash(name)과 일치하고, name이 등록된 사람일 때만 인정한다.
+-- devMode면 4명 모두 true. 아니면 hash가 hash(name)과 일치하는 등록된 사람만 인정한다.
 function M.LoadCollectedSet()
-    local stored = load_stored_entries()
+    local data = load_file()
     local collected = {}
-    for name, hash in pairs(stored) do
+
+    if data.devMode then
+        for _, person in ipairs(M.PEOPLE) do
+            collected[person.key] = true
+        end
+        return collected
+    end
+
+    for name, hash in pairs(data.entries) do
         local person = BY_NAME[name]
         if person ~= nil and hash == hash_name(name) then
             collected[person.key] = true
@@ -197,18 +217,45 @@ function M.LoadCollectedSet()
     return collected
 end
 
--- 이번 세션에서 습득한 카드를 기존 컬렉션에 합집합으로 누적 저장한다. (Result 진입용)
--- 새로 추가될 것이 없으면 파일을 건드리지 않고 false를 반환한다.
-function M.PersistSessionCollection()
-    local session_collected = Session.collectedIdCards or {}
+-- 컬렉션이 4명 모두 채워졌는지 여부. (크레딧 축하 문구 판정용)
+function M.IsAllCollected()
+    local collected = M.LoadCollectedSet()
+    for _, person in ipairs(M.PEOPLE) do
+        if not collected[person.key] then
+            return false
+        end
+    end
+    return true
+end
 
-    local stored = load_stored_entries()
+-- 이번 세션 습득분(Session.idCardNames + Session.collectedIdCards)을 기존 컬렉션에
+-- 합집합으로 누적 저장한다. (Result 진입용) 새로 추가될 것이 없으면 파일을 안 건드린다.
+-- devMode 플래그는 기존 파일 값을 그대로 보존한다.
+function M.PersistSessionCollection()
+    local data = load_file()
     local added = false
-    for key in pairs(session_collected) do
-        local person = BY_KEY[key]
-        if person ~= nil and stored[person.name] == nil then
-            stored[person.name] = hash_name(person.name)
+
+    local function add(id)
+        local person = resolve_person(id)
+        if person ~= nil and data.entries[person.name] == nil then
+            data.entries[person.name] = hash_name(person.name)
             added = true
+        end
+    end
+
+    -- 1) 게임플레이가 기록한 actor 이름 목록(= 카드 키). 리스트 형태.
+    local names = Session.idCardNames
+    if type(names) == "table" then
+        for _, id in ipairs(names) do
+            add(id)
+        end
+    end
+
+    -- 2) MarkCollected API로 표시한 세션 집합. set 형태.
+    local set = Session.collectedIdCards
+    if type(set) == "table" then
+        for id in pairs(set) do
+            add(id)
         end
     end
 
@@ -216,7 +263,7 @@ function M.PersistSessionCollection()
         return false
     end
 
-    return write_all(SAVE_PATH, serialize_entries(stored))
+    return write_all(SAVE_PATH, serialize_file(data.devMode, data.entries))
 end
 
 return M

@@ -4036,15 +4036,18 @@ void FLuaScriptManager::RegisterUIBindings(sol::state& Lua)
 	},
 		"hide", &UUserWidget::RemoveFromParent,
 		"IsInViewport", &UUserWidget::IsInViewport,
-		"bind_click", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
+		// Callback 을 main_protected_function 으로 받아 메인 thread 의 lua_State 를 캡처한다.
+		// 코루틴 안에서 bind_click 을 호출해도 콜백이 그 코루틴 thread 가 아닌 메인 thread 를
+		// 참조하므로, 코루틴이 Lua GC 로 회수된 뒤 위젯 파괴 시 unref 가 dangling 되지 않는다.
+		"bind_click", [](UUserWidget& Widget, const FString& ElementId, sol::main_protected_function Callback)
 	{
 		Widget.BindClick(ElementId, Callback);
 	},
-		"bind_hover", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
+		"bind_hover", [](UUserWidget& Widget, const FString& ElementId, sol::main_protected_function Callback)
 	{
 		Widget.BindHover(ElementId, Callback);
 	},
-		"bind_mousemove", [](UUserWidget& Widget, const FString& ElementId, sol::protected_function Callback)
+		"bind_mousemove", [](UUserWidget& Widget, const FString& ElementId, sol::main_protected_function Callback)
 	{
 		Widget.BindMouseMove(ElementId, Callback);
 	},

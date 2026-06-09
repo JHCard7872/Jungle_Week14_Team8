@@ -9,7 +9,7 @@ namespace
 {
 	void RegisterWidgetEventListeners(
 		Rml::ElementDocument* Document,
-		const TArray<std::pair<FString, sol::protected_function>>& Bindings,
+		const TArray<std::pair<FString, sol::main_protected_function>>& Bindings,
 		const FString& EventName,
 		const FString& LogLabel,
 		TArray<FWidgetEventListener*>& OutListeners)
@@ -38,10 +38,7 @@ void UUserWidget::BeginDestroy()
     }
 
     RemoveFromParent();
-    ClearEventListeners();
-    PendingClickBindings.clear();
-    PendingHoverBindings.clear();
-    PendingMouseMoveBindings.clear();
+    ReleaseLuaCallbacks();
     ClearDocument();
 
     OwningPlayer.Reset();
@@ -73,7 +70,7 @@ void UUserWidget::RemoveFromParent()
 	bInViewport = false;
 }
 
-void UUserWidget::BindClick(const FString& ElementId, sol::protected_function Callback)
+void UUserWidget::BindClick(const FString& ElementId, sol::main_protected_function Callback)
 {
 	PendingClickBindings.push_back({ ElementId, Callback });
 	if (IsDocumentLoaded())
@@ -82,7 +79,7 @@ void UUserWidget::BindClick(const FString& ElementId, sol::protected_function Ca
 	}
 }
 
-void UUserWidget::BindHover(const FString& ElementId, sol::protected_function Callback)
+void UUserWidget::BindHover(const FString& ElementId, sol::main_protected_function Callback)
 {
 	PendingHoverBindings.push_back({ ElementId, Callback });
 	if (IsDocumentLoaded())
@@ -93,7 +90,7 @@ void UUserWidget::BindHover(const FString& ElementId, sol::protected_function Ca
 
 // mousemove는 씬 Tick이 멈춘 일시정지 중에도 UIManager 입력 경로로 디스패치된다 —
 // pause 메뉴의 커서 스프라이트가 이 이벤트로 위치를 갱신한다.
-void UUserWidget::BindMouseMove(const FString& ElementId, sol::protected_function Callback)
+void UUserWidget::BindMouseMove(const FString& ElementId, sol::main_protected_function Callback)
 {
 	PendingMouseMoveBindings.push_back({ ElementId, Callback });
 	if (IsDocumentLoaded())
@@ -139,6 +136,19 @@ void UUserWidget::ClearEventListeners()
 		delete Listener;
 	}
 	EventListeners.clear();
+}
+
+// 위젯이 보유한 Lua 콜백(sol::protected_function) 을 모두 해제한다. 반드시 lua_State 가
+// 살아있는 동안 호출해야 한다 — sol reference 의 소멸자가 luaL_unref(LUA_REGISTRYINDEX) 를
+// 부르는데, 이미 닫힌 state 에 대고 호출하면 lua51.dll 내부에서 액세스 위반으로 죽는다.
+// (ULuaScriptComponent::ClearLuaRuntime 과 동일 원칙. UObject 파괴는 GC 가 맡지만 그 GC 는
+// lua close 이후에도 한 번 더 돌 수 있어, 콜백 해제만은 셧다운 시 미리 끝내 둔다.)
+void UUserWidget::ReleaseLuaCallbacks()
+{
+	ClearEventListeners();
+	PendingClickBindings.clear();
+	PendingHoverBindings.clear();
+	PendingMouseMoveBindings.clear();
 }
 
 void UUserWidget::SetText(const FString& ElementId, const FString& Text)

@@ -346,6 +346,7 @@ local function update_sub_page_fade(dt)
 
     set_cursor_hidden()
     SubMenuPageUI.UpdateCursor()
+    SubMenuPageUI.Update(dt)
     sub_page_fade_elapsed = math.min(sub_page_fade_elapsed + dt, SUB_PAGE_FADE_DURATION)
     local t = sub_page_fade_elapsed / SUB_PAGE_FADE_DURATION
 

@@ -59,6 +59,14 @@ local TAB_DEFAULT_BORDER  = "#ffffff44"
 -- 현재 화면에 표시 중인 옵션 설정값
 local settings = UserSettings.GetSettings()
 
+-- 크레딧 ID 카드 플립 연출 상태
+local FLIP_DURATION = 0.42
+local FLIP_SFX_KEY = "sfx_shine"
+local CREDITS_DEFAULT_HINT = "Hint: 플레이 중 반짝이는 무언가를 찾아보세요!"
+local CREDITS_ALL_HINT = "축하합니다! 모든 사원증을 찾았습니다."
+local credits_collected = {}   -- 현재 컬렉션 { [key]=true } (apply_credits_collection에서 갱신)
+local flip_states = {}         -- [key] = { phase, elapsed, showingDev, swapped }
+
 local function clamp(value, min_value, max_value)
     value = tonumber(value) or min_value
 
@@ -166,18 +174,59 @@ local function apply_scoreboard_to_view()
     set_text("scoreboard_page_label", tostring(scoreboard_current_page) .. "/" .. tostring(total_pages))
 end
 
--- 크레딧 ID 카드 컬렉션 반영: 저장된 바이너리 파일을 읽어, 습득한 사람은
--- id_card_dev_ 이미지로, 미습득은 id_card_jungle_ 이미지로 src를 갈아끼운다.
+-- 크레딧 카드 한 장의 src를 앞면(dev)/뒷면(jungle)으로 설정한다.
 -- (RmlUi img src는 스타일로 못 바꾸지만 SetAttribute("src", ...)는 가능 — HUD와 동일 방식)
+local function set_card_src(person, show_dev)
+    if widget == nil or widget.SetAttribute == nil then
+        return
+    end
+
+    widget:SetAttribute(person.creditsElementId, "src", show_dev and person.devImage or person.jungleImage)
+end
+
+-- 크레딧 ID 카드 컬렉션 반영: 저장 파일을 읽어 습득한 사람은 dev 이미지로, 미습득은
+-- jungle 이미지로 갈아끼운다. 카드 플립 상태를 초기화하고, 4명 모두 습득 시 힌트 문구를
+-- 축하 문구로 바꾼다. (크레딧 진입 때마다 호출 — 파일을 매번 다시 읽는다)
 local function apply_credits_collection()
     if widget == nil or widget.SetAttribute == nil then
         return
     end
 
-    local collected = IdCardCollection.LoadCollectedSet()
+    credits_collected = IdCardCollection.LoadCollectedSet()
+
+    local all_collected = true
     for _, person in ipairs(IdCardCollection.GetPeople()) do
-        local src = collected[person.key] and person.devImage or person.jungleImage
-        widget:SetAttribute(person.creditsElementId, "src", src)
+        local got = credits_collected[person.key] == true
+        if not got then
+            all_collected = false
+        end
+
+        flip_states[person.key] = { phase = "idle", elapsed = 0.0, showingDev = got, swapped = false }
+        set_card_src(person, got)
+        widget:SetProperty(person.creditsElementId, "transform", "scale(1.0, 1.0)")
+    end
+
+    set_text("credits_hint", all_collected and CREDITS_ALL_HINT or CREDITS_DEFAULT_HINT)
+end
+
+-- 습득(true)한 카드를 클릭할 때마다 뒤집기를 (재)시작하고 SfxShine을 재생한다.
+-- 진행 중에 다시 눌러도 처음부터 다시 뒤집으므로, 빠르게 연타하거나 되돌릴 때도
+-- 매번 소리가 난다. (이전엔 phase=="idle"이 아니면 무시해 복귀 플립 소리가 씹혔다)
+local function on_credits_card_click(person)
+    return function()
+        if widget == nil or credits_collected[person.key] ~= true then
+            return
+        end
+
+        local st = flip_states[person.key]
+        if st == nil then
+            return
+        end
+
+        st.phase = "flipping"
+        st.elapsed = 0.0
+        st.swapped = false
+        AudioManager.Play(FLIP_SFX_KEY, get_sfx_volume_scalar())
     end
 end
 
@@ -376,6 +425,12 @@ local function bind_actions()
     bind_hover_sound("controls_game_next_button")
     bind_hover_sound("scoreboard_prev_button")
     bind_hover_sound("scoreboard_next_button")
+
+    -- 크레딧 ID 카드 클릭 → 습득 카드면 플립 + SfxShine
+    for _, person in ipairs(IdCardCollection.GetPeople()) do
+        widget:bind_click(person.creditsElementId, on_credits_card_click(person))
+    end
+
     bindings_initialized = true
 end
 
@@ -484,6 +539,43 @@ function M.UpdateCursor()
     })
 end
 
+-- 매 프레임 크레딧 카드 플립 연출 갱신 (MainMenuScene.update_sub_page_fade에서 호출)
+-- scaleX 1→0(중간에 면 전환)→1 로 카드가 한 바퀴 뒤집히는 연출.
+function M.Update(dt)
+    if widget == nil or not visible or current_page_type ~= "credits" then
+        return
+    end
+
+    local delta = math.max(0.0, tonumber(dt) or 0.0)
+    for _, person in ipairs(IdCardCollection.GetPeople()) do
+        local st = flip_states[person.key]
+        if st ~= nil and st.phase == "flipping" then
+            st.elapsed = st.elapsed + delta
+            local t = st.elapsed / FLIP_DURATION
+
+            if t >= 1.0 then
+                st.phase = "idle"
+                st.elapsed = 0.0
+                widget:SetProperty(person.creditsElementId, "transform", "scale(1.0, 1.0)")
+            else
+                local scale_x
+                if t < 0.5 then
+                    scale_x = 1.0 - t * 2.0          -- 1 → 0 (앞면이 모서리로 접힘)
+                else
+                    if not st.swapped then           -- 가장 얇아진 순간 한 번만 면 전환
+                        st.showingDev = not st.showingDev
+                        set_card_src(person, st.showingDev)
+                        st.swapped = true
+                    end
+                    scale_x = (t - 0.5) * 2.0        -- 0 → 1 (뒷면이 펼쳐짐)
+                end
+                widget:SetProperty(person.creditsElementId, "transform",
+                    string.format("scale(%.3f, 1.0)", scale_x))
+            end
+        end
+    end
+end
+
 function M.IsVisible()
     return visible
 end
@@ -535,6 +627,8 @@ function M.Destroy()
     controls_active_tab = "input"
     controls_active_device = "km"
     controls_game_current_page = 1
+    flip_states = {}
+    credits_collected = {}
 end
 
 return M

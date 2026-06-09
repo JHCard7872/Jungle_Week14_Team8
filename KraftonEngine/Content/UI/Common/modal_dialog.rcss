@@ -74,6 +74,16 @@ body {
     height: 100px;
 }
 
+/* 제목이 없는 모달(컷씬 스토리/출근 모달)은 비어 있는 제목 자리만큼 문구를 위로 올린다 */
+.modal_no_title #modal_message {
+    top: 14px;
+}
+
+/* 이름 입력 모달은 입력칸과의 간격이 있어 기존 위치를 유지한다 */
+.modal_no_title.modal_with_input #modal_message {
+    top: 54px;
+}
+
 #modal_button_row {
     position: absolute;
     left: 0px;

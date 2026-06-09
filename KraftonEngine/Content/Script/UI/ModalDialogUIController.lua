@@ -28,6 +28,8 @@ local current_button_count = 1
 local current_input_enabled = false
 -- 커서 스프라이트 사용 여부 (Pause처럼 OS 커서를 숨긴 채 뜨는 모달이 켠다)
 local show_cursor = false
+-- 제목 유무 (제목이 없으면 modal_no_title 클래스로 문구를 위로 올린다 — 컷씬 모달)
+local current_has_title = true
 
 local function set_display(element_id, is_visible)
     if widget == nil then
@@ -89,6 +91,10 @@ local function set_root_class(button_count)
 
     if current_input_enabled then
         class_value = class_value .. " modal_with_input"
+    end
+
+    if not current_has_title then
+        class_value = class_value .. " modal_no_title"
     end
 
     widget:SetAttribute("modal_root", "class", class_value)
@@ -177,6 +183,7 @@ function M.Create(options)
     current_button_style = options.buttonStyle or "image"
     current_input_enabled = options.input == true
     show_cursor = options.showCursor == true
+    current_has_title = options.title ~= nil and options.title ~= ""
 
     if ensure_widget() == nil then
         return nil
@@ -262,6 +269,7 @@ function M.Destroy()
     current_button_count = 1
     current_input_enabled = false
     show_cursor = false
+    current_has_title = true
 end
 
 return M

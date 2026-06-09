@@ -288,7 +288,7 @@ local function run_cutscene()
     AudioManager.StopLoop("cutscene_falling")
     AudioManager.Play("sfx_falled", sfx_vol)
     animate_shake("cutscene_player_background", 0.35, 12)  -- 착지 임팩트
-    Wait(1.15)  -- 4→5 총 유지 1.5초 (흔들림 0.35 + 1.15), 5 렌더 타이밍
+    Wait(1.5)  -- 4→5 총 유지 1.5초 (흔들림 0.35 + 1.15), 5 렌더 타이밍
 
     -- 5. gameover_5 렌더 시 SfxBbbing 재생, 2.0초 유지 (모달 등장을 더 늦춤)
     set_bg_image(IMG_GAMEOVER[5])
@@ -298,8 +298,14 @@ local function run_cutscene()
     -- 5. dim overlay 0 → 30% fade-in
     animate_dim_in(0.4)
 
-    -- 스토리 모달 1: 하나 / 둘 / 셋
-    for _, text in ipairs({"하나", "둘", "셋"}) do
+    -- 스토리 모달 1: 세계관 소개
+    for _, text in ipairs({
+        "캐릭터들은 게임에서 쓰러지면 어디로 갈까?",
+        "천국? 지옥? 세이브 포인트?",
+        "아니다. 대부분은 그냥… 처리 대기 상태가 된다.",
+        "사망, 버그, 튕김, 방치로 발생한 래그돌들.",
+        "그걸 처리하는 회사가 바로, 게임오버 주식회사다.",
+    }) do
         show_story_modal(text, "다음으로")
         WaitUntil(function() return modal_confirmed end)
     end
@@ -315,27 +321,39 @@ local function run_cutscene()
     -- 8. fade-in
     animate_fade_in(1.0)
 
+    -- 플레이어 이미지를 잠시 보여준 뒤 모달 (텀을 늘림)
+    Wait(1.5)
+
     -- dim overlay 다시 적용
     animate_dim_in(0.4)
 
-    -- 스토리 모달 2: 하나 / 둘 / 셋
-    for _, text in ipairs({"하나", "둘", "셋"}) do
+    -- 스토리 모달 2: 주인공 소개 — 첫 대사("내가 처음 출근") 직후 자기소개로 이름을 입력받고,
+    -- 이어서 나머지 대사. 마지막 "첫날부터 큰일이야" 대사는 출근 버튼 모달로 분리.
+    show_story_modal("그리고 오늘, 내가 처음 출근하게 된 회사가 여기다.", "다음으로")
+    WaitUntil(function() return modal_confirmed end)
+    QuestionPopup.Destroy()
+
+    -- 9. 이름 입력 (자기소개)
+    show_name_input(DEFAULT_EMPLOYEE_NAME)
+    WaitUntil(function() return name_confirmed end)
+
+    for _, text in ipairs({
+        "부서는 래그돌 회수 센터.",
+        "힘들다는 소문은 좀 들었다.",
+        "야근이 많고, 서버가 자주 터지고, 가끔 직원도 튕긴다던데…",
+    }) do
         show_story_modal(text, "다음으로")
         WaitUntil(function() return modal_confirmed end)
     end
     QuestionPopup.Destroy()
 
-    -- 9. 이름 입력
-    show_name_input(DEFAULT_EMPLOYEE_NAME)
-    WaitUntil(function() return name_confirmed end)
-
-    -- 10. "좋아, 첫 출근이다!" + "출근하기" 버튼
+    -- 10. "뭐, 첫날부터 큰일이야 있겠어?" + "첫 출근 업무 개시" 버튼 (주인공 소개 마지막 대사)
     modal_confirmed = false
     QuestionPopup.ShowNotice({
         zOrder = MODAL_Z_ORDER,
         title = "",
-        message = "좋아, 첫 출근이다!",
-        buttonText = "출근하기",
+        message = "뭐, 첫날부터 큰일이야 있겠어?",
+        buttonText = "첫 업무 개시",
         showCursor = true,
         onConfirm = function()
             modal_confirmed = true

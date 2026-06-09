@@ -20,7 +20,7 @@ local LETTERBOX_RATIO       = 0.12   -- bar height as fraction of viewport heigh
 local CINEMATIC_ZOOM_DUR    = 3.0    -- zoom+pan duration (seconds)
 local LETTERBOX_FADEOUT_DUR = 0.8    -- letterbox bars fade out duration
 local WAIT_LOGO_DUR         = 0.4    -- pause before logo appears
-local LOGO_IMPACT_LEAD      = 0.2    -- play the impact SFX this early before the logo lands
+local LOGO_IMPACT_DELAY     = 0.2    -- play the impact SFX this long after the logo lands
 local SHAKE_DURATION        = 0.55   -- screen shake duration on logo impact
 local SHAKE_INTENSITY       = 14.0   -- shake amplitude in pixels
 local SHAKE_FREQUENCY       = 12.0   -- shake oscillation frequency in Hz
@@ -59,7 +59,8 @@ local cinematic_vw = 0
 local cinematic_vh = 0
 local shake_elapsed = 0.0  -- counts up; active when < SHAKE_DURATION
 local shake_osc_time = 0.0 -- separate timer for oscillation phase
-local impact_sfx_played = false  -- 쿵! plays slightly before the logo lands
+local impact_sfx_pending = false  -- 쿵! plays a beat after the logo lands
+local impact_sfx_elapsed = 0.0
 
 local particles_active = false
 local particles = {}       -- pool of {ox, oy, vx, vy, life, maxlife, scale, wobble}
@@ -312,6 +313,7 @@ local function begin_main_menu_transition()
     waiting_for_input = false
     bgm_pending = false   -- cancel the pending BGM/prompt timers if the player skips ahead
     press_pending = false
+    impact_sfx_pending = false
     Session.sceneTransition = Session.sceneTransition or {}
     Session.sceneTransition.mainMenuFadeInDuration = MAIN_MENU_FADE_IN_DURATION
     stop_title_bgm()
@@ -361,21 +363,21 @@ local function update_transition(dt)
             transition_phase = "wait_logo"
             transition_elapsed = 0.0
             transition_duration = WAIT_LOGO_DUR
-            impact_sfx_played = false
         end
         return true
     end
 
     if transition_phase == "wait_logo" then
         if t >= 1.0 then
-            -- Logo appears with impact
+            -- Logo appears; the 쿵! is delayed a touch (fired in Tick)
             set_element_opacity("title_logo_container", 1.0)
             -- keep the prompt hidden until a beat after the BGM (revealed in Tick)
             set_element_opacity("press_any_button", 0.0)
             press_visible = false
             press_pending = false
             press_delay_elapsed = 0.0
-            AudioManager.Play(SFX_LOGO_IMPACT_KEY, UserSettings.GetSfxVolumeScalar())
+            impact_sfx_pending = true
+            impact_sfx_elapsed = 0.0
             shake_elapsed = 0.0
             shake_osc_time = 0.0
             CameraManager.StartWaveShake(0.8)
@@ -438,6 +440,8 @@ function BeginPlay()
     press_pending = false
     press_delay_elapsed = 0.0
     press_visible = false
+    impact_sfx_pending = false
+    impact_sfx_elapsed = 0.0
     if math.randomseed ~= nil then math.randomseed(20260609) end
 
     for key, path in pairs(require("Data/AudioData")) do
@@ -464,6 +468,15 @@ function Tick(dt)
     update_logo_particles(dt)
 
     if update_transition(dt) then return end
+
+    -- Fire the 쿵! a beat after the logo lands.
+    if impact_sfx_pending then
+        impact_sfx_elapsed = impact_sfx_elapsed + dt
+        if impact_sfx_elapsed >= LOGO_IMPACT_DELAY then
+            impact_sfx_pending = false
+            AudioManager.Play(SFX_LOGO_IMPACT_KEY, UserSettings.GetSfxVolumeScalar())
+        end
+    end
 
     -- Start the title BGM a beat after the logo has landed.
     if bgm_pending then

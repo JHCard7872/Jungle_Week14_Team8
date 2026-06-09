@@ -22,7 +22,11 @@ namespace Rml { class ElementDocument; }
 class FWidgetEventListener final : public Rml::EventListener
 {
 public:
-	FWidgetEventListener(FString InElementId, FString InEventName, FString InLogLabel, sol::protected_function InCallback)
+	// Callback 은 sol::main_protected_function — 메인 thread 의 lua_State 를 캡처한다.
+	// 그냥 sol::protected_function 으로 받으면, 바인딩이 코루틴(별도 lua thread) 안에서
+	// 일어난 경우 그 코루틴 thread 포인터를 저장하게 되고, 코루틴이 Lua GC 로 회수되면
+	// 위젯 파괴 시 deref 가 닫힌 thread 에 luaL_unref 를 호출해 lua51.dll 에서 크래시난다.
+	FWidgetEventListener(FString InElementId, FString InEventName, FString InLogLabel, sol::main_protected_function InCallback)
 		: ElementId(std::move(InElementId))
 		, EventName(std::move(InEventName))
 		, LogLabel(std::move(InLogLabel))
@@ -52,7 +56,7 @@ private:
 	FString ElementId;
 	FString EventName;
 	FString LogLabel;
-	sol::protected_function Callback;
+	sol::main_protected_function Callback;
 };
 
 UCLASS()
@@ -69,11 +73,15 @@ public:
 	void Initialize(APlayerController* InOwningPlayer, const FString& InDocumentPath);
 	void AddToViewport(int32 InZOrder = 0);
 	void RemoveFromParent();
-	void BindClick(const FString& ElementId, sol::protected_function Callback);
-	void BindHover(const FString& ElementId, sol::protected_function Callback);
-	void BindMouseMove(const FString& ElementId, sol::protected_function Callback);
+	void BindClick(const FString& ElementId, sol::main_protected_function Callback);
+	void BindHover(const FString& ElementId, sol::main_protected_function Callback);
+	void BindMouseMove(const FString& ElementId, sol::main_protected_function Callback);
 	void RegisterEventListeners();
 	void ClearEventListeners();
+	// 셧다운 시 lua_State 가 살아있는 동안 호출 — 위젯이 들고 있는 Lua 콜백을 모두 해제.
+	// 안 하면 이후 GC 가 위젯을 파괴할 때 닫힌 lua_State 에 luaL_unref → 크래시.
+	// [호출처: UUIManager::DestroyAllWidgets]
+	void ReleaseLuaCallbacks();
 	void SetText(const FString& ElementId, const FString& Text);
 	bool SetProperty(const FString& ElementId, const FString& PropertyName, const FString& Value);
 	bool SetAttribute(const FString& ElementId, const FString& AttributeName, const FString& Value);
@@ -102,9 +110,9 @@ private:
 	TWeakObjectPtr<APlayerController> OwningPlayer;
 	Rml::ElementDocument* Document = nullptr;
 	FString DocumentPath;
-	TArray<std::pair<FString, sol::protected_function>> PendingClickBindings;
-	TArray<std::pair<FString, sol::protected_function>> PendingHoverBindings;
-	TArray<std::pair<FString, sol::protected_function>> PendingMouseMoveBindings;
+	TArray<std::pair<FString, sol::main_protected_function>> PendingClickBindings;
+	TArray<std::pair<FString, sol::main_protected_function>> PendingHoverBindings;
+	TArray<std::pair<FString, sol::main_protected_function>> PendingMouseMoveBindings;
 	TArray<FWidgetEventListener*> EventListeners;
 	int32 ZOrder = 0;
 	bool bInViewport = false;

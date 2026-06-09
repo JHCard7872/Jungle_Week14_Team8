@@ -1029,6 +1029,11 @@ void UUIManager::DestroyAllWidgets()
 	{
 		if (IsAliveObject(Widget))
 		{
+			// lua_State 가 아직 살아있는 지금(UEngine::Shutdown 의 FLuaScriptManager::Shutdown
+			// 이전) 위젯 콜백 sol ref 를 미리 해제한다. 위젯 UObject 파괴는 GC 가 맡는데, 그 GC
+			// 가 lua close 이후(Engine::Shutdown 의 두 번째 CollectGarbage)에 돌면 닫힌 state 에
+			// luaL_unref → lua51.dll 크래시. 미리 비워두면 이후 BeginDestroy 는 빈 배열만 만져 안전.
+			Widget->ReleaseLuaCallbacks();
 			UObjectManager::Get().DestroyObject(Widget);
 		}
 	}
