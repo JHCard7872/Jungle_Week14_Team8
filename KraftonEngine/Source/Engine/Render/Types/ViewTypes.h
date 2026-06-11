@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Core/Types/CoreTypes.h"
 
@@ -59,7 +59,7 @@ struct FShowFlags
 	bool bDepthOfField = false;
 	bool bDOFBokeh = false;
 	bool bFXAA = false;
-	bool bBloom = false;
+	bool bBloom = true;
 	bool bGammaCorrection = true;
 	bool bViewLightCulling = false;
 	bool bVisualize25DCulling = false;
@@ -110,8 +110,8 @@ struct FViewportRenderOptions
 	// Bloom settings
 	float BloomThreshold = 1.0f;
 	float BloomSoftKnee = 0.5f;
-	float BloomIntensity = 0.6f;
-	float BloomBlurRadius = 1.0f;
+	float BloomIntensity = 0.8f;
+	float BloomBlurRadius = 2.5f;
 
 	// Tone Mapping / Gamma Correction settings
 	float Gamma = 2.4f;
