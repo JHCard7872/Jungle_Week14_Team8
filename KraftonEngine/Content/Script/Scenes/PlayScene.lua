@@ -33,6 +33,7 @@ local COUNTDOWN_FADE_DURATION = 0.3
 local COUNTDOWN_GO_HOLD_DURATION = 0.7
 local intro_active = false
 local gameplay_started = false
+local portal_spawned = false   -- 첫 미션 발급 시 포탈 1회 스폰을 보장하는 가드
 
 local function is_looping_audio_key(key)
     return key:find("^bgm_") ~= nil or key == "sfx_time_passing"
@@ -72,7 +73,8 @@ local function start_gameplay()
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
-    GOInc.SpawnSummonPortal()   -- 포탈 1개 코드 스폰 — 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로
+    -- 포탈은 시작과 동시에 스폰하지 않는다 — 첫 미션이 실제 발급될 때 Tick에서 1회 스폰한다
+    -- (미션 없이 포탈만 떠 있는 게 어색해서). 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로.
     HUD.SetGameplayHudVisible(true)
     HUD.UpdateFromSession(0.0)
 end
@@ -160,6 +162,7 @@ function BeginPlay()
     ended = false
     intro_active = false
     gameplay_started = false
+    portal_spawned = false
 
     Session.Reset(Config.timeLimit)   -- 이전 판 값 청소 (inputEnabled=true 포함)
     Session.inputEnabled = false
@@ -205,6 +208,12 @@ function Tick(dt)
 
     if Engine.IsPaused ~= nil and Engine.IsPaused() then
         return
+    end
+
+    -- 첫 미션이 실제로 발급되면(=포탈이 의미를 갖는 순간) 그때 포탈을 1회 스폰한다
+    if not portal_spawned and Session.mission and Session.mission.active then
+        GOInc.SpawnSummonPortal()   -- 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로
+        portal_spawned = true
     end
 
     Session.timeRemaining = Session.timeRemaining - dt

@@ -15,6 +15,7 @@ local UserSettings = require("Data/UserSettings")
 local ParticleFX   = require("ParticleFX")
 local Session      = require("GameSession")
 local Portal       = require("Data/PortalData")
+local HUD          = require("UI/HUDController")
 
 local lastSeq = 0   -- 마지막으로 반영한 미션 발급 시퀀스 — 변하면 재배치
 
@@ -39,6 +40,7 @@ function BeginPlay()
 
     lastSeq = (Session.mission and Session.mission.seq) or 0
     pickAndMove()   -- 스폰 직후 첫 배치
+    HUD.QueuePopup("PORTAL OPEN")   -- 시작과 동시에 포탈이 존재할 때도 이벤트 팝업 표시
 end
 
 -- 미션이 새로 발급되면(seq 변화) 다른 좌표로 순간이동. 프레임당 정수 비교 1회.

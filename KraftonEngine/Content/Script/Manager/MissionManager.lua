@@ -54,11 +54,16 @@ end
 
 function M.Start()
     current = nil
-    M.IssueNext()
-    -- 재발급은 미션이 비었을 때(클리어/보류)만 1초 주기로 시도 — 활성 중엔 싼 nil 체크만 돈다.
-    -- 수거마다 돌던 countAlive() 전체 스캔을 이 스로틀이 대체한다.
-    Timer.Every(Mission.reissueInterval, function()
-        if not current then M.IssueNext() end
+    publish()   -- 첫 발급 전까지 Session.mission을 비활성 상태로 발행해 둔다(HUD 직독 대비)
+    -- 첫 미션은 시작과 동시에 내지 않고 firstIssueDelay 만큼 늦춘다 — 그 뒤에야 주기 재발급을 켠다
+    -- (지연 동안 재발급 타이머가 먼저 발급해버리지 않도록 타이머 시작도 함께 미룬다).
+    Timer.After(Mission.firstIssueDelay, function()
+        M.IssueNext()
+        -- 재발급은 미션이 비었을 때(클리어/보류)만 주기적으로 시도 — 활성 중엔 싼 nil 체크만 돈다.
+        -- 수거마다 돌던 countAlive() 전체 스캔을 이 스로틀이 대체한다.
+        Timer.Every(Mission.reissueInterval, function()
+            if not current then M.IssueNext() end
+        end)
     end)
 end
 
