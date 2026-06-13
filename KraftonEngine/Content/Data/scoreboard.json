@@ -1,15 +1,19 @@
 [
-  {"nickname":"SAMPLE001","totalScore":12800,"collectedCount":32,"savedAt":1765000001},
-  {"nickname":"SAMPLE002","totalScore":9600,"collectedCount":24,"savedAt":1765000002},
-  {"nickname":"SAMPLE003","totalScore":7300,"collectedCount":18,"savedAt":1765000003}
-,
-  {"nickname":"SAMPLE84084_1","totalScore":10720,"collectedCount":18,"savedAt":1780784084}
-,
-  {"nickname":"SAMPLE84475_1","totalScore":10720,"collectedCount":18,"savedAt":1780784475}
-,
-  {"nickname":"SAMPLE84782_1","totalScore":10720,"collectedCount":18,"savedAt":1780784782}
-,
-  {"nickname":"SAMPLE85395_1","totalScore":10720,"collectedCount":18,"savedAt":1780785395}
-,
-  {"nickname":"dd","totalScore":10720,"collectedCount":18,"savedAt":1780876023}
+
+  {"nickname":"귤선장","totalScore":2500,"collectedCount":8,"savedAt":1780784084},
+
+  {"nickname":"잠많은사람","totalScore":2200,"collectedCount":7,"savedAt":1780784475},
+
+  {"nickname":"동글이광팬","totalScore":1900,"collectedCount":6,"savedAt":1780784782},
+
+  {"nickname":"미소녀오타쿠","totalScore":1600,"collectedCount":5,"savedAt":1780785395},
+
+  {"nickname":"AAAAAA","totalScore":1400,"collectedCount":4,"savedAt":1780876023},
+
+  {"nickname":"PLAYER1","totalScore":1000,"collectedCount":3,"savedAt":1780876123},
+
+  {"nickname":"INSERT","totalScore":700,"collectedCount":2,"savedAt":1780876223},
+
+  {"nickname":"PENGDORI","totalScore":300,"collectedCount":1,"savedAt":1780876323},
+  {"nickname":"TEST","totalScore":0,"collectedCount":0,"savedAt":1781354766,"savedDate":"2026-06-13 21:46"}
 ]

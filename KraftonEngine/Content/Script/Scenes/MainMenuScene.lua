@@ -137,7 +137,6 @@ local function ensure_widget()
     main_menu_widget:SetWantsMouse(true)
     set_element_display("menu_content", true)
     set_element_opacity("menu_content", 1.0)
-    set_element_display("title_overlay", false)
     set_element_opacity("menu_fade_overlay", 0.0)
     update_cursor_sprite()
 

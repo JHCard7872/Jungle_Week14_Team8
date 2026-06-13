@@ -68,7 +68,10 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
 
     other_actor:RemoveTag("Ragdoll")          -- 중복 이벤트·타 수거함 재수거 차단 (맨 먼저)
     ScoreMgr.AddForRagdoll(other_actor)
-    MissionMgr.NotifyRecovered(other_actor)   -- 타입 태그를 읽으므로 Destroy 전에 호출
+    local mission_completed = MissionMgr.NotifyRecovered(other_actor)   -- 타입 태그를 읽으므로 Destroy 전에 호출
+    if mission_completed then
+        HUD.QueuePopup("MISSION COMPLETE")
+    end
     LoadMgr.ReduceForPortalCollect()
     AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
     ParticleFX.Burst(Portal.collectFxPath, other_actor.Location, Portal.collectFxLife) -- Destroy 전 위치 읽기

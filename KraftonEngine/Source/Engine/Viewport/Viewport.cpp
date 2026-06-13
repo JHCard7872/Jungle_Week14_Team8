@@ -81,8 +81,8 @@ void FViewport::BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4])
 {
 	if (!RTV) return;
 
-	const float DefaultColor[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
-	const float* Color = ClearColor ? ClearColor : DefaultColor;
+	// 명시적 ClearColor가 없으면 씬에서 지정한 값(기본 회색)을 사용.
+	const float* Color = ClearColor ? ClearColor : ClearColorValue;
 	D3D11_VIEWPORT VPRect = GetViewportRect();
 
 	Ctx->ClearRenderTargetView(RTV, Color);
@@ -99,6 +99,14 @@ void FViewport::BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4])
 	Ctx->ClearDepthStencilView(DSV, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
 	Ctx->OMSetRenderTargets(1, &RTV, DSV);
 	Ctx->RSSetViewports(1, &VPRect);
+}
+
+void FViewport::SetClearColor(float R, float G, float B, float A)
+{
+	ClearColorValue[0] = R;
+	ClearColorValue[1] = G;
+	ClearColorValue[2] = B;
+	ClearColorValue[3] = A;
 }
 
 bool FViewport::CreateResources()

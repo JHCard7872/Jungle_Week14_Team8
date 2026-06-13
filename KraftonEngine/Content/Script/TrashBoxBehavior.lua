@@ -11,6 +11,7 @@ local ScoreMgr     = require("Manager/ScoreManager")
 local UserSettings = require("Data/UserSettings")
 local ParticleFX   = require("ParticleFX")
 local TrashBox     = require("Data/TrashBoxData")
+local HUD          = require("UI/HUDController")
 
 function BeginPlay()
     -- 트리거 박스 설정 검증 — GenerateOverlapEvents가 꺼져 있으면 OnOverlap이
@@ -35,6 +36,7 @@ function OnOverlap(other_actor, overlapped_component, other_comp)
     if not other_actor:HasTag("Ragdoll") then return end
 
     ScoreMgr.AddForRagdoll(other_actor)
+    HUD.QueuePopup("COLLECTED")
     AudioManager.Play("sfx_collect", UserSettings.GetSfxVolumeScalar())
     ParticleFX.Burst(TrashBox.collectFxPath, other_actor.Location, TrashBox.collectFxLife) -- Destroy 전 위치 읽기
     other_actor:Destroy()                     -- 트리거 디스패치 중 Destroy 안전 (엔진 보장)

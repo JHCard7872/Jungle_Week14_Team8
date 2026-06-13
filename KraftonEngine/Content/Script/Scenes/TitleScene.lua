@@ -12,7 +12,7 @@ local MAIN_MENU_FADE_IN_DURATION = 0.5
 local SFX_SCARY_KEY = "sfx_scary"
 local SFX_LOGO_IMPACT_KEY = "sfx_logo_impact"
 local TITLE_BGM_KEY = "bgm_title_0"
-local BGM_START_DELAY = 1.0          -- seconds after the logo lands before the BGM starts
+local BGM_START_DELAY = 1.6          -- seconds after the logo lands before the BGM starts
 local PRESS_REVEAL_AFTER_BGM = 1.55   -- seconds after the BGM starts before the prompt shows
 
 -- Cinematic settings

@@ -130,6 +130,13 @@ function BeginPlay()
     AudioManager.StopAllLoops()
     Engine.SetCursorVisible(false)
 
+    -- 로고 위젯이 viewport에 맞춰 레이아웃되기 전 프레임에는 흰 배경 div가 화면을
+    -- 못 덮어 SceneColor clear(기본 회색)가 드러난다. clear를 흰색으로 두어 그 회색
+    -- 깜박임을 없앤다. EndPlay에서 기본값으로 복구.
+    if Engine.SetClearColor ~= nil then
+        Engine.SetClearColor(1.0, 1.0, 1.0, 1.0)
+    end
+
     sequence_elapsed = 0.0
     pending_scene_name = nil
     fade_out_elapsed = 0.0
@@ -177,6 +184,11 @@ end
 function EndPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
+
+    -- clear color를 엔진 기본 회색으로 복구 (다른 씬 영향 방지).
+    if Engine.SetClearColor ~= nil then
+        Engine.SetClearColor(0.25, 0.25, 0.25, 1.0)
+    end
 
     if widget ~= nil then
         widget:RemoveFromParent()

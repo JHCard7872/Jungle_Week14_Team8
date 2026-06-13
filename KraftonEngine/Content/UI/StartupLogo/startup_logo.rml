@@ -10,13 +10,13 @@
         <div id="startup_logo_background"></div>
 
         <div id="startup_0_slot" class="startup_logo_slot">
-            <img id="startup_0" class="startup_logo_image" src="../../Sprite/startup_0.png" />
+            <div id="startup_0" class="startup_logo_image"></div>
         </div>
         <div id="startup_1_slot" class="startup_logo_slot">
-            <img id="startup_1" class="startup_logo_image" src="../../Sprite/startup_1.png" />
+            <div id="startup_1" class="startup_logo_image"></div>
         </div>
         <div id="startup_2_slot" class="startup_logo_slot">
-            <img id="startup_2" class="startup_logo_image" src="../../Sprite/startup_2.png" />
+            <div id="startup_2" class="startup_logo_image"></div>
         </div>
 
         <div id="startup_fade_overlay"></div>

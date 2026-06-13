@@ -329,6 +329,7 @@ body {
     font-effect: shadow(2px 2px #000000aa);
 }
 
+#hud_target_weight,
 #hud_target_score {
     position: absolute;
     left: 160px;
@@ -336,6 +337,10 @@ body {
     height: 24px;
     font-size: 25px;
     font-effect: shadow(2px 2px #000000aa);
+}
+
+#hud_target_weight {
+    top: 88px;
 }
 
 #hud_target_score {

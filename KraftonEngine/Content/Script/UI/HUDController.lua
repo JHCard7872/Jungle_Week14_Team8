@@ -19,10 +19,11 @@ local SERVER_LOAD_SOURCE_IMAGE_HEIGHT = 233.0
 local TIME_LOW_THRESHOLD = 30.0
 local HURRY_UP_THRESHOLD = 10.0
 local TIME_PASSING_LOOP_CHANNEL = "PlayHudTimePassingLoop"
-local POPUP_SHOW_DURATION = 0.45
-local POPUP_BLINK_INTERVAL = 0.08
-local POPUP_BLINK_COUNT = 4
-local POPUP_BLINK_MIN_OPACITY = 0.25
+local POPUP_HOLD_DURATION = 1.0          -- 중앙에 머무는 시간(초)
+local POPUP_SLIDE_IN_DURATION = 0.35     -- 우측 → 중앙 진입 시간
+local POPUP_SLIDE_OUT_DURATION = 0.30    -- 중앙 → 좌측 퇴장 시간
+local POPUP_SLIDE_OFFSCREEN = 1400.0     -- 화면 밖으로 빠지는 가로 이동량(px)
+local POPUP_SLIDE_FRAME = 1.0 / 60.0     -- 슬라이드 보간 한 스텝의 대기 시간
 local REVIVE_POPUP_SUPPRESS_WINDOW = 3.0
 local CROSSHAIR_IMAGES = {
     collect = {
@@ -101,6 +102,7 @@ local popup_state = {
     visible = false,
     imagePath = "../../Sprite/play_hud_popup_collected.png",
     opacity = 1.0,
+    offsetX = 0.0,
     currentEvent = nil,
 }
 local start_countdown_state = {
@@ -144,6 +146,7 @@ local state = {
         name = "Red Plumber",
         weightText = "12.5kg",
         scoreText = "+300",
+        scoreTier = nil,  -- nil | "silver" | "gold" — 점수 글씨 색을 등급에 맞춘다
         imagePath = "../../Sprite/Ragdoll_Image/ragdoll_sample.png",
     },
     mission = {
@@ -362,6 +365,7 @@ local function reset_popup_queue()
     last_revive_popup_push_time = nil
     popup_state.visible = false
     popup_state.opacity = 1.0
+    popup_state.offsetX = 0.0
     popup_state.currentEvent = nil
 end
 
@@ -417,6 +421,31 @@ local function stop_time_passing_loop()
     event_state.timePassingLoopActive = false
 end
 
+local function lerp(a, b, t)
+    return a + (b - a) * t
+end
+
+local function ease_out_cubic(t)
+    local inv = 1.0 - t
+    return 1.0 - inv * inv * inv
+end
+
+local function ease_in_cubic(t)
+    return t * t * t
+end
+
+-- offsetX/opacity를 duration 동안 보간하며 매 스텝 Refresh 한다. (코루틴 안에서만 호출)
+local function animate_popup_slide(from_x, to_x, from_op, to_op, duration, easing)
+    local steps = math.max(1, math.floor(duration / POPUP_SLIDE_FRAME + 0.5))
+    for i = 1, steps do
+        local t = easing(i / steps)
+        popup_state.offsetX = lerp(from_x, to_x, t)
+        popup_state.opacity = lerp(from_op, to_op, t)
+        M.Refresh()
+        Wait(POPUP_SLIDE_FRAME)
+    end
+end
+
 local function process_next_popup()
     if popup_routine ~= nil or #popup_queue == 0 or StartCoroutine == nil then
         return
@@ -430,25 +459,25 @@ local function process_next_popup()
 
             if definition ~= nil then
                 set_popup_event_image(event_name)
+                popup_state.offsetX = POPUP_SLIDE_OFFSCREEN
+                popup_state.opacity = 0.0
                 set_popup_visible(true)
                 play_sound(definition.soundKey)
                 M.Refresh()
 
-                -- 팝업은 그냥 한 번 뜨고 끝나는 대신, 짧게 점멸해서 이벤트 발생감을 준다.
-                for _ = 1, POPUP_BLINK_COUNT do
-                    popup_state.opacity = 1.0
-                    M.Refresh()
-                    Wait(POPUP_BLINK_INTERVAL)
+                -- 우측 화면 밖 → 중앙으로 슝 들어온다.
+                animate_popup_slide(POPUP_SLIDE_OFFSCREEN, 0.0, 0.0, 1.0, POPUP_SLIDE_IN_DURATION, ease_out_cubic)
 
-                    popup_state.opacity = POPUP_BLINK_MIN_OPACITY
-                    M.Refresh()
-                    Wait(POPUP_BLINK_INTERVAL)
-                end
-
+                -- 중앙에서 잠시 머문다.
+                popup_state.offsetX = 0.0
                 popup_state.opacity = 1.0
                 M.Refresh()
-                Wait(POPUP_SHOW_DURATION)
+                Wait(POPUP_HOLD_DURATION)
 
+                -- 중앙 → 좌측 화면 밖으로 슝 빠져나간다.
+                animate_popup_slide(0.0, -POPUP_SLIDE_OFFSCREEN, 1.0, 0.0, POPUP_SLIDE_OUT_DURATION, ease_in_cubic)
+
+                popup_state.offsetX = 0.0
                 set_popup_visible(false)
                 M.Refresh()
             end
@@ -756,6 +785,12 @@ end
 local function apply_popup()
     set_display("hud_popup_container", popup_state.visible)
     widget:SetAttribute("hud_popup_image", "src", popup_state.imagePath)
+    -- 가로 슬라이드 오프셋을 transform으로 준다. (CSS의 scale(0.9)와 동일하게 유지)
+    widget:SetProperty(
+        "hud_popup_container",
+        "transform",
+        string.format("translateX(%.1fpx) scale(0.9)", popup_state.offsetX or 0.0)
+    )
     -- 일부 RmlUi 빌드에서는 부모 opacity가 자식 img에 안정적으로 전파되지 않아
     -- 컨테이너와 이미지 양쪽에 모두 적용한다.
     set_opacity("hud_popup_container", popup_state.opacity)
@@ -845,6 +880,7 @@ end
 local function apply_target_info()
     set_display("hud_target_info_container", state.target.visible)
     widget:SetText("hud_target_name", state.target.name)
+    widget:SetText("hud_target_weight", state.target.weightText)
     widget:SetText("hud_target_score", state.target.scoreText)
     -- src는 스타일이 아니라 요소 속성 — SetProperty로 넣으면 RmlUi 파싱 오류가 난다
     widget:SetAttribute("hud_target_pose_image", "src", state.target.imagePath)

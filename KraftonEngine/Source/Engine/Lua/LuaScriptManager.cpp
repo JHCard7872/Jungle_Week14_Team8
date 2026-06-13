@@ -2342,6 +2342,23 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 		}
 		return false;
 	});
+	// 게임 SceneColor clear 색을 변경 (RGBA, 0..1). UI 풀스크린 배경이 레이아웃되기
+	// 전 프레임에 드러나는 clear 색을 씬별로 제어할 때 사용. 씬 EndPlay에서 복구할 것.
+	Engine.set_function("SetClearColor", [](float R, float G, float B, float A)
+	{
+		if (!GEngine)
+		{
+			return;
+		}
+
+		if (UGameViewportClient* GameViewportClient = GEngine->GetGameViewportClient())
+		{
+			if (FViewport* Viewport = GameViewportClient->GetViewport())
+			{
+				Viewport->SetClearColor(R, G, B, A);
+			}
+		}
+	});
 	Engine.set_function("GetViewportSize", []() -> sol::table
 	{
 		sol::table Result = FLuaScriptManager::GetState().create_table();

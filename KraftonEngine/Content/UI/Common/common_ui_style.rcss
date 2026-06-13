@@ -262,7 +262,7 @@
 
 .ui_hud_score_text {
     color: #ffffff;
-    font-size: 38px;
+    font-size: 44px;
     letter-spacing: 2px;
     text-align: right;
     font-effect: shadow(4px 4px #000000aa);

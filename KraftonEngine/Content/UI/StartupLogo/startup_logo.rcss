@@ -45,6 +45,20 @@ body {
     opacity: 0;
 }
 
+/* contain: 원본 비율을 유지하며 화면 안에 맞춘다(잘리지 않고 여백). width/height 100%로
+   늘리면 에디터/빌드 해상도 비율 차이만큼 세로로 늘어나 보이므로 decorator로 비율을 고정한다. */
+#startup_0 {
+    decorator: image( ../../Sprite/startup_0.png contain center center );
+}
+
+#startup_1 {
+    decorator: image( ../../Sprite/startup_1.png contain center center );
+}
+
+#startup_2 {
+    decorator: image( ../../Sprite/startup_2.png contain center center );
+}
+
 #startup_fade_overlay {
     position: absolute;
     left: 0px;

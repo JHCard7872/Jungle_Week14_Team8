@@ -22,7 +22,12 @@ public:
 	bool ApplyPendingResize();
 
 	// 오프스크린 RT 클리어 + 바인딩 (렌더 시작 시 호출)
+	// ClearColor == nullptr 이면 SetClearColor로 지정된 값(기본 회색)을 사용.
 	void BeginRender(ID3D11DeviceContext* Ctx, const float ClearColor[4] = nullptr);
+
+	// 게임 런타임 clear color 오버라이드 (RGBA, 0..1). UI 풀스크린 배경이 아직
+	// 레이아웃되기 전 프레임에 드러나는 clear 색을 씬별로 바꿀 때 사용.
+	void SetClearColor(float R, float G, float B, float A);
 
 	// ViewportClient 참조
 	void SetClient(FViewportClient* InClient) { ViewportClient = InClient; }
@@ -129,6 +134,9 @@ private:
 	FBloomFrameResources BloomResources;
 
 	D3D11_VIEWPORT ViewportRect = {};
+
+	// 게임 런타임 SceneColor clear 색 (기본 회색). SetClearColor로 변경.
+	float ClearColorValue[4] = { 0.25f, 0.25f, 0.25f, 1.0f };
 
 	uint32 Width = 0;
 	uint32 Height = 0;

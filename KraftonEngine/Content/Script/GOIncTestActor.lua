@@ -2,6 +2,7 @@ local C = require("Data/GOIncTestActorData") -- 이동/시점/빔/그랩/무기 
 local Session = require("GameSession")
 local HUD = require("UI/HUDController")
 local RagdollData = require("Data/RagdollData")
+local ScoreData = require("Data/ScoreData")
 local UserSettings = require("Data/UserSettings")
 
 local COLLECT_FIRE_SFX_CHANNEL = "CollectFireSfx"
@@ -2630,6 +2631,21 @@ local function build_target_state_from_hit(hit)
     local catalog_mass = catalog_entry ~= nil and catalog_entry.mass or nil
     local score = catalog_entry ~= nil and catalog_entry.baseScore or nil
 
+    -- 금/은 변형은 ScoreManager가 수거 시 ×3/×2 배수를 적용한다(태그 기준).
+    -- 조준 팝업도 동일하게 배수를 반영해 글씨 색과 점수를 등급에 맞춘다.
+    local score_tier = nil
+    local score_multiplier = 1.0
+    if actor.HasTag ~= nil then
+        if actor:HasTag("Gold") then
+            score_tier = "gold"
+            score_multiplier = ScoreData.goldMultiplier
+        elseif actor:HasTag("Silver") then
+            score_tier = "silver"
+            score_multiplier = ScoreData.silverMultiplier
+        end
+    end
+    local display_score = score ~= nil and (score * score_multiplier) or nil
+
     return {
         visible = true,
         ragdollId = ragdoll_id or "",
@@ -2642,8 +2658,9 @@ local function build_target_state_from_hit(hit)
         name = get_ragdoll_display_name(actor, catalog_entry, ragdoll_id),
         weight = catalog_mass or body_mass,
         weightText = catalog_mass ~= nil and string.format("%.1fkg", catalog_mass) or nil,
-        score = score,
-        scoreText = score ~= nil and string.format("+%d", math.floor(math.abs(score))) or nil,
+        score = display_score,
+        scoreTier = score_tier,
+        scoreText = display_score ~= nil and string.format("+%d", math.floor(math.abs(display_score))) or nil,
         imagePath = catalog_entry ~= nil and catalog_entry.referenceImage or C.TARGET_INFO_FALLBACK_IMAGE_PATH,
         referenceImage = catalog_entry ~= nil and catalog_entry.referenceImage or nil,
     }

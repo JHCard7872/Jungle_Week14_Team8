@@ -81,10 +81,6 @@
             <img id="cursor_click" class="cursor_image" src="../../Sprite/cursor_click.png" />
         </div>
 
-        <div id="title_overlay">
-            <img id="title_background" src="../../Sprite/title_background.png" />
-            <div id="press_any_button" class="ui_title_message">PRESS ANY BUTTON TO START</div>
-        </div>
         <div id="menu_fade_overlay"></div>
     </div>
 </body>

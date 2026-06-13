@@ -84,7 +84,7 @@ local CARD_TOP_OFFSET = -20 + 150    -- .credits_card top(-20px) + .credits_id_c
 local MODAL_BTN_BG_DEFAULT     = "#00000099"
 local MODAL_BTN_BORDER_DEFAULT = "#ffffffcc"
 local MODAL_BTN_BG_DISABLED    = "#0000004d"  -- 검은색 30% 오퍼시티(비활성)
-local MODAL_BTN_TEXT_DISABLED  = "#ffffff66"
+local MODAL_BTN_TEXT_DISABLED  = "#ffffffb3"
 
 -- 모달이 열릴 때 가리는(=블러 처리 대용으로 감추는) 크레딧 전경 요소들.
 -- 엔진 RmlUi 렌더러가 실제 blur 필터를 지원하지 않아, 선명한 전경을 숨기고

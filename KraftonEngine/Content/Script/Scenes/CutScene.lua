@@ -33,6 +33,7 @@ local modal_confirmed = false
 local name_confirmed = false
 local input_modal_open = false
 local last_input_name = DEFAULT_EMPLOYEE_NAME
+local skip_choice = nil  -- nil(대기) / "skip" / "play"
 
 -- ─── 유틸 ──────────────────────────────────────────────────────────────────
 
@@ -123,6 +124,20 @@ local function animate_shake(element_id, duration, magnitude)
 end
 
 -- ─── 모달 헬퍼 ─────────────────────────────────────────────────────────────
+
+local function ask_skip()
+    skip_choice = nil
+    QuestionPopup.ShowConfirm({
+        zOrder = MODAL_Z_ORDER,
+        title = "",
+        message = "컷씬을 스킵하시겠습니까?",
+        leftText = "예",
+        rightText = "아니오",
+        showCursor = true,
+        onYes = function() skip_choice = "skip" end,
+        onNo = function() skip_choice = "play" end,
+    })
+end
 
 local function show_story_modal(text, btn_text)
     modal_confirmed = false
@@ -268,6 +283,26 @@ local function run_cutscene()
     -- 1. 1초 fade-in (검은 화면 → gameover_0 노출)
     animate_fade_in(1.0)
 
+    -- 1.5 첫 진입: 컷씬 배경(gameover_0) 위에서 스킵 여부를 묻는다.
+    --     모달 가독성을 위해 dim을 살짝 깔고, 선택 후 dim을 원복한다.
+    animate_dim_in(0.4)
+    ask_skip()
+    WaitUntil(function() return skip_choice ~= nil end)
+    QuestionPopup.Destroy()
+
+    if skip_choice == "skip" then
+        -- 스킵: 이름만 입력받고 바로 Play 씬으로
+        show_name_input(DEFAULT_EMPLOYEE_NAME)
+        WaitUntil(function() return name_confirmed end)
+        QuestionPopup.Destroy()
+        animate_fade_out(0.5)
+        request_scene_load("Play")
+        return
+    end
+
+    -- 감상 선택: dim을 원복하고 기존 시퀀스를 진행
+    set_dim_overlay_opacity(0.0)
+
     -- 2. 어두운 무대(gameover_0)를 잠시 유지하며 긴장 빌드업
     Wait(2.3)
 
@@ -377,6 +412,7 @@ function BeginPlay()
     name_confirmed = false
     input_modal_open = false
     last_input_name = DEFAULT_EMPLOYEE_NAME
+    skip_choice = nil
 
     for key, path in pairs(require("Data/AudioData")) do
         AudioManager.Load(key, path, key:find("^bgm_") ~= nil)
@@ -427,4 +463,5 @@ function EndPlay()
     name_confirmed = false
     input_modal_open = false
     last_input_name = DEFAULT_EMPLOYEE_NAME
+    skip_choice = nil
 end

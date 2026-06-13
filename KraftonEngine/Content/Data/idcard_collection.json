@@ -1,8 +1,6 @@
 {
   "devMode": false,
   "collected": [
-    { "name": "김연하", "hash": "d9135a35d2b0b499cdc7c1b805976ed96a0b28aaaced2563444d33d4" },
-    { "name": "강건우", "hash": "115abcf977ab8108d78c9bbd2249935c00f4c801e48743b2fd5c2c47e89c42bc" },
     { "name": "박준혁", "hash": "8d94614b0c5e55420261d4f79c1d411ee91dda23b5b9e10c24de0161774f897e" },
     { "name": "오준혁", "hash": "4b398a83d8241e2ad212cce78a5ed9e6cda90563d62541544abd897102e0859e" }
   ]

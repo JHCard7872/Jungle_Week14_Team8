@@ -229,8 +229,10 @@ body {
     height: 46px;
 }
 
+/* 입력 모달 버튼을 알림 모달 버튼과 동일한 화면 높이로 맞춘다.
+   (알림: content top 22% + 150 = 242px / 입력: content top 10% + 200 = 242px) */
 .modal_with_input #modal_button_row {
-    top: 232px;
+    top: 200px;
     height: 104px;
 }
 
@@ -245,7 +247,7 @@ body {
 #modal_text_input {
     position: absolute;
     left: 50%;
-    top: 32px;
+    top: 16px;
     width: 380px;
     height: 52px;
     margin-left: -206px;
