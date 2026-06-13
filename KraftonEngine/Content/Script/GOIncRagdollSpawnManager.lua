@@ -23,6 +23,10 @@ local SPAWN_AREA_TAG = SpawnCfg.spawnAreaTag or "GOIncSpawnArea"
 local MAX_LOCATION_RETRY = SpawnCfg.maxLocationRetry or 10
 local MIN_DISTANCE_BETWEEN_SPAWNS = SpawnCfg.minDistanceBetweenSpawns or 0.0
 
+local SPAWN_NEAR_PLAYER = SpawnCfg.spawnNearPlayer == true
+local NEAR_PLAYER_SAMPLE_COUNT = SpawnCfg.nearPlayerSampleCount or 16
+local PLAYER_TAG = SpawnCfg.playerTag or "Player"
+
 local DEFAULT_CHARACTER_ID = SpawnCfg.defaultRagdollId or "blue-speedster"
 local RagdollData = nil
 
@@ -341,29 +345,97 @@ local function pick_random_spawn_area()
     return spawnAreas[index]
 end
 
+-- 플레이어 액터를 태그로 찾아 위치를 반환. 근처 스폰이 꺼져 있거나 못 찾으면 nil.
+local function get_player_location()
+    if not SPAWN_NEAR_PLAYER then
+        return nil
+    end
+
+    if World == nil or World.FindFirstActorByTag == nil then
+        return nil
+    end
+
+    local ok, player = pcall(World.FindFirstActorByTag, PLAYER_TAG)
+    if not ok or player == nil then
+        return nil
+    end
+
+    if player.IsValid ~= nil and not player:IsValid() then
+        return nil
+    end
+
+    return player.Location
+end
+
+-- 스폰 구역(면적 가중) 한 곳에서 점 하나를 샘플링. 실패하면 nil.
+local function sample_one_spawn_point()
+    local area = pick_random_spawn_area()
+    if area == nil then
+        return nil
+    end
+
+    if GOInc == nil or GOInc.GetRandomPointInSpawnAreaBox == nil then
+        print("[GOIncRagdollSpawnManager] Missing GOInc.GetRandomPointInSpawnAreaBox binding")
+        return nil
+    end
+
+    local ok, location = pcall(GOInc.GetRandomPointInSpawnAreaBox, area)
+    if not ok or location == nil then
+        return nil
+    end
+
+    return location
+end
+
+local function distance_sq_xy(a, b)
+    local dx = a.X - b.X
+    local dy = a.Y - b.Y
+    return dx * dx + dy * dy
+end
+
 local function make_random_spawn_location()
     local retryCount = math.max(1, number_or(MAX_LOCATION_RETRY, 10))
+    local playerLoc = get_player_location()
 
-    for _ = 1, retryCount do
-        local area = pick_random_spawn_area()
-        if area == nil then
-            return nil
+    -- 플레이어 위치를 모르면(근처 스폰 off / 미발견) 기존 동작: 최소거리 만족하는 첫 점.
+    if playerLoc == nil then
+        for _ = 1, retryCount do
+            local location = sample_one_spawn_point()
+            if location ~= nil and is_location_far_enough(location) then
+                return location
+            end
         end
 
-        if GOInc == nil or GOInc.GetRandomPointInSpawnAreaBox == nil then
-            print("[GOIncRagdollSpawnManager] Missing GOInc.GetRandomPointInSpawnAreaBox binding")
-            return nil
-        end
+        print(string.format(
+            "[GOIncRagdollSpawnManager] Failed to find a non-overlapping spawn location after %d attempt(s).",
+            retryCount))
+        return nil
+    end
 
-        local ok, location = pcall(GOInc.GetRandomPointInSpawnAreaBox, area)
-        if ok and location ~= nil and is_location_far_enough(location) then
-            return location
+    -- 플레이어 근처 우선: 후보 N개를 뽑아 최소거리 제약을 만족하는 것 중
+    -- 플레이어에게 가장 가까운 점을 고른다. (제약 만족 후보가 없으면 스폰 보류 — 겹침 방지)
+    local sampleCount = math.max(1, number_or(NEAR_PLAYER_SAMPLE_COUNT, 16))
+    local bestLocation = nil
+    local bestDistSq = nil
+
+    for _ = 1, sampleCount do
+        local location = sample_one_spawn_point()
+        if location ~= nil and is_location_far_enough(location) then
+            local distSq = distance_sq_xy(location, playerLoc)
+            if bestDistSq == nil or distSq < bestDistSq then
+                bestDistSq = distSq
+                bestLocation = location
+            end
         end
     end
 
+    if bestLocation ~= nil then
+        return bestLocation
+    end
+
     print(string.format(
-        "[GOIncRagdollSpawnManager] Failed to find a non-overlapping spawn location after %d attempt(s).",
-        retryCount))
+        "[GOIncRagdollSpawnManager] Failed to find a non-overlapping spawn location near player after %d sample(s).",
+        sampleCount))
     return nil
 end
 

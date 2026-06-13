@@ -32,6 +32,12 @@ return {
         minDistanceBetweenSpawns = 0.15,
         maxLocationRetry = 10,
 
+        -- 플레이어 근처 우선 스폰 — 여러 후보 점을 뽑아 플레이어에게 가장 가까운
+        -- (최소거리 제약을 만족하는) 점을 고른다. false면 기존 면적가중 랜덤.
+        spawnNearPlayer       = true,
+        nearPlayerSampleCount = 16,       -- 후보 점 개수. 클수록 더 가깝게(연산 ↑) -- 임시 밸런스
+        playerTag             = "Player", -- 플레이어 액터 Tag (MinimapController와 동일)
+
         defaultRagdollId = "blue-speedster",  -- 추첨 실패 시 폴백 타입
     },
 }
