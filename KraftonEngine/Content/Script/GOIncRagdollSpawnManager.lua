@@ -31,6 +31,8 @@ local spawnedCount = 0
 local totalSpawnedEver = 0
 local spawnedPawns = {}
 local spawnAreas = {}
+local spawnAreaWeights = {}
+local spawnAreaTotalWeight = 0.0
 local bPrintedMaxSpawnReached = false
 local bPrintedNoSpawnAreas = false
 local bPrintedSpawnCandidateSummary = false
@@ -55,8 +57,31 @@ local function random_range(minValue, maxValue)
     return minValue + (maxValue - minValue) * math.random()
 end
 
+-- 박스의 XY 바닥 면적을 가중치로 쓴다 (스폰은 XY 범위만 사용 — GameLuaBindings MakeRandomPointInBoxComponent).
+-- GetScaledBoxExtent()는 월드 반경(half-size)이므로 면적 ∝ extentX * extentY. 상수배는 상대가중에 무의미해 생략.
+-- 크기를 못 구하면 1.0으로 폴백해 균등 선택으로 동작한다.
+local function spawn_area_weight(box)
+    if box == nil or box.GetScaledBoxExtent == nil then
+        return 1.0
+    end
+
+    local ok, extent = pcall(function() return box:GetScaledBoxExtent() end)
+    if not ok or extent == nil then
+        return 1.0
+    end
+
+    local area = math.abs(number_or(extent.X, 0.0)) * math.abs(number_or(extent.Y, 0.0))
+    if area <= 0.0 then
+        return 1.0
+    end
+
+    return area
+end
+
 local function cache_spawn_area_boxes()
     spawnAreas = {}
+    spawnAreaWeights = {}
+    spawnAreaTotalWeight = 0.0
     bPrintedNoSpawnAreas = false
 
     if GOInc == nil or GOInc.FindSpawnAreaBoxes == nil then
@@ -72,14 +97,18 @@ local function cache_spawn_area_boxes()
 
     for _, box in ipairs(boxes) do
         if box ~= nil then
+            local weight = spawn_area_weight(box)
             table.insert(spawnAreas, box)
+            table.insert(spawnAreaWeights, weight)
+            spawnAreaTotalWeight = spawnAreaTotalWeight + weight
         end
     end
 
     print(string.format(
-        "[GOIncRagdollSpawnManager] Cached %d spawn area box(es). Tag=%s",
+        "[GOIncRagdollSpawnManager] Cached %d spawn area box(es). Tag=%s totalAreaWeight=%.2f",
         #spawnAreas,
-        tostring(SPAWN_AREA_TAG)))
+        tostring(SPAWN_AREA_TAG),
+        spawnAreaTotalWeight))
 end
 
 local function print_no_spawn_areas_once()
@@ -288,12 +317,27 @@ local function is_location_far_enough(location)
 end
 
 local function pick_random_spawn_area()
-    if #spawnAreas <= 0 then
+    local count = #spawnAreas
+    if count <= 0 then
         print_no_spawn_areas_once()
         return nil
     end
 
-    local index = math.random(1, #spawnAreas)
+    -- 면적 비례 가중 선택 — 넓은 박스일수록 더 자주 뽑혀 단위 면적당 스폰 밀도가 균일해진다.
+    -- 가중치가 없거나(모두 폴백) 합이 0이면 균등 선택으로 폴백.
+    if spawnAreaTotalWeight > 0.0 then
+        local roll = random_range(0.0, spawnAreaTotalWeight)
+        local accumulated = 0.0
+        for i = 1, count do
+            accumulated = accumulated + (spawnAreaWeights[i] or 0.0)
+            if roll <= accumulated then
+                return spawnAreas[i]
+            end
+        end
+        return spawnAreas[count]
+    end
+
+    local index = math.random(1, count)
     return spawnAreas[index]
 end
 
@@ -453,6 +497,8 @@ function BeginPlay()
     totalSpawnedEver = 0
     spawnedPawns = {}
     spawnAreas = {}
+    spawnAreaWeights = {}
+    spawnAreaTotalWeight = 0.0
     bPrintedMaxSpawnReached = false
     bPrintedNoSpawnAreas = false
     bPrintedSpawnCandidateSummary = false
