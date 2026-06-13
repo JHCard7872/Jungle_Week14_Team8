@@ -309,6 +309,15 @@ return output;
     // 픽셀별 디퓨즈 결과색을 그대로 발광색으로 사용하고, 세기는 Intensity만으로 조절한다.
     float3 materialEmissive = baseColor.rgb * max(EmissiveIntensity, 0.0f);
 
+    // ── 금속 표현 ──
+    // EmissiveColor(픽셀 셰이더에서 원래 미사용)를 "금속 반사 틴트"로 재활용한다.
+    // 0이면 비금속 → 아래 라이팅이 기존과 100% 동일하게 동작하고, 0이 아니면 그 색을
+    // 금속의 반사색으로 보고 스페큘러를 틴트 + 가장자리 프레넬 반사로 금속감을 만든다.
+    float3 metalTint = EmissiveColor;
+    float  metalMask = step(0.0001f, max(metalTint.r, max(metalTint.g, metalTint.b)));
+    // 금속은 하이라이트가 더 작고 또렷하다 — shininess를 끌어올린다.
+    float  litShininess = lerp(g_DefaultShininess, 96.0f, metalMask);
+
 #if defined(LIGHTING_MODEL_UNLIT) && LIGHTING_MODEL_UNLIT
     // Unlit: 라이팅 없이 Albedo만 출력
     float3 finalColor = ApplyWireframe(baseColor.rgb + materialEmissive + hitRim + hitImpact);
@@ -330,16 +339,29 @@ return output;
 
 #elif defined(LIGHTING_MODEL_PHONG) && LIGHTING_MODEL_PHONG
     diffuse = AccumulateDiffuse(input.worldPos, N, input.position);
-    specular = AccumulateSpecular(input.worldPos, N, V, g_DefaultShininess, input.position);
+    specular = AccumulateSpecular(input.worldPos, N, V, litShininess, input.position);
 
 #endif
 
 #if !defined(UBER_COLOR_ONLY) || !UBER_COLOR_ONLY
     output.Culling = ComputeCullingHeatmap(input.position, input.worldPos);
 #endif
-    // Diffuse에만 albedo를 곱하고, Specular는 빛 색상 그대로 더한다
+    // 비금속: Diffuse에만 albedo를 곱하고 Specular는 빛 색상 그대로 더한다
     // (비금속 표면: specular 반사 = 빛의 색, 물체 색이 아님)
-    float3 finalColor = baseColor.rgb * diffuse + specular + materialEmissive + hitRim + hitImpact;
+    float3 dielectric = baseColor.rgb * diffuse + specular;
+
+    // 금속: 디퓨즈 반사가 거의 없고, 모든 반사가 금속색으로 틴트된다.
+    //  - metalSpec : 광원 하이라이트를 금속색으로 강하게 틴트(흰 하이라이트 X)
+    //  - metalFres : 가장자리로 갈수록 강해지는 프레넬 반사(환경맵 대용으로 금속감을 만든다)
+    //  - metalBody : 디퓨즈 대신 아주 약한 환경 채움(그늘이 완전한 검정이 되지 않게)
+    float  fresnel   = pow(1.0f - saturate(dot(N, V)), 5.0f);
+    float  ambLum    = max(diffuse.r, max(diffuse.g, diffuse.b));
+    float3 metalSpec = specular * metalTint * 1.8f;
+    float3 metalFres = metalTint * fresnel * (0.5f + 0.5f * ambLum);
+    float3 metalBody = baseColor.rgb * metalTint * diffuse * 0.4f;
+    float3 metallic  = metalBody + metalSpec + metalFres;
+
+    float3 finalColor = lerp(dielectric, metallic, metalMask) + materialEmissive + hitRim + hitImpact;
     finalColor = ApplyWireframe(finalColor);
 #endif
 

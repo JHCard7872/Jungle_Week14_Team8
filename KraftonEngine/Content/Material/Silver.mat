@@ -4,10 +4,10 @@
   "Origin" : "Editor",
   "Parameters" : {
     "AlphaCutoff" : 0.000000,
-    "EmissiveColor" : [0.850000, 0.880000, 0.920000],
-    "EmissiveIntensity" : 0.200000,
+    "EmissiveColor" : [0.970000, 0.980000, 1.000000],
+    "EmissiveIntensity" : 0.000000,
     "HasNormalMap" : 0.000000,
-    "SectionColor" : [0.850000, 0.880000, 0.920000, 1.000000],
+    "SectionColor" : [0.950000, 0.960000, 0.980000, 1.000000],
     "_pad" : null
   },
   "PathFileName" : "Content/Material/Silver.mat",
