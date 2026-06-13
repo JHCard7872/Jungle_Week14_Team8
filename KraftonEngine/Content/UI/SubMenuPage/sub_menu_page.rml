@@ -180,6 +180,17 @@
             <div id="page_confirm_label" class="horiz_button_label ui_horizontal_button_text_large">결정</div>
         </button>
 
+        <!-- 크레딧 ID 카드 확대 모달 (Lua에서 display로 토글, 화면 전체 오버레이) -->
+        <div id="credits_card_modal">
+            <div id="credits_modal_dim"></div>
+            <img id="credits_modal_card" src="../../Sprite/id_card_jungle_KYH_with_holder.png" />
+            <button id="credits_modal_close">X</button>
+            <div id="credits_modal_buttons">
+                <button id="credits_modal_btn_trainee" class="credits_modal_switch_button">교육생증</button>
+                <button id="credits_modal_btn_employee" class="credits_modal_switch_button">사원증</button>
+            </div>
+        </div>
+
         <img id="submenu_cursor_normal" class="submenu_cursor_image" src="../../Sprite/cursor.png" />
         <img id="submenu_cursor_click" class="submenu_cursor_image" src="../../Sprite/cursor_click.png" />
     </div>
