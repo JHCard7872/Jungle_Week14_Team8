@@ -189,8 +189,8 @@ local function save_player_name(name)
     Session.employee = Session.employee or {}
     Session.employee.name = name
     Session.employee.number = Session.employee.number or "GO-2417"
-    Session.employee.department = Session.employee.department or "Operations"
-    Session.employee.rank = Session.employee.rank or "Contract"
+    Session.employee.department = Session.employee.department or "회수 운영부"
+    Session.employee.rank = Session.employee.rank or "사원"
     _G.PlayerName = name
 end
 
@@ -301,10 +301,10 @@ local function run_cutscene()
     -- 스토리 모달 1: 세계관 소개
     for _, text in ipairs({
         "캐릭터들은 게임에서 쓰러지면 어디로 갈까?",
-        "천국? 지옥? 세이브 포인트?",
-        "아니다. 대부분은 그냥… 처리 대기 상태가 된다.",
+        "천국? 지옥?<br/>세이브 포인트?",
+        "아니다.<br/>대부분은 그냥… 처리 대기 상태가 된다.",
         "사망, 버그, 튕김, 방치로 발생한 래그돌들.",
-        "그걸 처리하는 회사가 바로, 게임오버 주식회사다.",
+        "그걸 처리하는 회사가 바로,<br/>게임오버 주식회사다.",
     }) do
         show_story_modal(text, "다음으로")
         WaitUntil(function() return modal_confirmed end)
@@ -329,7 +329,7 @@ local function run_cutscene()
 
     -- 스토리 모달 2: 주인공 소개 — 첫 대사("내가 처음 출근") 직후 자기소개로 이름을 입력받고,
     -- 이어서 나머지 대사. 마지막 "첫날부터 큰일이야" 대사는 출근 버튼 모달로 분리.
-    show_story_modal("그리고 오늘, 내가 처음 출근하게 된 회사가 여기다.", "다음으로")
+    show_story_modal("그리고 오늘,<br/>내가 처음 출근하게 된 회사가 여기다.", "다음으로")
     WaitUntil(function() return modal_confirmed end)
     QuestionPopup.Destroy()
 
@@ -340,7 +340,7 @@ local function run_cutscene()
     for _, text in ipairs({
         "부서는 래그돌 회수 센터.",
         "힘들다는 소문은 좀 들었다.",
-        "야근이 많고, 서버가 자주 터지고, 가끔 직원도 튕긴다던데…",
+        "야근이 많고, 서버가 자주 터지고,<br/>가끔 직원도 튕긴다던데…",
     }) do
         show_story_modal(text, "다음으로")
         WaitUntil(function() return modal_confirmed end)

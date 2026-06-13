@@ -17,8 +17,8 @@
             <div id="result_overlay">
                 <div id="result_employee_no_value" class="result_employee_value">GO-2417</div>
                 <div id="result_employee_name_value" class="result_employee_value">Employee</div>
-                <div id="result_employee_dept_value" class="result_employee_value">Operations</div>
-                <div id="result_employee_rank_value" class="result_employee_value">Contract</div>
+                <div id="result_employee_dept_value" class="result_employee_value">회수 운영부</div>
+                <div id="result_employee_rank_value" class="result_employee_value">사원</div>
 
                 <div id="result_metric_count_value" class="result_metric_value">18</div>
                 <div id="result_metric_base_value" class="result_metric_value">8,400</div>

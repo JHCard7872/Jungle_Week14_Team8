@@ -46,8 +46,8 @@ local function apply_preview_preset(rank)
     Session.employee = {
         number = "GO-2417",
         name = "Kang Hana",
-        department = "Operations",
-        rank = "Contract",
+        department = "회수 운영부",
+        rank = "사원",
     }
     Session.result = {
         collectedCount = preset.count,

@@ -26,8 +26,8 @@ local S = {
     employee = {
         number = "GO-2417",
         name = "Employee",
-        department = "Operations",
-        rank = "Contract",
+        department = "회수 운영부",
+        rank = "사원",
     },
 
     gun = {
