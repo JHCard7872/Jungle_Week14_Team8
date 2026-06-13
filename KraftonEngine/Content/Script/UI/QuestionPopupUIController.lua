@@ -83,6 +83,10 @@ function M.IsVisible()
     return Modal.IsVisible()
 end
 
+function M.UpdateCursor()
+    Modal.UpdateCursor()
+end
+
 function M.GetInputText()
     return Modal.GetInputText()
 end

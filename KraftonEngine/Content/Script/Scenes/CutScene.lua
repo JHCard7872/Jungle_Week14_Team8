@@ -395,6 +395,10 @@ end
 function Tick(dt)
     UpdateCoroutines(dt)
 
+    -- 모달은 mousemove 이벤트로만 커서를 갱신하므로, 마우스를 안 움직이고 클릭하면
+    -- cursor_click 토글이 안 된다. 씬 Tick이 살아있으니 매 프레임 폴링해준다.
+    QuestionPopup.UpdateCursor()
+
     if pending_scene_name ~= nil then
         local scene_name = pending_scene_name
         pending_scene_name = nil

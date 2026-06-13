@@ -242,6 +242,12 @@ function M.IsVisible()
     return visible
 end
 
+-- 마우스를 움직이지 않고 클릭하면 mousemove가 안 떠 cursor_click 토글이 안 된다.
+-- 씬 Tick이 살아있는 화면(컷씬 등)에서 매 프레임 호출해 클릭 상태를 폴링하라.
+function M.UpdateCursor()
+    update_cursor_sprite()
+end
+
 function M.GetInputText()
     return get_value("modal_text_input")
 end
