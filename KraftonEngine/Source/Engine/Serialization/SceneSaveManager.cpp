@@ -379,6 +379,7 @@ json::JSON FSceneSaveManager::SerializeActor(AActor* Actor, FSceneSaveContext& C
 	for (UActorComponent* Comp : Actor->GetComponents()) {
 		if (!Comp) continue;
 		if (Comp->IsA<USceneComponent>()) continue;
+		if (Comp->IsDoNotSerialize()) continue;   // 절차적 런타임 컴포넌트는 굽지 않는다
 
 		JSON c = json::Object();
 		c[SceneKeys::ClassName] = Comp->GetClass()->GetName();
@@ -404,6 +405,7 @@ json::JSON FSceneSaveManager::SerializeSceneComponentTree(USceneComponent* Comp,
 	JSON Children = json::Array();
 	for (USceneComponent* Child : Comp->GetChildren()) {
 		if (!Child) continue;
+		if (Child->IsDoNotSerialize()) continue;   // 절차적 런타임 자식(빛기둥 등)은 굽지 않는다
 		Children.append(SerializeSceneComponentTree(Child, Context));
 	}
 	c[SceneKeys::Children] = Children;
@@ -647,6 +649,10 @@ void FSceneSaveManager::LoadSceneFromJSON(const string& filepath, FWorldContext&
 		{
 			continue;
 		}
+
+		// 컴포넌트/프로퍼티 복원 완료 후 — 최소 직렬화 액터가 파생 컴포넌트를 보강할 기회.
+		// (옥트리 재삽입보다 먼저 호출해 새로 만든 컴포넌트 bounds까지 반영)
+		Actor->PostLoadSceneActor();
 
 		World->RemoveActorToOctree(Actor);
 		World->InsertActorToOctree(Actor);

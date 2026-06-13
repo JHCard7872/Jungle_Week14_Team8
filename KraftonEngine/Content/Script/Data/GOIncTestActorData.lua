@@ -8,7 +8,7 @@
 -- ==========================================================================
 
 -- 파생 상수의 기준값. 테이블 생성자 안에서는 자기 필드 참조가 불가해 local로 선행 정의한다
-local MAX_TRACE_DISTANCE = 15.0 -- 화면 중앙 조준 Raycast 최대 거리
+local MAX_TRACE_DISTANCE = 30.0 -- 화면 중앙 조준 Raycast 최대 거리
 local BEAM_VISIBLE_TIME = 0.08 -- 발사 Beam을 화면에 유지하는 시간
 
 return {
@@ -149,6 +149,15 @@ return {
     THROW_IMPULSE_SCALE = 0.35,
     THROW_MAX_IMPULSE_PER_MASS = 120.0,
     THROW_MIN_SPEED = 0.5,
+
+    -- '큰 바구니'(AGOIncBasket) 운반 — 포탈 순간이동 시 바구니를 집고 있으면 바구니 부피 안의
+    -- 래그돌들도 같은 delta로 함께 옮긴다. 태그는 C++ AGOIncBasket::InitDefaultComponents와 일치해야 한다.
+    BASKET_TAG = "Basket",
+    -- 바구니 월드 위치 기준 래그돌 동반 판정 박스의 반-크기(half-extent). 바구니 메시 스케일을
+    -- 키우면 이 값도 같이 키워야 안에 든 래그돌이 빠짐없이 따라온다(스케일 ~10 기준 대략치).
+    BASKET_CARRY_HALF_EXTENT = { x = 16.0, y = 16.0, z = 24.0 },
+    -- 판정 박스 중심을 바구니 원점에서 위로 올려 바구니 안/위에 얹힌 래그돌을 포함시킨다.
+    BASKET_CARRY_CENTER_Z_OFFSET = 8.0,
 
     WEAPON_FORWARD_OFFSET = 0.85, -- 카메라 로컬 Forward 기준 총 화면 위치
     WEAPON_RIGHT_OFFSET = 0.40,   -- 카메라 로컬 Right 기준 총 화면 위치

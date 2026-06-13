@@ -7,6 +7,7 @@
 #include "Render/Proxy/PrimitiveSceneProxy.h"
 #include "GameFramework/AActor.h"
 #include "Object/Object.h"
+#include "Profiling/Stats/Stats.h"
 #include <algorithm>
 
 namespace
@@ -171,14 +172,17 @@ void FSpatialPartition::FlushPrimitive()
 	}
 
 	FBoundingBox DirtyBounds;
-	for (AActor* Actor : DirtyActors)
 	{
-        if (!IsValid(Actor))
+		SCOPE_STAT_CAT("Flush_DirtyBounds", "1_WorldTick"); // [임시 진단]
+		for (AActor* Actor : DirtyActors)
 		{
-			continue;
-		}
+			if (!IsValid(Actor))
+			{
+				continue;
+			}
 
-		ExpandBoundsByBox(DirtyBounds, BuildActorVisibleBounds(Actor, true));
+			ExpandBoundsByBox(DirtyBounds, BuildActorVisibleBounds(Actor, true));
+		}
 	}
 
 	const bool bNeedsRootGrowth =
@@ -193,6 +197,8 @@ void FSpatialPartition::FlushPrimitive()
 		return;
 	}
 
+	{
+	SCOPE_STAT_CAT("Flush_Reinsert", "1_WorldTick"); // [임시 진단]
 	for (AActor* Actor : DirtyActors)
 	{
 		if (!IsValid(Actor))
@@ -256,8 +262,12 @@ void FSpatialPartition::FlushPrimitive()
 			}
 		}
 	}
+	} // [임시 진단] Flush_Reinsert 스코프 끝
 
-	Octree->TryMergeRecursive();
+	// 전역 TryMergeRecursive 제거: 옥트리 전체를 매 프레임 순회 + 내부 노드마다 TArray 힙 할당
+	// 하던 비용(dirty 수와 무관하게 ~수백 ms)이 프레임 정체의 주원인이었다.
+	// 노드 병합은 이미 각 RemoveDirect(bTryMergeNow=true) → TryMergeUpward 가 제거 지점에서
+	// 지역적으로 수행하므로(과분할은 prim 이 빠질 때만 발생) 전역 패스는 중복이다.
 
 	ClearQueuedActorFlags();
 	DirtyActors.clear();

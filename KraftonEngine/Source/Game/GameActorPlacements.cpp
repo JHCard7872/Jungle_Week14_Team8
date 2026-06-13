@@ -2,6 +2,7 @@
 
 #include "Engine/Runtime/ActorPlacementRegistry.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/Actors/GOIncBasket.h"
 #include "Game/Actors/GOIncIdCard.h"
 #include "Game/Actors/GOIncTrashBox.h"
 #include "Game/Actors/GOIncTruck.h"
@@ -67,18 +68,33 @@ void RegisterGameActorPlacements()
 			});
 	}
 
-	FActorPlacementRegistry::Get().RegisterEntry(
-		"Summon Portal",
-		[](UWorld* World, const FVector& Location) -> AActor*
+	// 순간이동 포탈 — 색상별로 배치 메뉴를 분리(0=하늘 1=분홍 2=노랑). 같은 색끼리 한 쌍이
+	// 서로의 목적지가 된다. 색은 인스펙터의 Color Index로도 바꿀 수 있다(즉시 반영).
+	{
+		struct FPortalColorEntry { const char* Label; int32 ColorIndex; };
+		static const FPortalColorEntry PortalEntries[] = {
+			{ "Summon Portal (Cyan)",   0 },
+			{ "Summon Portal (Pink)",   1 },
+			{ "Summon Portal (Yellow)", 2 },
+		};
+		for (const FPortalColorEntry& E : PortalEntries)
 		{
-			ASummonPortalActor* Portal = World ? World->SpawnActor<ASummonPortalActor>() : nullptr;
-			if (Portal)
-			{
-				Portal->InitDefaultComponents();
-				Portal->SetActorLocation(Location);
-			}
-			return Portal;
-		});
+			const int32 Color = E.ColorIndex;
+			FActorPlacementRegistry::Get().RegisterEntry(
+				E.Label,
+				[Color](UWorld* World, const FVector& Location) -> AActor*
+				{
+					ASummonPortalActor* Portal = World ? World->SpawnActor<ASummonPortalActor>() : nullptr;
+					if (Portal)
+					{
+						Portal->ColorIndex = Color;       // InitDefaultComponents가 이 값으로 색 적용
+						Portal->InitDefaultComponents();
+						Portal->SetActorLocation(Location);
+					}
+					return Portal;
+				});
+		}
+	}
 
 	FActorPlacementRegistry::Get().RegisterEntry(
 		"GOInc Truck",
@@ -104,6 +120,19 @@ void RegisterGameActorPlacements()
 				TrashBox->SetActorLocation(Location);
 			}
 			return TrashBox;
+		});
+
+	FActorPlacementRegistry::Get().RegisterEntry(
+		"GOInc Basket",
+		[](UWorld* World, const FVector& Location) -> AActor*
+		{
+			AGOIncBasket* Basket = World ? World->SpawnActor<AGOIncBasket>() : nullptr;
+			if (Basket)
+			{
+				Basket->InitDefaultComponents();
+				Basket->SetActorLocation(Location);
+			}
+			return Basket;
 		});
 
 	FActorPlacementRegistry::Get().RegisterEntry(

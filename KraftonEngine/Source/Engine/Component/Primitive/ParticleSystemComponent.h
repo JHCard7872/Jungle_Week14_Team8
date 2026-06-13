@@ -121,6 +121,14 @@ public:
 	float GetWorldTimeSeconds() const { return CachedWorldTimeSeconds; }
 	void SetDestroyOwnerOnComplete(bool bInDestroyOwnerOnComplete) { bDestroyOwnerOnComplete = bInDestroyOwnerOnComplete; }
 
+	// 파티클 색 오버라이드 — 컴포넌트 단위로 모든 스프라이트 파티클을 목표 색조로 치환한다
+	// (각 파티클의 밝기/페이드는 보존). 같은 파티클 에셋을 색만 바꿔 재사용할 때 사용(예: 포탈).
+	// 기본은 미적용이라 다른 파티클에는 영향 없음.
+	void SetColorScale(const FLinearColor& InColor) { ColorScale = InColor; bOverrideColor = true; }
+	void ClearColorScale() { bOverrideColor = false; ColorScale = FLinearColor::White(); }
+	FLinearColor GetColorScale() const { return ColorScale; }
+	bool IsColorOverridden() const { return bOverrideColor; }
+
 	FParticleCollisionSignature OnParticleCollide;
 	TArray<FParticleEventCollideData> CollisionEvents;
 
@@ -167,6 +175,9 @@ private:
     // Runtime loaded material references. EmitterMaterialSlots stores persistent asset identity.
     UPROPERTY(Transient, Category="Rendering")
     TArray<TObjectPtr<UMaterial>>     EmitterMaterials;
+
+	FLinearColor ColorScale = FLinearColor::White();   // 색 오버라이드 색조(bOverrideColor일 때만 적용)
+	bool bOverrideColor = false;
 
 	bool bInitialized = false;
 	bool bDestroyOwnerOnComplete = false;

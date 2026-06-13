@@ -35,6 +35,7 @@ return {
     sfx_gun_mode_change = "SfxGunModeChange.mp3",
     sfx_beam_grab = "SfxBeamGrab.mp3",
     sfx_collect = "SfxUiClick.mp3",            -- TODO: 임시 매핑 — SfxCollect.mp3 입수 시 교체
+    sfx_portal_move = "SfxPortalMove.mp3",     -- 포탈 순간이동 사운드
     sfx_hit = "SfxHit.mp3",
     sfx_ui_click = "SfxUiClick.mp3",
     sfx_ui_hover = "SfxUiHover.mp3",

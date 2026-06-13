@@ -2140,6 +2140,9 @@
     <ClCompile Include="Source\Game\Actors\GOIncIdCard.cpp">
       <Filter>Source\Game</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Actors\GOIncBasket.cpp">
+      <Filter>Source\Game</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Actors\GOIncTrashBox.cpp">
       <Filter>Source\Game</Filter>
     </ClCompile>
@@ -5974,6 +5977,9 @@
     <ClInclude Include="Source\Editor\UI\Util\DetailPropertyRenderer.h" />
     <ClInclude Include="Source\Game\GameMode\GOIncPlayerController.h" />
     <ClInclude Include="Source\Game\Actors\GOIncIdCard.h">
+      <Filter>Source\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Actors\GOIncBasket.h">
       <Filter>Source\Game</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Actors\GOIncTrashBox.h">

@@ -4,6 +4,7 @@ local HUD = require("UI/HUDController")
 local RagdollData = require("Data/RagdollData")
 local ScoreData = require("Data/ScoreData")
 local UserSettings = require("Data/UserSettings")
+local PortalTeleport = require("Manager/PortalTeleport") -- 포탈 순간이동 코디네이터(이동 클로저 등록 + 연출 FSM 구동)
 
 local COLLECT_FIRE_SFX_CHANNEL = "CollectFireSfx"
 local FOOTSTEP_SFX_CHANNEL = "FootstepSfx"
@@ -3004,6 +3005,94 @@ local function apply_fire(delta_time)
     beam_visible_remaining = C.BEAM_VISIBLE_TIME
 end
 
+-- 바구니 부피 안의 래그돌들을 같은 delta로 함께 옮긴다(setGlobalPose 평행이동).
+-- center는 "이동 전" 바구니 월드 위치 — 래그돌도 아직 이동 전 위치라 같은 좌표계에서 판정한다.
+local function carry_basket_ragdolls(center, delta)
+    if center == nil or delta == nil then return end
+    if World == nil or World.FindActorsByTag == nil then return end
+
+    local ragdolls = World.FindActorsByTag(RAGDOLL_TAG)
+    if ragdolls == nil then return end
+
+    local hx = C.BASKET_CARRY_HALF_EXTENT or { x = 16.0, y = 16.0, z = 24.0 }
+    local center_z = center.Z + (C.BASKET_CARRY_CENTER_Z_OFFSET or 0.0)
+
+    for _, actor in pairs(ragdolls) do
+        if actor ~= nil and actor ~= grabbed_owner_actor
+           and (actor.IsValid == nil or actor:IsValid())
+           and actor.Location ~= nil then
+            local loc = actor.Location
+            if math.abs(loc.X - center.X) <= hx.x
+               and math.abs(loc.Y - center.Y) <= hx.y
+               and math.abs(loc.Z - center_z) <= hx.z then
+                -- 래그돌 폰의 루트는 일반 SceneComponent라 GetRootPrimitiveComponent가 nil이다.
+                -- 모든 프리미티브를 훑어 스켈레탈 메시에만 MoveRagdollBodiesBy가 true로 먹는다.
+                local comps = (actor.GetPrimitiveComponents ~= nil) and actor:GetPrimitiveComponents() or nil
+                if comps ~= nil then
+                    for _, comp in pairs(comps) do
+                        if comp ~= nil and comp.MoveRagdollBodiesBy ~= nil
+                           and comp:MoveRagdollBodiesBy(delta) then   -- 모든 본 바디 평행이동(+WakeUp)
+                            if comp.SetLinearVelocity ~= nil then
+                                comp:SetLinearVelocity(Vector.Zero())
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- 포탈 순간이동 — 플레이어를 delta만큼 옮기고, 레이저로 들고 있는 오브젝트가 있으면
+-- 통째로 함께 옮긴다(상대 위치 보존). PortalTeleport가 화면이 완전히 흰 순간에 호출한다.
+-- 들고 있는 게 '큰 바구니'면 바구니 부피 안의 래그돌들도 같이 옮겨 담은 채로 이동시킨다.
+local function teleport_player_with_grab(delta)
+    if delta == nil then return end
+    obj.Location = obj.Location + delta
+    player_velocity = Vector.Zero()   -- 텔레포트 직후 관성 제거(맵 밖 튕김 방지)
+
+    if grabbed_body ~= nil and grabbed_owner_actor ~= nil
+       and (grabbed_owner_actor.IsValid == nil or grabbed_owner_actor:IsValid()) then
+        -- 바구니라면 안에 든 래그돌 판정을 위해 "이동 전" 바구니 중심을 먼저 잡는다.
+        local is_basket = grabbed_owner_actor.HasTag ~= nil
+            and grabbed_owner_actor:HasTag(C.BASKET_TAG or "Basket")
+        local basket_center = nil
+        if is_basket and grabbed_body.GetLocation ~= nil then
+            basket_center = grabbed_body:GetLocation()
+        end
+
+        local moved = false
+        local comp = grabbed_hit_component
+        if comp == nil and grabbed_body.GetOwnerComponent ~= nil then
+            comp = grabbed_body:GetOwnerComponent()
+        end
+        -- 래그돌: 모든 본 바디를 함께 이동. 스태틱메시 등: 단일 바디 이동.
+        if comp ~= nil and comp.MoveRagdollBodiesBy ~= nil then
+            moved = comp:MoveRagdollBodiesBy(delta)
+        end
+        if not moved and grabbed_body.MoveBy ~= nil then
+            grabbed_body:MoveBy(delta)
+        end
+        if grabbed_body.SetLinearVelocity ~= nil then
+            grabbed_body:SetLinearVelocity(Vector.Zero())
+        end
+
+        -- 바구니 안의 래그돌들도 같은 delta로 동반 이동 (이동 전 중심 기준 판정).
+        if is_basket and basket_center ~= nil then
+            carry_basket_ragdolls(basket_center, delta)
+        end
+        -- 그랩 목표/속도 캐시도 평행이동해 다음 FixedTick에서 스프링이 튀지 않게
+        if grabbed_target_world ~= nil then grabbed_target_world = grabbed_target_world + delta end
+        if grabbed_last_target_world ~= nil then grabbed_last_target_world = grabbed_last_target_world + delta end
+        if grabbed_target_velocity ~= nil then grabbed_target_velocity = Vector.Zero() end
+    end
+
+    -- 조준 레이 시작점도 새 위치로 평행이동(다음 FixedTick이 소비하기 전)
+    if grab_fixed_ray ~= nil and grab_fixed_ray.start ~= nil then
+        grab_fixed_ray.start = grab_fixed_ray.start + delta
+    end
+end
+
 function BeginPlay()
     update_viewport_center()
     crosshair_screen_x = viewport_center_x
@@ -3020,6 +3109,7 @@ function BeginPlay()
     player_velocity = Vector.Zero()
     reset_collect_fire_sfx_timer()
     reset_footstep_sfx_timer()
+    PortalTeleport.RegisterTeleport(teleport_player_with_grab) -- 포탈이 이 클로저로 플레이어+그랩 이동
 
     if root_body ~= nil then
         root_body:SetSimulatePhysics(false)
@@ -3070,6 +3160,7 @@ end
 
 function Tick(delta_time)
     update_id_card_removals(delta_time)
+    PortalTeleport.Tick(delta_time)   -- 포탈 이동 연출 FSM(점멸→이동→fade in)·쿨다운 진행
 
     if Session.inputEnabled ~= true then
         slot2_muzzle_fx.Stop()

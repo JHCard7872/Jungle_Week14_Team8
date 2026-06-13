@@ -328,6 +328,15 @@ struct FCameraLetterboxConstants
 	float _pad[2];            // 8B - 16B boundary
 };
 
+// Camera Blur CB (b2) - HLSL CameraBlurCB와 1:1 대응
+struct FCameraBlurConstants
+{
+	float Strength;     // 4B - 0..1, 커널 반경 스케일
+	float TexelSizeX;   // 4B - 1.0 / ViewportWidth
+	float TexelSizeY;   // 4B - 1.0 / ViewportHeight
+	float _pad;         // 4B - 16B boundary
+};
+
 // ============================================================
 // 타입별 CB 바인딩 디스크립터 — GPU CB에 업로드할 데이터를 인라인 보관
 // ============================================================

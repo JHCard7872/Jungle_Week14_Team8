@@ -830,6 +830,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClCompile Include="Source\Engine\Viewport\GameViewportClient.cpp" />
     <ClCompile Include="Source\Engine\Viewport\Viewport.cpp" />
     <ClCompile Include="Source\Engine\Viewport\ViewportClient.cpp" />
+    <ClCompile Include="Source\Game\Actors\GOIncBasket.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncIdCard.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTrashBox.cpp" />
     <ClCompile Include="Source\Game\Actors\GOIncTruck.cpp" />
@@ -1374,6 +1375,7 @@ xcopy /Y "$(ProjectDir)ThirdParty\fbx\lib\x64\release\libfbxsdk.dll" "$(OutDir)"
     <ClInclude Include="Source\Engine\Viewport\GameViewportClient.h" />
     <ClInclude Include="Source\Engine\Viewport\Viewport.h" />
     <ClInclude Include="Source\Engine\Viewport\ViewportClient.h" />
+    <ClInclude Include="Source\Game\Actors\GOIncBasket.h" />
     <ClInclude Include="Source\Game\Actors\GOIncIdCard.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTrashBox.h" />
     <ClInclude Include="Source\Game\Actors\GOIncTruck.h" />

@@ -503,6 +503,19 @@ local function queue_popup_internal(request)
     end
 
     if event_name == "REVIVED" then
+        -- 한 번의 부활(일어남)당 팝업 한 번만:
+        -- 이미 표시 중이거나 큐에 대기 중인 REVIVED가 있으면 새로 쌓지 않는다.
+        -- (여러 마리가 동시에 부활해도 팝업은 하나로 합쳐진다)
+        if popup_state.currentEvent == "REVIVED" then
+            return false
+        end
+        for i = 1, #popup_queue do
+            if popup_queue[i].eventName == "REVIVED" then
+                return false
+            end
+        end
+
+        -- 팝업이 끝난 직후 곧바로 또 뜨는 연타도 막는 짧은 쿨다운.
         local last_time = last_revive_popup_push_time
         if last_time ~= nil and (popup_event_clock - last_time) < REVIVE_POPUP_SUPPRESS_WINDOW then
             return false
@@ -877,11 +890,26 @@ local function apply_crosshair_state()
     set_crosshair_property("hud_crosshair_attack", "transform", rotation_transform)
 end
 
+-- 점수 등급별 글씨 스타일은 RCSS 클래스(#hud_target_score.tier-*)로 정의되어 있다.
+-- 색상 + 다중(named) 폰트 이펙트(어두운 외곽선 + 위쪽 하이라이트 = "금속" 느낌)는
+-- 인라인 SetProperty로는 파싱이 안 되므로(named 폰트 이펙트는 스타일시트 전용),
+-- 여기서는 등급에 맞는 class 만 토글한다.
+local TARGET_SCORE_TIERS = {
+    normal = true,
+    silver = true,
+    gold = true,
+}
+
 local function apply_target_info()
     set_display("hud_target_info_container", state.target.visible)
     widget:SetText("hud_target_name", state.target.name)
     widget:SetText("hud_target_weight", state.target.weightText)
     widget:SetText("hud_target_score", state.target.scoreText)
+    local tier = state.target.scoreTier
+    if not TARGET_SCORE_TIERS[tier] then
+        tier = "normal"
+    end
+    widget:SetAttribute("hud_target_score", "class", "tier-" .. tier)
     -- src는 스타일이 아니라 요소 속성 — SetProperty로 넣으면 RmlUi 파싱 오류가 난다
     widget:SetAttribute("hud_target_pose_image", "src", state.target.imagePath)
 end
@@ -1186,6 +1214,8 @@ function M.ShowTargetInfo(target_info)
         or (target_info.score ~= nil and normalize_target_score_text(target_info.score))
         or (target_info.baseScore ~= nil and normalize_target_score_text(target_info.baseScore))
         or state.target.scoreText
+    -- 등급은 직접 대입(nil 허용) — 일반 래그돌은 이전 금/은 색이 남지 않도록 초기화한다
+    state.target.scoreTier = target_info.scoreTier
     state.target.imagePath = resolve_ragdoll_image_path(target_info.ragdollId, target_info.imagePath or target_info.referenceImage or state.target.imagePath)
     M.Refresh()
 end

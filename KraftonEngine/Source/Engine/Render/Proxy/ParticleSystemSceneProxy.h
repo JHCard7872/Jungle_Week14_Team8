@@ -61,6 +61,10 @@ private:
 	TArray<FDynamicEmitterDataBase*> CachedEmitterData;
 	int32 CachedEmitterCount = 0;
 
+	// 컴포넌트 색 오버라이드 — UpdatePerViewport에서 받아 FillStagingBuffer가 인스턴스 색에 반영
+	FLinearColor ColorScale = FLinearColor::White();
+	bool bOverrideColor = false;
+
 	void BuildQuadGeometry(ID3D11Device* Device);
 	void EnsureEmitterBuffers(ID3D11Device* Device, int32 EmitterCount);
 

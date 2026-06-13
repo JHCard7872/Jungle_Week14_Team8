@@ -76,4 +76,10 @@ struct FCameraLetterboxState
 	float Amount = 1.0f;
 	float Thickness = 0.12f;
 	FLinearColor Color = FLinearColor::Black();
-};;
+};
+
+struct FCameraBlurState
+{
+	bool bEnabled = false;
+	float Strength = 0.0f;   // 0..1, 커널 반경 스케일
+};

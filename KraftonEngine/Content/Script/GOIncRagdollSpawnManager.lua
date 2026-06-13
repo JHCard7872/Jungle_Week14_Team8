@@ -24,10 +24,17 @@ local MAX_LOCATION_RETRY = SpawnCfg.maxLocationRetry or 10
 local MIN_DISTANCE_BETWEEN_SPAWNS = SpawnCfg.minDistanceBetweenSpawns or 0.0
 
 local SPAWN_NEAR_PLAYER = SpawnCfg.spawnNearPlayer == true
+local NEAR_PLAYER_CHANCE = SpawnCfg.nearPlayerChance or 1.0
 local NEAR_PLAYER_SAMPLE_COUNT = SpawnCfg.nearPlayerSampleCount or 16
 local PLAYER_TAG = SpawnCfg.playerTag or "Player"
 
 local DEFAULT_CHARACTER_ID = SpawnCfg.defaultRagdollId or "blue-speedster"
+
+-- 부활 확률제: 스폰 시 1회 추첨해 부활 불가로 뽑힌 개체에 이 태그를 단다.
+-- GOIncRagdollPawn_Test.lua가 이 태그를 보고 revive를 막는다. (태그 문자열 동기화 필수)
+local REVIVE_CHANCE = SpawnCfg.reviveChance
+local NO_REVIVE_TAG = "NoRevive"
+
 local RagdollData = nil
 
 local spawnTimer = 0.0
@@ -397,7 +404,13 @@ local function make_random_spawn_location()
     local retryCount = math.max(1, number_or(MAX_LOCATION_RETRY, 10))
     local playerLoc = get_player_location()
 
-    -- 플레이어 위치를 모르면(근처 스폰 off / 미발견) 기존 동작: 최소거리 만족하는 첫 점.
+    -- 근처 스폰 추첨 — 이번 스폰이 추첨에 떨어지면 플레이어 위치를 무시하고
+    -- 맵 전체 랜덤(아래 nil 분기)으로 떨군다. 플레이어 주변 쏠림을 완화한다.
+    if playerLoc ~= nil and math.random() >= number_or(NEAR_PLAYER_CHANCE, 1.0) then
+        playerLoc = nil
+    end
+
+    -- 플레이어 위치를 모르면(근처 스폰 off / 미발견 / 추첨 탈락) 최소거리 만족하는 첫 점.
     if playerLoc == nil then
         for _ = 1, retryCount do
             local location = sample_one_spawn_point()
@@ -534,6 +547,16 @@ local function spawn_one()
             pawn:AddTag("Silver")
             GOInc.SetRagdollOverrideMaterial(pawn, "Content/Material/Silver.mat")
             print("[GOIncRagdollSpawnManager] Variant: Silver " .. tostring(characterId))
+        end
+    end
+
+    -- 부활 확률 추첨 — 실패하면 'NoRevive' 태그를 달아 이 개체는 부활하지 않게 한다.
+    -- chance >= 1.0 이면 전부 부활(추첨 생략), <= 0.0 이면 전부 부활 불가.
+    -- AddTag 바인딩이 없으면 추첨도 생략(기존 동작 = 전부 부활).
+    if pawn.AddTag ~= nil and type(REVIVE_CHANCE) == "number" then
+        if REVIVE_CHANCE <= 0.0 or (REVIVE_CHANCE < 1.0 and math.random() >= REVIVE_CHANCE) then
+            pawn:AddTag(NO_REVIVE_TAG)
+            print("[GOIncRagdollSpawnManager] Revive roll failed -> NoRevive " .. tostring(characterId))
         end
     end
 

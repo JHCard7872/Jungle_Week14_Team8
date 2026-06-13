@@ -10,7 +10,12 @@
     <div id="hud_root">
         <div id="hud_minimap_container">
             <img id="hud_minimap_image" src="../../Sprite/play_hud_minimap.png" />
-            <img id="minimap_marker_portal" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal.png" />
+            <img id="minimap_marker_portal_0_1" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal_0.png" />
+            <img id="minimap_marker_portal_0_2" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal_0.png" />
+            <img id="minimap_marker_portal_1_1" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal_1.png" />
+            <img id="minimap_marker_portal_1_2" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal_1.png" />
+            <img id="minimap_marker_portal_2_1" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal_2.png" />
+            <img id="minimap_marker_portal_2_2" class="minimap_marker mm_portal" src="../../Sprite/minimap_marker_portal_2.png" />
             <img id="minimap_marker_trashbox_1" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
             <img id="minimap_marker_trashbox_2" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
             <img id="minimap_marker_trashbox_3" class="minimap_marker mm_trashbox" src="../../Sprite/minimap_marker_trashbox.png" />
@@ -69,6 +74,7 @@
                 <img id="hud_server_load_orange" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_orange.png" />
                 <img id="hud_server_load_red" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_red.png" />
                 <div id="hud_server_load_value">0%</div>
+                <img id="hud_server_load_flame" src="../../Sprite/server_overload_flame_icon.png" />
             </div>
             <div id="hud_server_load_label">SERVER OVERLOAD</div>
         </div>
@@ -92,6 +98,7 @@
             <img id="hud_target_info_bg" src="../../Sprite/play_aim_ragdoll_popup.png" />
             <img id="hud_target_pose_image" src="../../Sprite/Ragdoll_Image/ragdoll_sample.png" />
             <div id="hud_target_name">Red Plumber</div>
+            <div id="hud_target_divider"></div>
             <div id="hud_target_weight">12.5kg</div>
             <div id="hud_target_score">+100</div>
         </div>

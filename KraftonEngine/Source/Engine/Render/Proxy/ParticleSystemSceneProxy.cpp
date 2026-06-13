@@ -141,6 +141,10 @@ void FParticleSystemSceneProxy::UpdatePerViewport(const FFrameContext& Frame)
 	float DistToCamera = FVector::Distance(Frame.CameraPosition, Comp->GetWorldLocation());
 	Comp->SetCachedDistanceToCamera(DistToCamera);
 
+	// 색 오버라이드 — FillStagingBuffer에서 인스턴스 색에 반영
+	ColorScale = Comp->GetColorScale();
+	bOverrideColor = Comp->IsColorOverridden();
+
 	const TArray<FDynamicEmitterDataBase*>& EmitterList = Comp->GetEmitterRenderData();
 	CachedEmitterData.clear();
 	CachedEmitterData.reserve(EmitterList.size());
@@ -391,7 +395,18 @@ void FParticleSystemSceneProxy::FillStagingBuffer(
 				? SpriteSource.SimulationToWorld.TransformPosition(P->Location)
 				: P->Location;
 			Inst->Size     = P->Size.X * Source.Scale.X;
-			Inst->Color    = P->Color.ToVector4();
+			if (bOverrideColor)
+			{
+				// 목표 색조로 치환하되 각 파티클의 밝기(휘도)와 알파(페이드)는 보존 — 같은 파티클을
+				// 색만 바꿔 쓰기 위함. ColorScale=White가 아니어도 bOverrideColor일 때만 적용된다.
+				const FLinearColor c = P->Color;
+				const float lum = 0.299f * c.R + 0.587f * c.G + 0.114f * c.B;
+				Inst->Color = FVector4(ColorScale.R * lum, ColorScale.G * lum, ColorScale.B * lum, c.A);
+			}
+			else
+			{
+				Inst->Color = P->Color.ToVector4();
+			}
 			Inst->Rotation = P->Rotation;
 			// 라이프타임 진행도를 그대로 흘려보냄. 머티리얼 그래프의 ParticleSubUV가 Rows/Cols로 정수 프레임 변환.
 			Inst->SubImageIndex = P->RelativeTime;

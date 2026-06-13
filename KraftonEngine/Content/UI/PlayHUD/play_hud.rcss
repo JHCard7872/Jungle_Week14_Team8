@@ -202,6 +202,16 @@ body {
     opacity: 0;
 }
 
+/* SERVER OVERLOAD 게이지 우측 끝에 붙는 불꽃 아이콘 — 게이지 높이(48px)에 맞추고
+   우측 바깥으로 살짝 걸쳐 게이지 경계에 닿게 한다. */
+#hud_server_load_flame {
+    position: absolute;
+    right: -4px;
+    top: -24px;
+    width: 62px;
+    height: 84px;
+}
+
 #hud_server_load_value {
     position: absolute;
     left: 0px;
@@ -329,6 +339,16 @@ body {
     font-effect: shadow(2px 2px #000000aa);
 }
 
+/* 이름 row 밑 얇은 구분선 — 가운데가 진하고 양끝이 옅게 빠지는 가로 그라데이션 */
+#hud_target_divider {
+    position: absolute;
+    left: 160px;
+    top: 80px;
+    width: 160px;
+    height: 2px;
+    decorator: linear-gradient(90deg, #bdf0ff00, #bdf0ffcc, #bdf0ff00);
+}
+
 #hud_target_weight,
 #hud_target_score {
     position: absolute;
@@ -348,6 +368,24 @@ body {
     color: #8cff79;
 
     font-size: 25px;
+}
+
+/* 점수 등급별 글씨 스타일. 이 RmlUi 빌드는 폰트 이펙트를 1개만 지원하므로(named 다중
+   이펙트는 파싱 실패), 등급은 색상 + 단일 외곽선(어두운 동색 테두리)으로 구분한다.
+   Lua는 class 만 토글한다(HUDController.lua: apply_target_info). */
+#hud_target_score.tier-normal {
+    color: #8cff79;
+    font-effect: outline(2px #114d05);
+}
+
+#hud_target_score.tier-silver {
+    color: #eef2f5;
+    font-effect: outline(2px #55595e);
+}
+
+#hud_target_score.tier-gold {
+    color: #ffd83a;
+    font-effect: outline(2px #6b4a00);
 }
 
 #hud_popup_container {

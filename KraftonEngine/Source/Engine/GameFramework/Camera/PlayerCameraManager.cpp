@@ -471,6 +471,21 @@ void APlayerCameraManager::ClearCameraVignette()
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Camera Blur — 풀스크린 블러 강도(0..1). EarlyPostProcess 패스가 읽는다.
+// ─────────────────────────────────────────────────────────────────
+void APlayerCameraManager::SetCameraBlur(float Strength)
+{
+	bEnableBlur = true;
+	BlurStrength = Strength;
+}
+
+void APlayerCameraManager::ClearCameraBlur()
+{
+	bEnableBlur = false;
+	BlurStrength = 0.0f;
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Camera Blend — ViewTarget A → Pending B 로 전환 중일 때 매 호출 시 보간된
 // raw POV 를 산출. shake 는 미포함. UpdateCamera 가 이걸 호출해 base POV 로
 // 받은 뒤 shake 를 누적해 CameraCachePOV 에 commit 한다.

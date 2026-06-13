@@ -9,13 +9,20 @@
 return {
     timeLimit      = 180,  -- 한 판 제한시간(초)                       -- 임시 밸런스
     maxServerLoad  = 100,  -- 게임오버가 되는 서버 부하 한계치           -- 임시 밸런스
-    loadPerRagdoll = 0.25,  -- 방치 래그돌 1마리가 1초당 올리는 부하(%)   -- 임시 밸런스
+    loadPerRagdoll = 0.075,  -- 방치 래그돌 1마리가 1초당 올리는 부하(%)   -- 임시 밸런스
+                             -- 스폰 간격 10s→3s(약 3.3배 빨라짐) 보정: 0.25 × (3/10) ≈ 0.075
     loadRecoverPerPortalCollect = 25.0, -- 포탈 미션 수거 1회당 낮추는 서버 부하(%) -- 임시 밸런스
 
     spawn = {              -- GOIncRagdollSpawnManager가 사용
-        interval       = 10.0,   -- 스폰 간격(초)                         -- 임시 밸런스
+        interval       = 3.0,    -- 스폰 간격(초)                         -- 임시 밸런스
         maxCount       = 10,    -- 최대 동시 스폰 수 (0 이하 = 무제한)     -- 임시 밸런스
         immediateFirst = true,  -- BeginPlay 직후 1마리 즉시 스폰 여부
+
+        -- 부활 확률제: 스폰 시 1회 추첨해 "이 개체가 부활 가능한가"를 고정한다.
+        -- 추첨에 실패한 개체는 'NoRevive' 태그가 붙어 플레이어가 닿아도 부활하지 않는다.
+        -- (canRevive=false 타입은 어차피 부활 불가 — 이 확률은 부활 가능 타입에만 적용)
+        -- 1.0 이상이면 전부 부활(기존 동작), 0 이하면 전부 부활 불가.
+        reviveChance   = 0.30,   -- 부활 가능 개체로 뽑힐 확률(0~1)         -- 임시 밸런스
         areaMinX = -10.0,       -- 스폰 영역(XY 박스) — 맵 확정 시 조정
         areaMaxX =  10.0,
         areaMinY = -10.0,
@@ -35,7 +42,10 @@ return {
         -- 플레이어 근처 우선 스폰 — 여러 후보 점을 뽑아 플레이어에게 가장 가까운
         -- (최소거리 제약을 만족하는) 점을 고른다. false면 기존 면적가중 랜덤.
         spawnNearPlayer       = true,
-        nearPlayerSampleCount = 16,       -- 후보 점 개수. 클수록 더 가깝게(연산 ↑) -- 임시 밸런스
+        -- 매 스폰마다 추첨: 이 확률로만 플레이어 근처 우선, 나머지는 맵 전체 랜덤.
+        -- 1.0이면 항상 근처(=기존 동작, 플레이어 주변에 몰림), 0이면 전부 랜덤.
+        nearPlayerChance      = 0.1,      -- 플레이어 근처에 떨굴 확률(0~1)         -- 임시 밸런스
+        nearPlayerSampleCount = 8,        -- 후보 점 개수. 클수록 더 가깝게(연산 ↑) -- 임시 밸런스
         playerTag             = "Player", -- 플레이어 액터 Tag (MinimapController와 동일)
 
         defaultRagdollId = "blue-speedster",  -- 추첨 실패 시 폴백 타입

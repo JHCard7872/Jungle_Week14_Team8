@@ -32,6 +32,11 @@ public:
 	virtual void EndPlay();
 	virtual void RouteActorDestroyed();
 
+	// 씬 로드(에디터 열기 + PIE/런타임)에서 한 액터의 컴포넌트·프로퍼티 역직렬화가 끝난 뒤
+	// SceneSaveManager가 1회 호출. 직렬화로 복원되지 않는 파생 컴포넌트를 보강하는 훅
+	// (예: 최소 직렬화된 액터가 로드 시 자기 컴포넌트를 구성). 기본 구현은 아무것도 안 한다.
+	virtual void PostLoadSceneActor() {}
+
 	bool HasActorBegunPlay() const { return bActorHasBegunPlay; }
 
 	void Serialize(FArchive& Ar) override;

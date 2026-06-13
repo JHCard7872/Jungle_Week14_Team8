@@ -123,6 +123,13 @@ void FGameRenderPipeline::BuildFrame(FViewport* VP, const FMinimalViewInfo& POV,
 		Frame.CameraVignette.Intensity = CamManager->GetVignetteIntensity();
 		Frame.CameraVignette.Radius = CamManager->GetVignetteRadius();
 		Frame.CameraVignette.Softness = CamManager->GetVignetteSoftness();
+		Frame.CameraVignette.Color = CamManager->GetVignetteColor();
+	}
+
+	Frame.CameraBlur.bEnabled = CamManager ? CamManager->IsBlurEnabled() : false;
+	if (Frame.CameraBlur.bEnabled)
+	{
+		Frame.CameraBlur.Strength = CamManager->GetBlurStrength();
 	}
 
 	UCameraComponent* ActiveCamera = CamManager ? CamManager->GetActiveCamera() : nullptr;

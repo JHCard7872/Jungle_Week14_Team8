@@ -19,6 +19,9 @@ local SYNC_BONE_NAME = "Pelvis"
 local PLAYER_TAG = "Player"
 local BEAM_BLOCK_REVIVE_TAG = "NoReviveWhileBeamed"
 local RED_BEAM_KILLED_TAG = "KilledByRedBeam"
+-- SpawnManager가 스폰 시 부활 확률 추첨에 실패한 개체에 다는 태그 (영구 부활 불가).
+-- GOIncRagdollSpawnManager.NO_REVIVE_TAG와 문자열이 일치해야 한다.
+local NO_REVIVE_TAG = "NoRevive"
 local BEAM_SHOCK_INTERVAL = 0.05
 local BEAM_SHOCK_IMPULSE_STRENGTH = 0.00
 local RED_BEAM_SHOCK_DURATION = 1.0
@@ -159,6 +162,10 @@ local function is_revive_blocked()
     end
 
     if is_valid(obj) and obj.HasTag ~= nil then
+        if obj:HasTag(NO_REVIVE_TAG) then
+            return true
+        end
+
         if obj:HasTag(RED_BEAM_KILLED_TAG) then
             return true
         end
@@ -181,6 +188,10 @@ local function get_revive_block_reason()
     end
 
     if is_valid(obj) and obj.HasTag ~= nil then
+        if obj:HasTag(NO_REVIVE_TAG) then
+            return "revive chance roll failed (NoRevive)"
+        end
+
         if obj:HasTag(RED_BEAM_KILLED_TAG) then
             return "KilledByRedBeam tag"
         end
@@ -1702,26 +1713,17 @@ function OnHit(other_actor, hit_component, other_comp, normal_impulse, hit_resul
 end
 
 function OnOverlap(other, overlappedComp, otherComp)
-    print(
-        "[GOIncRagdollPawn_Test] OnOverlap entered. state=" .. tostring(state) ..
-        " / other=" .. get_actor_debug_name(other) ..
-        " / canRevive=" .. tostring(bCanRevive) ..
-        " / canReviveHere=" .. tostring(canReviveHere)
-    )
-
+    -- 디버그 트레이스는 제거 — 플레이어가 부활 불가 래그돌에 닿아 있는 동안 매 프레임 콘솔을 도배했다.
     if state ~= STATE_DEAD then
-        print("[GOIncRagdollPawn_Test] OnOverlap ignored: state is " .. tostring(state))
         return
     end
 
     if not is_player_actor(other) then
-        print("[GOIncRagdollPawn_Test] OnOverlap ignored: other is not Player")
         return
     end
 
     local reviveBlockReason = get_revive_block_reason()
     if reviveBlockReason ~= nil then
-        print("[GOIncRagdollPawn_Test] Revive blocked: " .. tostring(reviveBlockReason))
         return
     end
 

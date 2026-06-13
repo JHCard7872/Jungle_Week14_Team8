@@ -2640,34 +2640,39 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 		AActor* Owner = PossessedCamera->GetOwner();
 		return IsValid(Owner) ? Owner : nullptr;
 	});
-	CameraManager.set_function("FadeOut", [](float Duration)
+	// FadeOut/FadeIn — 색상은 선택 인자(R,G,B). 미지정 시 검정(하위 호환). 흰 플래시는 (1,1,1).
+	CameraManager.set_function("FadeOut", [](float Duration, sol::optional<float> R, sol::optional<float> G, sol::optional<float> B)
 	{
 		if (!GEngine || !GEngine->GetWorld()) return;
 		APlayerController* PC = GEngine->GetWorld()->GetFirstPlayerController();
 		APlayerCameraManager* Manager = PC ? PC->GetPlayerCameraManager() : nullptr;
 		if (Manager)
 		{
-			Manager->StartCameraFade(0.0f, 1.0f, Duration, FLinearColor::Black(), false, true);
+			FLinearColor Color(R.value_or(0.0f), G.value_or(0.0f), B.value_or(0.0f), 1.0f);
+			Manager->StartCameraFade(0.0f, 1.0f, Duration, Color, false, true);
 		}
 	});
-	CameraManager.set_function("FadeIn", [](float Duration)
+	CameraManager.set_function("FadeIn", [](float Duration, sol::optional<float> R, sol::optional<float> G, sol::optional<float> B)
 	{
 		if (!GEngine || !GEngine->GetWorld()) return;
 		APlayerController* PC = GEngine->GetWorld()->GetFirstPlayerController();
 		APlayerCameraManager* Manager = PC ? PC->GetPlayerCameraManager() : nullptr;
 		if (Manager)
 		{
-			Manager->StartCameraFade(1.0f, 0.0f, Duration, FLinearColor::Black(), false, true);
+			FLinearColor Color(R.value_or(0.0f), G.value_or(0.0f), B.value_or(0.0f), 1.0f);
+			Manager->StartCameraFade(1.0f, 0.0f, Duration, Color, false, true);
 		}
 	});
-	CameraManager.set_function("SetVignette", [](float Intensity, float Radius, float Softness)
+	// SetVignette — 색상은 선택 인자(R,G,B). 미지정 시 검정(하위 호환).
+	CameraManager.set_function("SetVignette", [](float Intensity, float Radius, float Softness, sol::optional<float> R, sol::optional<float> G, sol::optional<float> B)
 	{
 		if (!GEngine || !GEngine->GetWorld()) return;
 		APlayerController* PC = GEngine->GetWorld()->GetFirstPlayerController();
 		APlayerCameraManager* Manager = PC ? PC->GetPlayerCameraManager() : nullptr;
 		if (Manager)
 		{
-			Manager->SetCameraVignette(Intensity, Radius, Softness, FLinearColor::Black());
+			FLinearColor Color(R.value_or(0.0f), G.value_or(0.0f), B.value_or(0.0f), 1.0f);
+			Manager->SetCameraVignette(Intensity, Radius, Softness, Color);
 		}
 	});
 	CameraManager.set_function("ClearVignette", []()
@@ -2678,6 +2683,27 @@ void FLuaScriptManager::RegisterCoreBindings(sol::state& Lua)
 		if (Manager)
 		{
 			Manager->ClearCameraVignette();
+		}
+	});
+	// SetBlur — 풀스크린 블러 강도(0..1). EarlyPostProcess 패스가 매 프레임 읽는다.
+	CameraManager.set_function("SetBlur", [](float Strength)
+	{
+		if (!GEngine || !GEngine->GetWorld()) return;
+		APlayerController* PC = GEngine->GetWorld()->GetFirstPlayerController();
+		APlayerCameraManager* Manager = PC ? PC->GetPlayerCameraManager() : nullptr;
+		if (Manager)
+		{
+			Manager->SetCameraBlur(Strength);
+		}
+	});
+	CameraManager.set_function("ClearBlur", []()
+	{
+		if (!GEngine || !GEngine->GetWorld()) return;
+		APlayerController* PC = GEngine->GetWorld()->GetFirstPlayerController();
+		APlayerCameraManager* Manager = PC ? PC->GetPlayerCameraManager() : nullptr;
+		if (Manager)
+		{
+			Manager->ClearCameraBlur();
 		}
 	});
 	CameraManager.set_function("SetViewTargetWithBlend", [](AActor* Target, float BlendTime)
@@ -3353,6 +3379,15 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		{
 			return Body.GetBodyTransform().TransformPosition(LocalPoint);
 		},
+		// 바디를 Delta만큼 순간이동(setGlobalPose) + WakeUp. 단일 바디(스태틱메시 등)용 —
+		// 래그돌은 본이 여러 개라 UPrimitiveComponent:MoveRagdollBodiesBy를 쓴다.
+		"MoveBy", [](FBodyInstance& Body, const FVector& Delta)
+		{
+			FTransform T = Body.GetBodyTransform();
+			T.Location = T.Location + Delta;
+			Body.SetBodyTransform(T);
+			Body.WakeUp();
+		},
 		"GetOwnerActor", [](FBodyInstance& Body) -> AActor*
 		{
 			return Body.GetOwnerActor();
@@ -3384,6 +3419,17 @@ void FLuaScriptManager::RegisterActorBindings(sol::state& Lua)
 		if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(&Component))
 		{
 			SkeletalMesh->AddDirectionalImpulseToAllRagdollBodies(Direction, ImpulsePerMass, CenterBodyScale);
+			return true;
+		}
+		return false;
+	},
+		// 래그돌이면 모든 본 바디를 Delta만큼 통째로 평행이동(+WakeUp). 포탈 순간이동에서
+		// 들고 있는 래그돌을 플레이어와 함께 옮길 때 사용. 스켈레탈이 아니면 false.
+		"MoveRagdollBodiesBy", [](UPrimitiveComponent& Component, const FVector& Delta)
+	{
+		if (USkeletalMeshComponent* SkeletalMesh = Cast<USkeletalMeshComponent>(&Component))
+		{
+			SkeletalMesh->MoveAllRagdollBodiesByComponentDelta(Delta);
 			return true;
 		}
 		return false;

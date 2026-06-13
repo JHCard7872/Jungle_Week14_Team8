@@ -13,6 +13,7 @@
 #include "Core/Logging/Log.h"
 #include "Engine/Runtime/Engine.h"
 #include "Engine/Runtime/EngineInitHooks.h"
+#include "Game/Actors/GOIncBasket.h"
 #include "Game/Actors/SummonPortalActor.h"
 #include "Game/GOIncRagdollCharacterRegistry.h"
 #include "GameFramework/AActor.h"
@@ -322,10 +323,11 @@ void RegisterGameLuaBindings(sol::state& Lua)
 			return SpawnedPawn;
 		});
 
-		// 소환 포탈 코드 스폰 — 판 시작 시 PlayScene이 1회 호출. 위치는 스폰하지 않고
-		// PortalBehavior.lua BeginPlay가 PortalData 좌표로 잡는다(미션마다 재배치).
+		// 소환 포탈 코드 스폰 — 판 시작 시 PlayScene이 색상 쌍별로 호출한다.
+		// (X,Y,Z) 위치와 ColorIndex(0=하늘 1=분홍 2=노랑; -1=무색)를 받아 스폰 시 바로 배치/착색한다.
 		// InitDefaultComponents가 BeginPlay보다 먼저 돌도록 Initializer 형태로 스폰한다.
-		GOInc.set_function("SpawnSummonPortal", []() -> ASummonPortalActor*
+		GOInc.set_function("SpawnSummonPortal",
+			[](float X, float Y, float Z, sol::optional<int32> ColorIndex) -> ASummonPortalActor*
 		{
 			if (!GEngine)
 			{
@@ -340,12 +342,16 @@ void RegisterGameLuaBindings(sol::state& Lua)
 				return nullptr;
 			}
 
+			const FVector Location(X, Y, Z);
+			const int32 Color = ColorIndex.value_or(0);
 			ASummonPortalActor* Portal = World->SpawnActorWithInitializer<ASummonPortalActor>(
-				[](ASummonPortalActor* P)
+				[&](ASummonPortalActor* P)
 				{
 					if (P)
 					{
+						P->ColorIndex = Color;        // InitDefaultComponents가 끝에서 이 값으로 색 적용
 						P->InitDefaultComponents();
+						P->SetActorLocation(Location);
 					}
 				});
 
@@ -355,8 +361,47 @@ void RegisterGameLuaBindings(sol::state& Lua)
 				return nullptr;
 			}
 
-			UE_LOG("[GOInc] Spawned summon portal.");
+			UE_LOG("[GOInc] Spawned summon portal. Color=%d Location=(%.2f, %.2f, %.2f)",
+				Color, Location.X, Location.Y, Location.Z);
 			return Portal;
+		});
+
+		// 큰 바구니(AGOIncBasket) 코드 스폰 — Place Actor 메뉴와 같은 경로(InitDefaultComponents 호출).
+		// PlayScene이 BeginPlay에서 스폰영역 점에 흩어 배치한다. 동적 바디라 살짝 위에서 떨궈 바닥에 안착.
+		GOInc.set_function("SpawnBasket", [](float X, float Y, float Z) -> AActor*
+		{
+			if (!GEngine)
+			{
+				UE_LOG("[GOInc] SpawnBasket failed. Missing GEngine.");
+				return nullptr;
+			}
+
+			UWorld* World = GEngine->GetWorld();
+			if (!World)
+			{
+				UE_LOG("[GOInc] SpawnBasket failed. Missing World.");
+				return nullptr;
+			}
+
+			const FVector Location(X, Y, Z);
+			AGOIncBasket* Basket = World->SpawnActorWithInitializer<AGOIncBasket>(
+				[&](AGOIncBasket* B)
+				{
+					if (B)
+					{
+						B->InitDefaultComponents();
+						B->SetActorLocation(Location);
+					}
+				});
+
+			if (!Basket)
+			{
+				UE_LOG("[GOInc] SpawnBasket failed.");
+				return nullptr;
+			}
+
+			UE_LOG("[GOInc] Spawned basket. Location=(%.2f, %.2f, %.2f)", Location.X, Location.Y, Location.Z);
+			return Basket;
 		});
 
 		// 수거 "뾰로롱 팍" 파티클을 코드로 구워 Content/Particle/FX_CollectPop.uasset 생성.

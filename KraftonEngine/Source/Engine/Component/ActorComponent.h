@@ -46,6 +46,11 @@ public:
 	bool IsHiddenInComponentTree() const { return bHiddenInComponentTree; }
 	void SetHiddenInComponentTree(bool bHidden) { bHiddenInComponentTree = bHidden; }
 
+	// 런타임에 코드로 만든 컴포넌트를 씬 저장에서 제외한다. 매 로드마다 코드가 다시 만드는
+	// 절차적 컴포넌트(예: 포탈 빛기둥)를 씬에 굽지 않아, 개수/구조 변경이 항상 반영되게 한다.
+	bool IsDoNotSerialize() const { return bDoNotSerialize; }
+	void SetDoNotSerialize(bool bIn) { bDoNotSerialize = bIn; }
+
 	UFUNCTION(Callable, Exec, Category="Component|Activation")
 	void SetActive(bool bNewActive);
 	UFUNCTION(Callable, Category="Component|Activation")
@@ -95,4 +100,6 @@ private:
 	bool bAutoActivate = true;
 	UPROPERTY(Save, Category="Header", DisplayName="Hidden In Component Tree")
 	bool bHiddenInComponentTree = false;
+	// 직렬화 제외(절차적 런타임 컴포넌트). 저장 안 하므로 UPROPERTY Save 아님.
+	bool bDoNotSerialize = false;
 };

@@ -142,6 +142,13 @@ public:
 	float GetVignetteSoftness() const { return VignetteSoftness; }
 	FLinearColor GetVignetteColor() const { return VignetteColor; }
 
+	// ─── Camera Blur ──────────────────────────────────────────────
+	virtual void SetCameraBlur(float Strength);
+	virtual void ClearCameraBlur();
+
+	bool IsBlurEnabled() const { return bEnableBlur; }
+	float GetBlurStrength() const { return BlurStrength; }
+
 	// ─── Camera Blend ──────────────────────────────────────────────
 	bool GetCameraView(FMinimalViewInfo& OutPOV) const;
 
@@ -212,6 +219,10 @@ private:
 	float VignetteRadius = 0.75f;
 	float VignetteSoftness = 0.35f;
 	FLinearColor VignetteColor = FLinearColor::Black();
+
+	// Blur 상태
+	bool bEnableBlur = false;
+	float BlurStrength = 0.0f;
 
 	// POV cache — UpdateCamera 가 채우고, 외부는 GetCameraCachePOV 로 read.
 	// ActiveCamera 가 한 번도 없었으면 bCameraCacheValid=false → caller 가 fallback 처리.

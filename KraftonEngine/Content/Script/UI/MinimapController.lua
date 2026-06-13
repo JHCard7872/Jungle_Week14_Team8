@@ -27,6 +27,7 @@ local IMG_W, IMG_H = 1190, 1322     -- play_hud_minimap.png 원본 해상도
 local MAP_W, MAP_H = 225, 250       -- #hud_minimap_container 크기(px). ★종횡비를 이미지(1190:1322≈0.90)에 맞춰야 왜곡·넘침이 없다. rcss 값과 일치 필수
 local RAGDOLL_POOL = 15             -- 미리 깔아둔 래그돌 마커 개수. play_hud.rml 마커 수와 반드시 일치
 local TRASHBOX_POOL = 6            -- 미리 깔아둔 수거함 마커 개수. play_hud.rml 마커 수와 반드시 일치
+local PORTAL_PER_COLOR = 2         -- 색상(0/1/2)별 포탈 마커 슬롯 수(한 쌍). play_hud.rml 마커 수와 반드시 일치
 
 -- 플레이어 마커(삼각형) 회전 보정.
 --   - 마커 이미지(minimap_marker_player.png)는 기본적으로 위(-y)를 가리킨다.
@@ -110,8 +111,14 @@ function M.Update(widget, dt)
         )
     end
 
-    -- 싱글턴: 포탈
-    place(widget, "minimap_marker_portal", find_one(PORTAL_TAG, PORTAL_NAME))
+    -- 포탈(순간이동) — 색상(0/1/2)별 한 쌍씩. "PortalColor{c}" 태그로 찾아 색별 슬롯에 매핑.
+    -- 마커 id: minimap_marker_portal_{c}_{1..PORTAL_PER_COLOR}, 스프라이트는 색별로 RML에 고정.
+    for c = 0, 2 do
+        local portals = (World.FindActorsByTag ~= nil) and World.FindActorsByTag("PortalColor" .. c) or {}
+        for i = 1, PORTAL_PER_COLOR do
+            place(widget, "minimap_marker_portal_" .. c .. "_" .. i, portals[i])
+        end
+    end
 
     -- 수거함(여러 개) — 풀 슬롯에 순서대로 매핑, 남는 슬롯은 숨김.
     local trashboxes = (World.FindActorsByTag ~= nil) and World.FindActorsByTag(TRASHBOX_TAG) or {}

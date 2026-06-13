@@ -15,7 +15,9 @@ public:
 private:
 	void EnsureResources(const FPassContext& Ctx);
 	void ExecuteDepthOfField(const FPassContext& Ctx);
+	void ExecuteCameraBlur(const FPassContext& Ctx);
 
 	FConstantBuffer DOFConstantBuffer;
+	FConstantBuffer BlurConstantBuffer;
 	bool bResourcesCreated = false;
 };

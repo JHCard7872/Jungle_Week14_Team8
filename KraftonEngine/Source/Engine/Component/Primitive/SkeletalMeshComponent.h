@@ -237,6 +237,10 @@ public:
     void InitializeAnimation();
     void ClearAnimInstance();
 
+    // 래그돌 전체 본 바디를 Delta만큼 평행이동(+WakeUp). 포탈 순간이동처럼 외부에서
+    // 들고 있는 래그돌을 통째로 옮길 때 사용. 내부 컴포넌트 무브 동기화 경로도 같은 함수를 쓴다.
+    void MoveAllRagdollBodiesByComponentDelta(const FVector& Delta);
+
     // Editor / 직렬화 통합.
     void GetEditableProperties(TArray<FPropertyValue>& OutProps) override;
     void PostEditProperty(const char* PropertyName) override;
@@ -277,7 +281,6 @@ protected:
     void CacheRagdollComponentWorldMatrix();
     void ClearRagdollComponentMoveState();
     void ApplyExternalComponentMoveToRagdollBodies();
-    void MoveAllRagdollBodiesByComponentDelta(const FVector& Delta);
     void StabilizeRagdollJitterAnchor();
     void TickRagdollPhysicsMode(float DeltaTime);
     void StartRagdollRecovery();

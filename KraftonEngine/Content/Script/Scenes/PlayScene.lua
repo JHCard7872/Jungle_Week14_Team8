@@ -33,7 +33,6 @@ local COUNTDOWN_FADE_DURATION = 0.3
 local COUNTDOWN_GO_HOLD_DURATION = 0.7
 local intro_active = false
 local gameplay_started = false
-local portal_spawned = false   -- 첫 미션 발급 시 포탈 1회 스폰을 보장하는 가드
 
 local function is_looping_audio_key(key)
     return key:find("^bgm_") ~= nil or key == "sfx_time_passing"
@@ -73,8 +72,8 @@ local function start_gameplay()
     ScoreMgr.Start()
     LoadMgr.Start()
     MissionMgr.Start()
-    -- 포탈은 시작과 동시에 스폰하지 않는다 — 첫 미션이 실제 발급될 때 Tick에서 1회 스폰한다
-    -- (미션 없이 포탈만 떠 있는 게 어색해서). 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로.
+    -- 포탈(순간이동)은 에디터에 직접 배치한다 — 코드 스폰 없음. 씬에 둔 ASummonPortalActor가
+    -- BeginPlay에서 Color Index로 색·태그를 적용하고, 판 내내 고정 위치로 늘 존재한다.
     HUD.SetGameplayHudVisible(true)
     HUD.UpdateFromSession(0.0)
 end
@@ -162,7 +161,6 @@ function BeginPlay()
     ended = false
     intro_active = false
     gameplay_started = false
-    portal_spawned = false
 
     Session.Reset(Config.timeLimit)   -- 이전 판 값 청소 (inputEnabled=true 포함)
     Session.inputEnabled = false
@@ -187,6 +185,7 @@ function BeginPlay()
     Engine.SetOnEscape(enterPause)   -- 씬마다 재등록 (전역 단일 콜백이라 안 하면 이전 씬 것이 남음)
 
     begin_start_countdown()
+    -- 큰 바구니(AGOIncBasket)는 Play.Scene에 직접 배치돼 있다(코드 스폰 없음).
     -- 스폰은 씬의 RagdollSpawnManager 액터(GOIncRagdollSpawnManager.lua)가,
     -- 수거는 코드 스폰 포탈(PortalBehavior.lua)과 TrashBox 액터(TrashBoxBehavior.lua)가
     -- 자체 Tick/오버랩으로 담당 — pause 시 액터 Tick이 멈추므로 스폰도 같이 멈춘다
@@ -195,6 +194,9 @@ end
 function Tick(dt)
     UpdateCoroutines(dt)   -- 코루틴 심장 — 반드시 첫 줄
     if ended then return end
+
+    -- 포탈(순간이동)은 씬에 직접 배치된 ASummonPortalActor들이다(코드 스폰 없음).
+    -- 각 포탈이 BeginPlay에서 컴포넌트/색/태그를 갖추고 판 내내 고정 위치로 존재한다.
 
     if intro_active then
         HUD.Update(dt)
@@ -208,12 +210,6 @@ function Tick(dt)
 
     if Engine.IsPaused ~= nil and Engine.IsPaused() then
         return
-    end
-
-    -- 첫 미션이 실제로 발급되면(=포탈이 의미를 갖는 순간) 그때 포탈을 1회 스폰한다
-    if not portal_spawned and Session.mission and Session.mission.active then
-        GOInc.SpawnSummonPortal()   -- 위치/재배치는 PortalBehavior.lua가 PortalData 좌표로
-        portal_spawned = true
     end
 
     Session.timeRemaining = Session.timeRemaining - dt

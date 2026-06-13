@@ -24,28 +24,34 @@ bool FEarlyPostProcessPass::BeginPass(const FPassContext& Ctx)
 {
 	const bool bHasEarlyCommands = Ctx.CommandList.GetCommandCount(ERenderPass::EarlyPostProcess) > 0;
 	const bool bDOF = Ctx.Frame.RenderOptions.ShowFlags.bDepthOfField;
-	if (!bHasEarlyCommands && !bDOF)
+	const bool bBlur = Ctx.Frame.CameraBlur.bEnabled && Ctx.Frame.CameraBlur.Strength > 0.0f;
+	if (!bHasEarlyCommands && !bDOF && !bBlur)
 		return false;
 
 	const FFrameContext& Frame = Ctx.Frame;
-	if (!Frame.DepthTexture || !Frame.DepthCopyTexture || !Frame.DepthCopySRV)
-		return false;
-
-	ID3D11DeviceContext* DC = Ctx.Device.GetDeviceContext();
 	FStateCache& Cache = Ctx.Cache;
 
-	// t16 SceneDepth SRV null unbind — CopyResource 전 read/write hazard 방지
-	ID3D11ShaderResourceView* NullSRV = nullptr;
-	DC->PSSetShaderResources(ESystemTexSlot::SceneDepth, 1, &NullSRV);
+	// Depth 복사는 DOF / early 커맨드에만 필요. Blur 전용 프레임이면 건너뛴다.
+	if (bDOF || bHasEarlyCommands)
+	{
+		if (!Frame.DepthTexture || !Frame.DepthCopyTexture || !Frame.DepthCopySRV)
+			return bBlur;   // depth 리소스가 없어도 blur는 진행
 
-	// RT/DSV unbind → depth 복사 → RT/DSV 복구
-	DC->OMSetRenderTargets(0, nullptr, nullptr);
-	DC->CopyResource(Frame.DepthCopyTexture, Frame.DepthTexture);
-	DC->OMSetRenderTargets(1, &Cache.RTV, Cache.DSV);
+		ID3D11DeviceContext* DC = Ctx.Device.GetDeviceContext();
 
-	// DepthCopySRV를 t16에 재바인딩
-	ID3D11ShaderResourceView* DepthSRV = Frame.DepthCopySRV;
-	DC->PSSetShaderResources(ESystemTexSlot::SceneDepth, 1, &DepthSRV);
+		// t16 SceneDepth SRV null unbind — CopyResource 전 read/write hazard 방지
+		ID3D11ShaderResourceView* NullSRV = nullptr;
+		DC->PSSetShaderResources(ESystemTexSlot::SceneDepth, 1, &NullSRV);
+
+		// RT/DSV unbind → depth 복사 → RT/DSV 복구
+		DC->OMSetRenderTargets(0, nullptr, nullptr);
+		DC->CopyResource(Frame.DepthCopyTexture, Frame.DepthTexture);
+		DC->OMSetRenderTargets(1, &Cache.RTV, Cache.DSV);
+
+		// DepthCopySRV를 t16에 재바인딩
+		ID3D11ShaderResourceView* DepthSRV = Frame.DepthCopySRV;
+		DC->PSSetShaderResources(ESystemTexSlot::SceneDepth, 1, &DepthSRV);
+	}
 
 	Cache.bForceAll = true;
 	return true;
@@ -58,6 +64,12 @@ void FEarlyPostProcessPass::Execute(const FPassContext& Ctx)
 	if (Ctx.Frame.RenderOptions.ShowFlags.bDepthOfField)
 	{
 		ExecuteDepthOfField(Ctx);
+	}
+
+	// 풀스크린 블러 — DOF 뒤에 적용(둘 다 켜져 있으면 블러가 최종). 포탈 이동 연출 등에서 사용.
+	if (Ctx.Frame.CameraBlur.bEnabled && Ctx.Frame.CameraBlur.Strength > 0.0f)
+	{
+		ExecuteCameraBlur(Ctx);
 	}
 }
 
@@ -78,7 +90,69 @@ void FEarlyPostProcessPass::EnsureResources(const FPassContext& Ctx)
 		return;
 
 	DOFConstantBuffer.Create(Ctx.Device.GetDevice(), sizeof(FDepthOfFieldConstants), "DepthOfFieldCB");
+	BlurConstantBuffer.Create(Ctx.Device.GetDevice(), sizeof(FCameraBlurConstants), "CameraBlurCB");
 	bResourcesCreated = true;
+}
+
+// 풀스크린 블러 — SceneColor를 복사본으로 떠서 t17에 바인딩하고 풀스크린 트라이앵글로 다시 그린다.
+// DOF의 CopyResource/SRV 바인딩 규약을 그대로 따른다(read/write hazard 회피).
+void FEarlyPostProcessPass::ExecuteCameraBlur(const FPassContext& Ctx)
+{
+	const FFrameContext& Frame = Ctx.Frame;
+	if (!Frame.SceneColorCopyTexture || !Frame.ViewportRenderTexture || !Frame.SceneColorCopySRV)
+		return;
+
+	EnsureResources(Ctx);
+
+	ID3D11DeviceContext* DC = Ctx.Device.GetDeviceContext();
+	FStateCache& Cache = Ctx.Cache;
+
+	FCameraBlurConstants Constants = {};
+	Constants.Strength = std::clamp(Frame.CameraBlur.Strength, 0.0f, 1.0f);
+	Constants.TexelSizeX = 1.0f / std::max(Frame.ViewportWidth, 1.0f);
+	Constants.TexelSizeY = 1.0f / std::max(Frame.ViewportHeight, 1.0f);
+	BlurConstantBuffer.Update(DC, &Constants, sizeof(Constants));
+
+	ID3D11Buffer* RawCB = BlurConstantBuffer.GetBuffer();
+	DC->VSSetConstantBuffers(ECBSlot::PerShader0, 1, &RawCB);
+	DC->PSSetConstantBuffers(ECBSlot::PerShader0, 1, &RawCB);
+
+	// SceneColor SRV null unbind → RT unbind → SceneColor 복사 → 복사본 SRV 바인딩
+	ID3D11ShaderResourceView* NullSystemSRV = nullptr;
+	DC->PSSetShaderResources(ESystemTexSlot::SceneColor, 1, &NullSystemSRV);
+	DC->OMSetRenderTargets(0, nullptr, nullptr);
+	DC->CopyResource(Frame.SceneColorCopyTexture, Frame.ViewportRenderTexture);
+
+	ID3D11ShaderResourceView* SceneColorSRV = Frame.SceneColorCopySRV;
+	DC->PSSetShaderResources(ESystemTexSlot::SceneColor, 1, &SceneColorSRV);
+
+	Ctx.Resources.SetDepthStencilState(Ctx.Device, EDepthStencilState::NoDepth);
+	Ctx.Resources.SetBlendState(Ctx.Device, EBlendState::Opaque);
+	Ctx.Resources.SetRasterizerState(Ctx.Device, ERasterizerState::SolidNoCull);
+	DC->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	DC->IASetInputLayout(nullptr);
+	DC->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+
+	D3D11_VIEWPORT FullViewport = {};
+	FullViewport.Width = std::max(Frame.ViewportWidth, 1.0f);
+	FullViewport.Height = std::max(Frame.ViewportHeight, 1.0f);
+	FullViewport.MinDepth = 0.0f;
+	FullViewport.MaxDepth = 1.0f;
+
+	FShader* BlurShader = FShaderManager::Get().GetOrCreate(EShaderPath::CameraBlur);
+	if (BlurShader && BlurShader->IsValid())
+	{
+		DC->OMSetRenderTargets(1, &Cache.RTV, nullptr);
+		DC->RSSetViewports(1, &FullViewport);
+		BlurShader->Bind(DC);
+		DC->Draw(3, 0);
+	}
+
+	// SceneColor SRV 해제 + RT/DSV·뷰포트 복구 + 상태 캐시 강제 재적용
+	DC->PSSetShaderResources(ESystemTexSlot::SceneColor, 1, &NullSystemSRV);
+	DC->OMSetRenderTargets(1, &Cache.RTV, Cache.DSV);
+	DC->RSSetViewports(1, &FullViewport);
+	Cache.bForceAll = true;
 }
 
 void FEarlyPostProcessPass::ExecuteDepthOfField(const FPassContext& Ctx)
