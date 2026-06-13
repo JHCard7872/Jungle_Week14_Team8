@@ -271,7 +271,30 @@ local function set_credits_foreground_visible(is_visible)
 end
 
 -- 카드 확대 모달을 닫고 그리드(4장) 상태로 되돌린다.
+-- 모달이 열려 있었다면(X/딤 클릭으로 닫는 경우) 마지막으로 고른 면을 기록해 두고,
+-- 해당 그리드 카드를 그 면으로 갈아끼워 "선택한 종류로 변경된" 상태로 남긴다.
 local function close_card_modal()
+    if expanded_person ~= nil then
+        local person = expanded_person
+        card_face_override[person.key] = expanded_showing_dev
+
+        local st = flip_states[person.key]
+        if st ~= nil then
+            st.phase = "idle"
+            st.elapsed = 0.0
+            st.swapped = false
+            st.hovering = false
+            st.resting = false
+            st.rest_elapsed = 0.0
+            st.settle_scale = 1.0
+            st.showingDev = rest_dev(person)
+        end
+        set_card_src(person, rest_dev(person))
+        if widget ~= nil then
+            widget:SetProperty(person.creditsElementId, "transform", "scale(1.0, 1.0)")
+        end
+    end
+
     expanded_person = nil
     modal_opening = false
     set_display("credits_card_modal", false)
@@ -287,6 +310,7 @@ local function apply_credits_collection()
     end
 
     close_card_modal()
+    card_face_override = {}
     credits_collected = IdCardCollection.LoadCollectedSet()
 
     local all_collected = true
@@ -968,6 +992,7 @@ function M.Destroy()
     controls_game_current_page = 1
     flip_states = {}
     credits_collected = {}
+    card_face_override = {}
     expanded_person = nil
     expanded_showing_dev = false
     modal_opening = false
