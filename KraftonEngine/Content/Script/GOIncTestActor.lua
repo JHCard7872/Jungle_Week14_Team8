@@ -1685,9 +1685,12 @@ local function begin_id_card_remove_timer(actor, hit_component)
         start_scale = start_scale,
     }
 
-    local popup_sfx_key = C.ID_CARD_POPUP_SFX_KEY or "sfx_popup_info_0"
-    if popup_sfx_key ~= nil and popup_sfx_key ~= "" then
-        play_one_shot_sfx(popup_sfx_key, C.ID_CARD_POPUP_SFX_VOLUME_SCALE or 1.0)
+    -- HUD에 "ID CARD FOUND" 팝업을 띄운다. entry가 새로 생성된 경우에만(이 함수는
+    -- actor당 한 번만 진입) 호출되므로 카드 1장당 팝업도 1회만 발생한다.
+    -- 습득 효과음은 팝업 정의(HUDController.POPUP_EVENT_DEFINITIONS["ID CARD FOUND"])의
+    -- soundKey로 일원화했다 — 여기서 별도 재생하면 중복되므로 호출하지 않는다.
+    if HUD ~= nil and HUD.QueuePopup ~= nil then
+        HUD.QueuePopup("ID CARD FOUND")
     end
 end
 

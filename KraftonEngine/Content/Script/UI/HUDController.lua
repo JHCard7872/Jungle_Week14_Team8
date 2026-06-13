@@ -51,6 +51,10 @@ local POPUP_EVENT_DEFINITIONS = {
         imagePath = "../../Sprite/play_hud_popup_hurryup.png",
         soundKey = "sfx_popup_alert",
     },
+    ["ID CARD FOUND"] = {
+        imagePath = "../../Sprite/play_hud_popup_id_card_found.png",
+        soundKey = "sfx_popup_info",
+    },
     ["MISSION COMPLETE"] = {
         imagePath = "../../Sprite/play_hud_popup_mission_complete.png",
         soundKey = "sfx_popup_info",

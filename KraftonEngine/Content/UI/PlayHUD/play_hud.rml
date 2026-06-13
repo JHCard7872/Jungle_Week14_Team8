@@ -68,7 +68,7 @@
                 <img id="hud_server_load_red" class="hud_server_load_fill" src="../../Sprite/play_hud_server_load_red.png" />
                 <div id="hud_server_load_value">0%</div>
             </div>
-            <div id="hud_server_load_label">OVERLOAD</div>
+            <div id="hud_server_load_label">SERVER OVERLOAD</div>
         </div>
 
         <div id="hud_time_container" class="ui_hud_status_frame">

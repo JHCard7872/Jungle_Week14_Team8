@@ -59,6 +59,9 @@ body {
     height: 22px;
     margin-left: -11px;
     margin-top: -11px;
+    /* 삼각형이 플레이어 방향을 가리키도록 MinimapController가 transform:rotate를 매 프레임 갱신.
+       마커 중심을 기준으로 회전해야 위치가 어긋나지 않으므로 회전 원점을 중앙으로 고정. */
+    transform-origin: 50% 50%;
 }
 
 #hud_minimap_container .mm_portal {
@@ -353,7 +356,7 @@ body {
     display: none;
     opacity: 0.7;
     transform-origin: 50% 50%;
-    transform: scale(1.2);
+    transform: scale(0.9);
 }
 
 #hud_popup_image {

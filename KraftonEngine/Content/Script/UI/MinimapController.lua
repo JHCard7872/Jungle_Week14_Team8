@@ -28,6 +28,13 @@ local MAP_W, MAP_H = 225, 250       -- #hud_minimap_container 크기(px). ★종
 local RAGDOLL_POOL = 15             -- 미리 깔아둔 래그돌 마커 개수. play_hud.rml 마커 수와 반드시 일치
 local TRASHBOX_POOL = 4            -- 미리 깔아둔 수거함 마커 개수. play_hud.rml 마커 수와 반드시 일치
 
+-- 플레이어 마커(삼각형) 회전 보정.
+--   - 마커 이미지(minimap_marker_player.png)는 기본적으로 위(-y)를 가리킨다.
+--   - 미니맵은 world +X→오른쪽 / world +Y→아래, 플레이어 yaw(도)는 atan2(dir.Y,dir.X) 기준(yaw 0 = world +X).
+--   - 따라서 CSS 회전각 = yaw + 90 이면 삼각형이 플레이어가 바라보는 방향을 가리킨다.
+--   - 마커 이미지의 기본 방향이 바뀌면 이 오프셋만 조정한다(위:90, 오른쪽:0, 아래:-90 또는 270).
+local PLAYER_MARKER_YAW_OFFSET = 90.0
+
 -- 엔티티 식별용 태그/이름. 실제 스폰되면 이 태그로 찾는다(다르면 여기만 고치면 됨).
 local TAG_PLAYER = "Player"
 local TAG_RAGDOLL = "Ragdoll"
@@ -91,9 +98,17 @@ function M.Update(widget, dt)
         return
     end
 
-    -- 플레이어
+    -- 플레이어 — 위치 + 바라보는 방향(삼각형 회전)
     local player = (World.FindFirstActorByTag ~= nil) and World.FindFirstActorByTag(TAG_PLAYER) or nil
     place(widget, "minimap_marker_player", player)
+    if is_alive(player) and player.Rotation ~= nil then
+        local yaw = player.Rotation.Z or 0.0
+        widget:SetProperty(
+            "minimap_marker_player",
+            "transform",
+            string.format("rotate(%.1fdeg)", yaw + PLAYER_MARKER_YAW_OFFSET)
+        )
+    end
 
     -- 싱글턴: 포탈
     place(widget, "minimap_marker_portal", find_one(PORTAL_TAG, PORTAL_NAME))
