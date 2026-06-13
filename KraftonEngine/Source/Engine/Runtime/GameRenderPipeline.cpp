@@ -1,4 +1,4 @@
-#include "Engine/Runtime/GameRenderPipeline.h"
+﻿#include "Engine/Runtime/GameRenderPipeline.h"
 
 #include "Engine/Runtime/GameEngine.h"
 #include "GameFramework/GameMode/PlayerController.h"
@@ -64,6 +64,11 @@ void FGameRenderPipeline::Execute(float DeltaTime, FRenderer& Renderer)
 
 	FViewportRenderOptions Opts;
 	Opts.ViewMode = EViewMode::Lit_Phong;
+	Opts.ShowFlags.bBloom = true;
+	Opts.BloomThreshold = 1.0f;
+	Opts.BloomSoftKnee = 0.55f;
+	Opts.BloomIntensity = 0.8f;
+	Opts.BloomBlurRadius = 2.66f;
 	Frame.SetRenderOptions(Opts);
 
 	FScene* Scene = &World->GetScene();
