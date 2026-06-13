@@ -78,7 +78,7 @@ body {
     top: 0px;
     width: 100%;
     height: 100%;
-    background-color: #000000;
+    background-color: #ffffff;   /* white, to seamlessly continue the title's white fade-out (no black flash) */
     opacity: 0;
     pointer-events: none;
     z-index: 300;

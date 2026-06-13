@@ -20,31 +20,10 @@ local LETTERBOX_RATIO       = 0.12   -- bar height as fraction of viewport heigh
 local CINEMATIC_ZOOM_DUR    = 3.0    -- zoom+pan duration (seconds)
 local LETTERBOX_FADEOUT_DUR = 0.8    -- letterbox bars fade out duration
 local WAIT_LOGO_DUR         = 0.4    -- pause before logo appears
-local LOGO_IMPACT_DELAY     = 0.2    -- play the impact SFX this long after the logo lands
+local LOGO_IMPACT_LEAD      = 1.3    -- play the impact SFX this long BEFORE the logo lands
 local SHAKE_DURATION        = 0.55   -- screen shake duration on logo impact
 local SHAKE_INTENSITY       = 14.0   -- shake amplitude in pixels
 local SHAKE_FREQUENCY       = 12.0   -- shake oscillation frequency in Hz
-
--- Logo particles (fluorescent-red sparkles that erupt + drift around the logo)
-local PARTICLE_COUNT        = 40
-local PARTICLE_SPREAD_X     = 260.0  -- horizontal spawn spread around logo center (± px)
-local PARTICLE_SPREAD_Y     = 70.0   -- vertical spawn spread (± px)
-local PARTICLE_RISE_MIN     = 14.0   -- upward drift speed (px/s)
-local PARTICLE_RISE_MAX     = 46.0
-local PARTICLE_DRIFT_X      = 22.0   -- horizontal drift speed (± px/s)
-local PARTICLE_LIFE_MIN     = 1.6    -- lifetime before respawn (s)
-local PARTICLE_LIFE_MAX     = 3.2
-local PARTICLE_SCALE_MIN    = 0.5    -- size multiplier (base glow is 36px)
-local PARTICLE_SCALE_MAX    = 1.5
-local PARTICLE_WOBBLE_AMP   = 10.0   -- horizontal sine wobble amplitude (px)
-local PARTICLE_WOBBLE_FREQ  = 1.8    -- wobble frequency (Hz)
-local PARTICLE_MAX_ALPHA    = 0.9    -- peak opacity
--- Impact burst: first generation erupts radially from the logo, then damps into
--- the ambient float. Respawned particles use the ambient params above.
-local PARTICLE_BURST_SPEED_MIN = 320.0  -- initial radial speed (px/s)
-local PARTICLE_BURST_SPEED_MAX = 620.0
-local PARTICLE_BURST_DAMPING   = 2.6    -- velocity decay rate (per second)
-local PARTICLE_BURST_SPREAD    = 40.0   -- tight initial spread at logo center (± px)
 
 -- State
 local title_widget = nil
@@ -59,11 +38,7 @@ local cinematic_vw = 0
 local cinematic_vh = 0
 local shake_elapsed = 0.0  -- counts up; active when < SHAKE_DURATION
 local shake_osc_time = 0.0 -- separate timer for oscillation phase
-local impact_sfx_pending = false  -- 쿵! plays a beat after the logo lands
-local impact_sfx_elapsed = 0.0
-
-local particles_active = false
-local particles = {}       -- pool of {ox, oy, vx, vy, life, maxlife, scale, wobble}
+local impact_sfx_pending = false  -- 쿵! armed during wait_logo; fires just BEFORE the logo lands
 
 local bgm_pending = false      -- true after logo lands, until the delayed BGM starts
 local bgm_delay_elapsed = 0.0
@@ -98,6 +73,14 @@ end
 
 local function set_fade_overlay_opacity(alpha)
     set_element_opacity("title_fade_overlay", alpha)
+end
+
+-- The PRESS prompt carries a black font-effect outline that opacity alone doesn't
+-- fully attenuate (the outline bleeds through at opacity 0). Hide it via display so
+-- nothing shows until the prompt is actually revealed a beat after the BGM.
+local function set_press_shown(shown)
+    if title_widget == nil then return end
+    title_widget:SetProperty("press_any_button", "display", shown and "block" or "none")
 end
 
 local function stop_title_bgm()
@@ -193,95 +176,6 @@ local function update_shake(dt)
         string.format("translateX(%.1fpx) translateY(%.1fpx)", ox, oy))
 end
 
--- ─── Logo particles ─────────────────────────────────────────────────────────
-
-local function rand_range(a, b)
-    return a + (b - a) * math.random()
-end
-
--- (Re)initializes one particle. is_burst=true: erupt radially from the logo
--- center (used for the first generation on logo impact). false: ambient float.
-local function spawn_particle(p, is_burst)
-    p.burst = is_burst == true
-    p.maxlife = rand_range(PARTICLE_LIFE_MIN, PARTICLE_LIFE_MAX)
-    p.life = p.maxlife
-    p.scale = rand_range(PARTICLE_SCALE_MIN, PARTICLE_SCALE_MAX)
-    p.wobble = rand_range(0.0, 2.0 * math.pi)
-    if p.burst then
-        p.ox = rand_range(-PARTICLE_BURST_SPREAD, PARTICLE_BURST_SPREAD)
-        p.oy = rand_range(-PARTICLE_BURST_SPREAD, PARTICLE_BURST_SPREAD)
-        local angle = rand_range(0.0, 2.0 * math.pi)
-        local speed = rand_range(PARTICLE_BURST_SPEED_MIN, PARTICLE_BURST_SPEED_MAX)
-        p.vx = math.cos(angle) * speed
-        p.vy = math.sin(angle) * speed
-        p.fadein = 0.06   -- pop in quickly with the impact
-    else
-        p.ox = rand_range(-PARTICLE_SPREAD_X, PARTICLE_SPREAD_X)
-        p.oy = rand_range(-PARTICLE_SPREAD_Y, PARTICLE_SPREAD_Y)
-        p.vx = rand_range(-PARTICLE_DRIFT_X, PARTICLE_DRIFT_X)
-        p.vy = -rand_range(PARTICLE_RISE_MIN, PARTICLE_RISE_MAX)  -- negative = upward
-        p.fadein = 0.25
-    end
-end
-
-local function init_logo_particles()
-    if title_widget == nil then return end
-    for i = 1, PARTICLE_COUNT do
-        local p = particles[i] or {}
-        spawn_particle(p, true)  -- first generation = impact burst (launch together)
-        particles[i] = p
-    end
-    particles_active = true
-end
-
-local function clear_logo_particles()
-    particles_active = false
-    if title_widget == nil then return end
-    for i = 1, PARTICLE_COUNT do
-        title_widget:SetProperty("logo_particle_" .. i, "opacity", "0.000")
-    end
-end
-
-local function update_logo_particles(dt)
-    if not particles_active or title_widget == nil then return end
-    for i = 1, PARTICLE_COUNT do
-        local p = particles[i]
-        if p ~= nil then
-            p.life = p.life - dt
-            if p.life <= 0.0 then spawn_particle(p, false) end  -- recycle as ambient float
-            if p.burst then
-                -- decay the radial launch velocity, then ease into a gentle rise
-                local damp = math.max(0.0, 1.0 - PARTICLE_BURST_DAMPING * dt)
-                p.vx = p.vx * damp
-                p.vy = p.vy * damp - PARTICLE_RISE_MIN * dt
-            end
-            p.ox = p.ox + p.vx * dt
-            p.oy = p.oy + p.vy * dt
-            p.wobble = p.wobble + dt * (PARTICLE_WOBBLE_FREQ * 2.0 * math.pi)
-
-            -- opacity envelope: fade in over p.fadein, fade out over last 45%
-            local age = 1.0 - (p.life / p.maxlife)
-            local fadein = p.fadein or 0.25
-            local alpha
-            if age < fadein then
-                alpha = age / fadein
-            elseif age > 0.55 then
-                alpha = (1.0 - age) / 0.45
-            else
-                alpha = 1.0
-            end
-            alpha = math.max(0.0, math.min(1.0, alpha)) * PARTICLE_MAX_ALPHA
-
-            local wob = math.sin(p.wobble) * PARTICLE_WOBBLE_AMP
-            local id = "logo_particle_" .. i
-            title_widget:SetProperty(id, "transform",
-                string.format("translateX(%.1fpx) translateY(%.1fpx) scale(%.2f)",
-                    p.ox + wob, p.oy, p.scale))
-            title_widget:SetProperty(id, "opacity", string.format("%.3f", alpha))
-        end
-    end
-end
-
 local function begin_title_cinematic()
     local vp = Engine.GetViewportSize()
     cinematic_vw = (vp and vp.Width)  or 0
@@ -289,6 +183,7 @@ local function begin_title_cinematic()
 
     set_fade_overlay_opacity(0.0)
     set_element_opacity("press_any_button", 0.0)
+    set_press_shown(false)
     set_element_opacity("title_logo_container", 0.0)
 
     set_letterbox_height(1.0)       -- letterbox bars fully open
@@ -314,6 +209,7 @@ local function begin_main_menu_transition()
     bgm_pending = false   -- cancel the pending BGM/prompt timers if the player skips ahead
     press_pending = false
     impact_sfx_pending = false
+    set_press_shown(true)   -- ensure the prompt is visible during the start-SFX blink, even if skipped early
     Session.sceneTransition = Session.sceneTransition or {}
     Session.sceneTransition.mainMenuFadeInDuration = MAIN_MENU_FADE_IN_DURATION
     stop_title_bgm()
@@ -363,25 +259,29 @@ local function update_transition(dt)
             transition_phase = "wait_logo"
             transition_elapsed = 0.0
             transition_duration = WAIT_LOGO_DUR
+            impact_sfx_pending = true   -- arm the 쿵!; it fires LOGO_IMPACT_LEAD before the logo lands
         end
         return true
     end
 
     if transition_phase == "wait_logo" then
+        -- Fire the 쿵! a touch BEFORE the logo lands, so the impact leads the visual.
+        if impact_sfx_pending and (transition_duration - transition_elapsed) <= LOGO_IMPACT_LEAD then
+            impact_sfx_pending = false
+            AudioManager.Play(SFX_LOGO_IMPACT_KEY, UserSettings.GetSfxVolumeScalar())
+        end
         if t >= 1.0 then
-            -- Logo appears; the 쿵! is delayed a touch (fired in Tick)
+            -- Logo appears (the 쿵! already fired during the lead window above)
             set_element_opacity("title_logo_container", 1.0)
             -- keep the prompt hidden until a beat after the BGM (revealed in Tick)
             set_element_opacity("press_any_button", 0.0)
+            set_press_shown(false)
             press_visible = false
             press_pending = false
             press_delay_elapsed = 0.0
-            impact_sfx_pending = true
-            impact_sfx_elapsed = 0.0
             shake_elapsed = 0.0
             shake_osc_time = 0.0
             CameraManager.StartWaveShake(0.8)
-            init_logo_particles()
             bgm_pending = true        -- start BGM a beat later (handled in Tick)
             bgm_delay_elapsed = 0.0
             press_blink_elapsed = 0.0
@@ -407,7 +307,10 @@ local function update_transition(dt)
     end
 
     if transition_phase == "fade_out" then
-        set_element_opacity("press_any_button", 1.0)
+        -- Hide the prompt as the white overlay takes over. Its black outline isn't
+        -- attenuated by opacity/overlay, so leaving it on leaves a black ghost on the
+        -- white fade — display:none removes it entirely.
+        set_press_shown(false)
         set_fade_overlay_opacity(t)
         if t >= 1.0 then
             complete_scene_load()
@@ -433,15 +336,12 @@ function BeginPlay()
     cinematic_vh = 0
     shake_elapsed = SHAKE_DURATION
     shake_osc_time = 0.0
-    particles_active = false
-    particles = {}
     bgm_pending = false
     bgm_delay_elapsed = 0.0
     press_pending = false
     press_delay_elapsed = 0.0
     press_visible = false
     impact_sfx_pending = false
-    impact_sfx_elapsed = 0.0
     if math.randomseed ~= nil then math.randomseed(20260609) end
 
     for key, path in pairs(require("Data/AudioData")) do
@@ -465,18 +365,8 @@ function Tick(dt)
     if title_widget == nil then return end
 
     update_shake(dt)
-    update_logo_particles(dt)
 
     if update_transition(dt) then return end
-
-    -- Fire the 쿵! a beat after the logo lands.
-    if impact_sfx_pending then
-        impact_sfx_elapsed = impact_sfx_elapsed + dt
-        if impact_sfx_elapsed >= LOGO_IMPACT_DELAY then
-            impact_sfx_pending = false
-            AudioManager.Play(SFX_LOGO_IMPACT_KEY, UserSettings.GetSfxVolumeScalar())
-        end
-    end
 
     -- Start the title BGM a beat after the logo has landed.
     if bgm_pending then
@@ -496,6 +386,7 @@ function Tick(dt)
             press_pending = false
             press_visible = true
             press_blink_elapsed = 0.0
+            set_press_shown(true)   -- reveal now (matches the original timing)
         end
     end
 
@@ -511,8 +402,6 @@ end
 function EndPlay()
     StopAllCoroutines()
     AudioManager.StopAllLoops()
-    clear_logo_particles()
-    particles = {}
     if title_widget ~= nil then
         title_widget:RemoveFromParent()
     end
